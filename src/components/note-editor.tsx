@@ -95,6 +95,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     };
     
     const handleSoftDelete = () => {
+        if (isNewNote) return;
         const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
         const notes: Note[] = savedNotes ? JSON.parse(savedNotes) : [];
         const updatedNotes = notes.map(note => 
@@ -115,26 +116,42 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
         let newContent = '';
         let newCursorPos = 0;
+        let placeholderLength = 0;
 
         if (formatType === 'bold') {
-            const replacement = `**${selectedText || 'bold text'}**`;
+            const placeholder = 'bold text';
+            const replacement = `**${selectedText || placeholder}**`;
             newContent = `${content.substring(0, start)}${replacement}${content.substring(end)}`;
-            newCursorPos = start + (selectedText ? replacement.length : 2);
+            newCursorPos = start + 2;
+            placeholderLength = placeholder.length;
         } else if (formatType === 'italic') {
-            const replacement = `*${selectedText || 'italic text'}*`;
+             const placeholder = 'italic text';
+            const replacement = `*${selectedText || placeholder}*`;
             newContent = `${content.substring(0, start)}${replacement}${content.substring(end)}`;
-            newCursorPos = start + (selectedText ? replacement.length : 1);
+            newCursorPos = start + 1;
+            placeholderLength = placeholder.length;
         } else if (formatType === 'list') {
-            const replacement = `\n- ${selectedText || 'List item'}`;
+            const placeholder = 'List item';
+            // If the current line is not empty, add a newline before the list item
+            const prefix = (start === 0 || content[start - 1] === '\n') ? '' : '\n';
+            const replacement = `${prefix}- ${selectedText || placeholder}`;
             newContent = `${content.substring(0, start)}${replacement}${content.substring(end)}`;
-            newCursorPos = start + replacement.length;
+            newCursorPos = start + prefix.length + 2;
+            placeholderLength = placeholder.length;
         }
 
         setContent(newContent);
+
         // Focus and set cursor position after state update
         setTimeout(() => {
             textarea.focus();
-            textarea.setSelectionRange(newCursorPos, newCursorPos + (selectedText ? 0 : (formatType === 'bold' ? 9 : (formatType === 'italic' ? 11 : 9))));
+            if (selectedText) {
+                // If text was selected, just place the cursor after the formatted text
+                textarea.setSelectionRange(start + newContent.length - content.length, start + newContent.length - content.length);
+            } else {
+                // If no text was selected, select the placeholder text
+                 textarea.setSelectionRange(newCursorPos, newCursorPos + placeholderLength);
+            }
         }, 0);
     };
 
