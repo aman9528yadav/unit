@@ -318,7 +318,7 @@ export function Notepad() {
                                         </div>
                                         <p className="text-sm text-muted-foreground truncate h-10">{note.content || 'No content'}</p>
                                         <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
-                                            <span>{format(new Date(note.updatedAt), "d MMM yyyy")}</span>
+                                            <span>{format(new Date(note.updatedAt), "d MMM yyyy, h:mm a")}</span>
                                             {note.category && <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full">{note.category}</span>}
                                         </div>
                                          {note.deletedAt && (
@@ -379,3 +379,5 @@ export function Notepad() {
         </SidebarProvider>
     );
 }
+
+    
