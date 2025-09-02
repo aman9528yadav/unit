@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Star, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, ListTodo, Code2, Paperclip, Smile, Image as ImageIcon, X } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -50,13 +50,16 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         }
     }, [noteId, isNewNote, router, toast]);
 
-    const handleFormat = (formatType: 'bold' | 'italic' | 'underline' | 'strikethrough' | 'insertUnorderedList' | 'insertOrderedList') => {
-        document.execCommand(formatType, false);
+    const handleFormat = (command: string) => {
+        document.execCommand(command, false);
         editorRef.current?.focus();
+        handleContentChange();
     };
 
-    const handleContentChange = (e: React.FormEvent<HTMLDivElement>) => {
-        setContent(e.currentTarget.innerHTML);
+    const handleContentChange = () => {
+        if(editorRef.current) {
+            setContent(editorRef.current.innerHTML);
+        }
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -179,16 +182,15 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             </div>
             <div className="bg-card p-4 rounded-t-xl flex-grow flex flex-col gap-4 mt-4">
                 <div className="flex items-center gap-1 border-b border-border pb-2 flex-wrap">
-                    <Button variant="ghost" size="icon" onClick={() => handleFormat('bold')}><Bold /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleFormat('italic')}><Italic /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleFormat('underline')}><Underline /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleFormat('strikethrough')}><Strikethrough /></Button>
-                    <Button variant="ghost" size="icon" onClick={showComingSoonToast}><Link2 /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleFormat('insertUnorderedList')}><List /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleFormat('insertOrderedList')}><ListOrdered /></Button>
-                    <Button variant="ghost" size="icon" onClick={showComingSoonToast}><ListTodo /></Button>
-                    <Button variant="ghost" size="icon" onClick={showComingSoonToast}><Code2 /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}><ImageIcon /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('bold')}><Bold /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('italic')}><Italic /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('underline')}><Underline /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('strikeThrough')}><Strikethrough /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={showComingSoonToast}><Link2 /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('insertUnorderedList')}><List /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('insertOrderedList')}><ListOrdered /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={showComingSoonToast}><Code2 /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => fileInputRef.current?.click()}><ImageIcon /></Button>
                     <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
                 </div>
                 {attachment && (
@@ -216,3 +218,5 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
+
+    

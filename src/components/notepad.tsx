@@ -139,9 +139,10 @@ export function Notepad() {
     const categories = [...new Set(notes.filter(n => !n.deletedAt && n.category).map(n => n.category!))];
 
     const filteredNotes = notes.filter(note => {
+        const plainTextContent = note.content.replace(/<[^>]*>?/gm, '');
         const matchesSearch = debouncedSearchQuery.trim() === '' || 
                               note.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || 
-                              note.content.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+                              plainTextContent.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
 
         if (!matchesSearch) return false;
         
@@ -393,3 +394,5 @@ export function Notepad() {
         </SidebarProvider>
     );
 }
+
+    
