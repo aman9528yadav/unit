@@ -4,9 +4,6 @@ import { useState, useEffect, useMemo, useTransition } from "react";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription
 } from "@/components/ui/card";
 import {
   Select,
@@ -15,8 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRightLeft, Loader2 } from "lucide-react";
 import { conversionCategories, ConversionCategory, Unit } from "@/lib/conversions";
@@ -43,7 +40,8 @@ export function Converter() {
   useEffect(() => {
     setFromUnit(currentUnits[0].symbol);
     setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
-  }, [currentUnits]);
+    setInputValue("1");
+  }, [selectedCategory, currentUnits]);
 
   useEffect(() => {
     const performConversion = () => {
@@ -102,109 +100,123 @@ export function Converter() {
   };
 
   const handleSwapUnits = () => {
-    const currentInput = inputValue;
     setFromUnit(toUnit);
     setToUnit(fromUnit);
     setInputValue(outputValue.replace(/,/g, ''));
   };
   
   return (
-    <Card className="w-full max-w-md mx-auto shadow-2xl bg-card">
-      <CardHeader>
-        <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-primary/20 rounded-lg">
-                <selectedCategory.icon className="w-6 h-6 text-primary" />
-            </div>
-            <CardTitle className="text-3xl font-headline tracking-tight">UniConvert</CardTitle>
-        </div>
-        <CardDescription>A clean, fast, and smart unit converter.</CardDescription>
-        { (isAiSuggesting || suggestedCategories.length > 0) && (
-            <div className="flex flex-wrap items-center gap-2 pt-4">
-                {isAiSuggesting ? (
-                    <Badge variant="secondary" className="gap-1.5 font-normal"><Loader2 className="h-3 w-3 animate-spin" /> Smart suggestions...</Badge>
-                ) : (
-                  <>
-                    {suggestedCategories.map(cat => (
-                        <Badge key={cat} variant="outline" className="cursor-pointer transition-colors hover:bg-accent/50" onClick={() => handleCategoryChange(cat)}>{cat}</Badge>
-                    ))}
-                  </>
-                )}
-            </div>
-        )}
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-            <Label>Category</Label>
-            <Select value={selectedCategory.name} onValueChange={handleCategoryChange}>
-                <SelectTrigger className="w-full text-base py-6">
-                    <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                    {conversionCategories.map(cat => (
-                        <SelectItem key={cat.name} value={cat.name}>
-                            <div className="flex items-center gap-2">
-                                <cat.icon className="w-4 h-4 text-muted-foreground" />
-                                <span>{cat.name}</span>
-                            </div>
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-        </div>
-        
-        <div className="grid grid-cols-1 gap-4 items-end sm:grid-cols-[1fr_auto_1fr]">
-          <div className="space-y-2">
-            <Label htmlFor="from-value">From</Label>
-            <Input
-              id="from-value"
-              type="number"
-              value={inputValue}
-              onChange={e => setInputValue(e.target.value)}
-              className="text-lg h-auto py-3"
-            />
-            <UnitSelect units={currentUnits} value={fromUnit} onValueChange={setFromUnit} />
-          </div>
+    <div className="w-full max-w-2xl mx-auto p-4 md:p-6">
+      <header className="text-center mb-8">
+        <h1 className="text-4xl font-bold tracking-tight text-primary">UNIT CONVERTER</h1>
+      </header>
+      
+      <Tabs value={selectedCategory.name} onValueChange={handleCategoryChange} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 bg-muted/80 backdrop-blur-sm rounded-lg p-1">
+          {conversionCategories.map(cat => (
+            <TabsTrigger key={cat.name} value={cat.name} className="flex items-center gap-2 text-base data-[state=active]:bg-background data-[state=active]:shadow-md">
+                <cat.icon className="w-5 h-5" />
+                <span>{cat.name}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <Card className="mt-6 bg-card/50 border-2 border-border/80 rounded-2xl shadow-lg backdrop-blur-xl">
+          <CardContent className="p-6 md:p-8">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 items-center">
+              <ConversionInput
+                label="FROM"
+                units={currentUnits}
+                selectedUnit={fromUnit}
+                onUnitChange={setFromUnit}
+                value={inputValue}
+                onValueChange={setInputValue}
+              />
+              
+              <Button variant="outline" size="icon" className="hidden md:flex justify-self-center self-center mt-8 rounded-full h-12 w-12 bg-background hover:bg-muted" onClick={handleSwapUnits} aria-label="Swap units">
+                <ArrowRightLeft className="w-5 h-5 text-muted-foreground" />
+              </Button>
+              <Button variant="outline" className="flex md:hidden w-full mt-2" onClick={handleSwapUnits} aria-label="Swap units">
+                <ArrowRightLeft className="w-4 h-4 mr-2" />
+                Swap
+              </Button>
 
-          <Button variant="outline" size="icon" className="hidden sm:flex self-center mb-[44px]" onClick={handleSwapUnits} aria-label="Swap units">
-            <ArrowRightLeft className="w-4 h-4 text-muted-foreground" />
-          </Button>
-
-          <div className="space-y-2">
-            <Label htmlFor="to-value">To</Label>
-            <div id="to-value" className="flex items-center h-auto py-3 min-h-[48px] w-full rounded-md border border-input bg-muted/50 px-3 text-lg text-foreground font-semibold">
-              {outputValue}
+              <ConversionInput
+                label="TO"
+                units={currentUnits}
+                selectedUnit={toUnit}
+                onUnitChange={setToUnit}
+                value={outputValue}
+                isReadOnly
+              />
             </div>
-            <UnitSelect units={currentUnits} value={toUnit} onValueChange={setToUnit} />
-          </div>
-        </div>
-        
-        <Button variant="outline" size="sm" className="w-full flex sm:hidden" onClick={handleSwapUnits}>
-            <ArrowRightLeft className="w-4 h-4 mr-2" />
-            Swap Units
-        </Button>
-      </CardContent>
-    </Card>
+            { (isAiSuggesting || suggestedCategories.length > 0) && (
+              <div className="flex flex-wrap items-center gap-2 pt-6 justify-center">
+                  {isAiSuggesting ? (
+                      <div className="flex items-center text-sm text-muted-foreground gap-1.5 font-normal"><Loader2 className="h-4 w-4 animate-spin" /> Thinking...</div>
+                  ) : (
+                    <>
+                      {suggestedCategories.map(cat => (
+                          <Button key={cat} variant="ghost" size="sm" className="transition-colors hover:bg-accent/20" onClick={() => handleCategoryChange(cat)}>{cat}</Button>
+                      ))}
+                    </>
+                  )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </Tabs>
+    </div>
   );
 }
 
-function Label({ children }: { children: React.ReactNode }) {
-    return (
-        <label className="text-sm font-medium text-muted-foreground ml-1">
-            {children}
-        </label>
-    );
+function ConversionInput({
+  label,
+  units,
+  selectedUnit,
+  onUnitChange,
+  value,
+  onValueChange,
+  isReadOnly = false
+}: {
+  label: string;
+  units: Unit[];
+  selectedUnit: string;
+  onUnitChange: (value: string) => void;
+  value: string;
+  onValueChange?: (value: string) => void;
+  isReadOnly?: boolean;
+}) {
+  return (
+    <div className="space-y-3">
+      <label className="text-sm font-semibold text-muted-foreground ml-2">{label}</label>
+      <div className="relative">
+        <Input
+          type={isReadOnly ? "text" : "number"}
+          value={value}
+          onChange={onValueChange ? (e) => onValueChange(e.target.value) : undefined}
+          readOnly={isReadOnly}
+          className="text-4xl font-bold h-auto py-3 pr-28 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 pl-2"
+          placeholder="0"
+        />
+        <div className="absolute right-0 top-0 h-full">
+          <UnitSelect units={units} value={selectedUnit} onValueChange={onUnitChange} />
+        </div>
+      </div>
+    </div>
+  );
 }
+
 
 function UnitSelect({ units, value, onValueChange }: { units: Unit[], value: string, onValueChange: (value: string) => void }) {
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className="h-auto">
-        <SelectValue placeholder="Select unit" />
+      <SelectTrigger className="h-full w-auto bg-transparent border-0 text-muted-foreground text-sm font-medium focus:ring-0">
+        <SelectValue placeholder="Unit" />
       </SelectTrigger>
       <SelectContent>
         {units.map(unit => (
           <SelectItem key={unit.symbol} value={unit.symbol}>
-            {unit.name} ({unit.symbol})
+            {unit.symbol}
           </SelectItem>
         ))}
       </SelectContent>
