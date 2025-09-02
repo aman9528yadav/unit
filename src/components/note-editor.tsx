@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon, ArrowRightLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -59,8 +59,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     setTitle(noteToEdit.title);
                     // Set content state, which will trigger the next effect
                     setContent(noteToEdit.content);
+                    contentSetRef.current = false;
                     setIsFavorite(noteToEdit.isFavorite || false);
-                    setCategory(noteToedit.category || '');
+                    setCategory(noteToEdit.category || '');
                     setAttachment(noteToEdit.attachment || null);
                 } else {
                     toast({ title: "Note not found", variant: "destructive" });
@@ -112,8 +113,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
 
     const handleFormat = (command: string, value?: string) => {
-        document.execCommand(command, false, value);
         editorRef.current?.focus();
+        document.execCommand(command, false, value);
     };
     
     const handleFormatBlock = (tag: string) => {
@@ -161,6 +162,16 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             document.execCommand('insertText', false, lastCalc);
         } else {
             toast({ title: "No calculation found", description: "Perform a calculation in the calculator first."});
+        }
+    };
+
+    const handleInsertConversion = () => {
+        const lastConv = localStorage.getItem('lastConversion');
+        if (lastConv && editorRef.current) {
+            editorRef.current.focus();
+            document.execCommand('insertText', false, lastConv);
+        } else {
+            toast({ title: "No conversion found", description: "Perform a conversion in the converter first."});
         }
     };
 
@@ -342,6 +353,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => fileInputRef.current?.click()}><ImageIcon /></Button>
                     <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={handleInsertCalculation}><CalculatorIcon /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={handleInsertConversion}><ArrowRightLeft /></Button>
                 </div>
                 {attachment && (
                     <div className="relative w-full h-48 group">

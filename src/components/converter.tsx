@@ -234,6 +234,7 @@ export function Converter() {
     if (isNaN(numValue) || isNaN(result)) return;
 
     const conversionString = getCurrentConversionString(numValue, fromUnit, toUnit, result);
+    localStorage.setItem('lastConversion', conversionString);
     
     if (!history.includes(conversionString)) {
       incrementTodaysCalculations();
