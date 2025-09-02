@@ -239,8 +239,8 @@ export function Notepad() {
 
                 <SidebarInset className="flex flex-col pb-24">
                      <header className="flex items-center justify-between p-4">
-                        <SidebarTrigger>
-                           <Menu/>
+                        <SidebarTrigger asChild>
+                           <Button variant="ghost" size="icon"><Menu/></Button>
                         </SidebarTrigger>
                         <div className='text-center'>
                              {isSearchVisible ? (
@@ -294,10 +294,10 @@ export function Notepad() {
                     </header>
                     <div className="flex-grow overflow-y-auto px-4">
                         {sortedNotes.length > 0 ? (
-                            <ul className={layout === 'list' ? "divide-y divide-border" : "grid grid-cols-2 gap-4"}>
+                            <ul className={layout === 'list' ? "divide-y divide-border" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
                                 {sortedNotes.map(note => (
                                     <li key={note.id} className={layout === 'list' ? 'cursor-pointer group' : 'bg-card p-4 rounded-lg cursor-pointer group'}>
-                                        <div onClick={() => router.push(`/notes/edit/${note.id}`)} className={layout === 'list' ? '' : ''}>
+                                        <div onClick={() => router.push(`/notes/edit/${note.id}`)} className={layout === 'list' ? 'py-4' : ''}>
                                             <div className="flex items-center justify-between">
                                                 <h2 className="font-semibold truncate">{note.title || 'Untitled Note'}</h2>
                                                 {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
@@ -337,7 +337,7 @@ export function Notepad() {
                             </div>
                         )}
                     </div>
-                    <Link href="/notes/edit/new" passHref>
+                     <Link href="/notes/edit/new" passHref>
                         <Button className="fixed bottom-8 right-1/2 translate-x-1/2 sm:right-8 sm:translate-x-0 w-16 h-16 rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90">
                             <Edit size={24} />
                         </Button>
