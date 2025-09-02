@@ -100,6 +100,7 @@ export function Converter() {
   const [isOnline, setIsOnline] = useState(true);
   const [parsedQuery, setParsedQuery] = useState<ParseConversionQueryOutput | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [autoConvert, setAutoConvert] = useState(true);
 
   const imageExportRef = React.useRef<HTMLDivElement>(null);
 
@@ -111,22 +112,19 @@ export function Converter() {
 
 
   const fromUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === fromUnit)?.info, [currentUnits, fromUnit]);
-  const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit)?.info, [currentUnits, toUnit]);
+  const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit)?.info, [currentUnits, toUnitInfo]);
 
 
   React.useEffect(() => {
     const storedHistory = localStorage.getItem("conversionHistory");
     const storedFavorites = localStorage.getItem("favoriteConversions");
     const storedProfile = localStorage.getItem("userProfile");
-    if (storedHistory) {
-      setHistory(JSON.parse(storedHistory));
-    }
-    if (storedFavorites) {
-      setFavorites(JSON.parse(storedFavorites));
-    }
-    if (storedProfile) {
-        setProfile(JSON.parse(storedProfile));
-    }
+    const savedAutoConvert = localStorage.getItem('autoConvert');
+
+    if (storedHistory) setHistory(JSON.parse(storedHistory));
+    if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
+    if (storedProfile) setProfile(JSON.parse(storedProfile));
+    if (savedAutoConvert !== null) setAutoConvert(JSON.parse(savedAutoConvert));
     
     const itemToRestore = localStorage.getItem("restoreConversion");
     if (itemToRestore) {
@@ -182,10 +180,12 @@ export function Converter() {
       
   }, [inputValue, fromUnit, toUnit, selectedCategory, region]);
   
-  // Perform conversion whenever inputs change
+  // Perform conversion whenever inputs change if auto-convert is on
   useEffect(() => {
-    performConversion();
-  }, [performConversion]);
+    if (autoConvert) {
+      performConversion();
+    }
+  }, [performConversion, autoConvert]);
   
   // This effect runs after a search query has been parsed and state has been set.
   useEffect(() => {
@@ -226,6 +226,9 @@ export function Converter() {
   }, [inputValue, fromUnit, toUnit, outputValue, favorites]);
 
   const handleSaveToHistory = () => {
+    const saveHistory = JSON.parse(localStorage.getItem('saveHistory') || 'true');
+    if (!saveHistory) return;
+
     const numValue = parseFloat(inputValue);
     const result = parseFloat(outputValue.replace(/,/g, ''));
     if (isNaN(numValue) || isNaN(result)) return;
@@ -283,12 +286,12 @@ export function Converter() {
     setFromUnit(toUnit);
     setToUnit(fromUnit);
     setInputValue(currentOutput.replace(/,/g, ''));
-    // The conversion will be re-triggered by the useEffect hook
   };
 
   const handleConvertClick = () => {
+    performConversion();
     // Save to history on manual convert click
-    handleSaveToHistory();
+    setTimeout(() => handleSaveToHistory(), 100);
   };
   
   const handleToggleFavorite = () => {
@@ -732,5 +735,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    

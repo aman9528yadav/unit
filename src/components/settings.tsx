@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -22,6 +22,29 @@ export function Settings() {
   const [saveHistory, setSaveHistory] = useState(true);
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    const savedAutoConvert = localStorage.getItem('autoConvert');
+    if (savedAutoConvert !== null) {
+      setAutoConvert(JSON.parse(savedAutoConvert));
+    }
+
+    const savedSaveHistory = localStorage.getItem('saveHistory');
+    if (savedSaveHistory !== null) {
+      setSaveHistory(JSON.parse(savedSaveHistory));
+    }
+  }, []);
+
+  const handleAutoConvertChange = (checked: boolean) => {
+    setAutoConvert(checked);
+    localStorage.setItem('autoConvert', JSON.stringify(checked));
+  };
+
+  const handleSaveHistoryChange = (checked: boolean) => {
+    setSaveHistory(checked);
+    localStorage.setItem('saveHistory', JSON.stringify(checked));
+  };
+
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6">
@@ -87,7 +110,7 @@ export function Settings() {
              <SettingsItem 
               icon={SlidersHorizontal} 
               text={t('settings.unitConverter.autoConvert')}
-              control={<Switch checked={autoConvert} onCheckedChange={setAutoConvert} />} 
+              control={<Switch checked={autoConvert} onCheckedChange={handleAutoConvertChange} />} 
             />
             <SettingsItem 
               icon={Languages} 
@@ -107,7 +130,7 @@ export function Settings() {
              <SettingsItem 
               icon={History} 
               text={t('settings.calculator.saveHistory')}
-              control={<Switch checked={saveHistory} onCheckedChange={setSaveHistory} />} 
+              control={<Switch checked={saveHistory} onCheckedChange={handleSaveHistoryChange} />} 
               isLast={true}
             />
           </div>
