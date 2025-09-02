@@ -6,11 +6,20 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, History, CalculatorIcon } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function Settings() {
   const [notifications, setNotifications] = useState(true);
   const [autoConvert, setAutoConvert] = useState(true);
   const [saveHistory, setSaveHistory] = useState(true);
+  const { language, setLanguage, t } = useLanguage();
 
   return (
     <div className="w-full max-w-md mx-auto text-white flex flex-col gap-6 p-4 sm:p-6">
@@ -20,30 +29,39 @@ export function Settings() {
             <ArrowLeft />
           </Button>
         </Link>
-        <h1 className="text-xl font-bold">Settings</h1>
+        <h1 className="text-xl font-bold">{t('settings.title')}</h1>
       </header>
 
       <div className="flex flex-col gap-8">
         {/* General Settings */}
         <div>
-          <h2 className="text-lg font-bold mb-3">General setting</h2>
+          <h2 className="text-lg font-bold mb-3">{t('settings.general.title')}</h2>
           <div className="bg-card rounded-xl">
-            <SettingsItem icon={User} text="Edit profile information" href="/profile/edit" />
+            <SettingsItem icon={User} text={t('settings.general.editProfile')} href="/profile/edit" />
             <SettingsItem 
               icon={Bell} 
-              text="Notifications" 
+              text={t('settings.general.notifications')}
               control={<Switch checked={notifications} onCheckedChange={setNotifications} />} 
             />
             <SettingsItem 
               icon={Languages} 
-              text="Language" 
-              value="English" 
-              href="#" 
+              text={t('settings.general.language')}
+              control={
+                <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'hi')}>
+                  <SelectTrigger className="w-[120px] bg-secondary border-none">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="hi">हिन्दी</SelectItem>
+                  </SelectContent>
+                </Select>
+              }
             />
              <SettingsItem 
               icon={Palette} 
-              text="Theme" 
-              value="Light mode" 
+              text={t('settings.general.theme')}
+              value={t('settings.general.lightMode')}
               href="#"
               isLast={true}
             />
@@ -52,18 +70,18 @@ export function Settings() {
 
         {/* Unit Converter Settings */}
         <div>
-          <h2 className="text-lg font-bold mb-3">Unit convertor</h2>
+          <h2 className="text-lg font-bold mb-3">{t('settings.unitConverter.title')}</h2>
            <div className="bg-card rounded-xl">
-            <SettingsItem icon={LayoutGrid} text="Change icon" href="#" />
+            <SettingsItem icon={LayoutGrid} text={t('settings.unitConverter.changeIcon')} href="#" />
              <SettingsItem 
               icon={SlidersHorizontal} 
-              text="Auto convertor" 
+              text={t('settings.unitConverter.autoConvert')}
               control={<Switch checked={autoConvert} onCheckedChange={setAutoConvert} />} 
             />
             <SettingsItem 
               icon={Languages} 
-              text="Custom unit"
-              value="Off" 
+              text={t('settings.unitConverter.customUnit')}
+              value={t('settings.unitConverter.off')}
               href="#"
               isLast={true}
             />
@@ -72,12 +90,12 @@ export function Settings() {
 
         {/* Calculator Settings */}
         <div>
-          <h2 className="text-lg font-bold mb-3">Calculator</h2>
+          <h2 className="text-lg font-bold mb-3">{t('settings.calculator.title')}</h2>
            <div className="bg-card rounded-xl">
-            <SettingsItem icon={CalculatorIcon} text="Mode" value="Basic" href="#" />
+            <SettingsItem icon={CalculatorIcon} text={t('settings.calculator.mode')} value={t('settings.calculator.basic')} href="#" />
              <SettingsItem 
               icon={History} 
-              text="Save history" 
+              text={t('settings.calculator.saveHistory')}
               control={<Switch checked={saveHistory} onCheckedChange={setSaveHistory} />} 
               isLast={true}
             />
@@ -105,18 +123,18 @@ function SettingsItem({ icon: Icon, text, href, control, value, isLast = false }
       </div>
       <span className="ml-4 font-medium flex-1">{text}</span>
       {control}
-      {value && <span className="text-muted-foreground">{value}</span>}
+      {value && <span className="text-muted-foreground mr-2">{value}</span>}
       {href && <ChevronRight className="w-5 h-5 text-muted-foreground" />}
     </div>
   );
 
   if (href) {
     return (
-      <Link href={href} className="hover:bg-white/5 transition-colors rounded-xl">
+      <Link href={href} className="hover:bg-white/5 transition-colors first:rounded-t-xl last:rounded-b-xl block">
         {content}
       </Link>
     );
   }
 
-  return content;
+  return <div className="first:rounded-t-xl last:rounded-b-xl">{content}</div>;
 }

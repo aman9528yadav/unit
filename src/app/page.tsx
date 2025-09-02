@@ -5,10 +5,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dashboard } from "@/components/dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguage } from "@/context/language-context";
 
 export default function Home() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const { language } = useLanguage(); // Load language context
 
   useEffect(() => {
     const profile = localStorage.getItem("userProfile");

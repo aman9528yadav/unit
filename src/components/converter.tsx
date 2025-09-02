@@ -33,6 +33,7 @@ import { Calculator } from "./calculator";
 import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { incrementTodaysCalculations } from "@/lib/utils";
+import { useLanguage } from "@/context/language-context";
 
 
 const regions: Region[] = ['International', 'India'];
@@ -87,6 +88,7 @@ export function Converter() {
   const [favorites, setFavorites] = React.useState<string[]>([]);
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [region, setRegion] = React.useState<Region>('International');
+  const { t } = useLanguage();
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isSearching, startSearchTransition] = React.useTransition();
@@ -191,14 +193,14 @@ export function Converter() {
           setInputValue(String(parsedQuery.value));
           setSearchQuery(""); // Clear search
         } else {
-          toast({ title: "Cannot perform conversion", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive" });
+          toast({ title: t('converter.toast.cannotConvert'), description: t('converter.toast.regionError', { region }), variant: "destructive" });
         }
       } else {
-        toast({ title: "Cannot perform conversion", description: "Could not determine the conversion category.", variant: "destructive" });
+        toast({ title: t('converter.toast.cannotConvert'), description: t('converter.toast.categoryError'), variant: "destructive" });
       }
       setParsedQuery(null); // Reset parsed query
     }
-  }, [parsedQuery, region, toast]);
+  }, [parsedQuery, region, toast, t]);
 
   // Update favorite status whenever output or favorites list change
   React.useEffect(() => {
@@ -245,11 +247,11 @@ export function Converter() {
             if (parsed) {
                 setParsedQuery(parsed);
             } else {
-                 toast({ title: "Invalid Search", description: "The search query could not be understood.", variant: "destructive" });
+                 toast({ title: t('converter.toast.invalidSearch'), description: t('converter.toast.queryError'), variant: "destructive" });
             }
         } catch (error) {
             console.error("Search conversion failed:", error);
-            toast({ title: "Invalid Search", description: "The search query could not be understood.", variant: "destructive" });
+            toast({ title: t('converter.toast.invalidSearch'), description: t('converter.toast.queryError'), variant: "destructive" });
         }
     });
 };
@@ -289,12 +291,12 @@ export function Converter() {
     let newFavorites: string[];
     if (favorites.includes(conversionString)) {
       newFavorites = favorites.filter(fav => fav !== conversionString);
-      toast({ title: "Removed from favorites." });
+      toast({ title: t('converter.toast.favRemoved') });
     } else {
       // Ensure it's in history before adding to favorites
       handleSaveToHistory(); 
       newFavorites = [conversionString, ...favorites];
-      toast({ title: "Added to favorites!" });
+      toast({ title: t('converter.toast.favAdded') });
     }
     setFavorites(newFavorites);
     localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
@@ -329,10 +331,10 @@ export function Converter() {
         setInputValue(value);
         setOutputValue(result);
       } else {
-        toast({ title: "Cannot restore", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive"});
+        toast({ title: t('converter.toast.cannotRestore'), description: t('converter.toast.regionError', { region }), variant: "destructive"});
       }
     } else {
-        toast({ title: "Cannot restore", description: "Could not determine the conversion category.", variant: "destructive"});
+        toast({ title: t('converter.toast.cannotRestore'), description: t('converter.toast.categoryError'), variant: "destructive"});
     }
   };
 
@@ -360,7 +362,7 @@ export function Converter() {
   const handleShare = async () => {
     const numValue = parseFloat(inputValue);
     if (isNaN(numValue) || !outputValue) {
-      toast({ title: "Nothing to share", description: "Please perform a conversion first.", variant: "destructive" });
+      toast({ title: t('converter.toast.nothingToShare'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
       return;
     }
     const result = parseFloat(outputValue.replace(/,/g, ''));
@@ -369,22 +371,22 @@ export function Converter() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Unit Conversion',
+          title: t('converter.share.title'),
           text: conversionString,
         });
       } catch (error) {
         console.error('Error sharing:', error);
-        toast({ title: "Share failed", description: "Could not share the conversion.", variant: "destructive" });
+        toast({ title: t('converter.toast.shareFailed'), description: t('converter.toast.couldNotShare'), variant: "destructive" });
       }
     } else {
-      toast({ title: "Not supported", description: "Web Share API is not supported in your browser.", variant: "destructive" });
+      toast({ title: t('converter.toast.notSupported'), description: t('converter.toast.webShareApi'), variant: "destructive" });
     }
   };
 
   const handleExportAsTxt = () => {
     const numValue = parseFloat(inputValue);
     if (isNaN(numValue) || !outputValue) {
-      toast({ title: "Nothing to export", description: "Please perform a conversion first.", variant: "destructive" });
+      toast({ title: t('converter.toast.nothingToExport'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
       return;
     }
     const result = parseFloat(outputValue.replace(/,/g, ''));
@@ -399,13 +401,13 @@ export function Converter() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast({ title: "Exported as TXT!" });
+    toast({ title: t('converter.toast.exportedAsTxt') });
   };
   
   const handleExportAsImage = async () => {
     const numValue = parseFloat(inputValue);
      if (isNaN(numValue) || !outputValue || !imageExportRef.current) {
-        toast({ title: "Nothing to export", description: "Please perform a conversion first.", variant: "destructive" });
+        toast({ title: t('converter.toast.nothingToExport'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
         return;
     }
 
@@ -418,10 +420,10 @@ export function Converter() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        toast({ title: "Exported as Image!" });
+        toast({ title: t('converter.toast.exportedAsImage') });
     } catch (error) {
         console.error('Error exporting as image:', error);
-        toast({ title: "Export failed", description: "Could not export the conversion as an image.", variant: "destructive" });
+        toast({ title: t('converter.toast.exportFailed'), description: t('converter.toast.couldNotExportImage'), variant: "destructive" });
     }
   };
 
@@ -430,8 +432,8 @@ export function Converter() {
     <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white">
       <header className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">Hi, Aman</h1>
-          <p className="text-muted-foreground">Welcome to the Converter</p>
+          <h1 className="text-2xl font-bold">{t('dashboard.greeting', { name: "Aman" })}</h1>
+          <p className="text-muted-foreground">{t('converter.welcome')}</p>
         </div>
         <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon"><Search /></Button>
@@ -447,23 +449,23 @@ export function Converter() {
       <div className="grid grid-cols-5 gap-2 text-center">
         <Link href="/" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <Home />
-            <span className="text-xs font-medium">Dashboard</span>
+            <span className="text-xs font-medium">{t('nav.dashboard')}</span>
         </Link>
          <Link href="/notes" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <StickyNote />
-            <span className="text-xs font-medium">Notes</span>
+            <span className="text-xs font-medium">{t('nav.notes')}</span>
         </Link>
         <Link href="/converter" className="flex flex-col items-center gap-2 p-2 rounded-lg bg-accent/20 border-accent border text-accent">
             <CalculatorIcon />
-            <span className="text-xs font-medium">Converter</span>
+            <span className="text-xs font-medium">{t('nav.converter')}</span>
         </Link>
         <Link href="/history" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <Clock />
-            <span className="text-xs font-medium">History</span>
+            <span className="text-xs font-medium">{t('nav.history')}</span>
         </Link>
          <Link href="/settings" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <Settings />
-            <span className="text-xs font-medium">Setting</span>
+            <span className="text-xs font-medium">{t('nav.settings')}</span>
         </Link>
       </div>
       
@@ -477,6 +479,7 @@ export function Converter() {
               toUnit={toUnit}
               inputValue={inputValue}
               outputValue={outputValue}
+              t={t}
             />
         )}
        </div>
@@ -484,14 +487,14 @@ export function Converter() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="Unit">Converter</TabsTrigger>
-          <TabsTrigger value="Calculator">Calculator</TabsTrigger>
+          <TabsTrigger value="Unit">{t('converter.tabs.converter')}</TabsTrigger>
+          <TabsTrigger value="Calculator">{t('converter.tabs.calculator')}</TabsTrigger>
         </TabsList>
         <TabsContent value="Unit">
           <div className="relative mt-4">
             <Input
               type="text"
-              placeholder="Search e.g., '10 km to m'"
+              placeholder={t('converter.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -512,12 +515,12 @@ export function Converter() {
     
           <div className="bg-card p-4 rounded-xl flex flex-col gap-4 mt-4">
             <div className="flex justify-between items-center">
-              <h2 className="font-bold text-lg">Quick Convert</h2>
+              <h2 className="font-bold text-lg">{t('converter.quickConvert')}</h2>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <label className="text-sm text-muted-foreground flex items-center gap-1.5"><Globe size={16}/> Region</label>
+                    <label className="text-sm text-muted-foreground flex items-center gap-1.5"><Globe size={16}/> {t('converter.region')}</label>
                     <Select value={region} onValueChange={handleRegionChange}>
                         <SelectTrigger className="bg-background mt-1">
                             <SelectValue />
@@ -528,7 +531,7 @@ export function Converter() {
                     </Select>
                 </div>
                 <div>
-                    <label className="text-sm text-muted-foreground flex items-center gap-1.5"><LayoutGrid size={16}/> Category</label>
+                    <label className="text-sm text-muted-foreground flex items-center gap-1.5"><LayoutGrid size={16}/> {t('converter.category')}</label>
                      <Select value={selectedCategory.name} onValueChange={handleCategoryChange}>
                         <SelectTrigger className="bg-background mt-1">
                              <SelectValue />
@@ -538,7 +541,7 @@ export function Converter() {
                                 <SelectItem key={cat.name} value={cat.name}>
                                     <div className="flex items-center gap-2">
                                         <cat.icon className="w-4 h-4" />
-                                        <span>{cat.name}</span>
+                                        <span>{t(`categories.${cat.name.toLowerCase()}`)}</span>
                                     </div>
                                 </SelectItem>
                             ))}
@@ -548,22 +551,22 @@ export function Converter() {
             </div>
     
             <div>
-                <label className="text-sm text-muted-foreground">From</label>
+                <label className="text-sm text-muted-foreground">{t('converter.from')}</label>
                 <Input
                     type="number"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     className="bg-background mt-1 h-12 text-lg"
-                    placeholder="Enter Value"
+                    placeholder={t('converter.enterValue')}
                   />
             </div>
             
             <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-                <UnitSelect units={currentUnits} value={fromUnit} onValueChange={setFromUnit} />
+                <UnitSelect units={currentUnits} value={fromUnit} onValueChange={setFromUnit} t={t} />
                 <Button variant="outline" size="icon" className="rounded-full h-10 w-10 bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSwapUnits}>
                     <ArrowRightLeft className="w-5 h-5" />
                 </Button>
-                <UnitSelect units={currentUnits} value={toUnit} onValueChange={setToUnit} />
+                <UnitSelect units={currentUnits} value={toUnit} onValueChange={setToUnit} t={t} />
             </div>
     
             <div className="grid grid-cols-2 gap-2 text-xs">
@@ -572,12 +575,12 @@ export function Converter() {
             </div>
             
             <div className="bg-background rounded-lg p-4 flex justify-between items-center h-16">
-                <span className={`text-lg ${!outputValue ? 'text-muted-foreground' : ''}`}>{outputValue || "Result will appear here !"}</span>
+                <span className={`text-lg ${!outputValue ? 'text-muted-foreground' : ''}`}>{outputValue || t('converter.resultPlaceholder')}</span>
                 {outputValue && (
                      <div className="flex items-center gap-3">
                         <Copy size={20} className="text-muted-foreground cursor-pointer hover:text-white" onClick={() => {
                             navigator.clipboard.writeText(outputValue)
-                            toast({ title: "Copied to clipboard!"})
+                            toast({ title: t('converter.toast.copied')})
                             }} />
                         <Star 
                           size={20} 
@@ -591,19 +594,19 @@ export function Converter() {
                             <DropdownMenuContent>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleExportAsImage}>
                                     <ImageIcon className="mr-2 h-4 w-4" />
-                                    <span>Export as Image</span>
+                                    <span>{t('converter.export.asImage')}</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => toast({title: "Export not available yet"})}>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => toast({title: t('converter.export.notAvailable')})}>
                                     <FileIcon className="mr-2 h-4 w-4" />
-                                    <span>Export as PDF</span>
+                                    <span>{t('converter.export.asPDF')}</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleExportAsTxt}>
                                     <FileText className="mr-2 h-4 w-4" />
-                                    <span>Export as TXT</span>
+                                    <span>{t('converter.export.asTXT')}</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleShare}>
                                     <Share2 className="mr-2 h-4 w-4" />
-                                    <span>Share it</span>
+                                    <span>{t('converter.export.share')}</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -611,13 +614,13 @@ export function Converter() {
                 )}
             </div>
             
-            <Button onClick={handleConvertClick} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base font-bold">convert</Button>
+            <Button onClick={handleConvertClick} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base font-bold">{t('converter.convertButton')}</Button>
           </div>
     
           {history.length > 0 && (
               <div className="bg-card p-4 rounded-xl flex flex-col gap-3 mt-4">
                   <div className="flex justify-between items-center">
-                    <h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} /> Recent Conversions</h3>
+                    <h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} /> {t('converter.recentConversions')}</h3>
                   </div>
                   <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                       {history.slice(0, 3).map((item, index) => (
@@ -647,7 +650,7 @@ export function Converter() {
   );
 }
 
-function UnitSelect({ units, value, onValueChange }: { units: Unit[], value: string, onValueChange: (value: string) => void }) {
+function UnitSelect({ units, value, onValueChange, t }: { units: Unit[], value: string, onValueChange: (value: string) => void, t: (key: string, params?: any) => string }) {
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger className="bg-background h-12 text-base">
@@ -656,7 +659,7 @@ function UnitSelect({ units, value, onValueChange }: { units: Unit[], value: str
       <SelectContent>
         {units.map(unit => (
           <SelectItem key={unit.symbol} value={unit.symbol}>
-            {`${unit.name} (${unit.symbol})`}
+            {`${t(`units.${unit.name.toLowerCase().replace(/ /g, '')}`)} (${unit.symbol})`}
           </SelectItem>
         ))}
       </SelectContent>
@@ -679,10 +682,11 @@ interface ConversionImageProps {
     toUnit: string;
     inputValue: string;
     outputValue: string;
+    t: (key: string) => string;
 }
 
 const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
-  ({ category, fromUnit, toUnit, inputValue, outputValue }, ref) => {
+  ({ category, fromUnit, toUnit, inputValue, outputValue, t }, ref) => {
     const fromUnitInfo = category.units.find(u => u.symbol === fromUnit);
     const toUnitInfo = category.units.find(u => u.symbol === toUnit);
 
@@ -695,10 +699,10 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
           <div className="p-2 bg-indigo-500/20 rounded-full">
             <category.icon className="w-6 h-6 text-indigo-400" />
           </div>
-          <h2 className="text-2xl font-bold">{category.name} Conversion</h2>
+          <h2 className="text-2xl font-bold">{t(`categories.${category.name.toLowerCase()}`)} {t('converter.image.conversion')}</h2>
         </div>
         <div className="flex flex-col gap-2 text-center">
-            <p className="text-xl text-muted-foreground">{fromUnitInfo?.name}</p>
+            <p className="text-xl text-muted-foreground">{fromUnitInfo ? t(`units.${fromUnitInfo.name.toLowerCase().replace(/ /g, '')}`) : ''}</p>
             <p className="text-5xl font-bold">{inputValue}</p>
             <p className="text-lg text-muted-foreground">{fromUnitInfo?.symbol}</p>
         </div>
@@ -706,12 +710,12 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
             <ArrowRightLeft className="w-8 h-8 text-accent" />
         </div>
          <div className="flex flex-col gap-2 text-center">
-            <p className="text-xl text-muted-foreground">{toUnitInfo?.name}</p>
+            <p className="text-xl text-muted-foreground">{toUnitInfo ? t(`units.${toUnitInfo.name.toLowerCase().replace(/ /g, '')}`) : ''}</p>
             <p className="text-5xl font-bold">{outputValue}</p>
             <p className="text-lg text-muted-foreground">{toUnitInfo?.symbol}</p>
         </div>
         <p className="text-center text-sm text-muted-foreground mt-4">
-            Generated by UniConvert
+            {t('converter.image.generatedBy')} UniConvert
         </p>
       </div>
     );

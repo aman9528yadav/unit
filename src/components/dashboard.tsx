@@ -11,6 +11,7 @@ import { ArrowRight, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { getTodaysCalculations, getWeeklyCalculations } from "@/lib/utils";
+import { useLanguage } from "@/context/language-context";
 
 // This should match the key in notepad.tsx
 const NOTES_STORAGE_KEY = 'userNotesV2';
@@ -42,6 +43,7 @@ export function Dashboard() {
   const [todayCalculations, setTodayCalculations] = useState(0);
   const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string, value: number}[]>([]);
   const [savedNotesCount, setSavedNotesCount] = useState(0);
+  const { t } = useLanguage();
 
   const updateCalculations = () => {
     setTodayCalculations(getTodaysCalculations());
@@ -80,8 +82,8 @@ export function Dashboard() {
     <div className="w-full max-w-md mx-auto flex flex-col gap-6 text-white">
       <header className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">Hi, Aman</h1>
-          <p className="text-muted-foreground">It's time to challenge your limits.</p>
+          <h1 className="text-2xl font-bold">{t('dashboard.greeting', { name: "Aman" })}</h1>
+          <p className="text-muted-foreground">{t('dashboard.challenge')}</p>
         </div>
         <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon"><Search /></Button>
@@ -97,31 +99,31 @@ export function Dashboard() {
       <div className="grid grid-cols-5 gap-2 text-center">
         <Link href="/" className="flex flex-col items-center gap-2 p-2 rounded-lg bg-accent/20 border-accent border text-accent">
             <Home />
-            <span className="text-xs font-medium">Dashboard</span>
+            <span className="text-xs font-medium">{t('nav.dashboard')}</span>
         </Link>
          <Link href="/notes" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <StickyNote />
-            <span className="text-xs font-medium">Notes</span>
+            <span className="text-xs font-medium">{t('nav.notes')}</span>
         </Link>
         <Link href="/converter" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <CalculatorIcon />
-            <span className="text-xs font-medium">Converter</span>
+            <span className="text-xs font-medium">{t('nav.converter')}</span>
         </Link>
         <Link href="/history" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <Clock />
-            <span className="text-xs font-medium">History</span>
+            <span className="text-xs font-medium">{t('nav.history')}</span>
         </Link>
          <Link href="/settings" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <Settings />
-            <span className="text-xs font-medium">Setting</span>
+            <span className="text-xs font-medium">{t('nav.settings')}</span>
         </Link>
       </div>
 
       <div>
         <div className="flex justify-between items-center mb-2">
-            <h2 className="font-bold text-lg">Recommendations</h2>
+            <h2 className="font-bold text-lg">{t('dashboard.recommendations')}</h2>
             <Link href="#" className="text-sm text-accent flex items-center gap-1">
-                See All <ArrowRight size={16} />
+                {t('dashboard.seeAll')} <ArrowRight size={16} />
             </Link>
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -136,9 +138,9 @@ export function Dashboard() {
                     </div>
                 </div>
                 <CardContent className="p-3">
-                    <h3 className="font-bold text-sm">Smart Search Bar</h3>
+                    <h3 className="font-bold text-sm">{t('dashboard.smartSearch')}</h3>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                        <span className="flex items-center gap-1"><ClockIcon size={14} /> 05 Minutes</span>
+                        <span className="flex items-center gap-1"><ClockIcon size={14} /> 05 {t('dashboard.minutes')}</span>
                         <span className="flex items-center gap-1"><User size={14} /> Aman</span>
                     </div>
                 </CardContent>
@@ -151,9 +153,9 @@ export function Dashboard() {
                     </div>
                 </div>
                 <CardContent className="p-3">
-                    <h3 className="font-bold text-sm">How to use Smart Calc</h3>
+                    <h3 className="font-bold text-sm">{t('dashboard.howToUseCalc')}</h3>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                        <span className="flex items-center gap-1"><ClockIcon size={14} /> 15 Minutes</span>
+                        <span className="flex items-center gap-1"><ClockIcon size={14} /> 15 {t('dashboard.minutes')}</span>
                         <span className="flex items-center gap-1"><User size={14} /> Aman</span>
                     </div>
                 </CardContent>
@@ -165,20 +167,20 @@ export function Dashboard() {
             <div className="flex items-center space-x-2">
                 <Checkbox id="terms1" checked className="border-accent data-[state=checked]:bg-accent" />
                 <label htmlFor="terms1" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Easy to use and fast in
+                    {t('dashboard.feature1')}
                 </label>
             </div>
             <div className="flex items-center space-x-2">
                 <Checkbox id="terms2" checked className="border-accent data-[state=checked]:bg-accent" />
                 <label htmlFor="terms2" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Made by Indian 🇮🇳
+                    {t('dashboard.feature2')}
                 </label>
             </div>
         </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Card className="bg-indigo-400/20 border-indigo-400/50 p-4 col-span-1 rounded-2xl">
-            <h3 className="text-white/90 font-semibold mb-2">Calculation</h3>
+            <h3 className="text-white/90 font-semibold mb-2">{t('dashboard.calculation')}</h3>
              <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={weeklyCalculations} margin={{ top: 5, right: 0, left: -30, bottom: 5 }}>
@@ -201,11 +203,11 @@ export function Dashboard() {
         </Card>
         <div className="col-span-1 flex flex-col gap-4">
              <Card className="bg-card p-4 rounded-2xl shadow-lg shadow-black/30 flex-1 flex flex-col items-center justify-center">
-                 <p className="text-sm text-yellow-400 font-semibold">Today Calculation</p>
+                 <p className="text-sm text-yellow-400 font-semibold">{t('dashboard.todayCalculation')}</p>
                  <p className="text-5xl font-bold">{String(todayCalculations).padStart(2, '0')}</p>
             </Card>
              <Card className="bg-card p-4 rounded-2xl flex-1 flex flex-col items-center justify-center">
-                <p className="text-sm text-muted-foreground">No. Save Notes</p>
+                <p className="text-sm text-muted-foreground">{t('dashboard.savedNotes')}</p>
                 <p className="text-5xl font-bold">{String(savedNotesCount).padStart(2, '0')}</p>
             </Card>
         </div>
@@ -213,5 +215,3 @@ export function Dashboard() {
     </div>
   );
 }
-
-    
