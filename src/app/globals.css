@@ -7,7 +7,7 @@ body {
 }
 
 @layer base {
-  :root {
+  :root, .light {
     --background: 204 10% 96.1%; /* Off-white (#F5F5F5) */
     --foreground: 222.2 84% 4.9%; /* Dark foreground for text */
     

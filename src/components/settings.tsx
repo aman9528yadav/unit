@@ -25,7 +25,7 @@ export function Settings() {
   const [saveCalcHistory, setSaveCalcHistory] = useState(true);
   const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>('scientific');
   const { language, setLanguage, t } = useLanguage();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, theme: currentTheme } = useTheme();
 
   useEffect(() => {
     const savedAutoConvert = localStorage.getItem('autoConvert');
@@ -69,6 +69,12 @@ export function Settings() {
     localStorage.setItem('calculatorMode', mode);
   }
 
+  const handleThemeChange = (value: string) => {
+    if (value === 'light' || value === 'dark') {
+      setTheme(value);
+    }
+  }
+
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6">
@@ -110,17 +116,8 @@ export function Settings() {
              <SettingsItem 
               icon={Palette} 
               text={t('settings.general.theme')}
-              control={
-                 <Select value={theme} onValueChange={(value) => setTheme(value as 'light' | 'dark')}>
-                  <SelectTrigger className="w-[120px] bg-secondary border-none">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
-                  </SelectContent>
-                </Select>
-              }
+              value={currentTheme.charAt(0).toUpperCase() + currentTheme.slice(1)}
+              href="/settings/theme"
               isLast={true}
             />
           </div>
