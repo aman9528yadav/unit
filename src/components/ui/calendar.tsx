@@ -90,15 +90,7 @@ function Calendar({
               );
             }
           } else if (props.name === 'years') {
-            const earliestYear = fromYear || fromMonth?.getFullYear() || fromDate?.getFullYear();
-            const latestYear = toYear || toMonth?.getFullYear() || toDate?.getFullYear();
-            if (earliestYear && latestYear) {
-              for (let i = latestYear; i >= earliestYear; i--) {
-                options.push(
-                  <SelectItem key={i} value={i.toString()}>{i}</SelectItem>
-                );
-              }
-            }
+            return <span>Year</span>; // Placeholder for year dropdown
           }
           
           const currentMonth = month || new Date();
