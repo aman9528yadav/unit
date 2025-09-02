@@ -32,13 +32,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  turbo: {
-    rules: {
-      '**/*.ts': {
-        loaders: ['private-next-loader'],
-      },
-    },
-  },
 };
 
 export default withPWA(nextConfig);
