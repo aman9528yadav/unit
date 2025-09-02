@@ -275,6 +275,30 @@ export function Converter() {
     localStorage.removeItem("favoriteConversions");
   };
 
+  const handleShare = async () => {
+    const numValue = parseFloat(inputValue);
+    if (isNaN(numValue) || !outputValue) {
+      toast({ title: "Nothing to share", description: "Please perform a conversion first.", variant: "destructive" });
+      return;
+    }
+    const result = parseFloat(outputValue.replace(/,/g, ''));
+    const conversionString = getCurrentConversionString(numValue, fromUnit, toUnit, result);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Unit Conversion',
+          text: conversionString,
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+        toast({ title: "Share failed", description: "Could not share the conversion.", variant: "destructive" });
+      }
+    } else {
+      toast({ title: "Not supported", description: "Web Share API is not supported in your browser.", variant: "destructive" });
+    }
+  };
+
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white">
       <header className="flex flex-col gap-4">
@@ -390,21 +414,21 @@ export function Converter() {
                                 <Share2 size={20} className="text-muted-foreground cursor-pointer hover:text-white" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => toast({title: "Coming soon!"})}>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => toast({title: "Export not available yet"})}>
                                     <ImageIcon className="mr-2 h-4 w-4" />
                                     <span>Export as Image</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => toast({title: "Coming soon!"})}>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => toast({title: "Export not available yet"})}>
                                     <FileIcon className="mr-2 h-4 w-4" />
                                     <span>Export as PDF</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => toast({title: "Coming soon!"})}>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => toast({title: "Export not available yet"})}>
                                     <FileText className="mr-2 h-4 w-4" />
                                     <span>Export as TXT</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => toast({title: "Coming soon!"})}>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleShare}>
                                     <Share2 className="mr-2 h-4 w-4" />
-                                    <span>Share Theme</span>
+                                    <span>Share it</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
