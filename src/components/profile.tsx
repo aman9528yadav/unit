@@ -30,6 +30,7 @@ const defaultProfile = {
     fullName: "Aman Yadav",
     email: "aman@example.com",
     birthday: "April 1st",
+    profileImage: "https://picsum.photos/200",
 };
 
 export function Profile() {
@@ -63,11 +64,11 @@ export function Profile() {
         <div className="flex flex-col items-center text-center gap-2 mt-2">
           <div className="relative w-28 h-28">
             <Image
-              src="https://picsum.photos/200"
+              src={profile.profileImage || defaultProfile.profileImage}
               alt={profile.fullName}
               width={112}
               height={112}
-              className="rounded-full border-4 border-white"
+              className="rounded-full border-4 border-white object-cover w-28 h-28"
               data-ai-hint="profile picture"
             />
             <Link href="/profile/edit">

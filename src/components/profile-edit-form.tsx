@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Pencil } from "lucide-react";
@@ -19,24 +19,44 @@ const defaultProfile = {
     dob: "01 / 04 / 199X",
     weight: "75 Kg",
     height: "1.65 CM",
+    profileImage: "https://picsum.photos/200",
 };
 
 
 export function ProfileEditForm() {
   const [profile, setProfile] = useState(defaultProfile);
+  const [imagePreview, setImagePreview] = useState<string>(defaultProfile.profileImage);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
     const storedProfile = localStorage.getItem("userProfile");
     if (storedProfile) {
-      setProfile(JSON.parse(storedProfile));
+        const parsedProfile = JSON.parse(storedProfile);
+        setProfile(parsedProfile);
+        if(parsedProfile.profileImage) {
+            setImagePreview(parsedProfile.profileImage);
+        }
     }
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setProfile(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setImagePreview(result);
+        setProfile(prev => ({ ...prev, profileImage: result }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleUpdate = () => {
@@ -63,17 +83,25 @@ export function ProfileEditForm() {
         <div className="flex flex-col items-center text-center gap-2 mt-2">
           <div className="relative w-28 h-28">
             <Image
-              src="https://picsum.photos/200"
+              src={imagePreview}
               alt={profile.fullName}
               width={112}
               height={112}
-              className="rounded-full border-4 border-white"
+              className="rounded-full border-4 border-white object-cover w-28 h-28"
               data-ai-hint="profile picture"
+            />
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageChange}
+              accept="image/*"
+              className="hidden"
             />
             <Button
               variant="outline"
               size="icon"
               className="absolute bottom-0 right-0 rounded-full w-8 h-8 bg-yellow-400 border-yellow-400 hover:bg-yellow-500"
+              onClick={() => fileInputRef.current?.click()}
             >
               <Pencil className="w-4 h-4 text-black" />
             </Button>
