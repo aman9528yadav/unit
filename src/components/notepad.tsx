@@ -308,10 +308,10 @@ export function Notepad() {
                 </header>
                 <div className="flex-grow overflow-y-auto px-4 pb-24">
                     {sortedNotes.length > 0 ? (
-                        <ul className={layout === 'list' ? "divide-y divide-border" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
+                        <ul className={layout === 'list' ? "space-y-4" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
                             {sortedNotes.map(note => (
-                                <li key={note.id} className={layout === 'list' ? 'cursor-pointer group' : 'bg-card p-4 rounded-lg cursor-pointer group'}>
-                                    <div onClick={() => router.push(`/notes/edit/${note.id}`)} className={layout === 'list' ? 'py-2' : ''}>
+                                <li key={note.id} className="bg-card p-4 rounded-lg cursor-pointer group">
+                                    <div onClick={() => router.push(`/notes/edit/${note.id}`)}>
                                         <div className="flex items-center justify-between">
                                             <h2 className="font-semibold truncate">{note.title || 'Untitled Note'}</h2>
                                             {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
