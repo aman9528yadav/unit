@@ -316,7 +316,7 @@ export function Notepad() {
                                             <h2 className="font-semibold truncate">{note.title || 'Untitled Note'}</h2>
                                             {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
                                         </div>
-                                        <p className="text-sm text-muted-foreground truncate h-10">{note.content || 'No content'}</p>
+                                        <p className="text-sm text-muted-foreground line-clamp-2">{note.content || 'No content'}</p>
                                         <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
                                             <span>{format(new Date(note.updatedAt), "d MMM yyyy, h:mm a")}</span>
                                             {note.category && <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full">{note.category}</span>}
@@ -379,6 +379,8 @@ export function Notepad() {
         </SidebarProvider>
     );
 }
+
+    
 
     
 
