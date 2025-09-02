@@ -110,7 +110,7 @@ export function Converter() {
   }, [inputValue, fromUnit, toUnit, outputValue, favorites]);
 
   
-  const performConversion = (value?: number, from?: string, to?: string) => {
+  const performConversion = React.useCallback((value?: number, from?: string, to?: string) => {
       const numValue = value ?? parseFloat(inputValue);
       const fromUnitValue = from ?? fromUnit;
       const toUnitValue = to ?? toUnit;
@@ -120,7 +120,8 @@ export function Converter() {
         setIsFavorite(false);
         return;
       }
-      const result = selectedCategory.convert(numValue, fromUnitValue, toUnitValue, region);
+      const categoryToUse = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnitValue) && c.units.some(u => u.symbol === toUnitValue)) || selectedCategory;
+      const result = categoryToUse.convert(numValue, fromUnitValue, toUnitValue, region);
       if (isNaN(result)) {
         setOutputValue("");
         setIsFavorite(false);
@@ -141,8 +142,8 @@ export function Converter() {
       localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
 
       setIsFavorite(favorites.includes(conversionString));
-    };
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputValue, fromUnit, toUnit, selectedCategory, region, history, favorites]);
   
   React.useEffect(() => {
     if (debouncedSearchQuery.trim() === "") {
@@ -164,7 +165,11 @@ export function Converter() {
             setFromUnit(parsed.fromUnit);
             setToUnit(parsed.toUnit);
             setInputValue(String(parsed.value));
-            performConversion(parsed.value, parsed.fromUnit, parsed.toUnit);
+            // We need to pass a callback to setState to ensure we use the latest state values for the conversion
+            setOutputValue((prevOutput) => {
+              performConversion(parsed.value, parsed.fromUnit, parsed.toUnit);
+              return prevOutput; // This will be immediately overwritten by performConversion's setOutputValue
+            });
             setSearchQuery(""); // Clear search
           } else {
              toast({ title: "Cannot perform conversion", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive"});
@@ -609,3 +614,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
