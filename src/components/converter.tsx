@@ -34,7 +34,7 @@ import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { incrementTodaysCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
-import { CustomUnit } from "./custom-unit-manager";
+import { CustomUnit, CustomCategory } from "./custom-unit-manager";
 
 
 const regions: Region[] = ['International', 'India'];
@@ -87,12 +87,42 @@ export function Converter() {
   const [activeTab, setActiveTab] = React.useState(initialTab);
 
   const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
+  const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
+
 
   const conversionCategories = useMemo(() => {
-    if (customUnits.length === 0) return baseConversionCategories;
+    const categories = [...baseConversionCategories];
 
-    const extendedCategories = baseConversionCategories.map(category => {
+    // Add custom categories
+    customCategories.forEach(cc => {
+        if (!categories.some(c => c.name === cc.name)) {
+            const newCategory: ConversionCategory = {
+                name: cc.name,
+                icon: Beaker, // Default icon for custom categories
+                units: [{
+                    name: cc.baseUnitName,
+                    symbol: cc.baseUnitSymbol,
+                    info: `Base unit for ${cc.name}`
+                }],
+                factors: { [cc.baseUnitSymbol]: 1 },
+                convert: function(value, from, to) {
+                    const fromFactor = this.factors![from];
+                    const toFactor = this.factors![to];
+                    if (fromFactor === undefined || toFactor === undefined) return NaN;
+                    const valueInBase = value * fromFactor;
+                    return valueInBase / toFactor;
+                },
+            };
+            categories.push(newCategory);
+        }
+    });
+
+    // Add custom units to their respective categories
+    const extendedCategories = categories.map(category => {
         const newCategory = { ...category, units: [...category.units] };
+        if (newCategory.factors) {
+          newCategory.factors = { ...newCategory.factors };
+        }
 
         const applicableUnits = customUnits.filter(cu => cu.category === category.name);
         
@@ -104,29 +134,16 @@ export function Converter() {
                     info: `1 ${cu.symbol} = ${cu.factor} base units`,
                 });
             }
+            if (newCategory.factors && newCategory.name !== 'Temperature') {
+                 newCategory.factors[cu.symbol] = cu.factor;
+            }
         });
         
-        if (typeof newCategory.convert === 'function' && newCategory.name !== 'Temperature') {
-             const originalFactors = (newCategory as any).factors || {};
-             const newFactors = { ...originalFactors };
-             applicableUnits.forEach(cu => {
-                 newFactors[cu.symbol] = cu.factor;
-             });
-
-            newCategory.convert = (value: number, from: string, to: string) => {
-                const fromFactor = newFactors[from];
-                const toFactor = newFactors[to];
-                if (fromFactor === undefined || toFactor === undefined) return NaN;
-                const valueInBase = value * fromFactor;
-                return valueInBase / toFactor;
-            }
-        }
-
         return newCategory;
     });
 
     return extendedCategories;
-  }, [customUnits]);
+  }, [customUnits, customCategories]);
 
 
   const [selectedCategory, setSelectedCategory] = React.useState<ConversionCategory>(conversionCategories[0]);
@@ -166,12 +183,14 @@ export function Converter() {
     const storedProfile = localStorage.getItem("userProfile");
     const savedAutoConvert = localStorage.getItem('autoConvert');
     const savedCustomUnits = localStorage.getItem('customUnits');
+    const savedCustomCategories = localStorage.getItem('customCategories');
 
     if (storedHistory) setHistory(JSON.parse(storedHistory));
     if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
     if (storedProfile) setProfile(JSON.parse(storedProfile));
     if (savedAutoConvert !== null) setAutoConvert(JSON.parse(savedAutoConvert));
     if (savedCustomUnits) setCustomUnits(JSON.parse(savedCustomUnits));
+    if (savedCustomCategories) setCustomCategories(JSON.parse(savedCustomCategories));
     
     const itemToRestore = localStorage.getItem("restoreConversion");
     if (itemToRestore) {
@@ -189,6 +208,9 @@ export function Converter() {
     const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'customUnits') {
             setCustomUnits(JSON.parse(e.newValue || '[]'));
+        }
+        if (e.key === 'customCategories') {
+            setCustomCategories(JSON.parse(e.newValue || '[]'));
         }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -611,7 +633,7 @@ export function Converter() {
                                 <SelectItem key={cat.name} value={cat.name}>
                                     <div className="flex items-center gap-2">
                                         <cat.icon className="w-4 h-4" />
-                                        <span>{t(`categories.${cat.name.toLowerCase()}`)}</span>
+                                        <span>{t(`categories.${cat.name.toLowerCase()}`, { defaultValue: cat.name })}</span>
                                     </div>
                                 </SelectItem>
                             ))}
@@ -752,7 +774,7 @@ interface ConversionImageProps {
     toUnit: string;
     inputValue: string;
     outputValue: string;
-    t: (key: string) => string;
+    t: (key: string, params?: any) => string;
 }
 
 const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
