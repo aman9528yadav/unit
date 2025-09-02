@@ -19,8 +19,22 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
+  const [month, setMonth] = React.useState(props.month || new Date());
+
+  React.useEffect(() => {
+    if (props.month) {
+      setMonth(props.month);
+    }
+  }, [props.month]);
+
+
   return (
     <DayPicker
+      month={month}
+      onMonthChange={(date) => {
+        setMonth(date);
+        props.onMonthChange?.(date);
+      }}
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       classNames={{
@@ -67,10 +81,11 @@ function Calendar({
 
           const options: React.ReactNode[] = [];
           if (props.name === 'months') {
-            for (let i = 0; i < 12; i++) {
+            const months = Array.from({ length: 12 }, (_, i) => new Date(1970, i));
+            for (const month of months) {
                options.push(
-                <SelectItem key={i} value={i.toString()}>
-                  {format(new Date(new Date().getFullYear(), i, 1), 'MMM')}
+                <SelectItem key={month.getMonth()} value={month.getMonth().toString()}>
+                  {format(month, 'MMM')}
                 </SelectItem>
               );
             }
@@ -85,28 +100,26 @@ function Calendar({
               }
             }
           }
+          
+          const currentMonth = month || new Date();
 
-          const caption =
-            props.name === 'months'
-              ? format(props.value as Date, 'MMM')
-              : (props.value as Date).getFullYear();
-              
           return (
             <Select
               onValueChange={(newValue) => {
-                const newDate = new Date(props.value as Date);
+                const newDate = new Date(currentMonth);
                 if (props.name === 'months') {
                   newDate.setMonth(parseInt(newValue));
                 } else if (props.name === 'years') {
                   newDate.setFullYear(parseInt(newValue));
                 }
+                setMonth(newDate);
                 props.onChange?.(newDate);
               }}
-              value={props.name === 'months' ? (props.value as Date).getMonth().toString() : (props.value as Date).getFullYear().toString()}
+              value={props.name === 'months' ? currentMonth.getMonth().toString() : currentMonth.getFullYear().toString()}
             >
               <SelectTrigger>
                 <SelectValue>
-                  {caption}
+                   {props.name === 'months' ? format(currentMonth, 'MMM') : currentMonth.getFullYear()}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
