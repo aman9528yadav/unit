@@ -117,29 +117,31 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         const afterText = content.substring(end);
 
         let newContent = '';
-        let newCursorPos = 0;
-        let placeholderLength = 0;
+        let newCursorPosStart = 0;
+        let newCursorPosEnd = 0;
 
-        if (formatType === 'bold') {
-            const placeholder = 'bold text';
-            const replacement = `**${selectedText || placeholder}**`;
-            newContent = `${beforeText}${replacement}${afterText}`;
-            newCursorPos = start + 2;
-            placeholderLength = placeholder.length;
-        } else if (formatType === 'italic') {
-             const placeholder = 'italic text';
-            const replacement = `*${selectedText || placeholder}*`;
-            newContent = `${beforeText}${replacement}${afterText}`;
-            newCursorPos = start + 1;
-            placeholderLength = placeholder.length;
-        } else if (formatType === 'list') {
-            const placeholder = 'List item';
-            // If the current line is not empty, add a newline before the list item
+        const formatters = {
+            bold: { wrapper: '**', placeholder: 'bold text' },
+            italic: { wrapper: '*', placeholder: 'italic text' },
+            list: { wrapper: '- ', placeholder: 'List item' },
+        };
+        
+        const { wrapper, placeholder } = formatters[formatType];
+
+        if (formatType === 'list') {
+            const replacement = `${wrapper}${selectedText || placeholder}`;
             const prefix = (start === 0 || content[start - 1] === '\n') ? '' : '\n';
-            const replacement = `${prefix}- ${selectedText || placeholder}`;
-            newContent = `${beforeText}${replacement}${afterText}`;
-            newCursorPos = start + prefix.length + 2;
-            placeholderLength = placeholder.length;
+            newContent = `${beforeText}${prefix}${replacement}${afterText}`;
+            
+            newCursorPosStart = start + prefix.length + wrapper.length;
+            newCursorPosEnd = newCursorPosStart + (selectedText.length || placeholder.length);
+
+        } else {
+             const replacement = `${wrapper}${selectedText || placeholder}${wrapper}`;
+             newContent = `${beforeText}${replacement}${afterText}`;
+             
+             newCursorPosStart = start + wrapper.length;
+             newCursorPosEnd = newCursorPosStart + (selectedText.length || placeholder.length);
         }
 
         setContent(newContent);
@@ -149,11 +151,11 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             textarea.focus();
             if (selectedText) {
                 // If text was selected, just place the cursor after the formatted text
-                const finalCursorPos = end + (newContent.length - content.length);
-                textarea.setSelectionRange(finalCursorPos, finalCursorPos);
+                 const finalCursorPos = end + (newContent.length - content.length);
+                 textarea.setSelectionRange(finalCursorPos, finalCursorPos);
             } else {
                 // If no text was selected, select the placeholder text
-                 textarea.setSelectionRange(newCursorPos, newCursorPos + placeholderLength);
+                 textarea.setSelectionRange(newCursorPosStart, newCursorPosEnd);
             }
         }, 0);
     };
@@ -215,5 +217,3 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
-
-    
