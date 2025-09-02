@@ -41,7 +41,7 @@ export function ProfileEditForm() {
     if (storedProfile) {
         const parsedProfile = JSON.parse(storedProfile);
         setProfile(parsedProfile);
-        if (parsedProfile.dob) {
+        if (parsedProfile.dob && !isNaN(new Date(parsedProfile.dob).getTime())) {
           setDob(new Date(parsedProfile.dob));
         }
         if(parsedProfile.profileImage) {

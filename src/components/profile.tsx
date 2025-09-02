@@ -44,7 +44,7 @@ export function Profile() {
     const storedProfile = localStorage.getItem("userProfile");
     if (storedProfile) {
       const parsed = JSON.parse(storedProfile);
-       if (parsed.dob) {
+       if (parsed.dob && !isNaN(new Date(parsed.dob).getTime())) {
         parsed.birthday = format(new Date(parsed.dob), "MMMM do");
       }
       setProfile(parsed);
