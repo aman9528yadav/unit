@@ -54,7 +54,11 @@ export function Dashboard() {
         <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon"><Search /></Button>
             <Button variant="ghost" size="icon"><Bell /></Button>
-            <Button variant="ghost" size="icon"><User /></Button>
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/profile">
+                <User />
+              </Link>
+            </Button>
         </div>
       </header>
 
