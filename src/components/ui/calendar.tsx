@@ -76,8 +76,7 @@ function Calendar({
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
         Dropdown: (props: DropdownProps) => {
-          const { fromYear, fromMonth, fromDate } = props;
-          const { toYear, toMonth, toDate } = props;
+          const { fromYear, toYear } = props;
 
           const options: React.ReactNode[] = [];
           if (props.name === 'months') {
@@ -90,7 +89,13 @@ function Calendar({
               );
             }
           } else if (props.name === 'years') {
-            return <span>Year</span>; // Placeholder for year dropdown
+             const from = fromYear ?? 1900;
+             const to = toYear ?? new Date().getFullYear();
+              for (let i = from; i <= to; i++) {
+                options.push(
+                  <SelectItem key={i} value={i.toString()}>{i}</SelectItem>
+                );
+              }
           }
           
           const currentMonth = month || new Date();
