@@ -224,14 +224,16 @@ export function Converter() {
         </ScrollArea>
         <div className="relative">
           <Input 
-            className="bg-card border-gray-500 rounded-full pl-10 h-12" 
+            className="bg-card border-gray-500 rounded-full pl-4 h-12" 
             placeholder="search here Ex. 10 km to m" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5">
-            {isParsingQuery ? <Loader2 className="animate-spin" /> : <Search />}
-          </div>
+          {isParsingQuery && (
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5">
+              <Loader2 className="animate-spin" />
+            </div>
+          )}
         </div>
       </header>
 
@@ -361,4 +363,5 @@ function InfoBox({ text }: { text: string }) {
     )
 }
 
+    
     
