@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Star, Trash2, Bold, Italic, List } from 'lucide-react';
+import { ArrowLeft, Save, Star, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, ListTodo, Code2, Paperclip, Smile } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -95,7 +95,10 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     };
     
     const handleSoftDelete = () => {
-        if (isNewNote) return;
+        if (isNewNote) {
+             router.push('/notes');
+             return;
+        };
         const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
         const notes: Note[] = savedNotes ? JSON.parse(savedNotes) : [];
         const updatedNotes = notes.map(note => 
@@ -106,113 +109,62 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         router.push('/notes');
     };
 
-    const applyFormat = (formatType: 'bold' | 'italic' | 'list') => {
-        const textarea = textareaRef.current;
-        if (!textarea) return;
-
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const selectedText = content.substring(start, end);
-        const beforeText = content.substring(0, start);
-        const afterText = content.substring(end);
-
-        let newContent = '';
-        let newCursorPosStart = 0;
-        let newCursorPosEnd = 0;
-
-        const formatters = {
-            bold: { wrapper: '**', placeholder: 'bold text' },
-            italic: { wrapper: '*', placeholder: 'italic text' },
-            list: { wrapper: '- ', placeholder: 'List item' },
-        };
-        
-        const { wrapper, placeholder } = formatters[formatType];
-
-        if (formatType === 'list') {
-            const replacement = `${wrapper}${selectedText || placeholder}`;
-            const prefix = (start === 0 || content[start - 1] === '\n') ? '' : '\n';
-            newContent = `${beforeText}${prefix}${replacement}${afterText}`;
-            
-            newCursorPosStart = start + prefix.length + wrapper.length;
-            newCursorPosEnd = newCursorPosStart + (selectedText.length || placeholder.length);
-
-        } else {
-             const replacement = `${wrapper}${selectedText || placeholder}${wrapper}`;
-             newContent = `${beforeText}${replacement}${afterText}`;
-             
-             newCursorPosStart = start + wrapper.length;
-             newCursorPosEnd = newCursorPosStart + (selectedText.length || placeholder.length);
-        }
-
-        setContent(newContent);
-
-        // Focus and set cursor position after state update
-        setTimeout(() => {
-            textarea.focus();
-            if (selectedText) {
-                // If text was selected, just place the cursor after the formatted text
-                 const finalCursorPos = end + (newContent.length - content.length);
-                 textarea.setSelectionRange(finalCursorPos, finalCursorPos);
-            } else {
-                // If no text was selected, select the placeholder text
-                 textarea.setSelectionRange(newCursorPosStart, newCursorPosEnd);
-            }
-        }, 0);
-    };
-
     if (!isClient) {
         return null; // Or a loading skeleton
     }
 
     return (
-        <div className="w-full max-w-md mx-auto flex flex-col gap-4">
-            <header className="flex items-center justify-between">
+        <div className="w-full max-w-md mx-auto flex flex-col h-screen">
+            <header className="flex items-center justify-between p-4 flex-shrink-0">
                 <Button variant="ghost" size="icon" asChild>
                     <Link href="/notes">
                         <ArrowLeft />
                     </Link>
                 </Button>
                 <div className="flex items-center gap-2">
-                    {!isNewNote && (
-                         <Button variant="ghost" size="icon" onClick={() => setIsFavorite(!isFavorite)}>
-                            <Star className={isFavorite ? 'text-yellow-400 fill-yellow-400' : ''}/>
-                        </Button>
-                    )}
-                     {!isNewNote && (
-                        <Button variant="ghost" size="icon" onClick={handleSoftDelete}>
-                            <Trash2 />
-                        </Button>
-                    )}
                     <Button variant="ghost" size="icon" onClick={handleSave}>
                         <Save />
                     </Button>
                 </div>
             </header>
-            <div className="bg-card p-4 rounded-xl flex-grow flex flex-col gap-4">
+            <div className="px-4 flex-shrink-0">
                 <Input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Note title..."
-                    className="w-full bg-background border-none text-lg font-bold focus-visible:ring-0"
+                    placeholder="Write title here"
+                    className="w-full bg-card border-border h-12 text-lg font-bold focus-visible:ring-1 focus-visible:ring-ring mb-2"
                 />
                  <Input
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    placeholder="Category (e.g., Work, Personal)..."
-                    className="w-full bg-background border-none text-sm focus-visible:ring-0"
+                    placeholder="Write category"
+                    className="w-full bg-card border-border h-12 text-base focus-visible:ring-1 focus-visible:ring-ring"
                 />
-                <div className="flex items-center gap-2 border-b border-border pb-2">
-                    <Button variant="ghost" size="icon" onClick={() => applyFormat('bold')}><Bold /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => applyFormat('italic')}><Italic /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => applyFormat('list')}><List /></Button>
+            </div>
+            <div className="bg-card p-4 rounded-t-xl flex-grow flex flex-col gap-4 mt-4">
+                <div className="flex items-center gap-1 border-b border-border pb-2 flex-wrap">
+                    <Button variant="ghost" size="icon"><Bold /></Button>
+                    <Button variant="ghost" size="icon"><Italic /></Button>
+                    <Button variant="ghost" size="icon"><Underline /></Button>
+                    <Button variant="ghost" size="icon"><Strikethrough /></Button>
+                    <Button variant="ghost" size="icon"><Link2 /></Button>
+                    <Button variant="ghost" size="icon"><List /></Button>
+                    <Button variant="ghost" size="icon"><ListOrdered /></Button>
+                    <Button variant="ghost" size="icon"><ListTodo /></Button>
+                    <Button variant="ghost" size="icon"><Code2 /></Button>
                 </div>
                 <Textarea
                     ref={textareaRef}
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder="Start typing your note here..."
-                    className="w-full h-full min-h-[50vh] bg-transparent border-none resize-none focus-visible:ring-0 text-base"
+                    placeholder="Type your message"
+                    className="w-full h-full flex-grow bg-transparent border-none resize-none focus-visible:ring-0 text-base p-0"
                 />
+                <div className="flex items-center gap-2 pt-2 border-t border-border">
+                    <Button variant="ghost" size="icon"><Paperclip /></Button>
+                    <Button variant="ghost" size="icon"><Smile /></Button>
+                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={handleSoftDelete}><Trash2 /></Button>
+                </div>
             </div>
         </div>
     );
