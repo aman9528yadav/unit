@@ -177,27 +177,27 @@ export function Converter() {
   
   // This effect runs after a search query has been parsed and state has been set.
   useEffect(() => {
-      if (parsedQuery) {
-          const category = conversionCategories.find(c => c.name === parsedQuery.category);
-          if (category) {
-              const categoryUnits = category.units.filter(u => !u.region || u.region === region);
-              const fromUnitExists = categoryUnits.some(u => u.symbol === parsedQuery.fromUnit);
-              const toUnitExists = categoryUnits.some(u => u.symbol === parsedQuery.toUnit);
+    if (parsedQuery) {
+      const category = conversionCategories.find(c => c.name === parsedQuery.category);
+      if (category) {
+        const categoryUnits = category.units.filter(u => !u.region || u.region === region);
+        const fromUnitExists = categoryUnits.some(u => u.symbol === parsedQuery.fromUnit);
+        const toUnitExists = categoryUnits.some(u => u.symbol === parsedQuery.toUnit);
 
-              if (fromUnitExists && toUnitExists) {
-                  setSelectedCategory(category);
-                  setFromUnit(parsedQuery.fromUnit);
-                  setToUnit(parsedQuery.toUnit);
-                  setInputValue(String(parsedQuery.value));
-                  setSearchQuery(""); // Clear search
-              } else {
-                  toast({ title: "Cannot perform conversion", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive" });
-              }
-          } else {
-              toast({ title: "Cannot perform conversion", description: "Could not determine the conversion category.", variant: "destructive" });
-          }
-          setParsedQuery(null); // Reset parsed query
+        if (fromUnitExists && toUnitExists) {
+          setSelectedCategory(category);
+          setFromUnit(parsedQuery.fromUnit);
+          setToUnit(parsedQuery.toUnit);
+          setInputValue(String(parsedQuery.value));
+          setSearchQuery(""); // Clear search
+        } else {
+          toast({ title: "Cannot perform conversion", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive" });
+        }
+      } else {
+        toast({ title: "Cannot perform conversion", description: "Could not determine the conversion category.", variant: "destructive" });
       }
+      setParsedQuery(null); // Reset parsed query
+    }
   }, [parsedQuery, region, toast]);
 
   // Update favorite status whenever output or favorites list change
@@ -619,11 +619,6 @@ export function Converter() {
               <div className="bg-card p-4 rounded-xl flex flex-col gap-3 mt-4">
                   <div className="flex justify-between items-center">
                     <h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} /> Recent Conversions</h3>
-                     <Button variant="ghost" size="icon" asChild>
-                        <Link href="/history">
-                            <Clock />
-                        </Link>
-                     </Button>
                   </div>
                   <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                       {history.slice(0, 3).map((item, index) => (
@@ -724,5 +719,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
