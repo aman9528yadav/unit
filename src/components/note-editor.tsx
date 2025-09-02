@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2 } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -16,11 +16,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 
 
 const FONT_COLORS = [
-  { name: 'Default', color: '#000000' },
+  { name: 'Default', color: 'inherit' },
+  { name: 'Black', color: '#000000' },
   { name: 'Red', color: '#E53E3E' },
   { name: 'Green', color: '#48BB78' },
   { name: 'Blue', color: '#4299E1' },
@@ -34,10 +36,13 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const [isFavorite, setIsFavorite] = useState(false);
     const [attachment, setAttachment] = useState<string | null>(null);
     const [isClient, setIsClient] = useState(false);
+    const [customFontSize, setCustomFontSize] = useState('16');
+
     const router = useRouter();
     const { toast } = useToast();
     const editorRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const colorInputRef = useRef<HTMLInputElement>(null);
     const isNewNote = noteId === 'new';
     
     // Flag to prevent setting innerHTML on every render
@@ -71,6 +76,39 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             contentSetRef.current = true;
         }
     }, [content]);
+
+    const applyStyle = (style: string, value: string) => {
+        editorRef.current?.focus();
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
+
+        const range = selection.getRangeAt(0);
+        if (range.collapsed) {
+             // If no text is selected, we can insert a styled span
+            const span = document.createElement('span');
+            span.style[style as any] = value;
+            span.innerHTML = '&#8203;'; // Zero-width space to place cursor inside
+            range.insertNode(span);
+            range.selectNodeContents(span);
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        } else {
+             document.execCommand('styleWithCSS', false, 'true');
+             if (style === 'color') {
+                 document.execCommand('foreColor', false, value);
+             } else if (style === 'fontSize') {
+                 // This is tricky. A better way would be to wrap in a span.
+                 const span = document.createElement('span');
+                 span.style.fontSize = value;
+                 span.innerHTML = range.toString();
+                 range.deleteContents();
+                 range.insertNode(span);
+             }
+              document.execCommand('styleWithCSS', false, 'false');
+        }
+       handleContentChange();
+    };
 
 
     const handleFormat = (command: string, value?: string) => {
@@ -113,6 +151,16 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const showComingSoonToast = () => {
         toast({ title: "Feature Coming Soon!", description: "This functionality is currently under development."});
     }
+    
+    const handleApplyCustomFontSize = () => {
+        const size = parseInt(customFontSize, 10);
+        if(!isNaN(size) && size > 0){
+            applyStyle('fontSize', `${size}px`);
+        } else {
+            toast({ title: "Invalid Font Size", variant: "destructive"});
+        }
+    }
+
 
     const handleSave = () => {
          const currentContent = editorRef.current?.innerHTML || '';
@@ -239,6 +287,22 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                             <DropdownMenuItem onSelect={() => handleFormatBlock('p')}>
                                 <Pilcrow className="mr-2 h-4 w-4" /> Paragraph
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <div className="flex items-center gap-2">
+                                     <Text className="mr-2 h-4 w-4" />
+                                     <Input 
+                                        type="number" 
+                                        value={customFontSize} 
+                                        onChange={(e) => setCustomFontSize(e.target.value)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-16 h-8"
+                                        placeholder="16"
+                                     />
+                                     <span>px</span>
+                                     <Button size="sm" onClick={handleApplyCustomFontSize}>Apply</Button>
+                                </div>
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                     
@@ -249,10 +313,26 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                         <DropdownMenuContent>
                             {FONT_COLORS.map(item => (
                                 <DropdownMenuItem key={item.name} onSelect={() => handleColorChange(item.color)}>
-                                    <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: item.color }} />
+                                    <div className="w-4 h-4 rounded-full mr-2 border" style={{ backgroundColor: item.color === 'inherit' ? 'transparent' : item.color, color: item.color }} >
+                                       {item.color !== 'inherit' && <Circle className='w-full h-full'/>}
+                                    </div>
                                     {item.name}
                                 </DropdownMenuItem>
                             ))}
+                            <DropdownMenuSeparator/>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <label htmlFor="customColor" className="flex items-center gap-2 cursor-pointer">
+                                    <div className="w-4 h-4 rounded-full mr-2 border" style={{ backgroundColor: 'transparent' }} />
+                                    Custom
+                                    <input 
+                                        id="customColor"
+                                        ref={colorInputRef}
+                                        type="color" 
+                                        className="w-0 h-0 opacity-0"
+                                        onChange={(e) => handleColorChange(e.target.value)}
+                                    />
+                                </label>
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                     
@@ -284,3 +364,4 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
+
