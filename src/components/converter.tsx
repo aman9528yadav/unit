@@ -23,12 +23,14 @@ import { parseConversionQuery } from "@/ai/flows/parse-conversion-flow";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Calculator } from "./calculator";
 
 const navItems = ["Unit", "Calculator", "Note", "Timer", "Date", "History"];
 const regions: Region[] = ['International', 'India'];
 
 export function Converter() {
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("Unit");
   const [selectedCategory, setSelectedCategory] = useState<ConversionCategory>(conversionCategories[0]);
   const [fromUnit, setFromUnit] = useState<string>(conversionCategories[0].units[0].symbol);
   const [toUnit, setToUnit] = useState<string>(conversionCategories[0].units[1].symbol);
@@ -205,7 +207,7 @@ export function Converter() {
       <header className="flex flex-col gap-4">
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex space-x-2 pb-2">
-            {navItems.map((item, index) => {
+            {navItems.map((item) => {
               if (item === "History") {
                 return (
                   <Button key={item} variant="outline" className="rounded-full border-gray-500" asChild>
@@ -214,7 +216,12 @@ export function Converter() {
                 )
               }
               return (
-                <Button key={item} variant={index === 0 ? "secondary" : "outline"} className={`rounded-full ${index === 0 ? 'bg-accent text-accent-foreground' : 'border-gray-500'}`}>
+                <Button 
+                  key={item} 
+                  variant={activeTab === item ? "secondary" : "outline"} 
+                  className={`rounded-full ${activeTab === item ? 'bg-accent text-accent-foreground' : 'border-gray-500'}`}
+                  onClick={() => setActiveTab(item)}
+                >
                   {item}
                 </Button>
               )
@@ -224,114 +231,122 @@ export function Converter() {
         </ScrollArea>
       </header>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="Search e.g., '10 km to m'"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="bg-card h-12 text-base pl-10 pr-10"
-        />
-        {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />}
-      </div>
-      
-
-      <div className="bg-card p-4 rounded-xl flex flex-col gap-4">
-        <h2 className="font-bold text-lg">Quick Convert</h2>
-        <p className="text-sm text-muted-foreground -mt-2">Enter a value and choose units. Converts automatically.</p>
-        
-        <div className="grid grid-cols-2 gap-4">
-            <div>
-                <label className="text-sm text-muted-foreground flex items-center gap-1.5"><Globe size={16}/> Region</label>
-                <Select value={region} onValueChange={handleRegionChange}>
-                    <SelectTrigger className="bg-background mt-1">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-            </div>
-            <div>
-                <label className="text-sm text-muted-foreground flex items-center gap-1.5"><LayoutGrid size={16}/> Category</label>
-                 <Select value={selectedCategory.name} onValueChange={handleCategoryChange}>
-                    <SelectTrigger className="bg-background mt-1">
-                         <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {conversionCategories.map(cat => (
-                            <SelectItem key={cat.name} value={cat.name}>
-                                <div className="flex items-center gap-2">
-                                    <cat.icon className="w-4 h-4" />
-                                    <span>{cat.name}</span>
-                                </div>
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-        </div>
-
-        <div>
-            <label className="text-sm text-muted-foreground">From</label>
+      {activeTab === 'Unit' && (
+        <>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
-                type="number"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                className="bg-background mt-1 h-12 text-lg"
-                placeholder="Enter Value"
-              />
-        </div>
-        
-        <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-            <UnitSelect units={currentUnits} value={fromUnit} onValueChange={setFromUnit} />
-            <Button variant="outline" size="icon" className="rounded-full h-10 w-10 bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSwapUnits}>
-                <ArrowRightLeft className="w-5 h-5" />
-            </Button>
-            <UnitSelect units={currentUnits} value={toUnit} onValueChange={setToUnit} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 text-xs">
-            {fromUnitInfo && <InfoBox text={fromUnitInfo} />}
-            {toUnitInfo && <InfoBox text={toUnitInfo} />}
-        </div>
-        
-        <div className="bg-background rounded-lg p-4 flex justify-between items-center h-16">
-            <span className={`text-lg ${!outputValue ? 'text-muted-foreground' : ''}`}>{outputValue || "Result will appear here !"}</span>
-            {outputValue && (
-                 <div className="flex items-center gap-3">
-                    <Copy size={20} className="text-muted-foreground cursor-pointer hover:text-white" onClick={() => {
-                        navigator.clipboard.writeText(outputValue)
-                        toast({ title: "Copied to clipboard!"})
-                        }} />
-                    <Star size={20} className="text-muted-foreground cursor-pointer hover:text-white" />
-                    <Share2 size={20} className="text-muted-foreground cursor-pointer hover:text-white" />
-                 </div>
-            )}
-        </div>
-        
-        <Button onClick={handleConvertClick} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base font-bold">convert</Button>
-      </div>
-
-      {history.length > 0 && (
-          <div className="bg-card p-4 rounded-xl flex flex-col gap-3">
-              <div className="flex justify-between items-center">
-                <h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} /> Recent Conversions</h3>
-                <RefreshCw size={18} className="text-muted-foreground cursor-pointer hover:text-white" onClick={handleClearHistory}/>
-              </div>
-              <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                  {history.slice(0, 3).map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-2 rounded hover:bg-background group">
-                        <span>{item}</span>
-                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <RotateCcw size={16} className="cursor-pointer hover:text-white" onClick={() => handleRestoreHistory(item)} />
-                            <Trash2 size={16} className="cursor-pointer hover:text-white" onClick={() => handleDeleteHistory(index)} />
-                        </div>
-                      </div>
-                  ))}
-              </div>
+              type="text"
+              placeholder="Search e.g., '10 km to m'"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-card h-12 text-base pl-10 pr-10"
+            />
+            {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />}
           </div>
+          
+    
+          <div className="bg-card p-4 rounded-xl flex flex-col gap-4">
+            <h2 className="font-bold text-lg">Quick Convert</h2>
+            <p className="text-sm text-muted-foreground -mt-2">Enter a value and choose units. Converts automatically.</p>
+            
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="text-sm text-muted-foreground flex items-center gap-1.5"><Globe size={16}/> Region</label>
+                    <Select value={region} onValueChange={handleRegionChange}>
+                        <SelectTrigger className="bg-background mt-1">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                    <label className="text-sm text-muted-foreground flex items-center gap-1.5"><LayoutGrid size={16}/> Category</label>
+                     <Select value={selectedCategory.name} onValueChange={handleCategoryChange}>
+                        <SelectTrigger className="bg-background mt-1">
+                             <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {conversionCategories.map(cat => (
+                                <SelectItem key={cat.name} value={cat.name}>
+                                    <div className="flex items-center gap-2">
+                                        <cat.icon className="w-4 h-4" />
+                                        <span>{cat.name}</span>
+                                    </div>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+    
+            <div>
+                <label className="text-sm text-muted-foreground">From</label>
+                <Input
+                    type="number"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    className="bg-background mt-1 h-12 text-lg"
+                    placeholder="Enter Value"
+                  />
+            </div>
+            
+            <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
+                <UnitSelect units={currentUnits} value={fromUnit} onValueChange={setFromUnit} />
+                <Button variant="outline" size="icon" className="rounded-full h-10 w-10 bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSwapUnits}>
+                    <ArrowRightLeft className="w-5 h-5" />
+                </Button>
+                <UnitSelect units={currentUnits} value={toUnit} onValueChange={setToUnit} />
+            </div>
+    
+            <div className="grid grid-cols-2 gap-2 text-xs">
+                {fromUnitInfo && <InfoBox text={fromUnitInfo} />}
+                {toUnitInfo && <InfoBox text={toUnitInfo} />}
+            </div>
+            
+            <div className="bg-background rounded-lg p-4 flex justify-between items-center h-16">
+                <span className={`text-lg ${!outputValue ? 'text-muted-foreground' : ''}`}>{outputValue || "Result will appear here !"}</span>
+                {outputValue && (
+                     <div className="flex items-center gap-3">
+                        <Copy size={20} className="text-muted-foreground cursor-pointer hover:text-white" onClick={() => {
+                            navigator.clipboard.writeText(outputValue)
+                            toast({ title: "Copied to clipboard!"})
+                            }} />
+                        <Star size={20} className="text-muted-foreground cursor-pointer hover:text-white" />
+                        <Share2 size={20} className="text-muted-foreground cursor-pointer hover:text-white" />
+                     </div>
+                )}
+            </div>
+            
+            <Button onClick={handleConvertClick} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base font-bold">convert</Button>
+          </div>
+    
+          {history.length > 0 && (
+              <div className="bg-card p-4 rounded-xl flex flex-col gap-3">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} /> Recent Conversions</h3>
+                    <RefreshCw size={18} className="text-muted-foreground cursor-pointer hover:text-white" onClick={handleClearHistory}/>
+                  </div>
+                  <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                      {history.slice(0, 3).map((item, index) => (
+                          <div key={index} className="flex justify-between items-center p-2 rounded hover:bg-background group">
+                            <span>{item}</span>
+                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <RotateCcw size={16} className="cursor-pointer hover:text-white" onClick={() => handleRestoreHistory(item)} />
+                                <Trash2 size={16} className="cursor-pointer hover:text-white" onClick={() => handleDeleteHistory(index)} />
+                            </div>
+                          </div>
+                      ))}
+                  </div>
+              </div>
+          )}
+        </>
+      )}
+
+      {activeTab === 'Calculator' && (
+        <Calculator />
       )}
     </div>
   );
