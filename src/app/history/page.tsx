@@ -34,14 +34,16 @@ export default function HistoryPage() {
       setFavorites(JSON.parse(storedFavorites));
     }
   }, []);
+  
+  const getHistoryIndex = (item: string) => {
+    return history.findIndex(h => h === item);
+  }
 
-  const handleDeleteHistory = (index: number) => {
-    const itemToDelete = history[index];
-    const newHistory = history.filter((_, i) => i !== index);
+  const handleDelete = (itemToDelete: string) => {
+    const newHistory = history.filter(h => h !== itemToDelete);
     setHistory(newHistory);
     localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
 
-    // Also remove from favorites if it exists there
     if (favorites.includes(itemToDelete)) {
       const newFavorites = favorites.filter(fav => fav !== itemToDelete);
       setFavorites(newFavorites);
@@ -51,14 +53,17 @@ export default function HistoryPage() {
   
   const handleClearAll = () => {
     setHistory([]);
-    setFavorites([]); // Also clear favorites from state
+    setFavorites([]);
     localStorage.removeItem("conversionHistory");
-    localStorage.removeItem("favoriteConversions"); // And from storage
+    localStorage.removeItem("favoriteConversions");
   };
 
   if (!isClient) {
     return null; // or a loading spinner
   }
+  
+  const favoriteItems = history.filter(item => favorites.includes(item));
+
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-6">
@@ -69,7 +74,7 @@ export default function HistoryPage() {
               <ArrowLeft />
             </Link>
           </Button>
-          <h1 className="text-xl font-bold">Conversion History</h1>
+          <h1 className="text-xl font-bold">History</h1>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="icon" disabled={history.length === 0}>
@@ -92,22 +97,45 @@ export default function HistoryPage() {
             </AlertDialogContent>
           </AlertDialog>
         </header>
-
+        
         {history.length > 0 ? (
-          <div className="bg-card p-4 rounded-xl flex flex-col gap-3">
-              <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                  {history.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-2 rounded hover:bg-background group">
-                        <div className="flex items-center gap-2">
-                           {favorites.includes(item) && <Star size={16} className="text-yellow-400 fill-yellow-400" />}
-                           <span>{item}</span>
-                        </div>
-                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Trash2 size={16} className="cursor-pointer hover:text-white" onClick={() => handleDeleteHistory(index)} />
-                        </div>
-                      </div>
-                  ))}
+          <div className="flex flex-col gap-4">
+            {favoriteItems.length > 0 && (
+              <div className="bg-card p-4 rounded-xl flex flex-col gap-3">
+                  <h3 className="font-bold text-lg flex items-center gap-2"><Star size={20} className="text-yellow-400" /> Favorites</h3>
+                  <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                      {favoriteItems.map((item, index) => (
+                          <div key={`fav-${index}`} className="flex justify-between items-center p-2 rounded hover:bg-background group">
+                            <div className="flex items-center gap-2">
+                               <Star size={16} className="text-yellow-400 fill-yellow-400" />
+                               <span>{item}</span>
+                            </div>
+                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Trash2 size={16} className="cursor-pointer hover:text-white" onClick={() => handleDelete(item)} />
+                            </div>
+                          </div>
+                      ))}
+                  </div>
               </div>
+            )}
+
+            <div className="bg-card p-4 rounded-xl flex flex-col gap-3">
+                <h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} /> History</h3>
+                <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                    {history.map((item, index) => (
+                        <div key={`hist-${index}`} className="flex justify-between items-center p-2 rounded hover:bg-background group">
+                          <div className="flex items-center gap-2">
+                             {favorites.includes(item) && <Star size={16} className="text-yellow-400 fill-yellow-400" />}
+                             {!favorites.includes(item) && <Star size={16} className="text-transparent" />}
+                             <span>{item}</span>
+                          </div>
+                          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Trash2 size={16} className="cursor-pointer hover:text-white" onClick={() => handleDelete(item)} />
+                          </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center text-center text-muted-foreground bg-card p-8 rounded-xl gap-4">
@@ -119,6 +147,7 @@ export default function HistoryPage() {
             </Button>
           </div>
         )}
+
       </div>
     </main>
   );
