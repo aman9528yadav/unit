@@ -165,11 +165,9 @@ export function Converter() {
             setFromUnit(parsed.fromUnit);
             setToUnit(parsed.toUnit);
             setInputValue(String(parsed.value));
-            // We need to pass a callback to setState to ensure we use the latest state values for the conversion
-            setOutputValue((prevOutput) => {
-              performConversion(parsed.value, parsed.fromUnit, parsed.toUnit);
-              return prevOutput; // This will be immediately overwritten by performConversion's setOutputValue
-            });
+            // We need to pass the parsed values directly to perform the conversion
+            // as the state updates might not be applied immediately.
+            performConversion(parsed.value, parsed.fromUnit, parsed.toUnit);
             setSearchQuery(""); // Clear search
           } else {
              toast({ title: "Cannot perform conversion", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive"});
