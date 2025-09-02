@@ -302,26 +302,13 @@ export function Converter() {
     }
   }, [parsedQuery, region, toast, t, conversionCategories]);
 
-  // Update favorite status whenever output or favorites list change
-  React.useEffect(() => {
-    const numValue = parseFloat(inputValue);
-     if (isNaN(numValue) || !outputValue) {
-      setIsFavorite(false);
-      return
-    };
-
-    const result = parseFloat(outputValue.replace(/,/g, ''));
-    const conversionString = getCurrentConversionString(numValue, fromUnit, toUnit, result);
-    setIsFavorite(favorites.includes(conversionString));
-  }, [inputValue, fromUnit, toUnit, outputValue, favorites]);
-
-  const handleSaveToHistory = () => {
+  const handleSaveToHistory = React.useCallback(() => {
     const saveConversionHistory = JSON.parse(localStorage.getItem('saveConversionHistory') || 'true');
     if (!saveConversionHistory) return;
 
     const numValue = parseFloat(inputValue);
     const result = parseFloat(outputValue.replace(/,/g, ''));
-    if (isNaN(numValue) || isNaN(result)) return;
+    if (isNaN(numValue) || isNaN(result) || outputValue === '') return;
 
     const conversionString = getCurrentConversionString(numValue, fromUnit, toUnit, result);
     localStorage.setItem('lastConversion', conversionString);
@@ -332,8 +319,24 @@ export function Converter() {
       setHistory(newHistory);
       localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
     }
-  };
-  
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputValue, fromUnit, toUnit, outputValue, history]);
+
+  // Update favorite status & save history whenever output or favorites list change
+  React.useEffect(() => {
+    const numValue = parseFloat(inputValue);
+     if (isNaN(numValue) || !outputValue) {
+      setIsFavorite(false);
+      return
+    };
+
+    handleSaveToHistory();
+
+    const result = parseFloat(outputValue.replace(/,/g, ''));
+    const conversionString = getCurrentConversionString(numValue, fromUnit, toUnit, result);
+    setIsFavorite(favorites.includes(conversionString));
+  }, [inputValue, fromUnit, toUnit, outputValue, favorites, handleSaveToHistory]);
+
   const handleSearch = async () => {
     if (searchQuery.trim() === "" || isSearching) {
         return;
@@ -381,8 +384,6 @@ export function Converter() {
 
   const handleConvertClick = () => {
     performConversion();
-    // Save to history on manual convert click
-    setTimeout(() => handleSaveToHistory(), 100);
   };
   
   const handleToggleFavorite = () => {
@@ -397,8 +398,6 @@ export function Converter() {
       newFavorites = favorites.filter(fav => fav !== conversionString);
       toast({ title: t('converter.toast.favRemoved') });
     } else {
-      // Ensure it's in history before adding to favorites
-      handleSaveToHistory(); 
       newFavorites = [conversionString, ...favorites];
       toast({ title: t('converter.toast.favAdded') });
     }
@@ -766,7 +765,7 @@ function UnitSelect({ units, value, onValueChange, t }: { units: Unit[], value: 
       <SelectContent>
         {units.map(unit => (
           <SelectItem key={unit.symbol} value={unit.symbol}>
-            {t(`units.${unit.name.toLowerCase().replace(/[\s().]/g, '')}`, { defaultValue: unit.name })}
+            {t(`units.${unit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: unit.name })}
           </SelectItem>
         ))}
       </SelectContent>
@@ -810,7 +809,7 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
           <h2 className="text-2xl font-bold">{t(`categories.${category.name.toLowerCase()}`)} {t('converter.image.conversion')}</h2>
         </div>
         <div className="flex flex-col gap-2 text-center">
-            <p className="text-xl text-muted-foreground">{fromUnitInfo ? t(`units.${fromUnitInfo.name.toLowerCase().replace(/[\s().]/g, '')}`) : ''}</p>
+            <p className="text-xl text-muted-foreground">{fromUnitInfo ? t(`units.${fromUnitInfo.name.toLowerCase().replace(/[\s().-]/g, '')}`) : ''}</p>
             <p className="text-5xl font-bold">{inputValue}</p>
             <p className="text-lg text-muted-foreground">{fromUnitInfo?.symbol}</p>
         </div>
@@ -818,7 +817,7 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
             <ArrowRightLeft className="w-8 h-8 text-accent" />
         </div>
          <div className="flex flex-col gap-2 text-center">
-            <p className="text-xl text-muted-foreground">{toUnitInfo ? t(`units.${toUnitInfo.name.toLowerCase().replace(/[\s().]/g, '')}`) : ''}</p>
+            <p className="text-xl text-muted-foreground">{toUnitInfo ? t(`units.${toUnitInfo.name.toLowerCase().replace(/[\s().-]/g, '')}`) : ''}</p>
             <p className="text-5xl font-bold">{outputValue}</p>
             <p className="text-lg text-muted-foreground">{toUnitInfo?.symbol}</p>
         </div>
@@ -830,3 +829,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
