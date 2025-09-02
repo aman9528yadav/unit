@@ -21,6 +21,7 @@ export type ConversionCategory = {
   name: 'Length' | 'Weight' | 'Temperature' | 'Data' | 'Time' | 'Speed' | 'Area' | 'Volume';
   icon: LucideIcon;
   units: Unit[];
+  factors?: LinearConversionFactors;
   convert: (value: number, from: string, to: string, region?: Region) => number;
 };
 
@@ -53,9 +54,10 @@ const lengthCategory: ConversionCategory = {
   name: 'Length',
   icon: Ruler,
   units: lengthUnits,
-  convert: (value, from, to) => {
-    const fromFactor = lengthFactors[from];
-    const toFactor = lengthFactors[to];
+  factors: lengthFactors,
+  convert: function(value, from, to) {
+    const fromFactor = this.factors![from];
+    const toFactor = this.factors![to];
     if (fromFactor === undefined || toFactor === undefined) return NaN;
     const valueInBase = value * fromFactor;
     return valueInBase / toFactor;
@@ -89,9 +91,10 @@ const weightCategory: ConversionCategory = {
     name: 'Weight',
     icon: Scale,
     units: weightUnits,
-    convert: (value, from, to) => {
-        const fromFactor = weightFactors[from];
-        const toFactor = weightFactors[to];
+    factors: weightFactors,
+    convert: function(value, from, to) {
+        const fromFactor = this.factors![from];
+        const toFactor = this.factors![to];
         if (fromFactor === undefined || toFactor === undefined) return NaN;
         const valueInBase = value * fromFactor;
         return valueInBase / toFactor;
@@ -153,9 +156,10 @@ const dataCategory: ConversionCategory = {
     name: 'Data',
     icon: Database,
     units: dataUnits,
-    convert: (value, from, to) => {
-        const fromFactor = dataFactors[from];
-        const toFactor = dataFactors[to];
+    factors: dataFactors,
+    convert: function(value, from, to) {
+        const fromFactor = this.factors![from];
+        const toFactor = this.factors![to];
         if (fromFactor === undefined || toFactor === undefined) return NaN;
         const valueInBase = value * fromFactor;
         return valueInBase / toFactor;
@@ -181,9 +185,10 @@ const timeCategory: ConversionCategory = {
     name: 'Time',
     icon: Hourglass,
     units: timeUnits,
-    convert: (value, from, to) => {
-        const fromFactor = timeFactors[from];
-        const toFactor = timeFactors[to];
+    factors: timeFactors,
+    convert: function(value, from, to) {
+        const fromFactor = this.factors![from];
+        const toFactor = this.factors![to];
         if (fromFactor === undefined || toFactor === undefined) return NaN;
         const valueInBase = value * fromFactor;
         return valueInBase / toFactor;
@@ -207,9 +212,10 @@ const speedCategory: ConversionCategory = {
     name: 'Speed',
     icon: Zap,
     units: speedUnits,
-    convert: (value, from, to) => {
-        const fromFactor = speedFactors[from];
-        const toFactor = speedFactors[to];
+    factors: speedFactors,
+    convert: function(value, from, to) {
+        const fromFactor = this.factors![from];
+        const toFactor = this.factors![to];
         if (fromFactor === undefined || toFactor === undefined) return NaN;
         const valueInBase = value * fromFactor;
         return valueInBase / toFactor;
@@ -241,15 +247,16 @@ const areaCategory: ConversionCategory = {
     name: 'Area',
     icon: Square,
     units: areaUnits,
-    convert: (value, from, to, region) => {
+    factors: areaFactors,
+    convert: function(value, from, to, region) {
         // Special handling for Indian units that vary
-        let bighaFactor = areaFactors['bigha'];
+        let bighaFactor = this.factors!['bigha'];
         if (from === 'bigha' || to === 'bigha') {
             // In a real app, you might have a sub-region selector
             // For now, we use a common (but not universal) value.
         }
 
-        const customFactors = {...areaFactors, 'bigha': bighaFactor};
+        const customFactors = {...this.factors, 'bigha': bighaFactor};
 
         const fromFactor = customFactors[from];
         const toFactor = customFactors[to];
@@ -282,9 +289,10 @@ const volumeCategory: ConversionCategory = {
     name: 'Volume',
     icon: Beaker,
     units: volumeUnits,
-    convert: (value, from, to) => {
-        const fromFactor = volumeFactors[from];
-        const toFactor = volumeFactors[to];
+    factors: volumeFactors,
+    convert: function(value, from, to) {
+        const fromFactor = this.factors![from];
+        const toFactor = this.factors![to];
         if (fromFactor === undefined || toFactor === undefined) return NaN;
         const valueInBase = value * fromFactor;
         return valueInBase / toFactor;
@@ -293,3 +301,5 @@ const volumeCategory: ConversionCategory = {
 
 
 export const conversionCategories: ConversionCategory[] = [lengthCategory, weightCategory, temperatureCategory, dataCategory, timeCategory, speedCategory, areaCategory, volumeCategory];
+
+    

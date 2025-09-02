@@ -25,7 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass } from "lucide-react";
-import { conversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
+import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import { parseConversionQuery, ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -34,6 +34,7 @@ import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { incrementTodaysCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
+import { CustomUnit } from "./custom-unit-manager";
 
 
 const regions: Region[] = ['International', 'India'];
@@ -46,7 +47,7 @@ interface UserProfile {
 // Offline parser to replace the AI flow
 const offlineParseConversionQuery = (query: string, allUnits: Unit[]): ParseConversionQueryOutput | null => {
     // Regex to capture value and units, e.g., "10.5 km to m"
-    const regex = /^\s*([0-9.,]+)\s*([a-zA-Z°/²³]+)\s*(?:to|in|as|)\s*([a-zA-Z°/²³]+)\s*$/i;
+    const regex = /^\s*([0-9.,]+)\s*([a-zA-Z°/²³-]+)\s*(?:to|in|as|)\s*([a-zA-Z°/²³-]+)\s*$/i;
     const match = query.match(regex);
 
     if (!match) return null;
@@ -63,7 +64,7 @@ const offlineParseConversionQuery = (query: string, allUnits: Unit[]): ParseConv
     if (!fromUnit || !toUnit) return null;
 
     // Find the category that contains both units
-    const category = conversionCategories.find(c =>
+    const category = baseConversionCategories.find(c =>
         c.units.some(u => u.symbol === fromUnit.symbol) &&
         c.units.some(u => u.symbol === toUnit.symbol)
     );
@@ -84,6 +85,50 @@ export function Converter() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") || "Unit";
   const [activeTab, setActiveTab] = React.useState(initialTab);
+
+  const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
+
+  const conversionCategories = useMemo(() => {
+    if (customUnits.length === 0) return baseConversionCategories;
+
+    const extendedCategories = baseConversionCategories.map(category => {
+        const newCategory = { ...category, units: [...category.units] };
+
+        const applicableUnits = customUnits.filter(cu => cu.category === category.name);
+        
+        applicableUnits.forEach(cu => {
+            if (!newCategory.units.some(u => u.symbol === cu.symbol)) {
+                newCategory.units.push({
+                    name: cu.name,
+                    symbol: cu.symbol,
+                    info: `1 ${cu.symbol} = ${cu.factor} base units`,
+                });
+            }
+        });
+        
+        if (typeof newCategory.convert === 'function' && newCategory.name !== 'Temperature') {
+             const originalFactors = (newCategory as any).factors || {};
+             const newFactors = { ...originalFactors };
+             applicableUnits.forEach(cu => {
+                 newFactors[cu.symbol] = cu.factor;
+             });
+
+            newCategory.convert = (value: number, from: string, to: string) => {
+                const fromFactor = newFactors[from];
+                const toFactor = newFactors[to];
+                if (fromFactor === undefined || toFactor === undefined) return NaN;
+                const valueInBase = value * fromFactor;
+                return valueInBase / toFactor;
+            }
+        }
+
+        return newCategory;
+    });
+
+    return extendedCategories;
+  }, [customUnits]);
+
+
   const [selectedCategory, setSelectedCategory] = React.useState<ConversionCategory>(conversionCategories[0]);
   const [fromUnit, setFromUnit] = React.useState<string>(conversionCategories[0].units[0].symbol);
   const [toUnit, setToUnit] = React.useState<string>(conversionCategories[0].units[1].symbol);
@@ -108,7 +153,7 @@ export function Converter() {
     return selectedCategory.units.filter(u => !u.region || u.region === region);
   }, [selectedCategory, region]);
   
-  const allUnits = React.useMemo(() => conversionCategories.flatMap(c => c.units), []);
+  const allUnits = React.useMemo(() => conversionCategories.flatMap(c => c.units), [conversionCategories]);
 
 
   const fromUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === fromUnit)?.info, [currentUnits, fromUnit]);
@@ -120,11 +165,13 @@ export function Converter() {
     const storedFavorites = localStorage.getItem("favoriteConversions");
     const storedProfile = localStorage.getItem("userProfile");
     const savedAutoConvert = localStorage.getItem('autoConvert');
+    const savedCustomUnits = localStorage.getItem('customUnits');
 
     if (storedHistory) setHistory(JSON.parse(storedHistory));
     if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
     if (storedProfile) setProfile(JSON.parse(storedProfile));
     if (savedAutoConvert !== null) setAutoConvert(JSON.parse(savedAutoConvert));
+    if (savedCustomUnits) setCustomUnits(JSON.parse(savedCustomUnits));
     
     const itemToRestore = localStorage.getItem("restoreConversion");
     if (itemToRestore) {
@@ -138,10 +185,19 @@ export function Converter() {
     const handleOffline = () => setIsOnline(false);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    
+    const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'customUnits') {
+            setCustomUnits(JSON.parse(e.newValue || '[]'));
+        }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('storage', handleStorageChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -170,7 +226,7 @@ export function Converter() {
       const categoryToUse = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit) && c.units.some(u => u.symbol === toUnit)) || selectedCategory;
       const result = categoryToUse.convert(numValue, fromUnit, toUnit, region);
 
-      if (isNaN(result)) {
+      if (result === undefined || isNaN(result)) {
         setOutputValue("");
         return;
       }
@@ -178,7 +234,7 @@ export function Converter() {
       const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
       setOutputValue(formattedResult);
       
-  }, [inputValue, fromUnit, toUnit, selectedCategory, region]);
+  }, [inputValue, fromUnit, toUnit, selectedCategory, region, conversionCategories]);
   
   // Perform conversion whenever inputs change if auto-convert is on
   useEffect(() => {
@@ -210,7 +266,7 @@ export function Converter() {
       }
       setParsedQuery(null); // Reset parsed query
     }
-  }, [parsedQuery, region, toast, t]);
+  }, [parsedQuery, region, toast, t, conversionCategories]);
 
   // Update favorite status whenever output or favorites list change
   React.useEffect(() => {
@@ -673,7 +729,7 @@ function UnitSelect({ units, value, onValueChange, t }: { units: Unit[], value: 
       <SelectContent>
         {units.map(unit => (
           <SelectItem key={unit.symbol} value={unit.symbol}>
-            {`${t(`units.${unit.name.toLowerCase().replace(/ /g, '')}`)} (${unit.symbol})`}
+            {`${t(`units.${unit.name.toLowerCase().replace(/ /g, '')}`, { defaultValue: unit.name })} (${unit.symbol})`}
           </SelectItem>
         ))}
       </SelectContent>
@@ -736,3 +792,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
