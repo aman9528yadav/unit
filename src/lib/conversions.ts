@@ -1,4 +1,4 @@
-import { Ruler, Scale, Thermometer, Database, Clock, Zap, Square } from 'lucide-react';
+import { Ruler, Scale, Thermometer, Database, Clock, Zap, Square, Beaker } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type Region = 'International' | 'India';
@@ -17,7 +17,7 @@ type LinearConversionFactors = { [unitSymbol: string]: number };
 type ConversionFunctions = { [from: string]: { [to: string]: (value: number) => number } };
 
 export type ConversionCategory = {
-  name: 'Length' | 'Weight' | 'Temperature' | 'Data' | 'Time' | 'Speed' | 'Area';
+  name: 'Length' | 'Weight' | 'Temperature' | 'Data' | 'Time' | 'Speed' | 'Area' | 'Volume';
   icon: LucideIcon;
   units: Unit[];
   convert: (value: number, from: string, to: string, region?: Region) => number;
@@ -138,6 +138,7 @@ const dataUnits: Unit[] = [
     { name: 'Megabytes', symbol: 'MB', info: '1MB = 1024 KB' },
     { name: 'Gigabytes', symbol: 'GB', info: '1GB = 1024 MB' },
     { name: 'Terabytes', symbol: 'TB', info: '1TB = 1024 GB' },
+    { name: 'Petabytes', symbol: 'PB', info: '1PB = 1024 TB' },
 ];
 const dataFactors: LinearConversionFactors = { // to Bytes
   'B': 1,
@@ -145,6 +146,7 @@ const dataFactors: LinearConversionFactors = { // to Bytes
   'MB': 1024 ** 2,
   'GB': 1024 ** 3,
   'TB': 1024 ** 4,
+  'PB': 1024 ** 5,
 };
 const dataCategory: ConversionCategory = {
     name: 'Data',
@@ -218,6 +220,8 @@ const areaUnits: Unit[] = [
     { name: 'Square Meters', symbol: 'm²', info: 'It is the standard unit' },
     { name: 'Square Kilometers', symbol: 'km²', info: '1km² = 1,000,000m²' },
     { name: 'Square Miles', symbol: 'mi²', info: '1mi² ≈ 2.59e6 m²' },
+    { name: 'Square Feet', symbol: 'ft²', info: '1ft² = 0.0929 m²' },
+    { name: 'Square Inches', symbol: 'in²', info: '1in² = 0.000645 m²' },
     { name: 'Hectares', symbol: 'ha', info: '1ha = 10,000 m²' },
     { name: 'Acres', symbol: 'acre', info: '1 acre ≈ 4046.86 m²' },
     { name: 'Bigha', symbol: 'bigha', info: 'Varies by region', region: 'India' },
@@ -226,6 +230,8 @@ const areaFactors: LinearConversionFactors = { // to m²
   'm²': 1,
   'km²': 1000000,
   'mi²': 2589988.11,
+  'ft²': 0.092903,
+  'in²': 0.00064516,
   'ha': 10000,
   'acre': 4046.86,
   'bigha': 2508.38, // Note: This is an approximation for some regions.
@@ -252,5 +258,37 @@ const areaCategory: ConversionCategory = {
     },
 };
 
+// --- VOLUME ---
+const volumeUnits: Unit[] = [
+    { name: 'Liters', symbol: 'L', info: 'It is the standard unit' },
+    { name: 'Milliliters', symbol: 'mL', info: '1mL = 0.001L' },
+    { name: 'US Gallons', symbol: 'gal', info: '1gal = 3.78541L' },
+    { name: 'US Quarts', symbol: 'qt', info: '1qt = 0.946353L' },
+    { name: 'US Pints', symbol: 'pt', info: '1pt = 0.473176L' },
+    { name: 'US Cups', symbol: 'cup', info: '1cup = 0.24L' },
+    { name: 'US Fluid Ounces', symbol: 'fl-oz', info: '1fl-oz = 0.0295735L' },
+];
+const volumeFactors: LinearConversionFactors = { // to Liters
+    'L': 1,
+    'mL': 0.001,
+    'gal': 3.78541,
+    'qt': 0.946353,
+    'pt': 0.473176,
+    'cup': 0.24,
+    'fl-oz': 0.0295735,
+};
+const volumeCategory: ConversionCategory = {
+    name: 'Volume',
+    icon: Beaker,
+    units: volumeUnits,
+    convert: (value, from, to) => {
+        const fromFactor = volumeFactors[from];
+        const toFactor = volumeFactors[to];
+        if (fromFactor === undefined || toFactor === undefined) return NaN;
+        const valueInBase = value * fromFactor;
+        return valueInBase / toFactor;
+    },
+};
 
-export const conversionCategories: ConversionCategory[] = [lengthCategory, weightCategory, temperatureCategory, dataCategory, timeCategory, speedCategory, areaCategory];
+
+export const conversionCategories: ConversionCategory[] = [lengthCategory, weightCategory, temperatureCategory, dataCategory, timeCategory, speedCategory, areaCategory, volumeCategory];

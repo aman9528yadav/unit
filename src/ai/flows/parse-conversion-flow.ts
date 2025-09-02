@@ -53,10 +53,11 @@ const prompt = ai.definePrompt({
   Length: m, km, cm, mm, mi, yd, ft, in, nmi, gaj
   Weight: kg, g, mg, t, lb, oz, q, tola, ratti
   Temperature: °C, °F, K
-  Data: B, KB, MB, GB, TB
+  Data: B, KB, MB, GB, TB, PB
   Time: s, min, h, d, wk
   Speed: m/s, km/h, mph, kn
-  Area: m², km², mi², ha, acre, bigha
+  Area: m², km², mi², ft², in², ha, acre, bigha
+  Volume: L, mL, gal, qt, pt, cup, fl-oz
 
   Query: {{{query}}}
 

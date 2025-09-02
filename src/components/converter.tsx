@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Loader2, Search, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square } from "lucide-react";
+import { ArrowRightLeft, Loader2, Search, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker } from "lucide-react";
 import { conversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import { suggestCategory, SuggestCategoryInput } from "@/ai/flows/smart-category-suggestion";
 import { parseConversionQuery } from "@/ai/flows/parse-conversion-flow";
@@ -314,5 +314,3 @@ function InfoBox({ text }: { text: string }) {
         </div>
     )
 }
-
-    
