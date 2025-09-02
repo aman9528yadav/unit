@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { getStreakData, StreakData } from "@/lib/streak";
 
 const menuItems = [
   { icon: User, text: "Profile", href: "/profile/edit" },
@@ -37,6 +38,7 @@ const defaultProfile = {
 
 export function Profile() {
   const [profile, setProfile] = useState(defaultProfile);
+  const [streakData, setStreakData] = useState<StreakData>({ bestStreak: 0, currentStreak: 0, daysNotOpened: 0 });
   const [isClient, setIsClient] = useState(false);
   
   useEffect(() => {
@@ -49,6 +51,7 @@ export function Profile() {
       }
       setProfile(parsed);
     }
+    setStreakData(getStreakData());
   }, []);
 
   if (!isClient) {
@@ -95,17 +98,17 @@ export function Profile() {
 
       <div className="bg-card text-card-foreground p-4 rounded-xl -mt-6 mx-4 shadow-lg flex justify-around text-center">
         <div>
-          <p className="text-lg font-bold">12 Days</p>
+          <p className="text-lg font-bold">{streakData.bestStreak} Days</p>
           <p className="text-xs text-muted-foreground">Best Streak</p>
         </div>
         <div className="border-l border-border"></div>
         <div>
-          <p className="text-lg font-bold">06 Days</p>
+          <p className="text-lg font-bold">{streakData.currentStreak} Days</p>
           <p className="text-xs text-muted-foreground">Current Streak</p>
         </div>
         <div className="border-l border-border"></div>
         <div>
-          <p className="text-lg font-bold">04 Days</p>
+          <p className="text-lg font-bold">{streakData.daysNotOpened} Days</p>
           <p className="text-xs text-muted-foreground">Not Open</p>
         </div>
       </div>

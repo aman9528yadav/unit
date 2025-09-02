@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { getTodaysCalculations, getWeeklyCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
+import { recordVisit } from "@/lib/streak";
 
 // This should match the key in notepad.tsx
 const NOTES_STORAGE_KEY = 'userNotesV2';
@@ -62,6 +63,7 @@ export function Dashboard() {
 
   useEffect(() => {
     setIsClient(true);
+    recordVisit(); // Record the visit for streak tracking
     const storedProfile = localStorage.getItem("userProfile");
     if (storedProfile) {
         setProfile(JSON.parse(storedProfile));
@@ -232,5 +234,3 @@ export function Dashboard() {
     </div>
   );
 }
-
-    

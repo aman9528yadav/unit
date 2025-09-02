@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { getStreakData, StreakData } from "@/lib/streak";
 
 
 const defaultProfile = {
@@ -32,6 +33,7 @@ export function ProfileEditForm() {
   const [profile, setProfile] = useState(defaultProfile);
   const [dob, setDob] = useState<Date | undefined>(new Date(defaultProfile.dob));
   const [imagePreview, setImagePreview] = useState<string>(defaultProfile.profileImage);
+  const [streakData, setStreakData] = useState<StreakData>({ bestStreak: 0, currentStreak: 0, daysNotOpened: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const router = useRouter();
@@ -48,6 +50,7 @@ export function ProfileEditForm() {
             setImagePreview(parsedProfile.profileImage);
         }
     }
+    setStreakData(getStreakData());
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,17 +133,17 @@ export function ProfileEditForm() {
 
       <div className="bg-card text-card-foreground p-4 rounded-xl -mt-6 mx-4 shadow-lg flex justify-around text-center">
         <div>
-          <p className="text-lg font-bold">12 Days</p>
+          <p className="text-lg font-bold">{streakData.bestStreak} Days</p>
           <p className="text-xs text-muted-foreground">Best Streak</p>
         </div>
         <div className="border-l border-border"></div>
         <div>
-          <p className="text-lg font-bold">06 Days</p>
+          <p className="text-lg font-bold">{streakData.currentStreak} Days</p>
           <p className="text-xs text-muted-foreground">Current Streak</p>
         </div>
         <div className="border-l border-border"></div>
         <div>
-          <p className="text-lg font-bold">04 Days</p>
+          <p className="text-lg font-bold">{streakData.daysNotOpened} Days</p>
           <p className="text-xs text-muted-foreground">Not Open</p>
         </div>
       </div>
