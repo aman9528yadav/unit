@@ -48,16 +48,17 @@ export function Profile() {
   }, []);
 
   const handleLogout = () => {
-    // Clear all user-specific data
-    localStorage.removeItem("userProfile");
-    localStorage.removeItem("conversionHistory");
-    localStorage.removeItem("favoriteConversions");
-    localStorage.removeItem("dailyCalculations");
-    localStorage.removeItem("userNotesV2");
-    localStorage.removeItem("userVisitHistory");
-    // Optionally keep theme and language settings, or clear them too
-    // localStorage.removeItem("theme");
-    // localStorage.removeItem("language");
+    // Clear all app-related data from localStorage for a full reset.
+    // This is more robust than removing items one by one.
+    if (typeof window !== 'undefined') {
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('user') || key.includes('History') || key.includes('Conversion') || key.includes('Calc') || key.includes('daily') || key.includes('theme') || key.includes('language')) {
+                 localStorage.removeItem(key);
+            }
+        });
+        // A simpler but more aggressive alternative:
+        // localStorage.clear();
+    }
     router.push("/welcome");
   };
 
@@ -144,7 +145,7 @@ export function Profile() {
 
             return (
               <li key={index} onClick={item.onClick}>
-                {item.href ? <Link href={item.href}>{content}</Link> : content}
+                {item.href ? <Link href={item.href}>{content}</Link> : <div className="cursor-pointer">{content}</div>}
               </li>
             )
           })}
