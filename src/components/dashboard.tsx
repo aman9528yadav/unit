@@ -78,10 +78,10 @@ export function Dashboard() {
             <Clock />
             <span className="text-xs font-medium">History</span>
         </Link>
-         <div className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
+         <Link href="/settings" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <Settings />
             <span className="text-xs font-medium">Setting</span>
-        </div>
+        </Link>
       </div>
 
       <div>
@@ -180,5 +180,3 @@ export function Dashboard() {
     </div>
   );
 }
-
-    

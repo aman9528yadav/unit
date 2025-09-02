@@ -461,10 +461,10 @@ export function Converter() {
             <Clock />
             <span className="text-xs font-medium">History</span>
         </Link>
-         <div className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
+         <Link href="/settings" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <Settings />
             <span className="text-xs font-medium">Setting</span>
-        </div>
+        </Link>
       </div>
       
       {/* Element to be captured for image export */}
@@ -718,5 +718,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
