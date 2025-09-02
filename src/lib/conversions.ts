@@ -1,4 +1,4 @@
-import { Ruler, Scale, Thermometer, Database } from 'lucide-react';
+import { Ruler, Scale, Thermometer, Database, Clock, Zap, Square } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type Region = 'International' | 'India';
@@ -10,14 +10,14 @@ export type Unit = {
   region?: Region;
 };
 
-// For simple linear conversions (Length, Weight)
+// For simple linear conversions
 type LinearConversionFactors = { [unitSymbol: string]: number };
 
 // For complex conversions (Temperature)
 type ConversionFunctions = { [from: string]: { [to: string]: (value: number) => number } };
 
 export type ConversionCategory = {
-  name: 'Length' | 'Weight' | 'Temperature' | 'Data';
+  name: 'Length' | 'Weight' | 'Temperature' | 'Data' | 'Time' | 'Speed' | 'Area';
   icon: LucideIcon;
   units: Unit[];
   convert: (value: number, from: string, to: string, region?: Region) => number;
@@ -33,6 +33,7 @@ const lengthUnits: Unit[] = [
   { name: 'Yards', symbol: 'yd', info: '1yd = 0.9144 m' },
   { name: 'Feet', symbol: 'ft', info: '1ft = 0.3048 m' },
   { name: 'Inches', symbol: 'in', info: '1in = 0.0254 m' },
+  { name: 'Nautical Miles', symbol: 'nmi', info: '1nmi = 1852 m' },
   { name: 'Gaj', symbol: 'gaj', info: '1 gaj = 0.9144 m', region: 'India' },
 ];
 const lengthFactors: LinearConversionFactors = { // to meter
@@ -44,6 +45,7 @@ const lengthFactors: LinearConversionFactors = { // to meter
   'yd': 0.9144,
   'ft': 0.3048,
   'in': 0.0254,
+  'nmi': 1852,
   'gaj': 0.9144,
 };
 const lengthCategory: ConversionCategory = {
@@ -64,8 +66,10 @@ const weightUnits: Unit[] = [
     { name: 'Kilograms', symbol: 'kg', info: 'It is the standard unit' },
     { name: 'Grams', symbol: 'g', info: '1g = 0.001 kg' },
     { name: 'Milligrams', symbol: 'mg', info: '1mg = 0.000001 kg' },
+    { name: 'Metric Tonnes', symbol: 't', info: '1t = 1000 kg' },
     { name: 'Pounds', symbol: 'lb', info: '1lb = 0.453592 kg' },
     { name: 'Ounces', symbol: 'oz', info: '1oz = 0.0283495 kg' },
+    { name: 'Quintal', symbol: 'q', info: '1q = 100 kg', region: 'India' },
     { name: 'Tola', symbol: 'tola', info: '1 tola ≈ 11.6638 g', region: 'India' },
     { name: 'Ratti', symbol: 'ratti', info: '1 ratti ≈ 0.1215 g', region: 'India' },
 ];
@@ -73,8 +77,10 @@ const weightFactors: LinearConversionFactors = { // to kg
   'kg': 1,
   'g': 0.001,
   'mg': 0.000001,
+  't': 1000,
   'lb': 0.453592,
   'oz': 0.0283495,
+  'q': 100,
   'tola': 0.0116638,
   'ratti': 0.0001215,
 };
@@ -153,7 +159,98 @@ const dataCategory: ConversionCategory = {
     },
 };
 
+// --- TIME ---
+const timeUnits: Unit[] = [
+    { name: 'Seconds', symbol: 's', info: 'It is the standard unit' },
+    { name: 'Minutes', symbol: 'min', info: '1min = 60s' },
+    { name: 'Hours', symbol: 'h', info: '1h = 60min' },
+    { name: 'Days', symbol: 'd', info: '1d = 24h' },
+    { name: 'Weeks', symbol: 'wk', info: '1wk = 7d' },
+];
+const timeFactors: LinearConversionFactors = { // to seconds
+  's': 1,
+  'min': 60,
+  'h': 3600,
+  'd': 86400,
+  'wk': 604800,
+};
+const timeCategory: ConversionCategory = {
+    name: 'Time',
+    icon: Clock,
+    units: timeUnits,
+    convert: (value, from, to) => {
+        const fromFactor = timeFactors[from];
+        const toFactor = timeFactors[to];
+        if (fromFactor === undefined || toFactor === undefined) return NaN;
+        const valueInBase = value * fromFactor;
+        return valueInBase / toFactor;
+    },
+};
 
-export const conversionCategories: ConversionCategory[] = [lengthCategory, weightCategory, temperatureCategory, dataCategory];
+// --- SPEED ---
+const speedUnits: Unit[] = [
+    { name: 'Meters/second', symbol: 'm/s', info: 'It is the standard unit' },
+    { name: 'Kilometers/hour', symbol: 'km/h', info: 'Commonly used for vehicles' },
+    { name: 'Miles/hour', symbol: 'mph', info: 'Used in the US and UK' },
+    { name: 'Knots', symbol: 'kn', info: 'Used in maritime/aviation' },
+];
+const speedFactors: LinearConversionFactors = { // to m/s
+  'm/s': 1,
+  'km/h': 1 / 3.6,
+  'mph': 0.44704,
+  'kn': 0.514444,
+};
+const speedCategory: ConversionCategory = {
+    name: 'Speed',
+    icon: Zap,
+    units: speedUnits,
+    convert: (value, from, to) => {
+        const fromFactor = speedFactors[from];
+        const toFactor = speedFactors[to];
+        if (fromFactor === undefined || toFactor === undefined) return NaN;
+        const valueInBase = value * fromFactor;
+        return valueInBase / toFactor;
+    },
+};
 
-    
+// --- AREA ---
+const areaUnits: Unit[] = [
+    { name: 'Square Meters', symbol: 'm²', info: 'It is the standard unit' },
+    { name: 'Square Kilometers', symbol: 'km²', info: '1km² = 1,000,000m²' },
+    { name: 'Square Miles', symbol: 'mi²', info: '1mi² ≈ 2.59e6 m²' },
+    { name: 'Hectares', symbol: 'ha', info: '1ha = 10,000 m²' },
+    { name: 'Acres', symbol: 'acre', info: '1 acre ≈ 4046.86 m²' },
+    { name: 'Bigha', symbol: 'bigha', info: 'Varies by region', region: 'India' },
+];
+const areaFactors: LinearConversionFactors = { // to m²
+  'm²': 1,
+  'km²': 1000000,
+  'mi²': 2589988.11,
+  'ha': 10000,
+  'acre': 4046.86,
+  'bigha': 2508.38, // Note: This is an approximation for some regions.
+};
+const areaCategory: ConversionCategory = {
+    name: 'Area',
+    icon: Square,
+    units: areaUnits,
+    convert: (value, from, to, region) => {
+        // Special handling for Indian units that vary
+        let bighaFactor = areaFactors['bigha'];
+        if (from === 'bigha' || to === 'bigha') {
+            // In a real app, you might have a sub-region selector
+            // For now, we use a common (but not universal) value.
+        }
+
+        const customFactors = {...areaFactors, 'bigha': bighaFactor};
+
+        const fromFactor = customFactors[from];
+        const toFactor = customFactors[to];
+        if (fromFactor === undefined || toFactor === undefined) return NaN;
+        const valueInBase = value * fromFactor;
+        return valueInBase / toFactor;
+    },
+};
+
+
+export const conversionCategories: ConversionCategory[] = [lengthCategory, weightCategory, temperatureCategory, dataCategory, timeCategory, speedCategory, areaCategory];

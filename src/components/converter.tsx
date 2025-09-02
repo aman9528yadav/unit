@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Loader2, Search, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw } from "lucide-react";
+import { ArrowRightLeft, Loader2, Search, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square } from "lucide-react";
 import { conversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import { suggestCategory, SuggestCategoryInput } from "@/ai/flows/smart-category-suggestion";
 import { useDebounce } from "@/hooks/use-debounce";
