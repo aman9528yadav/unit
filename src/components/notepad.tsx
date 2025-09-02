@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, Search, MoreVertical, ArrowDown, Edit, Star, Trash2, RotateCcw, Home, StickyNote, CalculatorIcon, Clock, Settings, LayoutGrid, List } from 'lucide-react';
+import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -37,7 +37,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter,
   SidebarInset
 } from '@/components/ui/sidebar';
 
@@ -161,7 +160,7 @@ export function Notepad() {
     if (!isClient) {
         // Optional: render a skeleton loader
         return (
-             <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white p-4">
+             <div className="w-full max-w-md mx-auto flex flex-col text-white p-4">
                 <header className="flex items-center justify-between">
                    <div className="w-10 h-10"></div>
                     <h1 className="text-xl font-bold">All notes</h1>
@@ -174,11 +173,9 @@ export function Notepad() {
 
     return (
         <SidebarProvider>
-        <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white pb-24 h-screen bg-background">
+        <div className="w-full max-w-md mx-auto flex flex-col text-white pb-24 h-screen bg-background">
             <header className="flex items-center justify-between p-4">
-                 <SidebarTrigger>
-                    <Menu />
-                 </SidebarTrigger>
+                 <SidebarTrigger />
                 <div className='text-center'>
                     <h1 className="text-2xl font-bold">{getHeading()}</h1>
                     <p className="text-sm text-muted-foreground">{sortedNotes.length} notes</p>
@@ -300,5 +297,3 @@ export function Notepad() {
         </SidebarProvider>
     );
 }
-
-    
