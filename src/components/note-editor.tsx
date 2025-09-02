@@ -364,4 +364,3 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
-
