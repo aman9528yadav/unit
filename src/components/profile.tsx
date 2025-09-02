@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
 const menuItems = [
-  { icon: User, text: "Profile", href: "#" },
+  { icon: User, text: "Profile", href: "/profile/edit" },
   { icon: Star, text: "Favorite", href: "/history" },
   { icon: Lock, text: "Privacy Policy", href: "#" },
   { icon: Settings, text: "Settings", href: "#" },
