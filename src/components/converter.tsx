@@ -14,9 +14,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon } from "lucide-react";
 import { conversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import { parseConversionQuery } from "@/ai/flows/parse-conversion-flow";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -379,7 +385,29 @@ export function Converter() {
                           className={`cursor-pointer transition-colors ${isFavorite ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground hover:text-white'}`}
                           onClick={handleToggleFavorite}
                         />
-                        <Share2 size={20} className="text-muted-foreground cursor-pointer hover:text-white" />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Share2 size={20} className="text-muted-foreground cursor-pointer hover:text-white" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onClick={() => toast({title: "Coming soon!"})}>
+                                    <ImageIcon className="mr-2 h-4 w-4" />
+                                    <span>Export as Image</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => toast({title: "Coming soon!"})}>
+                                    <FileIcon className="mr-2 h-4 w-4" />
+                                    <span>Export as PDF</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => toast({title: "Coming soon!"})}>
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    <span>Export as TXT</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => toast({title: "Coming soon!"})}>
+                                    <Share2 className="mr-2 h-4 w-4" />
+                                    <span>Share Theme</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                      </div>
                 )}
             </div>
@@ -446,5 +474,7 @@ function InfoBox({ text }: { text: string }) {
         </div>
     )
 }
+
+    
 
     
