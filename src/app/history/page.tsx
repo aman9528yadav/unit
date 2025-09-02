@@ -3,8 +3,9 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Trash2, Clock, Star } from "lucide-react";
+import { ArrowLeft, Trash2, Clock, Star, RotateCcw } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +23,7 @@ export default function HistoryPage() {
   const [history, setHistory] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setIsClient(true);
@@ -49,6 +51,11 @@ export default function HistoryPage() {
       setFavorites(newFavorites);
       localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
     }
+  };
+
+  const handleRestore = (item: string) => {
+    localStorage.setItem("restoreConversion", item);
+    router.push("/");
   };
   
   const handleClearAll = () => {
@@ -111,6 +118,7 @@ export default function HistoryPage() {
                                <span>{item}</span>
                             </div>
                             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <RotateCcw size={16} className="cursor-pointer hover:text-white" onClick={() => handleRestore(item)} />
                                 <Trash2 size={16} className="cursor-pointer hover:text-white" onClick={() => handleDelete(item)} />
                             </div>
                           </div>
@@ -130,6 +138,7 @@ export default function HistoryPage() {
                              <span>{item}</span>
                           </div>
                           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <RotateCcw size={16} className="cursor-pointer hover:text-white" onClick={() => handleRestore(item)} />
                               <Trash2 size={16} className="cursor-pointer hover:text-white" onClick={() => handleDelete(item)} />
                           </div>
                         </div>

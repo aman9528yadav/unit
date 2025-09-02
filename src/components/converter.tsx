@@ -63,6 +63,12 @@ export function Converter() {
     if (storedFavorites) {
       setFavorites(JSON.parse(storedFavorites));
     }
+    
+    const itemToRestore = localStorage.getItem("restoreConversion");
+    if (itemToRestore) {
+      handleRestoreHistory(itemToRestore);
+      localStorage.removeItem("restoreConversion");
+    }
   }, []);
   
   const getCurrentConversionString = (value: number, from: string, to: string, result: number) => {
