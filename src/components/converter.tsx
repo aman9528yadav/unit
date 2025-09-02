@@ -619,7 +619,11 @@ export function Converter() {
               <div className="bg-card p-4 rounded-xl flex flex-col gap-3 mt-4">
                   <div className="flex justify-between items-center">
                     <h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} /> Recent Conversions</h3>
-                    <RefreshCw size={18} className="text-muted-foreground cursor-pointer hover:text-white" onClick={handleClearHistory}/>
+                     <Button variant="ghost" size="icon" asChild>
+                        <Link href="/history">
+                            <Clock />
+                        </Link>
+                     </Button>
                   </div>
                   <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                       {history.slice(0, 3).map((item, index) => (
@@ -720,3 +724,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
