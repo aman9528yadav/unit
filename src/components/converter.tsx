@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRightLeft, Loader2, Search, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square } from "lucide-react";
 import { conversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import { suggestCategory, SuggestCategoryInput } from "@/ai/flows/smart-category-suggestion";
+import { parseConversionQuery } from "@/ai/flows/parse-conversion-flow";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -27,6 +28,7 @@ const regions: Region[] = ['International', 'India'];
 
 export function Converter() {
   const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<ConversionCategory>(conversionCategories[0]);
   const [fromUnit, setFromUnit] = useState<string>(conversionCategories[0].units[0].symbol);
   const [toUnit, setToUnit] = useState<string>(conversionCategories[0].units[1].symbol);
@@ -36,8 +38,10 @@ export function Converter() {
   const [region, setRegion] = useState<Region>('International');
 
   const [isAiSuggesting, startAiSuggestion] = useTransition();
+  const [isParsingQuery, startParsingQuery] = useTransition();
 
   const debouncedInput = useDebounce<SuggestCategoryInput>({input: inputValue, conversionHistory: history}, 500);
+  const debouncedSearch = useDebounce<string>(searchQuery, 500);
 
   const currentUnits = useMemo(() => {
     return selectedCategory.units.filter(u => !u.region || u.region === region);
@@ -105,6 +109,39 @@ export function Converter() {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedInput, history]);
+  
+    useEffect(() => {
+    if (debouncedSearch.trim() === "") {
+      return;
+    }
+    
+    startParsingQuery(async () => {
+      try {
+        const result = await parseConversionQuery({ query: debouncedSearch });
+        const category = conversionCategories.find(c => c.name === result.category);
+
+        if (category) {
+          const categoryUnits = category.units.filter(u => !u.region || u.region === region);
+          const fromUnitExists = categoryUnits.some(u => u.symbol === result.fromUnit);
+          const toUnitExists = categoryUnits.some(u => u.symbol === result.toUnit);
+
+          if (fromUnitExists && toUnitExists) {
+            setSelectedCategory(category);
+            setInputValue(String(result.value));
+            setFromUnit(result.fromUnit);
+            setToUnit(result.toUnit);
+          } else {
+             toast({ title: "Could not find units in selected category", description: "Try selecting another region.", variant: "destructive" });
+          }
+        }
+      } catch (error) {
+        console.error("AI query parsing failed:", error);
+        toast({ title: "Couldn't understand that", description: "Please try a different search query.", variant: "destructive" });
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
+
 
   const handleCategoryChange = (categoryName: string) => {
     const category = conversionCategories.find(c => c.name === categoryName);
@@ -147,8 +184,12 @@ export function Converter() {
           <Input 
             className="bg-card border-gray-500 rounded-full pl-10 h-12" 
             placeholder="search here Ex. 10 km to m" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5">
+            {isParsingQuery ? <Loader2 className="animate-spin" /> : <Search />}
+          </div>
         </div>
       </header>
 
