@@ -4,8 +4,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List } from 'lucide-react';
+import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,8 +38,13 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarInset
+  SidebarInset,
+  SidebarSeparator,
+  SidebarGroup,
+  SidebarGroupLabel
 } from '@/components/ui/sidebar';
+import { useDebounce } from '@/hooks/use-debounce';
+
 
 export interface Note {
     id: string;
@@ -48,11 +54,12 @@ export interface Note {
     updatedAt:string;
     isFavorite?: boolean;
     deletedAt?: string | null;
+    category?: string;
 }
 
 export const NOTES_STORAGE_KEY = 'userNotesV2';
 
-type NoteView = 'all' | 'favorites' | 'trash';
+type NoteView = 'all' | 'favorites' | 'trash' | 'category';
 type LayoutView = 'list' | 'card';
 type SortKey = 'updatedAt' | 'createdAt' | 'title';
 
@@ -61,8 +68,13 @@ export function Notepad() {
     const [isClient, setIsClient] = useState(false);
     const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
     const [view, setView] = useState<NoteView>('all');
+    const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [layout, setLayout] = useState<LayoutView>('list');
     const [sortKey, setSortKey] = useState<SortKey>('updatedAt');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
     const { toast } = useToast();
     const router = useRouter();
     
@@ -70,7 +82,6 @@ export function Notepad() {
         setIsClient(true);
         const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
         if (savedNotes) {
-            // Cleanup expired notes from trash
             const parsedNotes: Note[] = JSON.parse(savedNotes);
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -123,11 +134,22 @@ export function Notepad() {
         updateNotes(updatedNotes);
     };
 
+    const categories = [...new Set(notes.filter(n => !n.deletedAt && n.category).map(n => n.category!))];
+
     const filteredNotes = notes.filter(note => {
-        if (view === 'all') return !note.deletedAt;
-        if (view === 'favorites') return !note.deletedAt && note.isFavorite;
-        if (view === 'trash') return !!note.deletedAt;
-        return true;
+        const matchesSearch = debouncedSearchQuery.trim() === '' || 
+                              note.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || 
+                              note.content.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+
+        if (!matchesSearch) return false;
+        
+        switch (view) {
+            case 'all': return !note.deletedAt;
+            case 'favorites': return !note.deletedAt && note.isFavorite;
+            case 'trash': return !!note.deletedAt;
+            case 'category': return !note.deletedAt && note.category === activeCategory;
+            default: return true;
+        }
     });
 
     const sortedNotes = [...filteredNotes].sort((a, b) => {
@@ -142,23 +164,32 @@ export function Notepad() {
             case 'all': return 'All Notes';
             case 'favorites': return 'Favorites';
             case 'trash': return 'Recycle Bin';
+            case 'category': return activeCategory || 'Category';
             default: return 'All Notes';
         }
     };
     
     const getEmptyState = () => {
+        if (debouncedSearchQuery && sortedNotes.length === 0) {
+            return { title: 'No results found', message: `No notes matched your search for "${debouncedSearchQuery}".` };
+        }
         switch(view) {
             case 'all': return { title: 'No Notes Yet', message: 'Click the button to create your first note.' };
             case 'favorites': return { title: 'No Favorites', message: 'Mark a note as favorite to see it here.' };
             case 'trash': return { title: 'Recycle Bin is Empty', message: 'Deleted notes will appear here.' };
+            case 'category': return { title: `No notes in ${activeCategory}`, message: 'Add a note to this category to see it here.' };
             default: return { title: 'No Notes', message: ''};
         }
+    }
+
+    const handleCategoryClick = (category: string) => {
+        setView('category');
+        setActiveCategory(category);
     }
     
     const { title: emptyTitle, message: emptyMessage } = getEmptyState();
 
     if (!isClient) {
-        // Optional: render a skeleton loader
         return (
              <div className="w-full max-w-md mx-auto flex flex-col text-white p-4">
                 <header className="flex items-center justify-between">
@@ -172,8 +203,8 @@ export function Notepad() {
     }
 
     return (
-        <SidebarProvider>
-            <div className="w-full max-w-md mx-auto text-white h-screen bg-background">
+        <div className="w-full max-w-md mx-auto text-white h-screen bg-background">
+            <SidebarProvider>
                 <Sidebar>
                     <SidebarContent>
                         <SidebarHeader>
@@ -181,29 +212,63 @@ export function Notepad() {
                         </SidebarHeader>
                         <SidebarMenu>
                             <SidebarMenuItem>
-                                <SidebarMenuButton onClick={() => setView('all')} isActive={view === 'all'}><StickyNote />All Notes</SidebarMenuButton>
+                                <SidebarMenuButton onClick={() => { setView('all'); setActiveCategory(null); }} isActive={view === 'all'}><StickyNote />All Notes</SidebarMenuButton>
                             </SidebarMenuItem>
                             <SidebarMenuItem>
-                                <SidebarMenuButton onClick={() => setView('favorites')} isActive={view === 'favorites'}><Star />Favorites</SidebarMenuButton>
+                                <SidebarMenuButton onClick={() => { setView('favorites'); setActiveCategory(null); }} isActive={view === 'favorites'}><Star />Favorites</SidebarMenuButton>
                             </SidebarMenuItem>
                             <SidebarMenuItem>
-                                <SidebarMenuButton onClick={() => setView('trash')} isActive={view === 'trash'}><Trash2/>Recycle Bin</SidebarMenuButton>
+                                <SidebarMenuButton onClick={() => { setView('trash'); setActiveCategory(null); }} isActive={view === 'trash'}><Trash2/>Recycle Bin</SidebarMenuButton>
                             </SidebarMenuItem>
                         </SidebarMenu>
+                         <SidebarSeparator />
+                         <SidebarGroup>
+                            <SidebarGroupLabel>Categories</SidebarGroupLabel>
+                            <SidebarMenu>
+                                {categories.map(cat => (
+                                    <SidebarMenuItem key={cat}>
+                                        <SidebarMenuButton onClick={() => handleCategoryClick(cat)} isActive={view === 'category' && activeCategory === cat}>
+                                            <Tag /> {cat}
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                ))}
+                            </SidebarMenu>
+                         </SidebarGroup>
                     </SidebarContent>
                 </Sidebar>
 
                 <SidebarInset className="flex flex-col pb-24">
-                    <header className="flex items-center justify-between p-4">
-                        <SidebarTrigger />
+                     <header className="flex items-center justify-between p-4">
+                        <SidebarTrigger>
+                           <Menu/>
+                        </SidebarTrigger>
                         <div className='text-center'>
-                            <h1 className="text-2xl font-bold">{getHeading()}</h1>
-                            <p className="text-sm text-muted-foreground">{sortedNotes.length} notes</p>
+                             {isSearchVisible ? (
+                                <div className="flex items-center gap-2">
+                                    <Search className="text-muted-foreground" />
+                                    <Input 
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Search notes..."
+                                        className="w-full bg-transparent border-none focus:ring-0"
+                                        autoFocus
+                                    />
+                                    <Button variant="ghost" size="icon" onClick={() => {setIsSearchVisible(false); setSearchQuery('');}}><X/></Button>
+                                </div>
+                            ) : (
+                                <>
+                                    <h1 className="text-2xl font-bold">{getHeading()}</h1>
+                                    <p className="text-sm text-muted-foreground">{sortedNotes.length} notes</p>
+                                </>
+                            )}
                         </div>
                         <div className="flex items-center">
-                            <Button variant="ghost" size="icon">
-                                <Search />
-                            </Button>
+                            {!isSearchVisible && (
+                                <Button variant="ghost" size="icon" onClick={() => setIsSearchVisible(true)}>
+                                    <Search />
+                                </Button>
+                            )}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon">
@@ -232,15 +297,21 @@ export function Notepad() {
                             <ul className={layout === 'list' ? "divide-y divide-border" : "grid grid-cols-2 gap-4"}>
                                 {sortedNotes.map(note => (
                                     <li key={note.id} className={layout === 'list' ? 'cursor-pointer group' : 'bg-card p-4 rounded-lg cursor-pointer group'}>
-                                        <div onClick={() => router.push(`/notes/edit/${note.id}`)} className={layout === 'list' ? 'py-4' : ''}>
-                                            <h2 className="font-semibold truncate">{note.title || 'Untitled Note'}</h2>
+                                        <div onClick={() => router.push(`/notes/edit/${note.id}`)} className={layout === 'list' ? '' : ''}>
+                                            <div className="flex items-center justify-between">
+                                                <h2 className="font-semibold truncate">{note.title || 'Untitled Note'}</h2>
+                                                {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
+                                            </div>
                                             <p className="text-sm text-muted-foreground truncate h-10">{note.content || 'No content'}</p>
-                                            <p className="text-xs text-muted-foreground mt-2">
-                                                {format(new Date(note.updatedAt), "d MMM yyyy")}
-                                                {note.deletedAt && ` (in bin for ${formatDistanceToNow(new Date(note.deletedAt))})`}
-                                            </p>
+                                            <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
+                                                <span>{format(new Date(note.updatedAt), "d MMM yyyy")}</span>
+                                                {note.category && <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full">{note.category}</span>}
+                                            </div>
+                                             {note.deletedAt && (
+                                                <p className="text-xs text-destructive mt-1">In bin for {formatDistanceToNow(new Date(note.deletedAt))}</p>
+                                             )}
                                         </div>
-                                        <div className="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex items-center justify-end gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                             {view === 'trash' ? (
                                                 <>
                                                     <Button size="sm" variant="ghost" onClick={() => handleRestore(note.id)}><RotateCcw size={16} /> Restore</Button>
@@ -266,33 +337,32 @@ export function Notepad() {
                             </div>
                         )}
                     </div>
+                    <Link href="/notes/edit/new" passHref>
+                        <Button className="fixed bottom-8 right-1/2 translate-x-1/2 sm:right-8 sm:translate-x-0 w-16 h-16 rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90">
+                            <Edit size={24} />
+                        </Button>
+                    </Link>
+                    <AlertDialog open={!!noteToDelete}>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete the note. This action cannot be undone.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => setNoteToDelete(null)}>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => {
+                                    if(noteToDelete) handlePermanentDelete(noteToDelete);
+                                    setNoteToDelete(null);
+                                }}>
+                                    Delete Permanently
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </SidebarInset>
-                
-                <Link href="/notes/edit/new" passHref>
-                    <Button className="fixed bottom-8 right-1/2 translate-x-1/2 sm:right-8 sm:translate-x-0 w-16 h-16 rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90">
-                        <Edit size={24} />
-                    </Button>
-                </Link>
-                <AlertDialog open={!!noteToDelete}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This will permanently delete the note. This action cannot be undone.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setNoteToDelete(null)}>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => {
-                                if(noteToDelete) handlePermanentDelete(noteToDelete);
-                                setNoteToDelete(null);
-                            }}>
-                                Delete Permanently
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            </div>
-        </SidebarProvider>
+            </SidebarProvider>
+        </div>
     );
 }

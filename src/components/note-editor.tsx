@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Star, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Star, Trash2, Bold, Italic, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import { Note, NOTES_STORAGE_KEY } from './notepad';
 export function NoteEditor({ noteId }: { noteId: string }) {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
+    const [category, setCategory] = useState('');
     const [isFavorite, setIsFavorite] = useState(false);
     const [isClient, setIsClient] = useState(false);
     const router = useRouter();
@@ -34,6 +35,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     setTitle(noteToEdit.title);
                     setContent(noteToEdit.content);
                     setIsFavorite(noteToEdit.isFavorite || false);
+                    setCategory(noteToEdit.category || '');
                 } else {
                     // Note not found, redirect
                     toast({ title: "Note not found", variant: "destructive" });
@@ -63,6 +65,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 title,
                 content,
                 isFavorite,
+                category,
                 createdAt: now,
                 updatedAt: now,
                 deletedAt: null
@@ -76,6 +79,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     title,
                     content,
                     isFavorite,
+                    category,
                     updatedAt: now,
                 };
             }
@@ -100,6 +104,18 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         router.push('/notes');
     };
 
+    const applyFormat = (formatType: 'bold' | 'italic' | 'list') => {
+        // This is a simplified implementation. A real app would use a proper editor library.
+        let newContent = content;
+        if (formatType === 'bold') {
+            newContent += `**bold text**`;
+        } else if (formatType === 'italic') {
+            newContent += `*italic text*`;
+        } else if (formatType === 'list') {
+            newContent += `\n- List item`;
+        }
+        setContent(newContent);
+    };
 
     if (!isClient) {
         return null; // Or a loading skeleton
@@ -136,15 +152,24 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     placeholder="Note title..."
                     className="w-full bg-background border-none text-lg font-bold focus-visible:ring-0"
                 />
+                 <Input
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    placeholder="Category (e.g., Work, Personal)..."
+                    className="w-full bg-background border-none text-sm focus-visible:ring-0"
+                />
+                <div className="flex items-center gap-2 border-b border-border pb-2">
+                    <Button variant="ghost" size="icon" onClick={() => applyFormat('bold')}><Bold /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => applyFormat('italic')}><Italic /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => applyFormat('list')}><List /></Button>
+                </div>
                 <Textarea
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="Start typing your note here..."
-                    className="w-full h-full min-h-[60vh] bg-background border-none resize-none focus-visible:ring-0 text-base"
+                    className="w-full h-full min-h-[50vh] bg-transparent border-none resize-none focus-visible:ring-0 text-base"
                 />
             </div>
         </div>
     );
 }
-
-    
