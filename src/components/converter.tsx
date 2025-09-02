@@ -36,7 +36,6 @@ export function Converter() {
   const [region, setRegion] = useState<Region>('International');
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResult, setSearchResult] = useState<string | null>(null);
   const [isSearching, startSearchTransition] = useTransition();
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -90,7 +89,6 @@ export function Converter() {
   
   useEffect(() => {
     if (debouncedSearchQuery.trim() === "") {
-      setSearchResult(null);
       return;
     }
 
@@ -100,23 +98,29 @@ export function Converter() {
         const category = conversionCategories.find(c => c.name === parsed.category);
 
         if (category) {
-          const result = category.convert(parsed.value, parsed.fromUnit, parsed.toUnit);
-          if (!isNaN(result)) {
-            const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
-            setSearchResult(`${parsed.value} ${parsed.fromUnit} = ${formattedResult} ${parsed.toUnit}`);
+          const categoryUnits = category.units.filter(u => !u.region || u.region === region);
+          const fromUnitExists = categoryUnits.some(u => u.symbol === parsed.fromUnit);
+          const toUnitExists = categoryUnits.some(u => u.symbol === parsed.toUnit);
+
+          if (fromUnitExists && toUnitExists) {
+            setSelectedCategory(category);
+            setFromUnit(parsed.fromUnit);
+            setToUnit(parsed.toUnit);
+            setInputValue(String(parsed.value));
+            setSearchQuery(""); // Clear search
           } else {
-            setSearchResult("Could not perform conversion.");
+             toast({ title: "Cannot perform conversion", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive"});
           }
         } else {
-          setSearchResult("Could not find a matching category.");
+          toast({ title: "Cannot perform conversion", description: "Could not determine the conversion category.", variant: "destructive"});
         }
       } catch (error) {
         console.error("Search conversion failed:", error);
-        setSearchResult("Invalid search query.");
+        toast({ title: "Invalid Search", description: "The search query could not be understood.", variant: "destructive"});
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearchQuery]);
+  }, [debouncedSearchQuery, region]);
 
   const handleCategoryChange = (categoryName: string) => {
     const category = conversionCategories.find(c => c.name === categoryName);
@@ -206,12 +210,6 @@ export function Converter() {
         {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />}
       </div>
       
-      {searchResult && (
-        <div className="bg-card p-4 rounded-xl text-center">
-            <p className="text-lg font-medium">{searchResult}</p>
-        </div>
-      )}
-
 
       <div className="bg-card p-4 rounded-xl flex flex-col gap-4">
         <h2 className="font-bold text-lg">Quick Convert</h2>
