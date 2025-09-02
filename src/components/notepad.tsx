@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Home, Plus, Edit, Trash2, StickyNote } from 'lucide-react';
+import { Home, Plus, Edit, Trash2, StickyNote, CalculatorIcon, Settings, Search, Bell, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -69,15 +69,40 @@ export function Notepad() {
 
     return (
         <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white pb-24">
-            <header className="flex items-center justify-between">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/">
-                        <Home />
+            <header className="flex justify-between items-center">
+                <div>
+                <h1 className="text-2xl font-bold">Hi, Aman</h1>
+                <p className="text-muted-foreground">Welcome to your Notes</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon"><Search /></Button>
+                    <Button variant="ghost" size="icon"><Bell /></Button>
+                    <Button variant="ghost" size="icon" asChild>
+                    <Link href="/profile">
+                        <User />
                     </Link>
-                </Button>
-                <h1 className="text-xl font-bold">My Notes</h1>
-                <div className="w-10"></div>
+                    </Button>
+                </div>
             </header>
+
+            <div className="grid grid-cols-4 gap-4 text-center">
+                <Link href="/" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
+                    <Home />
+                    <span className="text-xs font-medium">Dashboard</span>
+                </Link>
+                <Link href="/notes" className="flex flex-col items-center gap-2 p-2 rounded-lg bg-accent/20 border-accent border text-accent">
+                    <StickyNote />
+                    <span className="text-xs font-medium">Notes</span>
+                </Link>
+                <Link href="/converter" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
+                    <CalculatorIcon />
+                    <span className="text-xs font-medium">Converter</span>
+                </Link>
+                <div className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
+                    <Settings />
+                    <span className="text-xs font-medium">Setting</span>
+                </div>
+            </div>
 
             {notes.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4">

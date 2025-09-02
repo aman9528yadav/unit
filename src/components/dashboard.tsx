@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
-import { ArrowRight, LayoutDashboard, Calculator, Pencil, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, Home, StickyNote } from "lucide-react";
+import { ArrowRight, LayoutDashboard, Calculator, Pencil, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, Home, StickyNote, CalculatorIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { getTodaysCalculations, getWeeklyCalculations } from "@/lib/utils";
@@ -71,7 +71,7 @@ export function Dashboard() {
             <span className="text-xs font-medium">Notes</span>
         </Link>
         <Link href="/converter" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
-            <Calculator />
+            <CalculatorIcon />
             <span className="text-xs font-medium">Converter</span>
         </Link>
          <div className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">

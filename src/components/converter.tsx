@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User } from "lucide-react";
 import { conversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import { parseConversionQuery, ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow";
 import { useToast } from "@/hooks/use-toast";
@@ -91,6 +91,7 @@ export function Converter() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isSearching, startSearchTransition] = React.useTransition();
   const [isOnline, setIsOnline] = useState(true);
+  const [parsedQuery, setParsedQuery] = useState<ParseConversionQueryOutput | null>(null);
 
   const imageExportRef = React.useRef<HTMLDivElement>(null);
 
@@ -174,6 +175,30 @@ export function Converter() {
     performConversion();
   }, [performConversion]);
   
+  // This effect runs after a search query has been parsed and state has been set.
+  useEffect(() => {
+      if (parsedQuery) {
+          const category = conversionCategories.find(c => c.name === parsedQuery.category);
+          if (category) {
+              const categoryUnits = category.units.filter(u => !u.region || u.region === region);
+              const fromUnitExists = categoryUnits.some(u => u.symbol === parsedQuery.fromUnit);
+              const toUnitExists = categoryUnits.some(u => u.symbol === parsedQuery.toUnit);
+
+              if (fromUnitExists && toUnitExists) {
+                  setSelectedCategory(category);
+                  setFromUnit(parsedQuery.fromUnit);
+                  setToUnit(parsedQuery.toUnit);
+                  setInputValue(String(parsedQuery.value));
+                  setSearchQuery(""); // Clear search
+              } else {
+                  toast({ title: "Cannot perform conversion", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive" });
+              }
+          } else {
+              toast({ title: "Cannot perform conversion", description: "Could not determine the conversion category.", variant: "destructive" });
+          }
+          setParsedQuery(null); // Reset parsed query
+      }
+  }, [parsedQuery, region, toast]);
 
   // Update favorite status whenever output or favorites list change
   React.useEffect(() => {
@@ -218,24 +243,7 @@ export function Converter() {
             }
 
             if (parsed) {
-                const category = conversionCategories.find(c => c.name === parsed!.category);
-                if (category) {
-                    const categoryUnits = category.units.filter(u => !u.region || u.region === region);
-                    const fromUnitExists = categoryUnits.some(u => u.symbol === parsed!.fromUnit);
-                    const toUnitExists = categoryUnits.some(u => u.symbol === parsed!.toUnit);
-
-                    if (fromUnitExists && toUnitExists) {
-                        setSelectedCategory(category);
-                        setFromUnit(parsed.fromUnit);
-                        setToUnit(parsed.toUnit);
-                        setInputValue(String(parsed.value));
-                        setSearchQuery(""); // Clear search
-                    } else {
-                        toast({ title: "Cannot perform conversion", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive" });
-                    }
-                } else {
-                    toast({ title: "Cannot perform conversion", description: "Could not determine the conversion category.", variant: "destructive" });
-                }
+                setParsedQuery(parsed);
             } else {
                  toast({ title: "Invalid Search", description: "The search query could not be understood.", variant: "destructive" });
             }
@@ -420,21 +428,40 @@ export function Converter() {
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white">
-      <header className="flex flex-col gap-4">
-        <div className="flex justify-between items-center">
-             <Button variant="ghost" size="icon" asChild>
-                <Link href="/">
-                  <Home />
-                </Link>
-              </Button>
-            <h1 className="text-xl font-bold">UniConvert</h1>
+      <header className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">Hi, Aman</h1>
+          <p className="text-muted-foreground">Welcome to the Converter</p>
+        </div>
+        <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon"><Search /></Button>
+            <Button variant="ghost" size="icon"><Bell /></Button>
             <Button variant="ghost" size="icon" asChild>
-                <Link href="/history">
-                  <Clock />
-                </Link>
-              </Button>
+              <Link href="/profile">
+                <User />
+              </Link>
+            </Button>
         </div>
       </header>
+
+      <div className="grid grid-cols-4 gap-4 text-center">
+        <Link href="/" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
+            <Home />
+            <span className="text-xs font-medium">Dashboard</span>
+        </Link>
+         <Link href="/notes" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
+            <StickyNote />
+            <span className="text-xs font-medium">Notes</span>
+        </Link>
+        <Link href="/converter" className="flex flex-col items-center gap-2 p-2 rounded-lg bg-accent/20 border-accent border text-accent">
+            <CalculatorIcon />
+            <span className="text-xs font-medium">Converter</span>
+        </Link>
+         <div className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
+            <Settings />
+            <span className="text-xs font-medium">Setting</span>
+        </div>
+      </div>
       
       {/* Element to be captured for image export */}
       <div className="absolute -left-[9999px] -top-[9999px]">
@@ -480,8 +507,14 @@ export function Converter() {
           
     
           <div className="bg-card p-4 rounded-xl flex flex-col gap-4 mt-4">
-            <h2 className="font-bold text-lg">Quick Convert</h2>
-            <p className="text-sm text-muted-foreground -mt-2">Enter a value, choose units, and click convert.</p>
+            <div className="flex justify-between items-center">
+              <h2 className="font-bold text-lg">Quick Convert</h2>
+              <Button variant="ghost" size="icon" asChild>
+                <Link href="/history">
+                  <Clock />
+                </Link>
+              </Button>
+            </div>
             
             <div className="grid grid-cols-2 gap-4">
                 <div>
