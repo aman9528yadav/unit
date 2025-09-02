@@ -21,9 +21,9 @@ import { format } from "date-fns";
 const menuItems = [
   { icon: User, text: "Profile", href: "/profile/edit" },
   { icon: Star, text: "Favorite", href: "/history" },
-  { icon: Lock, text: "Privacy Policy", href: "#" },
+  { icon: Lock, text: "Privacy Policy", href: "/privacy-policy" },
   { icon: Settings, text: "Settings", href: "#" },
-  { icon: HelpCircle, text: "Help", href: "#" },
+  { icon: HelpCircle, text: "Help", href: "/help" },
   { icon: LogOut, text: "Logout", href: "#" },
 ];
 
