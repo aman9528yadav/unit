@@ -12,6 +12,7 @@ import {
   Settings,
   HelpCircle,
   LogOut,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -47,6 +48,15 @@ export function Profile() {
               className="rounded-full border-4 border-white"
               data-ai-hint="profile picture"
             />
+            <Link href="/profile/edit">
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute bottom-0 right-0 rounded-full w-8 h-8 bg-yellow-400 border-yellow-400 hover:bg-yellow-500"
+              >
+                <Pencil className="w-4 h-4 text-black" />
+              </Button>
+            </Link>
           </div>
           <h2 className="text-2xl font-bold mt-2">Aman Yadav</h2>
           <p className="text-sm">aman@example.com</p>
