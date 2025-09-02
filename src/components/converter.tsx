@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo, useTransition } from "react";
@@ -85,7 +84,21 @@ export function Converter() {
     setFromUnit(currentUnits[0].symbol);
     setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
     setInputValue("1");
-  }, [selectedCategory, currentUnits, region]);
+    setOutputValue("");
+  }, [selectedCategory, region]);
+
+  useEffect(() => {
+    const numValue = parseFloat(inputValue);
+     if (isNaN(numValue) || !outputValue) {
+      setIsFavorite(false);
+      return
+    };
+
+    const result = parseFloat(outputValue.replace(/,/g, ''));
+    const conversionString = getCurrentConversionString(numValue, fromUnit, toUnit, result);
+    setIsFavorite(favorites.includes(conversionString));
+  }, [inputValue, fromUnit, toUnit, outputValue, favorites]);
+
   
   const performConversion = (value?: number, from?: string, to?: string) => {
       const numValue = value ?? parseFloat(inputValue);
@@ -120,15 +133,6 @@ export function Converter() {
       setIsFavorite(favorites.includes(conversionString));
     };
 
-  useEffect(() => {
-    if(inputValue) {
-      performConversion();
-    } else {
-      setOutputValue("");
-      setIsFavorite(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inputValue, fromUnit, toUnit, selectedCategory, region, favorites]);
   
   useEffect(() => {
     if (debouncedSearchQuery.trim() === "") {
@@ -150,6 +154,7 @@ export function Converter() {
             setFromUnit(parsed.fromUnit);
             setToUnit(parsed.toUnit);
             setInputValue(String(parsed.value));
+            performConversion(parsed.value, parsed.fromUnit, parsed.toUnit);
             setSearchQuery(""); // Clear search
           } else {
              toast({ title: "Cannot perform conversion", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive"});
@@ -303,7 +308,7 @@ export function Converter() {
     
           <div className="bg-card p-4 rounded-xl flex flex-col gap-4 mt-4">
             <h2 className="font-bold text-lg">Quick Convert</h2>
-            <p className="text-sm text-muted-foreground -mt-2">Enter a value and choose units. Converts automatically.</p>
+            <p className="text-sm text-muted-foreground -mt-2">Enter a value, choose units, and click convert.</p>
             
             <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -441,3 +446,5 @@ function InfoBox({ text }: { text: string }) {
         </div>
     )
 }
+
+    
