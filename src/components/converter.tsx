@@ -394,9 +394,10 @@ export function Converter() {
               placeholder="Search e.g., '10 km to m'"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              disabled={isSearching}
               className="bg-card h-12 text-base pl-10 pr-10"
             />
-            {isSearching && <Loader2 className="absolute right-3 top-1/2-translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />}
+            {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />}
           </div>
           
     
