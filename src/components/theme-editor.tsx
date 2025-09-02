@@ -7,6 +7,7 @@ import { ArrowLeft, RefreshCw, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme, type CustomTheme } from '@/context/theme-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
 
 const themeProperties: { id: keyof CustomTheme['colors'], name: string }[] = [
     { id: 'background', name: 'Background' },
@@ -26,8 +27,9 @@ const themeProperties: { id: keyof CustomTheme['colors'], name: string }[] = [
 
 
 export function ThemeEditor() {
-    const { customTheme, setCustomTheme, resetCustomTheme } = useTheme();
-    const [localTheme, setLocalTheme] = useState<CustomTheme['colors']>(customTheme?.colors || {});
+    const { customTheme, setCustomTheme, resetCustomTheme, theme, setTheme } = useTheme();
+    const [localTheme, setLocalTheme] = useState<CustomTheme['colors']>({});
+    const { toast } = useToast();
 
     useEffect(() => {
         setLocalTheme(customTheme?.colors || {});
@@ -37,6 +39,11 @@ export function ThemeEditor() {
         const updatedColors = { ...localTheme, [prop]: value };
         setLocalTheme(updatedColors);
         setCustomTheme({ name: 'custom', colors: updatedColors });
+    };
+
+    const handleReset = () => {
+        resetCustomTheme();
+        toast({ title: 'Theme Reset', description: 'Custom colors have been reset to default.' });
     };
 
     return (
@@ -50,7 +57,7 @@ export function ThemeEditor() {
                     </Link>
                     <h1 className="text-xl font-bold">Theme Editor</h1>
                 </div>
-                <Button variant="ghost" size="icon" onClick={resetCustomTheme}>
+                <Button variant="ghost" size="icon" onClick={handleReset}>
                     <RefreshCw />
                 </Button>
             </header>
@@ -72,8 +79,7 @@ export function ThemeEditor() {
                                             id={id}
                                             value={localTheme[id] || '#000000'}
                                             onChange={(e) => handleColorChange(id, e.target.value)}
-                                            className="w-8 h-8 border-none cursor-pointer"
-                                            style={{ backgroundColor: 'transparent' }}
+                                            className="w-8 h-8 border-none cursor-pointer bg-transparent"
                                         />
                                         <span className="text-sm text-muted-foreground uppercase">{localTheme[id]}</span>
                                     </div>

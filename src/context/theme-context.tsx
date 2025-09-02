@@ -5,30 +5,31 @@ import React, { createContext, useState, useContext, useEffect, useCallback } fr
 
 type Theme = 'light' | 'dark' | 'custom';
 
+type CustomColors = {
+    background?: string;
+    foreground?: string;
+    card?: string;
+    cardForeground?: string;
+    popover?: string;
+    popoverForeground?: string;
+    primary?: string;
+    primaryForeground?: string;
+    secondary?: string;
+    secondaryForeground?: string;
+    muted?: string;
+    mutedForeground?: string;
+    accent?: string;
+    accentForeground?: string;
+    destructive?: string;
+    destructiveForeground?: string;
+    border?: string;
+    input?: string;
+    ring?: string;
+    [key: string]: string | undefined;
+}
 export interface CustomTheme {
     name: 'custom';
-    colors: {
-        background?: string;
-        foreground?: string;
-        card?: string;
-        cardForeground?: string;
-        popover?: string;
-        popoverForeground?: string;
-        primary?: string;
-        primaryForeground?: string;
-        secondary?: string;
-        secondaryForeground?: string;
-        muted?: string;
-        mutedForeground?: string;
-        accent?: string;
-        accentForeground?: string;
-        destructive?: string;
-        destructiveForeground?: string;
-        border?: string;
-        input?: string;
-        ring?: string;
-        [key: string]: string | undefined;
-    }
+    colors: CustomColors;
 }
 
 interface ThemeContextType {
@@ -40,51 +41,6 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-const defaultThemes = {
-    light: {
-        '--background': '204 10% 96.1%',
-        '--foreground': '222.2 84% 4.9%',
-        '--card': '0 0% 100%',
-        '--card-foreground': '222.2 84% 4.9%',
-        '--popover': '0 0% 100%',
-        '--popover-foreground': '222.2 84% 4.9%',
-        '--primary': '210 100% 56%',
-        '--primary-foreground': '210 40% 98%',
-        '--secondary': '210 40% 96.1%',
-        '--secondary-foreground': '222.2 84% 4.9%',
-        '--muted': '210 40% 96.1%',
-        '--muted-foreground': '215.4 16.3% 46.9%',
-        '--accent': '49 95% 59%',
-        '--accent-foreground': '224 71% 4%',
-        '--destructive': '0 84.2% 60.2%',
-        '--destructive-foreground': '210 40% 98%',
-        '--border': '214.3 31.8% 91.4%',
-        '--input': '214.3 31.8% 91.4%',
-        '--ring': '210 100% 56%',
-    },
-    dark: {
-        '--background': '224 71% 4%',
-        '--foreground': '210 40% 98%',
-        '--card': '222 47% 11%',
-        '--card-foreground': '210 40% 98%',
-        '--popover': '224 71% 4%',
-        '--popover-foreground': '210 40% 98%',
-        '--primary': '210 100% 56%',
-        '--primary-foreground': '210 40% 98%',
-        '--secondary': '217.2 32.6% 17.5%',
-        '--secondary-foreground': '210 40% 98%',
-        '--muted': '217.2 32.6% 17.5%',
-        '--muted-foreground': '215 20.2% 65.1%',
-        '--accent': '49 95% 59%',
-        '--accent-foreground': '224 71% 4%',
-        '--destructive': '0 62.8% 30.6%',
-        '--destructive-foreground': '0 0% 98%',
-        '--border': '217.2 32.6% 17.5%',
-        '--input': '217.2 32.6% 17.5%',
-        '--ring': '210 100% 56%',
-    }
-};
 
 function hexToHsl(hex: string): string {
     hex = hex.replace('#', '');
@@ -116,7 +72,7 @@ function hexToHsl(hex: string): string {
 
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>('dark');
+  const [theme, setThemeState] = useState<Theme>('dark');
   const [lastNonCustomTheme, setLastNonCustomTheme] = useState< 'light' | 'dark'>('dark');
   const [customTheme, setCustomThemeState] = useState<CustomTheme | null>(null);
 
@@ -127,13 +83,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
     
-    setTheme(initialTheme);
+    setThemeState(initialTheme);
     if(initialTheme !== 'custom') {
         setLastNonCustomTheme(initialTheme);
     }
 
     if (savedCustomTheme) {
-      setCustomThemeState(JSON.parse(savedCustomTheme));
+      try {
+        setCustomThemeState(JSON.parse(savedCustomTheme));
+      } catch (e) {
+        console.error("Failed to parse custom theme from localStorage", e);
+        setCustomThemeState(null);
+      }
     }
   }, []);
 
@@ -141,53 +102,67 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');
 
+    const colorProperties: (keyof CustomColors)[] = [
+        'background', 'foreground', 'card', 'cardForeground', 'popover', 
+        'popoverForeground', 'primary', 'primaryForeground', 'secondary', 
+        'secondaryForeground', 'muted', 'mutedForeground', 'accent', 
+        'accentForeground', 'destructive', 'destructiveForeground', 'border', 
+        'input', 'ring'
+    ];
+    
+    // Clear any existing custom styles first
+    colorProperties.forEach(prop => {
+        const cssVarName = `--${prop.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+        root.style.removeProperty(cssVarName);
+    });
+
     if (themeToApply === 'custom' && customThemeToApply) {
-        root.classList.add('custom-theme');
+        root.classList.add(lastNonCustomTheme); // Apply base theme for properties not in custom
+        
         Object.entries(customThemeToApply.colors).forEach(([key, value]) => {
-            if (value && key in defaultThemes.dark) {
+            if (value) {
                 const cssVarName = `--${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
                 root.style.setProperty(cssVarName, hexToHsl(value));
             }
         });
     } else {
         root.classList.add(themeToApply);
-        // Clear custom styles
-        Object.keys(defaultThemes.dark).forEach(key => {
-             root.style.removeProperty(key);
-        });
     }
-
-    localStorage.setItem('theme', themeToApply);
-  }, []);
+  }, [lastNonCustomTheme]);
   
   useEffect(() => {
       applyTheme(theme, customTheme);
   }, [theme, customTheme, applyTheme]);
 
-  const handleSetTheme = (newTheme: Theme) => {
-    setTheme(newTheme);
+  const setTheme = (newTheme: Theme) => {
+    setThemeState(newTheme);
     if (newTheme !== 'custom') {
       setLastNonCustomTheme(newTheme);
     }
+    localStorage.setItem('theme', newTheme);
   };
 
-  const handleSetCustomTheme = (newCustomTheme: CustomTheme | null) => {
+  const setCustomTheme = (newCustomTheme: CustomTheme | null) => {
     setCustomThemeState(newCustomTheme);
     if (newCustomTheme) {
+      localStorage.setItem('customTheme', JSON.stringify(newCustomTheme));
+      if (theme !== 'custom') {
         setTheme('custom');
-        localStorage.setItem('customTheme', JSON.stringify(newCustomTheme));
+      }
     }
   };
 
   const resetCustomTheme = () => {
-    setTheme(lastNonCustomTheme);
     localStorage.removeItem('customTheme');
     setCustomThemeState(null);
+    if (theme === 'custom') {
+      setTheme(lastNonCustomTheme);
+    }
   };
   
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme, customTheme, setCustomTheme: handleSetCustomTheme, resetCustomTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, customTheme, setCustomTheme, resetCustomTheme }}>
       {children}
     </ThemeContext.Provider>
   );
