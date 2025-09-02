@@ -3,18 +3,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronRight } from "lucide-react";
-
-const settingsItems = [
-  { text: "About UniConvert", href: "#" },
-  { text: "Sync with Samsung Cloud", href: "#" },
-  { text: "Import notes", href: "#" },
-  { text: "Export notes", href: "#" },
-  { text: "Sort", href: "#" },
-  { text: "Style of new notes", href: "#" },
-  { text: "Customize toolbar", href: "#" },
-];
-
+import { ArrowLeft } from "lucide-react";
 
 export function Settings() {
   return (
@@ -27,21 +16,6 @@ export function Settings() {
         </Link>
         <h1 className="text-xl font-bold">Settings</h1>
       </header>
-       <nav className="flex-grow">
-        <ul className="space-y-2">
-          {settingsItems.map((item, index) => (
-            <li key={index}>
-              <Link href={item.href}>
-                <div className="flex items-center p-3 rounded-lg hover:bg-card transition-colors">
-                  <span className="font-medium">{item.text}</span>
-                  <ChevronRight className="ml-auto w-5 h-5 text-muted-foreground" />
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
     </div>
   );
 }
-
