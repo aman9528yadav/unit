@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Star, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, ListTodo, Code2, Paperclip, Smile, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Save, Star, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, ListTodo, Code2, Paperclip, Smile, Image as ImageIcon, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -130,6 +130,11 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             reader.readAsDataURL(file);
         }
     };
+
+    const handleRemoveImage = () => {
+        setAttachment(null);
+        toast({ title: "Image removed."});
+    }
     
     const showComingSoonToast = () => {
         toast({ title: "Feature Coming Soon!", description: "This functionality is currently under development."});
@@ -247,8 +252,11 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
                 </div>
                 {attachment && (
-                    <div className="relative w-full h-48">
+                    <div className="relative w-full h-48 group">
                         <Image src={attachment} alt="Note attachment" layout="fill" objectFit="contain" className="rounded-md" />
+                        <Button variant="destructive" size="icon" className="absolute top-2 right-2 w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={handleRemoveImage}>
+                           <X size={16}/>
+                        </Button>
                     </div>
                 )}
                 <Textarea
@@ -266,4 +274,5 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             </div>
         </div>
     );
-}
+
+    
