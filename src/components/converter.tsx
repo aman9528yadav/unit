@@ -299,6 +299,28 @@ export function Converter() {
     }
   };
 
+  const handleExportAsTxt = () => {
+    const numValue = parseFloat(inputValue);
+    if (isNaN(numValue) || !outputValue) {
+      toast({ title: "Nothing to export", description: "Please perform a conversion first.", variant: "destructive" });
+      return;
+    }
+    const result = parseFloat(outputValue.replace(/,/g, ''));
+    const conversionString = getCurrentConversionString(numValue, fromUnit, toUnit, result);
+    
+    const blob = new Blob([conversionString], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `conversion-${numValue}${fromUnit}-to-${toUnit}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast({ title: "Exported as TXT!" });
+  };
+
+
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white">
       <header className="flex flex-col gap-4">
@@ -422,7 +444,7 @@ export function Converter() {
                                     <FileIcon className="mr-2 h-4 w-4" />
                                     <span>Export as PDF</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => toast({title: "Export not available yet"})}>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleExportAsTxt}>
                                     <FileText className="mr-2 h-4 w-4" />
                                     <span>Export as TXT</span>
                                 </DropdownMenuItem>
@@ -502,3 +524,4 @@ function InfoBox({ text }: { text: string }) {
     
 
     
+
