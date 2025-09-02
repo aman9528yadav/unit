@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Trash2, Edit, FolderPlus, Tag } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit, FolderPlus, Tag, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -75,6 +75,27 @@ export function CustomUnitManager() {
         ...baseConversionCategories.filter(c => c.name !== 'Temperature').map(c => c.name),
         ...categories.map(c => c.name)
     ];
+
+    const getBaseUnitForCategory = (categoryName: string) => {
+        const customCat = categories.find(c => c.name === categoryName);
+        if (customCat) {
+            return { name: customCat.baseUnitName, symbol: customCat.baseUnitSymbol };
+        }
+        const baseCat = baseConversionCategories.find(c => c.name === categoryName);
+        if (baseCat && baseCat.factors) {
+            const baseUnitSymbol = Object.keys(baseCat.factors).find(key => baseCat.factors![key] === 1);
+            const baseUnit = baseCat.units.find(u => u.symbol === baseUnitSymbol);
+            if (baseUnit) {
+                 return { name: baseUnit.name, symbol: baseUnit.symbol };
+            }
+        }
+        return null;
+    }
+    
+    const baseUnitForNewUnit = useMemo(() => {
+        if (!newUnit.category) return null;
+        return getBaseUnitForCategory(newUnit.category);
+    }, [newUnit.category, categories]);
 
 
     const updateStoredUnits = (updatedUnits: CustomUnit[]) => {
@@ -249,10 +270,16 @@ export function CustomUnitManager() {
                                     <Label htmlFor="factor" className="text-right">Factor</Label>
                                     <Input id="factor" type="number" placeholder="e.g., 201.168" className="col-span-3" value={newUnit.factor} onChange={(e) => handleInputChange('factor', e.target.value)} />
                                 </div>
-                                 <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label className="text-right col-span-1"></Label>
-                                    <p className="col-span-3 text-sm text-muted-foreground">This factor is relative to the base unit of the selected category (e.g., for Length, the base is Meters).</p>
-                                </div>
+                                {baseUnitForNewUnit && (
+                                     <div className="grid grid-cols-4 items-center gap-4">
+                                        <div className="col-start-2 col-span-3 flex items-start gap-2 text-sm text-muted-foreground bg-secondary p-2 rounded-md">
+                                            <Info size={16} className="text-accent flex-shrink-0 mt-0.5" />
+                                            <span>
+                                                Factor is relative to the base unit: <strong>{baseUnitForNewUnit.name} ({baseUnitForNewUnit.symbol})</strong>.
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <DialogFooter>
                                 <Button type="submit" onClick={handleAddUnit}>Add Unit</Button>
@@ -362,5 +389,3 @@ export function CustomUnitManager() {
         </div>
     );
 }
-
-    
