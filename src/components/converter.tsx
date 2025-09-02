@@ -230,14 +230,16 @@ export function Converter() {
   };
 
   React.useEffect(() => {
-    // Reset inputs when category changes
-    setFromUnit(currentUnits[0].symbol);
-    setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
-    setInputValue("1");
+    // Reset inputs when category changes, only if there are units available.
+    if (currentUnits.length > 0) {
+      setFromUnit(currentUnits[0].symbol);
+      setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
+      setInputValue("1");
+    }
   }, [selectedCategory, region, currentUnits]);
 
 
-  const performConversion = React.useCallback(() => {
+  const performConversion = React.useCallback(async () => {
       const numValue = parseFloat(inputValue);
 
       if (isNaN(numValue) || !fromUnit || !toUnit) {
@@ -246,7 +248,7 @@ export function Converter() {
       }
       
       const categoryToUse = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit) && c.units.some(u => u.symbol === toUnit)) || selectedCategory;
-      const result = categoryToUse.convert(numValue, fromUnit, toUnit, region);
+      const result = await categoryToUse.convert(numValue, fromUnit, toUnit, region);
 
       if (result === undefined || isNaN(result)) {
         setOutputValue("");
@@ -814,5 +816,7 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
 
     
