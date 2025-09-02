@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X } from 'lucide-react';
+import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -211,6 +211,17 @@ export function Notepad() {
                             <h2 className="text-xl font-bold">UniConvert Notes</h2>
                         </SidebarHeader>
                         <SidebarMenu>
+                             <SidebarMenuItem>
+                                <SidebarMenuButton asChild>
+                                    <Link href="/">
+                                        <Home />
+                                        Dashboard
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                        <SidebarSeparator />
+                        <SidebarMenu>
                             <SidebarMenuItem>
                                 <SidebarMenuButton onClick={() => { setView('all'); setActiveCategory(null); }} isActive={view === 'all'}><StickyNote />All Notes</SidebarMenuButton>
                             </SidebarMenuItem>
@@ -239,8 +250,8 @@ export function Notepad() {
 
                 <SidebarInset className="flex flex-col pb-24">
                      <header className="flex items-center justify-between p-4">
-                        <SidebarTrigger asChild>
-                           <Button variant="ghost" size="icon"><Menu/></Button>
+                        <SidebarTrigger>
+                           <Menu/>
                         </SidebarTrigger>
                         <div className='text-center'>
                              {isSearchVisible ? (
@@ -297,7 +308,7 @@ export function Notepad() {
                             <ul className={layout === 'list' ? "divide-y divide-border" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
                                 {sortedNotes.map(note => (
                                     <li key={note.id} className={layout === 'list' ? 'cursor-pointer group' : 'bg-card p-4 rounded-lg cursor-pointer group'}>
-                                        <div onClick={() => router.push(`/notes/edit/${note.id}`)} className={layout === 'list' ? 'py-4' : ''}>
+                                        <div onClick={() => router.push(`/notes/edit/${note.id}`)} className={layout === 'list' ? '' : ''}>
                                             <div className="flex items-center justify-between">
                                                 <h2 className="font-semibold truncate">{note.title || 'Untitled Note'}</h2>
                                                 {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
