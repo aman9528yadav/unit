@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const defaultProfile = {
     fullName: "Madison Smith",
@@ -57,7 +58,7 @@ export function WelcomeForm() {
       <div className="text-center">
         <h1 className="text-3xl font-bold">Fill Your Profile</h1>
         <p className="text-muted-foreground mt-2 max-w-sm mx-auto">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+          This data is only stored on your device and is not collected by us.
         </p>
       </div>
       
@@ -82,7 +83,7 @@ export function WelcomeForm() {
               variant="outline"
               size="icon"
               className="absolute bottom-0 right-0 rounded-full w-8 h-8 bg-accent border-accent hover:bg-accent/90"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => fileInput_current?.click()}
             >
               <Pencil className="w-4 h-4 text-accent-foreground" />
             </Button>
@@ -105,6 +106,7 @@ export function WelcomeForm() {
           </div>
           <div>
             <Label htmlFor="mobile" className="text-muted-foreground">Mobile Number</Label>
+
             <Input id="mobile" value={profile.mobile} onChange={handleChange} className="bg-secondary mt-1 h-12 rounded-lg border-none" />
           </div>
           <div className="pt-4">
@@ -113,10 +115,21 @@ export function WelcomeForm() {
               onClick={handleStart}
               className="w-full h-14 bg-accent text-accent-foreground font-bold text-lg rounded-full hover:bg-accent/90"
             >
-              Start
+              Continue
             </Button>
           </div>
         </form>
+         <p className="text-center text-sm text-muted-foreground mt-4">
+            Or, sign up with a provider:
+        </p>
+         <div className="pt-4">
+            <Button asChild  className="w-full h-12 bg-card text-card-foreground font-bold text-base rounded-lg hover:bg-card/90 border flex items-center justify-center gap-2">
+             <Link href="/signup">
+                <Image src="/google-logo.svg" alt="Google" width={24} height={24} />
+                Sign up with Google
+             </Link>
+            </Button>
+          </div>
       </div>
     </div>
   );
