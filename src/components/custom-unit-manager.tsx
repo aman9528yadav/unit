@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,7 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,8 +39,10 @@ export interface CustomUnit {
 export function CustomUnitManager() {
     const [units, setUnits] = useState<CustomUnit[]>([]);
     const [isClient, setIsClient] = useState(false);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [newUnit, setNewUnit] = useState({ name: '', symbol: '', category: '', factor: 1 });
+    const [editingUnit, setEditingUnit] = useState<CustomUnit | null>(null);
     const { toast } = useToast();
 
     useEffect(() => {
@@ -61,6 +62,12 @@ export function CustomUnitManager() {
         setNewUnit(prev => ({ ...prev, [field]: value }));
     }
 
+    const handleEditInputChange = (field: keyof CustomUnit, value: string | number) => {
+        if (editingUnit) {
+            setEditingUnit({ ...editingUnit, [field]: value });
+        }
+    }
+
     const handleAddUnit = () => {
         if (!newUnit.name || !newUnit.symbol || !newUnit.category || !newUnit.factor) {
             toast({ title: "Incomplete Information", description: "Please fill out all fields to add a unit.", variant: "destructive" });
@@ -73,8 +80,25 @@ export function CustomUnitManager() {
 
         toast({ title: "Unit Added!", description: `Successfully added ${newUnit.name}.` });
         setNewUnit({ name: '', symbol: '', category: '', factor: 1 });
-        setIsDialogOpen(false);
+        setIsAddDialogOpen(false);
     };
+
+    const handleEditUnit = (unit: CustomUnit) => {
+        setEditingUnit(unit);
+        setIsEditDialogOpen(true);
+    }
+
+    const handleUpdateUnit = () => {
+        if (!editingUnit) return;
+
+        const updatedUnits = units.map(u => (u.id === editingUnit.id ? { ...editingUnit, factor: Number(editingUnit.factor) } : u));
+        updateStoredUnits(updatedUnits);
+
+        toast({ title: "Unit Updated!", description: `Successfully updated ${editingUnit.name}.` });
+        setIsEditDialogOpen(false);
+        setEditingUnit(null);
+    };
+
 
     const handleDeleteUnit = (unitId: string) => {
         const updatedUnits = units.filter(u => u.id !== unitId);
@@ -97,7 +121,7 @@ export function CustomUnitManager() {
                     </Link>
                     <h1 className="text-xl font-bold">Custom Units</h1>
                 </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                     <DialogTrigger asChild>
                         <Button size="icon">
                             <Plus />
@@ -123,7 +147,7 @@ export function CustomUnitManager() {
                                         <SelectValue placeholder="Select a category" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {conversionCategories.map(cat => (
+                                        {conversionCategories.filter(c => c.name !== 'Temperature').map(cat => (
                                             <SelectItem key={cat.name} value={cat.name}>{cat.name}</SelectItem>
                                         ))}
                                     </SelectContent>
@@ -159,14 +183,61 @@ export function CustomUnitManager() {
                                     <p className="font-bold">{unit.name} ({unit.symbol})</p>
                                     <p className="text-sm text-muted-foreground">{unit.category} (1 {unit.symbol} = {unit.factor} x base unit)</p>
                                 </div>
-                                <Button variant="ghost" size="icon" onClick={() => handleDeleteUnit(unit.id)}>
-                                    <Trash2 className="text-destructive" />
-                                </Button>
+                                <div className="flex items-center gap-2">
+                                    <Button variant="ghost" size="icon" onClick={() => handleEditUnit(unit)}>
+                                        <Edit className="text-muted-foreground" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteUnit(unit.id)}>
+                                        <Trash2 className="text-destructive" />
+                                    </Button>
+                                </div>
                             </div>
                         ))}
                     </div>
                 )}
             </div>
+
+            {/* Edit Dialog */}
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Custom Unit</DialogTitle>
+                    </DialogHeader>
+                    {editingUnit && (
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="edit-name" className="text-right">Name</Label>
+                                <Input id="edit-name" className="col-span-3" value={editingUnit.name} onChange={(e) => handleEditInputChange('name', e.target.value)} />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="edit-symbol" className="text-right">Symbol</Label>
+                                <Input id="edit-symbol" className="col-span-3" value={editingUnit.symbol} onChange={(e) => handleEditInputChange('symbol', e.target.value)} />
+                            </div>
+                             <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="edit-category" className="text-right">Category</Label>
+                                 <Select value={editingUnit.category} onValueChange={(value) => handleEditInputChange('category', value)}>
+                                    <SelectTrigger className="col-span-3">
+                                        <SelectValue placeholder="Select a category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {conversionCategories.filter(c => c.name !== 'Temperature').map(cat => (
+                                            <SelectItem key={cat.name} value={cat.name}>{cat.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                             <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="edit-factor" className="text-right">Factor</Label>
+                                <Input id="edit-factor" type="number" className="col-span-3" value={editingUnit.factor} onChange={(e) => handleEditInputChange('factor', e.target.value)} />
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+                        <Button type="submit" onClick={handleUpdateUnit}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
