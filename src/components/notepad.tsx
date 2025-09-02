@@ -329,7 +329,7 @@ export function Notepad() {
                                                     <Image src={note.attachment} alt="Note attachment" layout="fill" objectFit="cover" />
                                                 </div>
                                             )}
-                                            <p className="text-sm text-muted-foreground line-clamp-2">{note.content || 'No content'}</p>
+                                            <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: note.content || 'No content' }} />
                                         </div>
                                         <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
                                             <span>{format(new Date(note.updatedAt), "d MMM yyyy, h:mm a")}</span>
@@ -393,9 +393,3 @@ export function Notepad() {
         </SidebarProvider>
     );
 }
-
-    
-
-    
-
-    

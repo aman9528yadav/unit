@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { ArrowLeft, Save, Star, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, ListTodo, Code2, Paperclip, Smile, Image as ImageIcon, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Note, NOTES_STORAGE_KEY } from './notepad';
@@ -23,9 +22,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const [isClient, setIsClient] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const editorRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
     const isNewNote = noteId === 'new';
 
     useEffect(() => {
@@ -41,82 +39,24 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     setIsFavorite(noteToEdit.isFavorite || false);
                     setCategory(noteToEdit.category || '');
                     setAttachment(noteToEdit.attachment || null);
+                     if (editorRef.current) {
+                        editorRef.current.innerHTML = noteToEdit.content;
+                    }
                 } else {
-                    // Note not found, redirect
                     toast({ title: "Note not found", variant: "destructive" });
                     router.push('/notes');
                 }
             }
         }
     }, [noteId, isNewNote, router, toast]);
-    
-    const handleFormat = (formatType: 'bold' | 'italic' | 'underline' | 'strikethrough' | 'link' | 'list' | 'list-ordered') => {
-        const textarea = textareaRef.current;
-        if (!textarea) return;
 
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const selectedText = content.substring(start, end);
-        
-        let formattedText = '';
-        let prefix = '';
-        let suffix = '';
+    const handleFormat = (formatType: 'bold' | 'italic' | 'underline' | 'strikethrough' | 'insertUnorderedList' | 'insertOrderedList') => {
+        document.execCommand(formatType, false);
+        editorRef.current?.focus();
+    };
 
-        switch (formatType) {
-            case 'bold':
-                prefix = '**';
-                suffix = '**';
-                break;
-            case 'italic':
-                prefix = '*';
-                suffix = '*';
-                break;
-            case 'underline':
-                 // No standard markdown for underline, using a placeholder
-                prefix = '__'; 
-                suffix = '__';
-                break;
-            case 'strikethrough':
-                prefix = '~~';
-                suffix = '~~';
-                break;
-            case 'link':
-                prefix = '[';
-                suffix = '](url)';
-                break;
-            case 'list':
-                prefix = '- ';
-                break;
-            case 'list-ordered':
-                prefix = '1. ';
-                break;
-        }
-
-        if (formatType === 'list' || formatType === 'list-ordered') {
-            const currentLineStart = content.lastIndexOf('\n', start - 1) + 1;
-            const newContent = `${content.substring(0, currentLineStart)}${prefix}${content.substring(currentLineStart)}`;
-            setContent(newContent);
-            textarea.focus();
-            setTimeout(() => textarea.setSelectionRange(currentLineStart + prefix.length, currentLineStart + prefix.length), 0);
-        } else {
-            const textToInsert = selectedText || 'your text';
-            formattedText = `${prefix}${textToInsert}${suffix}`;
-            const newContent = `${content.substring(0, start)}${formattedText}${content.substring(end)}`;
-            setContent(newContent);
-            
-            // For better UX, select the inserted text or placeholder
-            textarea.focus();
-            const selectionStart = start + prefix.length;
-            const selectionEnd = selectionStart + textToInsert.length;
-             setTimeout(() => {
-                textarea.setSelectionRange(selectionStart, selectionEnd)
-                 if(formatType === 'link' && !selectedText) {
-                    const urlSelectionStart = newContent.lastIndexOf('(') + 1;
-                    const urlSelectionEnd = newContent.lastIndexOf(')');
-                    textarea.setSelectionRange(urlSelectionStart, urlSelectionEnd);
-                 }
-             }, 0);
-        }
+    const handleContentChange = (e: React.FormEvent<HTMLDivElement>) => {
+        setContent(e.currentTarget.innerHTML);
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -206,7 +146,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     };
 
     if (!isClient) {
-        return null; // Or a loading skeleton
+        return null;
     }
 
     return (
@@ -243,9 +183,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <Button variant="ghost" size="icon" onClick={() => handleFormat('italic')}><Italic /></Button>
                     <Button variant="ghost" size="icon" onClick={() => handleFormat('underline')}><Underline /></Button>
                     <Button variant="ghost" size="icon" onClick={() => handleFormat('strikethrough')}><Strikethrough /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleFormat('link')}><Link2 /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleFormat('list')}><List /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleFormat('list-ordered')}><ListOrdered /></Button>
+                    <Button variant="ghost" size="icon" onClick={showComingSoonToast}><Link2 /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleFormat('insertUnorderedList')}><List /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleFormat('insertOrderedList')}><ListOrdered /></Button>
                     <Button variant="ghost" size="icon" onClick={showComingSoonToast}><ListTodo /></Button>
                     <Button variant="ghost" size="icon" onClick={showComingSoonToast}><Code2 /></Button>
                     <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}><ImageIcon /></Button>
@@ -259,12 +199,13 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                         </Button>
                     </div>
                 )}
-                <Textarea
-                    ref={textareaRef}
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Type your message"
-                    className="w-full h-full flex-grow bg-transparent border-none resize-none focus-visible:ring-0 text-base p-0"
+                 <div
+                    ref={editorRef}
+                    contentEditable
+                    onInput={handleContentChange}
+                    data-placeholder="Type your message"
+                    className="w-full h-full flex-grow bg-transparent border-none resize-none focus-visible:outline-none text-base p-0 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
+                    dangerouslySetInnerHTML={{ __html: content }}
                 />
                 <div className="flex items-center gap-2 pt-2 border-t border-border">
                     <Button variant="ghost" size="icon" onClick={showComingSoonToast}><Paperclip /></Button>
@@ -274,5 +215,4 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             </div>
         </div>
     );
-
-    
+}
