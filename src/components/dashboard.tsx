@@ -10,6 +10,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 
 import { ArrowRight, LayoutDashboard, Calculator, Pencil, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, Home, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { getTodaysCalculations } from "@/lib/utils";
 
 const chartData = [
   { name: 'Jan', value: 158 },
@@ -25,12 +26,18 @@ export function Dashboard() {
 
   useEffect(() => {
     setIsClient(true);
-    const history = localStorage.getItem("conversionHistory");
-    if (history) {
-        // This is a simple way to get "today's" calculations. 
-        // In a real app, you'd store timestamps.
-        setTodayCalculations(JSON.parse(history).length);
-    }
+    setTodayCalculations(getTodaysCalculations());
+  }, []);
+
+  // Effect to listen for storage changes from other tabs/windows
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'dailyCalculations') {
+            setTodayCalculations(getTodaysCalculations());
+        }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   if (!isClient) {

@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Clock, RefreshCw, Trash2, Delete, Divide, X, Minus, Plus, Equal } from 'lucide-react';
+import { incrementTodaysCalculations } from '@/lib/utils';
 
 const buttonClasses = {
   gray: "bg-muted hover:bg-muted/80 text-foreground",
@@ -60,14 +61,19 @@ export function Calculator() {
 
   const handleCalculate = () => {
     try {
-      if (!expression) return;
+      if (!expression || /[+\-*/.]$/.test(expression)) return;
       // Avoid using eval in production. This is a simplified example.
       // A safer approach would be to use a library like math.js
       const evalResult = new Function('return ' + expression)();
+      if (isNaN(evalResult) || !isFinite(evalResult)) {
+        setResult('Error');
+        return;
+      }
       const formattedResult = evalResult.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: true });
       setResult(formattedResult);
       const newHistoryEntry = `${expression} = ${formattedResult}`;
       setHistory(prev => [newHistoryEntry, ...prev.filter(h => h !== newHistoryEntry)]);
+      incrementTodaysCalculations();
     } catch (error) {
       setResult('Error');
     }

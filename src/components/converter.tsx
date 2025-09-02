@@ -26,6 +26,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Calculator } from "./calculator";
 import { useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { incrementTodaysCalculations } from "@/lib/utils";
 
 
 const regions: Region[] = ['International', 'India'];
@@ -108,6 +109,10 @@ export function Converter() {
       
       const conversionString = getCurrentConversionString(numValue, fromUnitValue, toUnitValue, result);
       
+      if (!history.includes(conversionString)) {
+        incrementTodaysCalculations();
+      }
+
       const newHistory = [conversionString, ...history.filter(item => item !== conversionString)];
       setHistory(newHistory);
       localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
