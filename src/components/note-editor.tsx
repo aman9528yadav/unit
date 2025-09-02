@@ -45,6 +45,72 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             }
         }
     }, [noteId, isNewNote, router, toast]);
+    
+    const handleFormat = (formatType: 'bold' | 'italic' | 'underline' | 'strikethrough' | 'link' | 'list' | 'list-ordered') => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = content.substring(start, end);
+        
+        let formattedText = '';
+        let prefix = '';
+        let suffix = '';
+
+        switch (formatType) {
+            case 'bold':
+                prefix = '**';
+                suffix = '**';
+                break;
+            case 'italic':
+                prefix = '*';
+                suffix = '*';
+                break;
+            case 'underline':
+                 // No standard markdown for underline, using a placeholder
+                prefix = '__'; 
+                suffix = '__';
+                break;
+            case 'strikethrough':
+                prefix = '~~';
+                suffix = '~~';
+                break;
+            case 'link':
+                prefix = '[';
+                suffix = '](url)';
+                break;
+            case 'list':
+                prefix = '- ';
+                break;
+            case 'list-ordered':
+                prefix = '1. ';
+                break;
+        }
+
+        if (formatType === 'list' || formatType === 'list-ordered') {
+            const currentLineStart = content.lastIndexOf('\n', start - 1) + 1;
+            const newContent = `${content.substring(0, currentLineStart)}${prefix}${content.substring(currentLineStart)}`;
+            setContent(newContent);
+            textarea.focus();
+            setTimeout(() => textarea.setSelectionRange(currentLineStart + prefix.length, currentLineStart + prefix.length), 0);
+        } else {
+            const textToInsert = selectedText || 'your text';
+            formattedText = `${prefix}${textToInsert}${suffix}`;
+            const newContent = `${content.substring(0, start)}${formattedText}${content.substring(end)}`;
+            setContent(newContent);
+            
+            // For better UX, select the inserted text or placeholder
+            textarea.focus();
+            const selectionStart = start + prefix.length;
+            const selectionEnd = selectionStart + textToInsert.length + (formatType === 'link' ? 3 : 0);
+             setTimeout(() => textarea.setSelectionRange(selectionStart, selectionEnd), 0);
+        }
+    };
+    
+    const showComingSoonToast = () => {
+        toast({ title: "Feature Coming Soon!", description: "This functionality is currently under development."});
+    }
 
     const handleSave = () => {
         if (!title.trim() && !content.trim()) {
@@ -143,15 +209,15 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             </div>
             <div className="bg-card p-4 rounded-t-xl flex-grow flex flex-col gap-4 mt-4">
                 <div className="flex items-center gap-1 border-b border-border pb-2 flex-wrap">
-                    <Button variant="ghost" size="icon"><Bold /></Button>
-                    <Button variant="ghost" size="icon"><Italic /></Button>
-                    <Button variant="ghost" size="icon"><Underline /></Button>
-                    <Button variant="ghost" size="icon"><Strikethrough /></Button>
-                    <Button variant="ghost" size="icon"><Link2 /></Button>
-                    <Button variant="ghost" size="icon"><List /></Button>
-                    <Button variant="ghost" size="icon"><ListOrdered /></Button>
-                    <Button variant="ghost" size="icon"><ListTodo /></Button>
-                    <Button variant="ghost" size="icon"><Code2 /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleFormat('bold')}><Bold /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleFormat('italic')}><Italic /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleFormat('underline')}><Underline /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleFormat('strikethrough')}><Strikethrough /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleFormat('link')}><Link2 /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleFormat('list')}><List /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleFormat('list-ordered')}><ListOrdered /></Button>
+                    <Button variant="ghost" size="icon" onClick={showComingSoonToast}><ListTodo /></Button>
+                    <Button variant="ghost" size="icon" onClick={showComingSoonToast}><Code2 /></Button>
                 </div>
                 <Textarea
                     ref={textareaRef}
@@ -161,8 +227,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     className="w-full h-full flex-grow bg-transparent border-none resize-none focus-visible:ring-0 text-base p-0"
                 />
                 <div className="flex items-center gap-2 pt-2 border-t border-border">
-                    <Button variant="ghost" size="icon"><Paperclip /></Button>
-                    <Button variant="ghost" size="icon"><Smile /></Button>
+                    <Button variant="ghost" size="icon" onClick={showComingSoonToast}><Paperclip /></Button>
+                    <Button variant="ghost" size="icon" onClick={showComingSoonToast}><Smile /></Button>
                     <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={handleSoftDelete}><Trash2 /></Button>
                 </div>
             </div>
