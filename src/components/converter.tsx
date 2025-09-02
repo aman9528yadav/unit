@@ -112,7 +112,7 @@ export function Converter() {
 
 
   const fromUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === fromUnit)?.info, [currentUnits, fromUnit]);
-  const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit)?.info, [currentUnits, toUnitInfo]);
+  const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit)?.info, [currentUnits, toUnit]);
 
 
   React.useEffect(() => {
