@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { eachDayOfInterval, subDays, format } from 'date-fns';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -12,8 +13,33 @@ const getTodayString = () => {
 const CALCULATION_STORAGE_KEY = 'dailyCalculations';
 
 type DailyCalculationData = {
-    date: string;
-    count: number;
+    [date: string]: number; // date string 'YYYY-MM-DD'
+}
+
+export function getWeeklyCalculations(): { name: string; value: number }[] {
+  if (typeof window === 'undefined') {
+    return Array(7).fill(0).map((_, i) => {
+      const date = subDays(new Date(), 6 - i);
+      return { name: format(date, 'MMM d'), value: 0 };
+    });
+  }
+
+  const storedData = localStorage.getItem(CALCULATION_STORAGE_KEY);
+  const data: DailyCalculationData = storedData ? JSON.parse(storedData) : {};
+  
+  const today = new Date();
+  const weekAgo = subDays(today, 6);
+  
+  const last7Days = eachDayOfInterval({ start: weekAgo, end: today });
+  
+  return last7Days.map(date => {
+    const formattedDateKey = format(date, 'yyyy-MM-dd');
+    const dayName = format(date, 'MMM d');
+    return {
+      name: dayName,
+      value: data[formattedDateKey] || 0,
+    };
+  });
 }
 
 export function getTodaysCalculations(): number {
@@ -26,40 +52,35 @@ export function getTodaysCalculations(): number {
   try {
     const data: DailyCalculationData = JSON.parse(storedData);
     const today = getTodayString();
-    if (data.date === today) {
-      return data.count;
-    }
+    return data[today] || 0;
   } catch (error) {
     console.error("Error parsing daily calculation data from localStorage", error);
     return 0;
   }
-  return 0; // if date is not today or data is corrupted
 }
 
 export function incrementTodaysCalculations() {
   if (typeof window === 'undefined') return;
 
   const today = getTodayString();
-  let count = 1;
-
   const storedData = localStorage.getItem(CALCULATION_STORAGE_KEY);
+  
+  let data: DailyCalculationData = {};
   if (storedData) {
     try {
-      const data: DailyCalculationData = JSON.parse(storedData);
-      if (data.date === today) {
-        count = data.count + 1;
-      }
+      data = JSON.parse(storedData);
     } catch (error) {
        console.error("Error parsing daily calculation data from localStorage", error);
     }
   }
 
-  const newData: DailyCalculationData = { date: today, count: count };
-  localStorage.setItem(CALCULATION_STORAGE_KEY, JSON.stringify(newData));
+  data[today] = (data[today] || 0) + 1;
+  
+  localStorage.setItem(CALCULATION_STORAGE_KEY, JSON.stringify(data));
 
   // Dispatch a storage event so other tabs can update
   window.dispatchEvent(new StorageEvent('storage', {
     key: CALCULATION_STORAGE_KEY,
-    newValue: JSON.stringify(newData),
+    newValue: JSON.stringify(data),
   }));
 }

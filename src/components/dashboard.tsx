@@ -6,34 +6,33 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 import { ArrowRight, LayoutDashboard, Calculator, Pencil, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, Home, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { getTodaysCalculations } from "@/lib/utils";
-
-const chartData = [
-  { name: 'Jan', value: 158 },
-  { name: 'Feb', value: 168 },
-  { name: 'Mar', value: 156 },
-  { name: 'Apr', value: 158 },
-];
+import { getTodaysCalculations, getWeeklyCalculations } from "@/lib/utils";
 
 export function Dashboard() {
   const [isClient, setIsClient] = useState(false);
   const [todayCalculations, setTodayCalculations] = useState(0);
+  const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string, value: number}[]>([]);
   const [savedNotes, setSavedNotes] = useState(11); // static for now
+
+  const updateCalculations = () => {
+    setTodayCalculations(getTodaysCalculations());
+    setWeeklyCalculations(getWeeklyCalculations());
+  }
 
   useEffect(() => {
     setIsClient(true);
-    setTodayCalculations(getTodaysCalculations());
+    updateCalculations();
   }, []);
 
   // Effect to listen for storage changes from other tabs/windows
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'dailyCalculations') {
-            setTodayCalculations(getTodaysCalculations());
+            updateCalculations();
         }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -145,10 +144,19 @@ export function Dashboard() {
             <h3 className="text-white/90 font-semibold mb-2">Calculation</h3>
              <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData} margin={{ top: 5, right: 0, left: -30, bottom: 5 }}>
+                    <BarChart data={weeklyCalculations} margin={{ top: 5, right: 0, left: -30, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
                         <XAxis dataKey="name" tick={{ fill: 'white', fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fill: 'white', fontSize: 12 }} axisLine={false} tickLine={false} domain={[150, 170]}/>
+                        <YAxis tick={{ fill: 'white', fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: 'hsl(var(--background))',
+                                borderColor: 'hsl(var(--border))',
+                                color: 'hsl(var(--foreground))',
+                                borderRadius: 'var(--radius)',
+                            }}
+                            cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
+                        />
                         <Bar dataKey="value" fill="#fbbf24" radius={[4, 4, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
