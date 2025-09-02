@@ -360,10 +360,24 @@ const energyCategory: ConversionCategory = {
 
 // --- CURRENCY ---
 const currencyUnits: Unit[] = [
-    { name: 'United States Dollar', symbol: 'USD', info: 'Base currency for manual rates' },
+    { name: 'United States Dollar', symbol: 'USD', info: 'Base currency' },
+    { name: 'Euro', symbol: 'EUR', info: '1 EUR ≈ 1.08 USD' },
+    { name: 'Japanese Yen', symbol: 'JPY', info: '1 JPY ≈ 0.0064 USD' },
+    { name: 'British Pound', symbol: 'GBP', info: '1 GBP ≈ 1.27 USD' },
+    { name: 'Indian Rupee', symbol: 'INR', info: '1 INR ≈ 0.012 USD' },
+    { name: 'Australian Dollar', symbol: 'AUD', info: '1 AUD ≈ 0.66 USD' },
+    { name: 'Canadian Dollar', symbol: 'CAD', info: '1 CAD ≈ 0.73 USD' },
+    { name: 'Swiss Franc', symbol: 'CHF', info: '1 CHF ≈ 1.11 USD' },
 ];
 const currencyFactors: LinearConversionFactors = {
     'USD': 1,
+    'EUR': 1.08,
+    'JPY': 0.0064,
+    'GBP': 1.27,
+    'INR': 0.012,
+    'AUD': 0.66,
+    'CAD': 0.73,
+    'CHF': 1.11,
 };
 const currencyCategory: ConversionCategory = {
     name: 'Currency',
@@ -371,15 +385,16 @@ const currencyCategory: ConversionCategory = {
     units: currencyUnits,
     factors: currencyFactors,
     convert: function(value, from, to) {
+        // This is a simplified conversion. For real applications, use a live API.
         const fromFactor = this.factors![from]; // Factor relative to USD
         const toFactor = this.factors![to]; // Factor relative to USD
         if (fromFactor === undefined || toFactor === undefined) return NaN;
         
         // First, convert the value to the base currency (USD)
-        const valueInBase = value * fromFactor;
+        const valueInUsd = value * fromFactor;
         
         // Then, convert from the base currency to the target currency
-        return valueInBase / toFactor;
+        return valueInUsd / toFactor;
     },
 };
 
