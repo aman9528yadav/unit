@@ -15,9 +15,9 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2 } from "lucide-react";
 import { conversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
-import { suggestCategory, SuggestCategoryInput } from "@/ai/flows/smart-category-suggestion";
+import { parseConversionQuery } from "@/ai/flows/parse-conversion-flow";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -35,9 +35,11 @@ export function Converter() {
   const [history, setHistory] = useState<string[]>([]);
   const [region, setRegion] = useState<Region>('International');
 
-  const [isAiSuggesting, startAiSuggestion] = useTransition();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResult, setSearchResult] = useState<string | null>(null);
+  const [isSearching, startSearchTransition] = useTransition();
 
-  const debouncedInput = useDebounce<SuggestCategoryInput>({input: inputValue, conversionHistory: history}, 500);
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   const currentUnits = useMemo(() => {
     return selectedCategory.units.filter(u => !u.region || u.region === region);
@@ -85,30 +87,36 @@ export function Converter() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputValue, fromUnit, toUnit, selectedCategory, region]);
-
+  
   useEffect(() => {
-    if (debouncedInput.input.trim() === "" || Number.isNaN(parseFloat(debouncedInput.input))) {
-        return;
+    if (debouncedSearchQuery.trim() === "") {
+      setSearchResult(null);
+      return;
     }
-    
-    startAiSuggestion(async () => {
+
+    startSearchTransition(async () => {
       try {
-        const suggestions = await suggestCategory({
-            input: `${debouncedInput.input} ${fromUnit} to ${toUnit}`,
-            conversionHistory: history
-        });
-        const suggested = conversionCategories.find(c => c.name === suggestions.suggestedCategories[0])
-        if (suggested && suggested.name !== selectedCategory.name) {
-          // You could potentially show a suggestion UI here
-          // For now, we won't auto-switch categories to avoid being too disruptive
+        const parsed = await parseConversionQuery({ query: debouncedSearchQuery });
+        const category = conversionCategories.find(c => c.name === parsed.category);
+
+        if (category) {
+          const result = category.convert(parsed.value, parsed.fromUnit, parsed.toUnit);
+          if (!isNaN(result)) {
+            const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
+            setSearchResult(`${parsed.value} ${parsed.fromUnit} = ${formattedResult} ${parsed.toUnit}`);
+          } else {
+            setSearchResult("Could not perform conversion.");
+          }
+        } else {
+          setSearchResult("Could not find a matching category.");
         }
       } catch (error) {
-        console.error("AI suggestion failed:", error);
+        console.error("Search conversion failed:", error);
+        setSearchResult("Invalid search query.");
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedInput, history]);
-  
+  }, [debouncedSearchQuery]);
 
   const handleCategoryChange = (categoryName: string) => {
     const category = conversionCategories.find(c => c.name === categoryName);
@@ -185,6 +193,25 @@ export function Converter() {
           <ScrollBar orientation="horizontal" className="h-1" />
         </ScrollArea>
       </header>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="Search e.g., '10 km to m'"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="bg-card h-12 text-base pl-10 pr-10"
+        />
+        {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />}
+      </div>
+      
+      {searchResult && (
+        <div className="bg-card p-4 rounded-xl text-center">
+            <p className="text-lg font-medium">{searchResult}</p>
+        </div>
+      )}
+
 
       <div className="bg-card p-4 rounded-xl flex flex-col gap-4">
         <h2 className="font-bold text-lg">Quick Convert</h2>
@@ -312,6 +339,4 @@ function InfoBox({ text }: { text: string }) {
     )
 }
 
-    
-    
     
