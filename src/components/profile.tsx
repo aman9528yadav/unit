@@ -16,6 +16,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
 
 const menuItems = [
   { icon: User, text: "Profile", href: "#" },
@@ -31,6 +32,7 @@ const defaultProfile = {
     email: "aman@example.com",
     birthday: "April 1st",
     profileImage: "https://picsum.photos/200",
+    dob: "1990-04-01"
 };
 
 export function Profile() {
@@ -41,7 +43,11 @@ export function Profile() {
     setIsClient(true);
     const storedProfile = localStorage.getItem("userProfile");
     if (storedProfile) {
-      setProfile(JSON.parse(storedProfile));
+      const parsed = JSON.parse(storedProfile);
+       if (parsed.dob) {
+        parsed.birthday = format(new Date(parsed.dob), "MMMM do");
+      }
+      setProfile(parsed);
     }
   }, []);
 

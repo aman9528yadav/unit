@@ -4,19 +4,24 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, Pencil, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+
 
 const defaultProfile = {
     fullName: "Aman Yadav",
     email: "aman@example.com",
     birthday: "April 1st",
     mobile: "+123 567 89000",
-    dob: "01 / 04 / 199X",
+    dob: "1990-04-01",
     weight: "75 Kg",
     height: "1.65 CM",
     profileImage: "https://picsum.photos/200",
@@ -25,6 +30,7 @@ const defaultProfile = {
 
 export function ProfileEditForm() {
   const [profile, setProfile] = useState(defaultProfile);
+  const [dob, setDob] = useState<Date | undefined>(new Date(defaultProfile.dob));
   const [imagePreview, setImagePreview] = useState<string>(defaultProfile.profileImage);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -35,6 +41,9 @@ export function ProfileEditForm() {
     if (storedProfile) {
         const parsedProfile = JSON.parse(storedProfile);
         setProfile(parsedProfile);
+        if (parsedProfile.dob) {
+          setDob(new Date(parsedProfile.dob));
+        }
         if(parsedProfile.profileImage) {
             setImagePreview(parsedProfile.profileImage);
         }
@@ -45,6 +54,13 @@ export function ProfileEditForm() {
     const { id, value } = e.target;
     setProfile(prev => ({ ...prev, [id]: value }));
   };
+  
+  const handleDateChange = (date: Date | undefined) => {
+    setDob(date);
+    if(date) {
+      setProfile(prev => ({ ...prev, dob: format(date, "yyyy-MM-dd"), birthday: format(date, "MMMM do") }));
+    }
+  }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -137,7 +153,7 @@ export function ProfileEditForm() {
           </div>
           <div>
             <Label htmlFor="email" className="text-muted-foreground">Email</Label>
-            <Input id="email" type="email" value={profile.email} onChange={handleChange} className="bg-secondary mt-1 h-12 rounded-lg" />
+            <Input id="email" type="email" value={_profile.email} onChange={handleChange} className="bg-secondary mt-1 h-12 rounded-lg" />
           </div>
           <div>
             <Label htmlFor="mobile" className="text-muted-foreground">Mobile Number</Label>
@@ -145,7 +161,31 @@ export function ProfileEditForm() {
           </div>
           <div>
             <Label htmlFor="dob" className="text-muted-foreground">Date of birth</Label>
-            <Input id="dob" value={profile.dob} onChange={handleChange} className="bg-secondary mt-1 h-12 rounded-lg" />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-full justify-start text-left font-normal bg-secondary mt-1 h-12 rounded-lg",
+                    !dob && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dob ? format(dob, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={dob}
+                  onSelect={handleDateChange}
+                  initialFocus
+                  captionLayout="dropdown-buttons"
+                  fromYear={1900}
+                  toYear={new Date().getFullYear()}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <div>
             <Label htmlFor="weight" className="text-muted-foreground">Weight</Label>
