@@ -57,13 +57,16 @@ export function Converter() {
     setInputValue("1");
   }, [selectedCategory, currentUnits, region]);
   
-  const performConversion = () => {
-      const numValue = parseFloat(inputValue);
-      if (isNaN(numValue) || !fromUnit || !toUnit) {
+  const performConversion = (value?: number, from?: string, to?: string) => {
+      const numValue = value ?? parseFloat(inputValue);
+      const fromUnitValue = from ?? fromUnit;
+      const toUnitValue = to ?? toUnit;
+
+      if (isNaN(numValue) || !fromUnitValue || !toUnitValue) {
         setOutputValue("");
         return;
       }
-      const result = selectedCategory.convert(numValue, fromUnit, toUnit, region);
+      const result = selectedCategory.convert(numValue, fromUnitValue, toUnitValue, region);
       if (isNaN(result)) {
         setOutputValue("");
         return;
@@ -72,7 +75,7 @@ export function Converter() {
       const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
       setOutputValue(formattedResult);
       
-      const conversionString = `${numValue} ${fromUnit} → ${formattedResult} ${toUnit}`;
+      const conversionString = `${numValue} ${fromUnitValue} → ${formattedResult} ${toUnitValue}`;
       if (!history.includes(conversionString)) {
         setHistory(prev => [conversionString, ...prev].slice(0, 5));
       }
@@ -130,6 +133,8 @@ export function Converter() {
             setInputValue(String(result.value));
             setFromUnit(result.fromUnit);
             setToUnit(result.toUnit);
+            performConversion(result.value, result.fromUnit, result.toUnit);
+            setSearchQuery("");
           } else {
              toast({ title: "Could not find units in selected category", description: "Try selecting another region.", variant: "destructive" });
           }
@@ -314,3 +319,5 @@ function InfoBox({ text }: { text: string }) {
         </div>
     )
 }
+
+    
