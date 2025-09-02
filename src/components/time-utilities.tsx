@@ -11,47 +11,81 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format, differenceInDays, differenceInWeeks, differenceInMonths } from 'date-fns';
-import { Home, Play, Pause, RotateCcw, Flag, CalendarIcon, ArrowRight, Hourglass } from "lucide-react";
+import { Home, Play, Pause, RotateCcw, Flag, CalendarIcon, ArrowRight, Hourglass, Trash2, Settings } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter
+} from "@/components/ui/dialog"
+import { Label } from "../ui/label";
 
 
 function PomodoroTimer() {
     const [minutes, setMinutes] = React.useState(25);
     const [seconds, setSeconds] = React.useState(0);
     const [isActive, setIsActive] = React.useState(false);
-    const [mode, setMode] = React.useState<'work' | 'break'>('work');
-    const [pomodoroLength, setPomodoroLength] = React.useState(25);
-    const [breakLength, setBreakLength] = React.useState(5);
+    const [mode, setMode] = React.useState<'work' | 'shortBreak' | 'longBreak'>('work');
+    const [pomodoros, setPomodoros] = React.useState(0);
+    const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+
+    // Default settings
+    const [settings, setSettings] = React.useState({
+        pomodoroLength: 25,
+        shortBreakLength: 5,
+        longBreakLength: 15,
+        pomodorosUntilLongBreak: 4,
+    });
+
+    const audioRef = React.useRef<HTMLAudioElement>(null);
+
+     React.useEffect(() => {
+        // Load settings from localStorage
+        const savedSettings = localStorage.getItem('pomodoroSettings');
+        if (savedSettings) {
+            setSettings(JSON.parse(savedSettings));
+        }
+    }, []);
+
+    React.useEffect(() => {
+        // Initialize timer values from settings
+        reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [settings]);
 
     React.useEffect(() => {
         let interval: NodeJS.Timeout | null = null;
         if (isActive) {
             interval = setInterval(() => {
                 if (seconds > 0) {
-                    setSeconds(seconds - 1);
+                    setSeconds(s => s - 1);
                 } else if (minutes > 0) {
-                    setMinutes(minutes - 1);
+                    setMinutes(m => m - 1);
                     setSeconds(59);
                 } else {
                     // Timer ended
-                    setIsActive(false);
-                    const newMode = mode === 'work' ? 'break' : 'work';
-                    setMode(newMode);
-                    setMinutes(newMode === 'work' ? pomodoroLength : breakLength);
-                    setSeconds(0);
-                    new Audio('/alarm.mp3').play().catch(e => console.error("Error playing sound:", e));
+                    if (audioRef.current) {
+                      audioRef.current.play().catch(e => console.error("Error playing sound:", e));
+                    }
+                    
+                    let newMode: typeof mode;
+                    if (mode === 'work') {
+                        const newPomodoroCount = pomodoros + 1;
+                        setPomodoros(newPomodoroCount);
+                        newMode = newPomodoroCount % settings.pomodorosUntilLongBreak === 0 ? 'longBreak' : 'shortBreak';
+                    } else {
+                        newMode = 'work';
+                    }
+                    switchMode(newMode);
                 }
             }, 1000);
-        } else if (!isActive && seconds !== 0) {
-            if(interval) clearInterval(interval);
-        } else if (!isActive && minutes !== (mode === 'work' ? pomodoroLength : breakLength)) {
-            // handles reset when paused
-             setMinutes(mode === 'work' ? pomodoroLength : breakLength);
-             setSeconds(0);
         }
-        return () => { if(interval) clearInterval(interval) };
-    }, [isActive, seconds, minutes, mode, pomodoroLength, breakLength]);
+        return () => { if (interval) clearInterval(interval); };
+    }, [isActive, seconds, minutes, mode, pomodoros, settings]);
 
     const toggle = () => {
         setIsActive(!isActive);
@@ -59,39 +93,55 @@ function PomodoroTimer() {
 
     const reset = () => {
         setIsActive(false);
-        setMinutes(mode === 'work' ? pomodoroLength : breakLength);
+        switch (mode) {
+            case 'work':
+                setMinutes(settings.pomodoroLength);
+                break;
+            case 'shortBreak':
+                setMinutes(settings.shortBreakLength);
+                break;
+            case 'longBreak':
+                setMinutes(settings.longBreakLength);
+                break;
+        }
         setSeconds(0);
     };
 
-    const switchMode = (newMode: 'work' | 'break') => {
+    const switchMode = (newMode: typeof mode, userInitiated = false) => {
         setIsActive(false);
         setMode(newMode);
-        setMinutes(newMode === 'work' ? pomodoroLength : breakLength);
-        setSeconds(0);
-    }
-    
-    const handleTimeChange = (value: string) => {
-        const newLength = parseInt(value, 10);
-        if (mode === 'work') {
-            setPomodoroLength(newLength);
-            if (!isActive) setMinutes(newLength);
-        } else {
-            setBreakLength(newLength);
-            if (!isActive) setMinutes(newLength);
+        if (userInitiated) {
+             setPomodoros(0); // Reset cycle count if mode is manually changed
         }
+        // This effect will call reset() -> setMinutes(newMode === 'work' ? settings.pomodoroLength : settings.shortBreakLength);
     };
+    
+    React.useEffect(() => {
+        reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mode]);
+
+    const handleSettingsSave = (newSettings: typeof settings) => {
+        setSettings(newSettings);
+        localStorage.setItem('pomodoroSettings', JSON.stringify(newSettings));
+        setIsSettingsOpen(false);
+        switchMode(mode); // Reset timer with new settings
+    }
 
 
     return (
         <Card className="w-full text-center">
+             <audio ref={audioRef} src="/alarm.mp3" preload="auto"></audio>
             <CardHeader>
                 <div className="flex justify-center gap-2 mb-4">
-                    <Button variant={mode === 'work' ? 'secondary' : 'ghost'} onClick={() => switchMode('work')}>Pomodoro</Button>
-                    <Button variant={mode === 'break' ? 'secondary' : 'ghost'} onClick={() => switchMode('break')}>Short Break</Button>
+                    <Button variant={mode === 'work' ? 'secondary' : 'ghost'} onClick={() => switchMode('work', true)}>Pomodoro</Button>
+                    <Button variant={mode === 'shortBreak' ? 'secondary' : 'ghost'} onClick={() => switchMode('shortBreak', true)}>Short Break</Button>
+                    <Button variant={mode === 'longBreak' ? 'secondary' : 'ghost'} onClick={() => switchMode('longBreak', true)}>Long Break</Button>
                 </div>
                 <div className="text-7xl font-bold tracking-tighter">
                     {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
                 </div>
+                 <p className="text-muted-foreground">Cycles completed: {pomodoros}</p>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
                  <div className="flex items-center gap-4">
@@ -102,23 +152,67 @@ function PomodoroTimer() {
                     <Button onClick={reset} variant="outline" className="w-24 h-12 text-lg">
                         <RotateCcw/> Reset
                     </Button>
-                </div>
-                <div className="flex items-center gap-2">
-                    <label className="text-sm text-muted-foreground">Duration:</label>
-                     <Select value={String(mode === 'work' ? pomodoroLength : breakLength)} onValueChange={handleTimeChange}>
-                        <SelectTrigger className="w-[100px]">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {[5, 10, 15, 20, 25, 30, 45, 60].map(time => (
-                                <SelectItem key={time} value={String(time)}>{time} min</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <PomodoroSettingsDialog
+                        isOpen={isSettingsOpen}
+                        setIsOpen={setIsSettingsOpen}
+                        currentSettings={settings}
+                        onSave={handleSettingsSave}
+                    />
                 </div>
             </CardContent>
         </Card>
     );
+}
+
+function PomodoroSettingsDialog({ isOpen, setIsOpen, currentSettings, onSave }: any) {
+    const [localSettings, setLocalSettings] = React.useState(currentSettings);
+
+    React.useEffect(() => {
+        setLocalSettings(currentSettings);
+    }, [currentSettings]);
+
+    const handleChange = (key: keyof typeof localSettings, value: string) => {
+        const numValue = parseInt(value, 10);
+        if (!isNaN(numValue)) {
+            setLocalSettings({ ...localSettings, [key]: numValue });
+        }
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon">
+                    <Settings />
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Pomodoro Settings</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="pomodoroLength" className="text-right">Work</Label>
+                        <Input id="pomodoroLength" type="number" value={localSettings.pomodoroLength} onChange={e => handleChange('pomodoroLength', e.target.value)} className="col-span-3" />
+                    </div>
+                     <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="shortBreakLength" className="text-right">Short Break</Label>
+                        <Input id="shortBreakLength" type="number" value={localSettings.shortBreakLength} onChange={e => handleChange('shortBreakLength', e.target.value)} className="col-span-3" />
+                    </div>
+                     <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="longBreakLength" className="text-right">Long Break</Label>
+                        <Input id="longBreakLength" type="number" value={localSettings.longBreakLength} onChange={e => handleChange('longBreakLength', e.target.value)} className="col-span-3" />
+                    </div>
+                     <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="pomodorosUntilLongBreak" className="text-right">Cycles</Label>
+                        <Input id="pomodorosUntilLongBreak" type="number" value={localSettings.pomodorosUntilLongBreak} onChange={e => handleChange('pomodorosUntilLongBreak', e.target.value)} className="col-span-3" />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button onClick={() => onSave(localSettings)}>Save</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
 }
 
 
@@ -151,6 +245,10 @@ function Stopwatch() {
         setLaps(prevLaps => [...prevLaps, time]);
     };
 
+    const clearLaps = () => {
+        setLaps([]);
+    };
+
     const formatTime = (ms: number) => {
         const minutes = String(Math.floor((ms / 60000) % 60)).padStart(2, '0');
         const seconds = String(Math.floor((ms / 1000) % 60)).padStart(2, '0');
@@ -178,17 +276,24 @@ function Stopwatch() {
                         <Flag/> Lap
                     </Button>
                 </div>
-                <ScrollArea className="h-40 w-full mt-4">
-                    <div className="flex flex-col gap-2 p-2">
-                        {laps.map((lapTime, index) => (
-                            <div key={index} className="flex justify-between items-center bg-secondary p-2 rounded-md">
-                                <span className="text-muted-foreground">Lap {index + 1}</span>
-                                <span className="font-mono">{formatTime(lapTime - (laps[index - 1] || 0))}</span>
-                                <span className="font-mono text-foreground">{formatTime(lapTime)}</span>
+                {laps.length > 0 && (
+                    <>
+                        <ScrollArea className="h-40 w-full mt-4">
+                            <div className="flex flex-col gap-2 p-2">
+                                {laps.map((lapTime, index) => (
+                                    <div key={index} className="flex justify-between items-center bg-secondary p-2 rounded-md">
+                                        <span className="text-muted-foreground">Lap {index + 1}</span>
+                                        <span className="font-mono">{formatTime(lapTime - (laps[index - 1] || 0))}</span>
+                                        <span className="font-mono text-foreground">{formatTime(lapTime)}</span>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                </ScrollArea>
+                        </ScrollArea>
+                        <Button onClick={clearLaps} variant="ghost" size="sm" className="text-muted-foreground">
+                            <Trash2 className="mr-2 h-4 w-4"/> Clear Laps
+                        </Button>
+                    </>
+                )}
             </CardContent>
         </Card>
     );
@@ -309,3 +414,5 @@ export function TimeUtilities() {
     </div>
   );
 }
+
+    
