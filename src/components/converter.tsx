@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useTransition } from "react";
@@ -15,13 +16,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowRightLeft, Loader2, Search, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw } from "lucide-react";
-import { conversionCategories, ConversionCategory, Unit } from "@/lib/conversions";
+import { conversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import { suggestCategory, SuggestCategoryInput } from "@/ai/flows/smart-category-suggestion";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const navItems = ["Unit", "Calculator", "Note", "Timer", "Date", "History"];
+const regions: Region[] = ['International', 'India'];
 
 export function Converter() {
   const { toast } = useToast();
@@ -31,12 +33,16 @@ export function Converter() {
   const [inputValue, setInputValue] = useState<string>("");
   const [outputValue, setOutputValue] = useState<string>("");
   const [history, setHistory] = useState<string[]>([]);
-  
+  const [region, setRegion] = useState<Region>('International');
+
   const [isAiSuggesting, startAiSuggestion] = useTransition();
 
   const debouncedInput = useDebounce<SuggestCategoryInput>({input: inputValue, conversionHistory: history}, 500);
 
-  const currentUnits = useMemo(() => selectedCategory.units, [selectedCategory]);
+  const currentUnits = useMemo(() => {
+    return selectedCategory.units.filter(u => !u.region || u.region === region);
+  }, [selectedCategory, region]);
+
   const fromUnitInfo = useMemo(() => currentUnits.find(u => u.symbol === fromUnit)?.info, [currentUnits, fromUnit]);
   const toUnitInfo = useMemo(() => currentUnits.find(u => u.symbol === toUnit)?.info, [currentUnits, toUnit]);
 
@@ -45,7 +51,7 @@ export function Converter() {
     setFromUnit(currentUnits[0].symbol);
     setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
     setInputValue("1");
-  }, [selectedCategory, currentUnits]);
+  }, [selectedCategory, currentUnits, region]);
   
   const performConversion = () => {
       const numValue = parseFloat(inputValue);
@@ -53,7 +59,7 @@ export function Converter() {
         setOutputValue("");
         return;
       }
-      const result = selectedCategory.convert(numValue, fromUnit, toUnit);
+      const result = selectedCategory.convert(numValue, fromUnit, toUnit, region);
       if (isNaN(result)) {
         setOutputValue("");
         return;
@@ -75,7 +81,7 @@ export function Converter() {
       setOutputValue("");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inputValue, fromUnit, toUnit, selectedCategory]);
+  }, [inputValue, fromUnit, toUnit, selectedCategory, region]);
 
   useEffect(() => {
     if (debouncedInput.input.trim() === "" || Number.isNaN(parseFloat(debouncedInput.input))) {
@@ -106,6 +112,10 @@ export function Converter() {
       setSelectedCategory(category);
     }
   };
+
+  const handleRegionChange = (value: string) => {
+    setRegion(value as Region);
+  }
 
   const handleSwapUnits = () => {
     const currentInput = inputValue;
@@ -149,12 +159,12 @@ export function Converter() {
         <div className="grid grid-cols-2 gap-4">
             <div>
                 <label className="text-sm text-muted-foreground flex items-center gap-1.5"><Globe size={16}/> Region</label>
-                <Select value="International">
+                <Select value={region} onValueChange={handleRegionChange}>
                     <SelectTrigger className="bg-background mt-1">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="International">International</SelectItem>
+                        {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
@@ -263,3 +273,5 @@ function InfoBox({ text }: { text: string }) {
         </div>
     )
 }
+
+    

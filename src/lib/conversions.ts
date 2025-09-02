@@ -1,10 +1,13 @@
 import { Ruler, Scale, Thermometer, Database } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
+export type Region = 'International' | 'India';
+
 export type Unit = {
   name: string;
   symbol: string;
   info?: string;
+  region?: Region;
 };
 
 // For simple linear conversions (Length, Weight)
@@ -17,7 +20,7 @@ export type ConversionCategory = {
   name: 'Length' | 'Weight' | 'Temperature' | 'Data';
   icon: LucideIcon;
   units: Unit[];
-  convert: (value: number, from: string, to: string) => number;
+  convert: (value: number, from: string, to: string, region?: Region) => number;
 };
 
 // --- LENGTH ---
@@ -30,6 +33,7 @@ const lengthUnits: Unit[] = [
   { name: 'Yards', symbol: 'yd', info: '1yd = 0.9144 m' },
   { name: 'Feet', symbol: 'ft', info: '1ft = 0.3048 m' },
   { name: 'Inches', symbol: 'in', info: '1in = 0.0254 m' },
+  { name: 'Gaj', symbol: 'gaj', info: '1 gaj = 0.9144 m', region: 'India' },
 ];
 const lengthFactors: LinearConversionFactors = { // to meter
   'm': 1,
@@ -40,6 +44,7 @@ const lengthFactors: LinearConversionFactors = { // to meter
   'yd': 0.9144,
   'ft': 0.3048,
   'in': 0.0254,
+  'gaj': 0.9144,
 };
 const lengthCategory: ConversionCategory = {
   name: 'Length',
@@ -61,6 +66,8 @@ const weightUnits: Unit[] = [
     { name: 'Milligrams', symbol: 'mg', info: '1mg = 0.000001 kg' },
     { name: 'Pounds', symbol: 'lb', info: '1lb = 0.453592 kg' },
     { name: 'Ounces', symbol: 'oz', info: '1oz = 0.0283495 kg' },
+    { name: 'Tola', symbol: 'tola', info: '1 tola ≈ 11.6638 g', region: 'India' },
+    { name: 'Ratti', symbol: 'ratti', info: '1 ratti ≈ 0.1215 g', region: 'India' },
 ];
 const weightFactors: LinearConversionFactors = { // to kg
   'kg': 1,
@@ -68,6 +75,8 @@ const weightFactors: LinearConversionFactors = { // to kg
   'mg': 0.000001,
   'lb': 0.453592,
   'oz': 0.0283495,
+  'tola': 0.0116638,
+  'ratti': 0.0001215,
 };
 const weightCategory: ConversionCategory = {
     name: 'Weight',
@@ -146,3 +155,5 @@ const dataCategory: ConversionCategory = {
 
 
 export const conversionCategories: ConversionCategory[] = [lengthCategory, weightCategory, temperatureCategory, dataCategory];
+
+    
