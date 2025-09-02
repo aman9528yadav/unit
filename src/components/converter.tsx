@@ -81,7 +81,7 @@ export function Converter() {
   const [selectedCategory, setSelectedCategory] = React.useState<ConversionCategory>(conversionCategories[0]);
   const [fromUnit, setFromUnit] = React.useState<string>(conversionCategories[0].units[0].symbol);
   const [toUnit, setToUnit] = React.useState<string>(conversionCategories[0].units[1].symbol);
-  const [inputValue, setInputValue] = React.useState<string>("");
+  const [inputValue, setInputValue] = React.useState<string>("1");
   const [outputValue, setOutputValue] = React.useState<string>("");
   const [history, setHistory] = React.useState<string[]>([]);
   const [favorites, setFavorites] = React.useState<string[]>([]);
@@ -132,7 +132,7 @@ export function Converter() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   const getCurrentConversionString = (value: number, from: string, to: string, result: number) => {
@@ -141,12 +141,41 @@ export function Converter() {
   };
 
   React.useEffect(() => {
+    // Reset inputs when category changes
     setFromUnit(currentUnits[0].symbol);
     setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
     setInputValue("1");
-    setOutputValue("");
   }, [selectedCategory, region, currentUnits]);
 
+
+  const performConversion = React.useCallback(() => {
+      const numValue = parseFloat(inputValue);
+
+      if (isNaN(numValue) || !fromUnit || !toUnit) {
+        setOutputValue("");
+        return;
+      }
+      
+      const categoryToUse = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit) && c.units.some(u => u.symbol === toUnit)) || selectedCategory;
+      const result = categoryToUse.convert(numValue, fromUnit, toUnit, region);
+
+      if (isNaN(result)) {
+        setOutputValue("");
+        return;
+      }
+      
+      const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
+      setOutputValue(formattedResult);
+      
+  }, [inputValue, fromUnit, toUnit, selectedCategory, region]);
+  
+  // Perform conversion whenever inputs change
+  useEffect(() => {
+    performConversion();
+  }, [performConversion]);
+  
+
+  // Update favorite status whenever output or favorites list change
   React.useEffect(() => {
     const numValue = parseFloat(inputValue);
      if (isNaN(numValue) || !outputValue) {
@@ -159,41 +188,20 @@ export function Converter() {
     setIsFavorite(favorites.includes(conversionString));
   }, [inputValue, fromUnit, toUnit, outputValue, favorites]);
 
-  
-  const performConversion = React.useCallback((value?: number, from?: string, to?: string) => {
-      const numValue = value ?? parseFloat(inputValue);
-      const fromUnitValue = from ?? fromUnit;
-      const toUnitValue = to ?? toUnit;
+  const handleSaveToHistory = () => {
+    const numValue = parseFloat(inputValue);
+    const result = parseFloat(outputValue.replace(/,/g, ''));
+    if (isNaN(numValue) || isNaN(result)) return;
 
-      if (isNaN(numValue) || !fromUnitValue || !toUnitValue) {
-        setOutputValue("");
-        setIsFavorite(false);
-        return;
-      }
-      const categoryToUse = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnitValue) && c.units.some(u => u.symbol === toUnitValue)) || selectedCategory;
-      const result = categoryToUse.convert(numValue, fromUnitValue, toUnitValue, region);
-      if (isNaN(result)) {
-        setOutputValue("");
-        setIsFavorite(false);
-        return;
-      }
-      
-      const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
-      setOutputValue(formattedResult);
-      
-      const conversionString = getCurrentConversionString(numValue, fromUnitValue, toUnitValue, result);
-      
-      if (!history.includes(conversionString)) {
-        incrementTodaysCalculations();
-      }
-
+    const conversionString = getCurrentConversionString(numValue, fromUnit, toUnit, result);
+    
+    if (!history.includes(conversionString)) {
+      incrementTodaysCalculations();
       const newHistory = [conversionString, ...history.filter(item => item !== conversionString)];
       setHistory(newHistory);
       localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
-
-      setIsFavorite(favorites.includes(conversionString));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inputValue, fromUnit, toUnit, selectedCategory, region, history, favorites]);
+    }
+  };
   
   const handleSearch = async () => {
     if (searchQuery.trim() === "" || isSearching) {
@@ -218,13 +226,9 @@ export function Converter() {
 
                     if (fromUnitExists && toUnitExists) {
                         setSelectedCategory(category);
-                        setInputValue(String(parsed.value));
                         setFromUnit(parsed.fromUnit);
                         setToUnit(parsed.toUnit);
-                        // Use a callback with setState to ensure conversion happens after state is updated
-                        React.startTransition(() => {
-                           performConversion(parsed!.value, parsed!.fromUnit, parsed!.toUnit);
-                        });
+                        setInputValue(String(parsed.value));
                         setSearchQuery(""); // Clear search
                     } else {
                         toast({ title: "Cannot perform conversion", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive" });
@@ -259,11 +263,12 @@ export function Converter() {
     setFromUnit(toUnit);
     setToUnit(fromUnit);
     setInputValue(currentOutput.replace(/,/g, ''));
-    setOutputValue(currentInput);
+    // The conversion will be re-triggered by the useEffect hook
   };
 
   const handleConvertClick = () => {
-    performConversion();
+    // Save to history on manual convert click
+    handleSaveToHistory();
   };
   
   const handleToggleFavorite = () => {
@@ -278,6 +283,8 @@ export function Converter() {
       newFavorites = favorites.filter(fav => fav !== conversionString);
       toast({ title: "Removed from favorites." });
     } else {
+      // Ensure it's in history before adding to favorites
+      handleSaveToHistory(); 
       newFavorites = [conversionString, ...favorites];
       toast({ title: "Added to favorites!" });
     }
@@ -294,6 +301,7 @@ export function Converter() {
     const value = parts[0];
     const from = parts[1];
     // parts[2] is '→'
+    const result = parts[3];
     const to = parts[4];
   
     // Find category that has both units
@@ -308,10 +316,10 @@ export function Converter() {
 
       if(fromUnitExists && toUnitExists) {
         setSelectedCategory(category);
-        setInputValue(value);
         setFromUnit(from);
         setToUnit(to);
-        performConversion(parseFloat(value), from, to);
+        setInputValue(value);
+        setOutputValue(result);
       } else {
         toast({ title: "Cannot restore", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive"});
       }
