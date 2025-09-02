@@ -34,25 +34,32 @@ const CalculatorButton = ({
 
 // A simple and safe expression evaluator
 const evaluateExpression = (expr: string): number => {
-    // Replace user-friendly symbols with JS Math functions
-    let sanitizedExpr = expr
+    // Regular expression to match trig functions like sin(90), cos(45), etc.
+    const trigRegex = /(sin|cos|tan)\(([^)]+)\)/g;
+
+    // Convert degrees to radians for trig functions
+    let processedExpr = expr.replace(trigRegex, (match, func, angle) => {
+        const angleInRadians = parseFloat(angle) * (Math.PI / 180);
+        return `Math.${func}(${angleInRadians})`;
+    });
+
+    // Replace other user-friendly symbols with JS Math functions
+    processedExpr = processedExpr
         .replace(/√/g, 'Math.sqrt')
         .replace(/\^/g, '**')
-        .replace(/sin/g, 'Math.sin')
-        .replace(/cos/g, 'Math.cos')
-        .replace(/tan/g, 'Math.tan')
         .replace(/log/g, 'Math.log10')
         .replace(/ln/g, 'Math.log')
         .replace(/π/g, 'Math.PI')
         .replace(/e/g, 'Math.E');
 
     // Basic validation to prevent arbitrary code execution
-    if (/[^0-9+\-*/()., MathsqrtcoantlgPIE]/.test(sanitizedExpr)) {
+    // Allow letters for Math functions (e, PI, sqrt, etc.)
+    if (/[^0-9+\-*/()., MathsqrtcoantlgPIEa-z]/.test(processedExpr)) {
         throw new Error('Invalid characters in expression');
     }
     
     // Using Function constructor is safer than eval, but still requires caution.
-    return new Function('return ' + sanitizedExpr)();
+    return new Function('return ' + processedExpr)();
 };
 
 export function Calculator() {
@@ -102,7 +109,7 @@ export function Calculator() {
 
   const handleCalculate = () => {
     try {
-      if (!expression || /[+\-*/.]$/.test(expression)) return;
+      if (!expression || /[+\-*/.^]$/.test(expression)) return;
       
       const evalResult = evaluateExpression(expression);
 
@@ -127,42 +134,42 @@ export function Calculator() {
 
   const ScientificLayout = () => (
     <div className="grid grid-cols-5 gap-3">
-        {/* Row 1: Scientific Functions */}
+        {/* Row 1 */}
         <CalculatorButton onClick={() => handleFunctionClick('sin')} label="sin" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleFunctionClick('cos')} label="cos" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleFunctionClick('tan')} label="tan" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleFunctionClick('log')} label="log" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleFunctionClick('ln')} label="ln" className={buttonClasses.dark} />
+        <CalculatorButton onClick={() => handleButtonClick('/')} label={<Divide />} className={buttonClasses.blue} />
 
-        {/* Row 2: Scientific Functions & Clear */}
+        {/* Row 2 */}
+        <CalculatorButton onClick={() => handleFunctionClick('ln')} label="ln" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleButtonClick('(')} label="(" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleButtonClick(')')} label=")" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleFunctionClick('√')} label="√" className={buttonClasses.dark} />
+        <CalculatorButton onClick={() => handleButtonClick('*')} label={<X />} className={buttonClasses.blue} />
+
+        {/* Row 3 */}
         <CalculatorButton onClick={() => handleButtonClick('^')} label="^" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('π')} label="π" className={buttonClasses.dark} />
-        
-        {/* Row 3: Clear & Numbers */}
-        <CalculatorButton onClick={handleClear} label="AC" className={buttonClasses.gray} />
-        <CalculatorButton onClick={handleBackspace} label={<Delete />} className={buttonClasses.gray} />
         <CalculatorButton onClick={() => handleButtonClick('7')} label="7" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleButtonClick('8')} label="8" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleButtonClick('9')} label="9" className={buttonClasses.dark} />
-        
-        {/* Row 4: Operators & Numbers */}
-        <CalculatorButton onClick={() => handleButtonClick('/')} label={<Divide />} className={buttonClasses.blue} />
-        <CalculatorButton onClick={() => handleButtonClick('*')} label={<X />} className={buttonClasses.blue} />
+        <CalculatorButton onClick={() => handleButtonClick('-')} label={<Minus />} className={buttonClasses.blue} />
+
+        {/* Row 4 */}
+        <CalculatorButton onClick={() => handleButtonClick('π')} label="π" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleButtonClick('4')} label="4" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleButtonClick('5')} label="5" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleButtonClick('6')} label="6" className={buttonClasses.dark} />
-
-        {/* Row 5: Operators & Numbers */}
-        <CalculatorButton onClick={() => handleButtonClick('-')} label={<Minus />} className={buttonClasses.blue} />
         <CalculatorButton onClick={() => handleButtonClick('+')} label={<Plus />} className={buttonClasses.blue} />
+        
+        {/* Row 5 */}
+        <CalculatorButton onClick={handleClear} label="AC" className={buttonClasses.gray} />
         <CalculatorButton onClick={() => handleButtonClick('1')} label="1" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleButtonClick('2')} label="2" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleButtonClick('3')} label="3" className={buttonClasses.dark} />
+        <CalculatorButton onClick={handleBackspace} label={<Delete />} className={buttonClasses.gray} />
 
-        {/* Row 6: Zero, Dot & Equals */}
+        {/* Row 6 */}
         <CalculatorButton onClick={() => handleButtonClick('0')} label="0" className={`${buttonClasses.dark} col-span-2`} />
         <CalculatorButton onClick={() => handleButtonClick('.')} label="." className={buttonClasses.dark} />
         <CalculatorButton onClick={handleCalculate} label={<Equal />} className={`${buttonClasses.blue} col-span-2`} />
@@ -233,3 +240,5 @@ const BasicLayout = () => (
     </div>
   );
 }
+
+    
