@@ -37,6 +37,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const [attachment, setAttachment] = useState<string | null>(null);
     const [isClient, setIsClient] = useState(false);
     const [customFontSize, setCustomFontSize] = useState('16');
+    const [isDirty, setIsDirty] = useState(false);
 
     const router = useRouter();
     const { toast } = useToast();
@@ -45,7 +46,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const colorInputRef = useRef<HTMLInputElement>(null);
     const isNewNote = noteId === 'new';
     
-    // Flag to prevent setting innerHTML on every render
     const contentSetRef = useRef(false);
 
     useEffect(() => {
@@ -57,7 +57,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 const noteToEdit = notes.find(note => note.id === noteId);
                 if (noteToEdit) {
                     setTitle(noteToEdit.title);
-                    // Set content state, which will trigger the next effect
                     setContent(noteToEdit.content);
                     contentSetRef.current = false;
                     setIsFavorite(noteToEdit.isFavorite || false);
@@ -71,13 +70,30 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         }
     }, [noteId, isNewNote, router, toast]);
 
-    // Set initial content only once when the note is loaded
     useEffect(() => {
         if (editorRef.current && content && !contentSetRef.current) {
             editorRef.current.innerHTML = content;
             contentSetRef.current = true;
         }
     }, [content, isClient]);
+
+    const handleAutoSave = () => {
+        const currentContent = editorRef.current?.innerHTML || '';
+        if (!title.trim() && !currentContent.trim()) {
+            return;
+        }
+        handleSave(true);
+    };
+
+    useEffect(() => {
+        // This is the cleanup function that will run when the component unmounts.
+        return () => {
+            if (isDirty) {
+                handleAutoSave();
+            }
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isDirty, title]); // Re-run effect if isDirty or title changes.
 
     const applyStyle = (style: string, value: string) => {
         editorRef.current?.focus();
@@ -86,10 +102,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
         const range = selection.getRangeAt(0);
         if (range.collapsed) {
-             // If no text is selected, we can insert a styled span
             const span = document.createElement('span');
             span.style[style as any] = value;
-            span.innerHTML = '&#8203;'; // Zero-width space to place cursor inside
+            span.innerHTML = '&#8203;';
             range.insertNode(span);
             range.selectNodeContents(span);
             range.collapse(false);
@@ -100,7 +115,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
              if (style === 'color') {
                  document.execCommand('foreColor', false, value);
              } else if (style === 'fontSize') {
-                 // This is tricky. A better way would be to wrap in a span.
                  const span = document.createElement('span');
                  span.style.fontSize = value;
                  span.innerHTML = range.toString();
@@ -109,12 +123,14 @@ export function NoteEditor({ noteId }: { noteId: string }) {
              }
               document.execCommand('styleWithCSS', false, 'false');
         }
+        setIsDirty(true);
     };
 
 
     const handleFormat = (command: string, value?: string) => {
         editorRef.current?.focus();
         document.execCommand(command, false, value);
+        setIsDirty(true);
     };
     
     const handleFormatBlock = (tag: string) => {
@@ -132,6 +148,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             reader.onloadend = () => {
                 setAttachment(reader.result as string);
                 toast({ title: "Image attached successfully!"});
+                setIsDirty(true);
             };
             reader.readAsDataURL(file);
         }
@@ -140,6 +157,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const handleRemoveImage = () => {
         setAttachment(null);
         toast({ title: "Image removed."});
+        setIsDirty(true);
     }
     
     const showComingSoonToast = () => {
@@ -160,6 +178,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         if (lastCalc && editorRef.current) {
             editorRef.current.focus();
             document.execCommand('insertText', false, lastCalc);
+            setIsDirty(true);
         } else {
             toast({ title: "No calculation found", description: "Perform a calculation in the calculator first."});
         }
@@ -170,20 +189,23 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         if (lastConv && editorRef.current) {
             editorRef.current.focus();
             document.execCommand('insertText', false, lastConv);
+            setIsDirty(true);
         } else {
             toast({ title: "No conversion found", description: "Perform a conversion in the converter first."});
         }
     };
 
 
-    const handleSave = () => {
+    const handleSave = (isAutoSave = false) => {
          const currentContent = editorRef.current?.innerHTML || '';
         if (!title.trim() && !currentContent.trim()) {
-            toast({
-                title: "Cannot save empty note",
-                description: "Please add a title or some content.",
-                variant: "destructive"
-            });
+            if (!isAutoSave) {
+                toast({
+                    title: "Cannot save empty note",
+                    description: "Please add a title or some content.",
+                    variant: "destructive"
+                });
+            }
             return;
         }
 
@@ -220,11 +242,15 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         }
 
         localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
-        toast({
-            title: "Note Saved!",
-            description: "Your note has been saved successfully.",
-        });
-        router.push('/notes');
+        setIsDirty(false);
+
+        if (!isAutoSave) {
+            toast({
+                title: "Note Saved!",
+                description: "Your note has been saved successfully.",
+            });
+            router.push('/notes');
+        }
     };
     
     const handleSoftDelete = () => {
@@ -238,6 +264,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             note.id === noteId ? { ...note, deletedAt: new Date().toISOString() } : note
         );
         localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(updatedNotes));
+        setIsDirty(false);
         toast({ title: "Note moved to Recycle Bin." });
         router.push('/notes');
     };
@@ -249,13 +276,11 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     return (
         <div className="w-full max-w-md mx-auto flex flex-col h-screen">
             <header className="flex items-center justify-between p-4 flex-shrink-0">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/notes">
-                        <ArrowLeft />
-                    </Link>
+                <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                    <ArrowLeft />
                 </Button>
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={handleSave}>
+                    <Button variant="ghost" size="icon" onClick={() => handleSave()}>
                         <Save />
                     </Button>
                 </div>
@@ -263,13 +288,13 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             <div className="px-4 flex-shrink-0">
                 <Input
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => { setTitle(e.target.value); setIsDirty(true); }}
                     placeholder="Write title here"
                     className="w-full bg-card border-border h-12 text-lg font-bold focus-visible:ring-1 focus-visible:ring-ring mb-2"
                 />
                  <Input
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
+                    onChange={(e) => { setCategory(e.target.value); setIsDirty(true); }}
                     placeholder="Write category"
                     className="w-full bg-card border-border h-12 text-base focus-visible:ring-1 focus-visible:ring-ring"
                 />
@@ -366,6 +391,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                  <div
                     ref={editorRef}
                     contentEditable
+                    onInput={() => setIsDirty(true)}
                     data-placeholder="Type your message"
                     className="w-full h-full flex-grow bg-transparent border-none resize-none focus-visible:outline-none text-base p-0 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
                     style={{ direction: 'ltr' }}
