@@ -35,6 +35,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { incrementTodaysCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { CustomUnit, CustomCategory } from "./custom-unit-manager";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+
 
 const regions: Region[] = ['International', 'India'];
 
@@ -77,6 +79,11 @@ const offlineParseConversionQuery = (query: string, allUnits: Unit[]): ParseConv
         category: category.name,
     };
 };
+
+type ChartDataItem = {
+    name: string;
+    value: number;
+}
 
 
 export function Converter() {
@@ -160,6 +167,8 @@ export function Converter() {
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [region, setRegion] = React.useState<Region>('International');
   const { t } = useLanguage();
+  const [chartData, setChartData] = useState<ChartDataItem[]>([]);
+
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isSearching, startSearchTransition] = React.useTransition();
@@ -243,32 +252,53 @@ export function Converter() {
   }, [selectedCategory, region, currentUnits]);
 
 
-  const performConversion = React.useCallback(async () => {
-      const numValue = parseFloat(inputValue);
+ const performConversion = React.useCallback(async () => {
+    const numValue = parseFloat(inputValue);
 
-      if (isNaN(numValue) || !fromUnit || !toUnit) {
+    if (isNaN(numValue) || !fromUnit || !toUnit) {
         setOutputValue("");
+        setChartData([]);
         return;
-      }
-      
-      const categoryToUse = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit) && c.units.some(u => u.symbol === toUnit)) || selectedCategory;
-      
-      if (!categoryToUse) {
-         setOutputValue("");
-         return;
-      }
+    }
 
-      const result = await categoryToUse.convert(numValue, fromUnit, toUnit, region);
+    const categoryToUse = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit) && c.units.some(u => u.symbol === toUnit)) || selectedCategory;
 
-      if (result === undefined || isNaN(result)) {
+    if (!categoryToUse) {
         setOutputValue("");
+        setChartData([]);
         return;
-      }
-      
-      const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
-      setOutputValue(formattedResult);
-      
-  }, [inputValue, fromUnit, toUnit, selectedCategory, region, conversionCategories]);
+    }
+
+    const result = await categoryToUse.convert(numValue, fromUnit, toUnit, region);
+
+    if (result === undefined || isNaN(result)) {
+        setOutputValue("");
+        setChartData([]);
+        return;
+    }
+
+    const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
+    setOutputValue(formattedResult);
+
+    // Prepare data for chart
+    if (categoryToUse.factors && categoryToUse.name !== 'Temperature') {
+        const fromFactor = categoryToUse.factors[fromUnit];
+        const toFactor = categoryToUse.factors[toUnit];
+
+        if (fromFactor !== undefined && toFactor !== undefined) {
+            const valueInBase = numValue * fromFactor;
+            const resultInBase = result * toFactor;
+            setChartData([
+                { name: fromUnit, value: valueInBase },
+                { name: toUnit, value: resultInBase }
+            ]);
+        }
+    } else {
+        setChartData([]);
+    }
+
+}, [inputValue, fromUnit, toUnit, selectedCategory, region, conversionCategories]);
+
   
   // Perform conversion whenever inputs change if auto-convert is on
   useEffect(() => {
@@ -722,6 +752,30 @@ export function Converter() {
             
             <Button onClick={handleConvertClick} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base font-bold">{t('converter.convertButton')}</Button>
           </div>
+            
+            {chartData.length > 0 && (
+                <div className="bg-card p-4 rounded-xl mt-4">
+                    <h3 className="font-bold text-lg mb-4 text-center">Visual Comparison</h3>
+                    <div className="h-40">
+                         <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.5} />
+                                <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+                                <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} tickFormatter={(value) => value.toLocaleString()} />
+                                <Tooltip
+                                    cursor={{fill: 'hsla(var(--muted), 0.5)'}}
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--background))',
+                                        borderColor: 'hsl(var(--border))',
+                                        borderRadius: 'var(--radius)',
+                                    }}
+                                />
+                                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
     
           {history.length > 0 && (
               <div className="bg-card p-4 rounded-xl flex flex-col gap-3 mt-4">
@@ -829,5 +883,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
