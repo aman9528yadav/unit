@@ -25,6 +25,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const editorRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const isNewNote = noteId === 'new';
+    
+    // Flag to prevent setting innerHTML on every render
+    const contentSetRef = useRef(false);
 
     useEffect(() => {
         setIsClient(true);
@@ -39,9 +42,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     setIsFavorite(noteToEdit.isFavorite || false);
                     setCategory(noteToEdit.category || '');
                     setAttachment(noteToEdit.attachment || null);
-                     if (editorRef.current) {
-                        editorRef.current.innerHTML = noteToEdit.content;
-                    }
                 } else {
                     toast({ title: "Note not found", variant: "destructive" });
                     router.push('/notes');
@@ -49,6 +49,15 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             }
         }
     }, [noteId, isNewNote, router, toast]);
+
+    // Set initial content only once when the note is loaded
+    useEffect(() => {
+        if (editorRef.current && content && !contentSetRef.current) {
+            editorRef.current.innerHTML = content;
+            contentSetRef.current = true;
+        }
+    }, [content]);
+
 
     const handleFormat = (command: string) => {
         document.execCommand(command, false);
@@ -84,7 +93,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     }
 
     const handleSave = () => {
-        if (!title.trim() && !content.trim()) {
+         const currentContent = editorRef.current?.innerHTML || '';
+        if (!title.trim() && !currentContent.trim()) {
             toast({
                 title: "Cannot save empty note",
                 description: "Please add a title or some content.",
@@ -101,7 +111,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             const newNote: Note = {
                 id: uuidv4(),
                 title,
-                content,
+                content: currentContent,
                 isFavorite,
                 category,
                 attachment,
@@ -116,7 +126,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 notes[noteIndex] = {
                     ...notes[noteIndex],
                     title,
-                    content,
+                    content: currentContent,
                     isFavorite,
                     category,
                     attachment,
@@ -208,7 +218,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     data-placeholder="Type your message"
                     className="w-full h-full flex-grow bg-transparent border-none resize-none focus-visible:outline-none text-base p-0 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
                     style={{ direction: 'ltr' }}
-                    dangerouslySetInnerHTML={{ __html: content }}
                 />
                 <div className="flex items-center gap-2 pt-2 border-t border-border">
                     <Button variant="ghost" size="icon" onClick={showComingSoonToast}><Paperclip /></Button>
