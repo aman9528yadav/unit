@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -25,7 +26,28 @@ const menuItems = [
   { icon: LogOut, text: "Logout", href: "#" },
 ];
 
+const defaultProfile = {
+    fullName: "Aman Yadav",
+    email: "aman@example.com",
+    birthday: "April 1st",
+};
+
 export function Profile() {
+  const [profile, setProfile] = useState(defaultProfile);
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+    const storedProfile = localStorage.getItem("userProfile");
+    if (storedProfile) {
+      setProfile(JSON.parse(storedProfile));
+    }
+  }, []);
+
+  if (!isClient) {
+    return null; // or a loading spinner
+  }
+
   return (
     <div className="w-full max-w-md mx-auto text-white flex flex-col">
       <div className="bg-indigo-400/90 pb-8 rounded-b-3xl">
@@ -42,7 +64,7 @@ export function Profile() {
           <div className="relative w-28 h-28">
             <Image
               src="https://picsum.photos/200"
-              alt="Aman Yadav"
+              alt={profile.fullName}
               width={112}
               height={112}
               className="rounded-full border-4 border-white"
@@ -58,9 +80,9 @@ export function Profile() {
               </Button>
             </Link>
           </div>
-          <h2 className="text-2xl font-bold mt-2">Aman Yadav</h2>
-          <p className="text-sm">aman@example.com</p>
-          <p className="text-sm">Birthday: April 1st</p>
+          <h2 className="text-2xl font-bold mt-2">{profile.fullName}</h2>
+          <p className="text-sm">{profile.email}</p>
+          <p className="text-sm">Birthday: {profile.birthday}</p>
         </div>
       </div>
 

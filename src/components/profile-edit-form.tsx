@@ -1,25 +1,51 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+
+const defaultProfile = {
+    fullName: "Aman Yadav",
+    email: "aman@example.com",
+    birthday: "April 1st",
+    mobile: "+123 567 89000",
+    dob: "01 / 04 / 199X",
+    weight: "75 Kg",
+    height: "1.65 CM",
+};
+
 
 export function ProfileEditForm() {
-  const [fullName, setFullName] = useState("Madison Smith");
-  const [email, setEmail] = useState("madisons@example.com");
-  const [mobile, setMobile] = useState("+123 567 89000");
-  const [dob, setDob] = useState("01 / 04 / 199X");
-  const [weight, setWeight] = useState("75 Kg");
-  const [height, setHeight] = useState("1.65 CM");
+  const [profile, setProfile] = useState(defaultProfile);
+  const { toast } = useToast();
+  const router = useRouter();
+
+  useEffect(() => {
+    const storedProfile = localStorage.getItem("userProfile");
+    if (storedProfile) {
+      setProfile(JSON.parse(storedProfile));
+    }
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setProfile(prev => ({ ...prev, [id]: value }));
+  };
 
   const handleUpdate = () => {
-    // Handle profile update logic
-    console.log("Profile Updated");
+    localStorage.setItem("userProfile", JSON.stringify(profile));
+    toast({
+      title: "Profile Updated",
+      description: "Your changes have been saved successfully.",
+    });
+    router.push("/profile");
   };
 
   return (
@@ -38,7 +64,7 @@ export function ProfileEditForm() {
           <div className="relative w-28 h-28">
             <Image
               src="https://picsum.photos/200"
-              alt="Aman Yadav"
+              alt={profile.fullName}
               width={112}
               height={112}
               className="rounded-full border-4 border-white"
@@ -52,9 +78,9 @@ export function ProfileEditForm() {
               <Pencil className="w-4 h-4 text-black" />
             </Button>
           </div>
-          <h2 className="text-2xl font-bold mt-2">Aman Yadav</h2>
-          <p className="text-sm">aman@example.com</p>
-          <p className="text-sm">Birthday: April 1st</p>
+          <h2 className="text-2xl font-bold mt-2">{profile.fullName}</h2>
+          <p className="text-sm">{profile.email}</p>
+          <p className="text-sm">Birthday: {profile.birthday}</p>
         </div>
       </div>
 
@@ -79,27 +105,27 @@ export function ProfileEditForm() {
         <form className="space-y-4">
           <div>
             <Label htmlFor="fullName" className="text-muted-foreground">Full name</Label>
-            <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} className="bg-secondary mt-1 h-12 rounded-lg" />
+            <Input id="fullName" value={profile.fullName} onChange={handleChange} className="bg-secondary mt-1 h-12 rounded-lg" />
           </div>
           <div>
             <Label htmlFor="email" className="text-muted-foreground">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-secondary mt-1 h-12 rounded-lg" />
+            <Input id="email" type="email" value={profile.email} onChange={handleChange} className="bg-secondary mt-1 h-12 rounded-lg" />
           </div>
           <div>
             <Label htmlFor="mobile" className="text-muted-foreground">Mobile Number</Label>
-            <Input id="mobile" value={mobile} onChange={(e) => setMobile(e.target.value)} className="bg-secondary mt-1 h-12 rounded-lg" />
+            <Input id="mobile" value={profile.mobile} onChange={handleChange} className="bg-secondary mt-1 h-12 rounded-lg" />
           </div>
           <div>
             <Label htmlFor="dob" className="text-muted-foreground">Date of birth</Label>
-            <Input id="dob" value={dob} onChange={(e) => setDob(e.target.value)} className="bg-secondary mt-1 h-12 rounded-lg" />
+            <Input id="dob" value={profile.dob} onChange={handleChange} className="bg-secondary mt-1 h-12 rounded-lg" />
           </div>
           <div>
             <Label htmlFor="weight" className="text-muted-foreground">Weight</Label>
-            <Input id="weight" value={weight} onChange={(e) => setWeight(e.target.value)} className="bg-secondary mt-1 h-12 rounded-lg" />
+            <Input id="weight" value={profile.weight} onChange={handleChange} className="bg-secondary mt-1 h-12 rounded-lg" />
           </div>
           <div>
             <Label htmlFor="height" className="text-muted-foreground">Height</Label>
-            <Input id="height" value={height} onChange={(e) => setHeight(e.target.value)} className="bg-secondary mt-1 h-12 rounded-lg" />
+            <Input id="height" value={profile.height} onChange={handleChange} className="bg-secondary mt-1 h-12 rounded-lg" />
           </div>
           <Button
             type="button"
