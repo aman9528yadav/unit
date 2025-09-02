@@ -109,7 +109,8 @@
         "area": "क्षेत्र",
         "volume": "आयतन",
         "pressure": "दबाव",
-        "energy": "ऊर्जा"
+        "energy": "ऊर्जा",
+        "currency": "मुद्रा"
     },
     "units": {
         "meters": "मीटर",
@@ -173,6 +174,23 @@
         "kilojoule": "किलोजूल",
         "calorie": "कैलोरी",
         "kilocalorie": "किलोकैलोरी",
-        "kilowatt-hour": "किलोवाट-घंटा"
+        "kilowatt-hour": "किलोवाट-घंटा",
+        "unitedstatesdollarusd": "संयुक्त राज्य डॉलर (USD)",
+        "euroeur": "यूरो (EUR)",
+        "japaneseyenjpy": "जापानी येन (JPY)",
+        "britishpoundgbp": "ब्रिटिश पाउंड (GBP)",
+        "indianrupeeinr": "भारतीय रुपया (INR)",
+        "australiandollaraud": "ऑस्ट्रेलियाई डॉलर (AUD)",
+        "canadiandollarcad": "कनाडाई डॉलर (CAD)",
+        "swissfrancchf": "स्विस फ्रैंक (CHF)",
+        "chineseyuancny": "चीनी युआन (CNY)",
+        "hongkongdollarhkd": "हांगकांग डॉलर (HKD)",
+        "newzealanddollarnzd": "न्यूजीलैंड डॉलर (NZD)",
+        "southkoreanwonkrw": "दक्षिण कोरियाई वॉन (KRW)",
+        "singaporedollarsgd": "सिंगापुर डॉलर (SGD)",
+        "mexicanpesomxn": "मैक्सिकन पेसो (MXN)",
+        "brazilianrealbrl": "ब्राज़ीलियाई रियल (BRL)",
+        "russianrublerub": "रूसी रूबल (RUB)",
+        "southafricanrandzar": "दक्षिण अफ़्रीकी रैंड (ZAR)"
     }
 }

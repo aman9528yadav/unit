@@ -766,7 +766,7 @@ function UnitSelect({ units, value, onValueChange, t }: { units: Unit[], value: 
       <SelectContent>
         {units.map(unit => (
           <SelectItem key={unit.symbol} value={unit.symbol}>
-            {`${t(`units.${unit.name.toLowerCase().replace(/ /g, '')}`, { defaultValue: unit.name })} (${unit.symbol})`}
+            {t(`units.${unit.name.toLowerCase().replace(/[\s().]/g, '')}`, { defaultValue: unit.name })}
           </SelectItem>
         ))}
       </SelectContent>
@@ -810,7 +810,7 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
           <h2 className="text-2xl font-bold">{t(`categories.${category.name.toLowerCase()}`)} {t('converter.image.conversion')}</h2>
         </div>
         <div className="flex flex-col gap-2 text-center">
-            <p className="text-xl text-muted-foreground">{fromUnitInfo ? t(`units.${fromUnitInfo.name.toLowerCase().replace(/ /g, '')}`) : ''}</p>
+            <p className="text-xl text-muted-foreground">{fromUnitInfo ? t(`units.${fromUnitInfo.name.toLowerCase().replace(/[\s().]/g, '')}`) : ''}</p>
             <p className="text-5xl font-bold">{inputValue}</p>
             <p className="text-lg text-muted-foreground">{fromUnitInfo?.symbol}</p>
         </div>
@@ -818,7 +818,7 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
             <ArrowRightLeft className="w-8 h-8 text-accent" />
         </div>
          <div className="flex flex-col gap-2 text-center">
-            <p className="text-xl text-muted-foreground">{toUnitInfo ? t(`units.${toUnitInfo.name.toLowerCase().replace(/ /g, '')}`) : ''}</p>
+            <p className="text-xl text-muted-foreground">{toUnitInfo ? t(`units.${toUnitInfo.name.toLowerCase().replace(/[\s().]/g, '')}`) : ''}</p>
             <p className="text-5xl font-bold">{outputValue}</p>
             <p className="text-lg text-muted-foreground">{toUnitInfo?.symbol}</p>
         </div>

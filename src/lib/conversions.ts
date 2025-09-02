@@ -360,14 +360,23 @@ const energyCategory: ConversionCategory = {
 
 // --- CURRENCY ---
 const currencyUnits: Unit[] = [
-    { name: 'United States Dollar', symbol: 'USD', info: 'Base currency' },
-    { name: 'Euro', symbol: 'EUR', info: '1 EUR ≈ 1.08 USD' },
-    { name: 'Japanese Yen', symbol: 'JPY', info: '1 JPY ≈ 0.0064 USD' },
-    { name: 'British Pound', symbol: 'GBP', info: '1 GBP ≈ 1.27 USD' },
-    { name: 'Indian Rupee', symbol: 'INR', info: '1 INR ≈ 0.012 USD' },
-    { name: 'Australian Dollar', symbol: 'AUD', info: '1 AUD ≈ 0.66 USD' },
-    { name: 'Canadian Dollar', symbol: 'CAD', info: '1 CAD ≈ 0.73 USD' },
-    { name: 'Swiss Franc', symbol: 'CHF', info: '1 CHF ≈ 1.11 USD' },
+    { name: 'United States Dollar (USD)', symbol: 'USD', info: 'Base currency' },
+    { name: 'Euro (EUR)', symbol: 'EUR', info: '1 EUR ≈ 1.08 USD' },
+    { name: 'Japanese Yen (JPY)', symbol: 'JPY', info: '1 JPY ≈ 0.0064 USD' },
+    { name: 'British Pound (GBP)', symbol: 'GBP', info: '1 GBP ≈ 1.27 USD' },
+    { name: 'Indian Rupee (INR)', symbol: 'INR', info: '1 INR ≈ 0.012 USD' },
+    { name: 'Australian Dollar (AUD)', symbol: 'AUD', info: '1 AUD ≈ 0.66 USD' },
+    { name: 'Canadian Dollar (CAD)', symbol: 'CAD', info: '1 CAD ≈ 0.73 USD' },
+    { name: 'Swiss Franc (CHF)', symbol: 'CHF', info: '1 CHF ≈ 1.11 USD' },
+    { name: 'Chinese Yuan (CNY)', symbol: 'CNY', info: '1 CNY ≈ 0.14 USD' },
+    { name: 'Hong Kong Dollar (HKD)', symbol: 'HKD', info: '1 HKD ≈ 0.13 USD' },
+    { name: 'New Zealand Dollar (NZD)', symbol: 'NZD', info: '1 NZD ≈ 0.61 USD' },
+    { name: 'South Korean Won (KRW)', symbol: 'KRW', info: '1 KRW ≈ 0.00072 USD' },
+    { name: 'Singapore Dollar (SGD)', symbol: 'SGD', info: '1 SGD ≈ 0.74 USD' },
+    { name: 'Mexican Peso (MXN)', symbol: 'MXN', info: '1 MXN ≈ 0.059 USD' },
+    { name: 'Brazilian Real (BRL)', symbol: 'BRL', info: '1 BRL ≈ 0.18 USD' },
+    { name: 'Russian Ruble (RUB)', symbol: 'RUB', info: '1 RUB ≈ 0.011 USD' },
+    { name: 'South African Rand (ZAR)', symbol: 'ZAR', info: '1 ZAR ≈ 0.054 USD' },
 ];
 const currencyFactors: LinearConversionFactors = {
     'USD': 1,
@@ -378,6 +387,15 @@ const currencyFactors: LinearConversionFactors = {
     'AUD': 0.66,
     'CAD': 0.73,
     'CHF': 1.11,
+    'CNY': 0.14,
+    'HKD': 0.13,
+    'NZD': 0.61,
+    'KRW': 0.00072,
+    'SGD': 0.74,
+    'MXN': 0.059,
+    'BRL': 0.18,
+    'RUB': 0.011,
+    'ZAR': 0.054,
 };
 const currencyCategory: ConversionCategory = {
     name: 'Currency',

@@ -109,7 +109,8 @@
         "area": "Area",
         "volume": "Volume",
         "pressure": "Pressure",
-        "energy": "Energy"
+        "energy": "Energy",
+        "currency": "Currency"
     },
     "units": {
         "meters": "Meters",
@@ -173,6 +174,23 @@
         "kilojoule": "Kilojoule",
         "calorie": "Calorie",
         "kilocalorie": "Kilocalorie",
-        "kilowatt-hour": "Kilowatt-hour"
+        "kilowatt-hour": "Kilowatt-hour",
+        "unitedstatesdollarusd": "United States Dollar (USD)",
+        "euroeur": "Euro (EUR)",
+        "japaneseyenjpy": "Japanese Yen (JPY)",
+        "britishpoundgbp": "British Pound (GBP)",
+        "indianrupeeinr": "Indian Rupee (INR)",
+        "australiandollaraud": "Australian Dollar (AUD)",
+        "canadiandollarcad": "Canadian Dollar (CAD)",
+        "swissfrancchf": "Swiss Franc (CHF)",
+        "chineseyuancny": "Chinese Yuan (CNY)",
+        "hongkongdollarhkd": "Hong Kong Dollar (HKD)",
+        "newzealanddollarnzd": "New Zealand Dollar (NZD)",
+        "southkoreanwonkrw": "South Korean Won (KRW)",
+        "singaporedollarsgd": "Singapore Dollar (SGD)",
+        "mexicanpesomxn": "Mexican Peso (MXN)",
+        "brazilianrealbrl": "Brazilian Real (BRL)",
+        "russianrublerub": "Russian Ruble (RUB)",
+        "southafricanrandzar": "South African Rand (ZAR)"
     }
 }
