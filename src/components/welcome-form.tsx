@@ -1,136 +1,112 @@
 
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import Image from "next/image";
-import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-const defaultProfile = {
-    fullName: "Madison Smith",
-    nickname: "Madison",
-    email: "madisons@example.com",
-    mobile: "+123 567 89000",
-    profileImage: "https://picsum.photos/200",
-};
+import { auth } from "@/lib/firebase";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 export function WelcomeForm() {
-  const [profile, setProfile] = useState(defaultProfile);
-  const [imagePreview, setImagePreview] = useState<string>(profile.profileImage);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const { toast } = useToast();
   const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setProfile(prev => ({ ...prev, [id]: value }));
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setImagePreview(result);
-        setProfile(prev => ({ ...prev, profileImage: result }));
-      };
-      reader.readAsDataURL(file);
+  const handleLogin = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({ title: "Login Successful" });
+      
+      const user = auth.currentUser;
+      if (user) {
+        // Fetch or create profile
+         const profile = {
+            fullName: user.displayName || "User",
+            email: user.email || "",
+            profileImage: user.photoURL || "https://picsum.photos/200",
+            nickname: user.displayName?.split(' ')[0] || "User",
+            mobile: user.phoneNumber || ""
+          };
+          localStorage.setItem("userProfile", JSON.stringify(profile));
+      }
+      router.push("/");
+    } catch (error: any) {
+       toast({ title: "Login Failed", description: error.message, variant: "destructive" });
     }
   };
 
-  const handleStart = () => {
-    localStorage.setItem("userProfile", JSON.stringify(profile));
-    toast({
-      title: "Profile Created!",
-      description: "Welcome to UniConvert.",
-    });
-    router.push("/profile/success");
-  };
+  const handleGoogleLogin = async () => {
+     const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      const profile = {
+        fullName: user.displayName || "New User",
+        email: user.email || "",
+        profileImage: user.photoURL || "https://picsum.photos/200",
+        nickname: user.displayName?.split(' ')[0] || "User",
+        mobile: user.phoneNumber || ""
+      };
+
+      localStorage.setItem("userProfile", JSON.stringify(profile));
+      toast({ title: "Login Successful!", description: `Welcome back, ${profile.fullName}!` });
+      router.push("/");
+
+    } catch (error: any) {
+      console.error("Error during Google sign-in:", error);
+      toast({ title: "Sign-in Failed", description: error.message, variant: "destructive" });
+    }
+  }
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col gap-8 p-4 sm:p-6">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold">Fill Your Profile</h1>
+    <div className="w-full max-w-md mx-auto flex flex-col items-center justify-center gap-8 p-4 sm:p-6 min-h-screen">
+       <div className="text-center">
+        <h1 className="text-3xl font-bold">Welcome Back!</h1>
         <p className="text-muted-foreground mt-2 max-w-sm mx-auto">
-          This data is only stored on your device and is not collected by us.
+          Log in to continue your journey with UniConvert.
         </p>
+      </div>
+
+      <div className="w-full space-y-4">
+        <div>
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-secondary mt-1 h-12 rounded-lg border-none" placeholder="aman@example.com" />
+        </div>
+        <div>
+            <Label htmlFor="password">Password</Label>
+            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-secondary mt-1 h-12 rounded-lg border-none" placeholder="••••••••" />
+        </div>
+        <div className="pt-4">
+            <Button type="button" onClick={handleLogin} className="w-full h-14 bg-accent text-accent-foreground font-bold text-lg rounded-full hover:bg-accent/90">
+                Log In
+            </Button>
+        </div>
       </div>
       
-      <div className="bg-primary/20 py-8 rounded-2xl flex flex-col items-center relative">
-         <div className="relative w-28 h-28">
-            <Image
-              src={imagePreview}
-              alt={profile.fullName}
-              width={112}
-              height={112}
-              className="rounded-full border-4 border-white object-cover w-28 h-28"
-              data-ai-hint="profile picture"
-            />
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageChange}
-              accept="image/*"
-              className="hidden"
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute bottom-0 right-0 rounded-full w-8 h-8 bg-accent border-accent hover:bg-accent/90"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Pencil className="w-4 h-4 text-accent-foreground" />
-            </Button>
-          </div>
+       <p className="text-center text-sm text-muted-foreground">
+        Or, log in with a provider:
+      </p>
+
+      <div className="w-full">
+         <Button onClick={handleGoogleLogin}  className="w-full h-12 bg-card text-card-foreground font-bold text-base rounded-lg hover:bg-card/90 border flex items-center justify-center gap-2">
+            <Image src="/google-logo.svg" alt="Google" width={24} height={24} />
+            Continue with Google
+         </Button>
       </div>
 
-      <div className="flex-grow w-full">
-        <form className="space-y-4">
-          <div>
-            <Label htmlFor="fullName" className="text-muted-foreground">Full name</Label>
-            <Input id="fullName" value={profile.fullName} onChange={handleChange} className="bg-secondary mt-1 h-12 rounded-lg border-none" />
-          </div>
-          <div>
-            <Label htmlFor="nickname" className="text-muted-foreground">Nickname</Label>
-            <Input id="nickname" value={profile.nickname} onChange={handleChange} className="bg-secondary mt-1 h-12 rounded-lg border-none" />
-          </div>
-          <div>
-            <Label htmlFor="email" className="text-muted-foreground">Email</Label>
-            <Input id="email" type="email" value={profile.email} onChange={handleChange} className="bg-secondary mt-1 h-12 rounded-lg border-none" />
-          </div>
-          <div>
-            <Label htmlFor="mobile" className="text-muted-foreground">Mobile Number</Label>
-
-            <Input id="mobile" value={profile.mobile} onChange={handleChange} className="bg-secondary mt-1 h-12 rounded-lg border-none" />
-          </div>
-          <div className="pt-4">
-            <Button
-              type="button"
-              onClick={handleStart}
-              className="w-full h-14 bg-accent text-accent-foreground font-bold text-lg rounded-full hover:bg-accent/90"
-            >
-              Continue
-            </Button>
-          </div>
-        </form>
-         <p className="text-center text-sm text-muted-foreground mt-4">
-            Or, sign up with a provider:
-        </p>
-         <div className="pt-4">
-            <Button asChild  className="w-full h-12 bg-card text-card-foreground font-bold text-base rounded-lg hover:bg-card/90 border flex items-center justify-center gap-2">
-             <Link href="/signup">
-                <Image src="/google-logo.svg" alt="Google" width={24} height={24} />
-                Sign up with Google
-             </Link>
-            </Button>
-          </div>
-      </div>
+       <p className="text-center text-sm text-muted-foreground">
+        Don't have an account?{" "}
+        <Link href="/signup" className="font-semibold text-primary hover:underline">
+          Sign up
+        </Link>
+      </p>
     </div>
   );
 }
