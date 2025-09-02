@@ -88,7 +88,8 @@
             "changeIcon": "Change icon",
             "autoConvert": "Auto convertor",
             "customUnit": "Custom unit",
-            "off": "Off"
+            "off": "Off",
+            "saveHistory": "Save history"
         },
         "calculator": {
             "title": "Calculator",

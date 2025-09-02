@@ -226,8 +226,8 @@ export function Converter() {
   }, [inputValue, fromUnit, toUnit, outputValue, favorites]);
 
   const handleSaveToHistory = () => {
-    const saveHistory = JSON.parse(localStorage.getItem('saveHistory') || 'true');
-    if (!saveHistory) return;
+    const saveConversionHistory = JSON.parse(localStorage.getItem('saveConversionHistory') || 'true');
+    if (!saveConversionHistory) return;
 
     const numValue = parseFloat(inputValue);
     const result = parseFloat(outputValue.replace(/,/g, ''));

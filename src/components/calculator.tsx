@@ -131,9 +131,14 @@ export function Calculator() {
       }
       const formattedResult = evalResult.toLocaleString(undefined, { maximumFractionDigits: 10, useGrouping: true });
       setResult(formattedResult);
-      const newHistoryEntry = `${expression} = ${formattedResult}`;
-      setHistory(prev => [newHistoryEntry, ...prev.filter(h => h !== newHistoryEntry)]);
-      localStorage.setItem('lastCalculation', newHistoryEntry); // Save for note editor
+      
+      const saveCalcHistory = JSON.parse(localStorage.getItem('saveCalcHistory') || 'true');
+      if (saveCalcHistory) {
+        const newHistoryEntry = `${expression} = ${formattedResult}`;
+        setHistory(prev => [newHistoryEntry, ...prev.filter(h => h !== newHistoryEntry)]);
+      }
+
+      localStorage.setItem('lastCalculation', `${expression} = ${formattedResult}`); // Save for note editor
       incrementTodaysCalculations();
     } catch (error) {
       console.error(error)

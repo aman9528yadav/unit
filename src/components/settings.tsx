@@ -21,7 +21,8 @@ export type CalculatorMode = 'basic' | 'scientific';
 export function Settings() {
   const [notifications, setNotifications] = useState(true);
   const [autoConvert, setAutoConvert] = useState(true);
-  const [saveHistory, setSaveHistory] = useState(true);
+  const [saveConversionHistory, setSaveConversionHistory] = useState(true);
+  const [saveCalcHistory, setSaveCalcHistory] = useState(true);
   const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>('scientific');
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
@@ -32,9 +33,14 @@ export function Settings() {
       setAutoConvert(JSON.parse(savedAutoConvert));
     }
 
-    const savedSaveHistory = localStorage.getItem('saveHistory');
-    if (savedSaveHistory !== null) {
-      setSaveHistory(JSON.parse(savedSaveHistory));
+    const savedConversionHistory = localStorage.getItem('saveConversionHistory');
+    if (savedConversionHistory !== null) {
+      setSaveConversionHistory(JSON.parse(savedConversionHistory));
+    }
+
+    const savedCalcHistory = localStorage.getItem('saveCalcHistory');
+    if (savedCalcHistory !== null) {
+      setSaveCalcHistory(JSON.parse(savedCalcHistory));
     }
     
     const savedCalcMode = localStorage.getItem('calculatorMode') as CalculatorMode;
@@ -48,9 +54,14 @@ export function Settings() {
     localStorage.setItem('autoConvert', JSON.stringify(checked));
   };
 
-  const handleSaveHistoryChange = (checked: boolean) => {
-    setSaveHistory(checked);
-    localStorage.setItem('saveHistory', JSON.stringify(checked));
+  const handleSaveConversionHistoryChange = (checked: boolean) => {
+    setSaveConversionHistory(checked);
+    localStorage.setItem('saveConversionHistory', JSON.stringify(checked));
+  };
+
+  const handleSaveCalcHistoryChange = (checked: boolean) => {
+    setSaveCalcHistory(checked);
+    localStorage.setItem('saveCalcHistory', JSON.stringify(checked));
   };
   
   const handleCalcModeChange = (mode: CalculatorMode) => {
@@ -125,6 +136,11 @@ export function Settings() {
               text={t('settings.unitConverter.autoConvert')}
               control={<Switch checked={autoConvert} onCheckedChange={handleAutoConvertChange} />} 
             />
+             <SettingsItem 
+              icon={History} 
+              text={t('settings.unitConverter.saveHistory')}
+              control={<Switch checked={saveConversionHistory} onCheckedChange={handleSaveConversionHistoryChange} />} 
+            />
             <SettingsItem 
               icon={Languages} 
               text={t('settings.unitConverter.customUnit')}
@@ -157,7 +173,7 @@ export function Settings() {
              <SettingsItem 
               icon={History} 
               text={t('settings.calculator.saveHistory')}
-              control={<Switch checked={saveHistory} onCheckedChange={handleSaveHistoryChange} />} 
+              control={<Switch checked={saveCalcHistory} onCheckedChange={handleSaveCalcHistoryChange} />} 
               isLast={true}
             />
           </div>
