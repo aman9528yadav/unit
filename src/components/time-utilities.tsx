@@ -10,10 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format, differenceInDays, differenceInWeeks, differenceInMonths } from 'date-fns';
-import { Home, Play, Pause, RotateCcw, Flag, CalendarIcon, ArrowRight, Hourglass, Trash2, Settings } from "lucide-react";
+import { format, differenceInDays, differenceInWeeks, differenceInMonths, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, addYears, subYears, intervalToDuration, differenceInBusinessDays, parseISO } from 'date-fns';
+import { Home, Play, Pause, RotateCcw, Flag, CalendarIcon, ArrowRight, Hourglass, Trash2, Settings, Minus, Plus } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,8 @@ import {
   DialogFooter
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label";
-
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 function PomodoroTimer() {
     const [minutes, setMinutes] = React.useState(25);
@@ -113,7 +114,6 @@ function PomodoroTimer() {
         if (userInitiated) {
              setPomodoros(0); // Reset cycle count if mode is manually changed
         }
-        // This effect will call reset() -> setMinutes(newMode === 'work' ? settings.pomodoroLength : settings.shortBreakLength);
     };
     
     React.useEffect(() => {
@@ -277,7 +277,7 @@ function Stopwatch() {
                     </Button>
                 </div>
                 {laps.length > 0 && (
-                    <>
+                    <div className="w-full">
                         <ScrollArea className="h-40 w-full mt-4">
                             <div className="flex flex-col gap-2 p-2">
                                 {laps.map((lapTime, index) => (
@@ -289,10 +289,10 @@ function Stopwatch() {
                                 ))}
                             </div>
                         </ScrollArea>
-                        <Button onClick={clearLaps} variant="ghost" size="sm" className="text-muted-foreground">
+                        <Button onClick={clearLaps} variant="ghost" size="sm" className="text-muted-foreground mt-2">
                             <Trash2 className="mr-2 h-4 w-4"/> Clear Laps
                         </Button>
-                    </>
+                    </div>
                 )}
             </CardContent>
         </Card>
@@ -302,26 +302,22 @@ function Stopwatch() {
 function DateDifference() {
     const [startDate, setStartDate] = React.useState<Date | undefined>(new Date());
     const [endDate, setEndDate] = React.useState<Date | undefined>(new Date());
-    const [difference, setDifference] = React.useState({ days: 0, weeks: 0, months: 0 });
+    const [duration, setDuration] = React.useState<Duration>({});
 
     React.useEffect(() => {
         if (startDate && endDate) {
             if (endDate < startDate) {
-                setDifference({ days: 0, weeks: 0, months: 0 });
+                 setDuration({});
                 return;
             }
-            setDifference({
-                days: differenceInDays(endDate, startDate),
-                weeks: differenceInWeeks(endDate, startDate),
-                months: differenceInMonths(endDate, startDate)
-            });
+            setDuration(intervalToDuration({ start: startDate, end: endDate }));
         }
     }, [startDate, endDate]);
 
     return (
         <Card className="w-full">
              <CardHeader>
-                <CardTitle className="text-center">Calculate Date Difference</CardTitle>
+                <CardTitle className="text-center">Time Between Dates</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-4">
@@ -358,24 +354,268 @@ function DateDifference() {
 
                 <div className="bg-secondary p-4 rounded-xl mt-4">
                     <h3 className="font-semibold mb-3 text-center">Result</h3>
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                        <div>
-                            <p className="text-3xl font-bold">{difference.days}</p>
-                            <p className="text-sm text-muted-foreground">Days</p>
-                        </div>
-                         <div>
-                            <p className="text-3xl font-bold">{difference.weeks}</p>
-                            <p className="text-sm text-muted-foreground">Weeks</p>
-                        </div>
-                         <div>
-                            <p className="text-3xl font-bold">{difference.months}</p>
-                            <p className="text-sm text-muted-foreground">Months</p>
-                        </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                        <StatCard value={duration.years} label="Years" />
+                        <StatCard value={duration.months} label="Months" />
+                        <StatCard value={duration.weeks} label="Weeks" />
+                        <StatCard value={duration.days} label="Days" />
+                    </div>
+                     <div className="text-center text-sm text-muted-foreground mt-4">
+                        Total Days: {startDate && endDate ? differenceInDays(endDate, startDate) : 0}
                     </div>
                 </div>
             </CardContent>
         </Card>
     );
+}
+
+function AddSubtractTime() {
+    const [date, setDate] = React.useState<Date | undefined>(new Date());
+    const [amount, setAmount] = React.useState<number>(1);
+    const [unit, setUnit] = React.useState<'days' | 'weeks' | 'months' | 'years'>('days');
+    const [operation, setOperation] = React.useState<'add' | 'subtract'>('add');
+    const [resultDate, setResultDate] = React.useState<Date | null>(null);
+    
+    const calculate = () => {
+        if (!date) return;
+        const fn = operation === 'add' ? 
+            { days: addDays, weeks: addWeeks, months: addMonths, years: addYears }[unit] :
+            { days: subDays, weeks: subWeeks, months: subMonths, years: subYears }[unit];
+        setResultDate(fn(date, amount));
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-center">Add / Subtract Time</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                    <Label>Date</Label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {date ? format(date, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                        </PopoverContent>
+                    </Popover>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                    <Label>Operation</Label>
+                    <RadioGroup defaultValue="add" onValueChange={(v) => setOperation(v as any)} className="flex gap-4">
+                         <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="add" id="add" />
+                            <Label htmlFor="add">Add</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="subtract" id="subtract" />
+                            <Label htmlFor="subtract">Subtract</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
+                <div className="flex gap-2">
+                     <div className="flex-grow flex-col gap-1.5">
+                        <Label htmlFor="amount">Amount</Label>
+                        <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
+                    </div>
+                     <div className="flex-grow-[2] flex-col gap-1.5">
+                        <Label>Unit</Label>
+                        <Select value={unit} onValueChange={(v) => setUnit(v as any)}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="days">Days</SelectItem>
+                                <SelectItem value="weeks">Weeks</SelectItem>
+                                <SelectItem value="months">Months</SelectItem>
+                                <SelectItem value="years">Years</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                <Button onClick={calculate}>Calculate</Button>
+                 {resultDate && (
+                    <div className="bg-secondary p-4 rounded-xl mt-4 text-center">
+                        <h3 className="font-semibold mb-2">Resulting Date</h3>
+                        <p className="text-2xl font-bold">{format(resultDate, "PPP")}</p>
+                    </div>
+                 )}
+            </CardContent>
+        </Card>
+    )
+}
+
+function AgeCalculator() {
+    const [birthDate, setBirthDate] = React.useState<Date | undefined>();
+    const [age, setAge] = React.useState<Duration | null>(null);
+
+    React.useEffect(() => {
+        if (birthDate) {
+            setAge(intervalToDuration({ start: birthDate, end: new Date() }));
+        }
+    }, [birthDate]);
+
+    return (
+        <Card>
+            <CardHeader><CardTitle className="text-center">Age Calculator</CardTitle></CardHeader>
+            <CardContent className="flex flex-col gap-4 items-center">
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {birthDate ? format(birthDate, "PPP") : <span>Pick your birthdate</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                        <Calendar mode="single" selected={birthDate} onSelect={setBirthDate} captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear()} initialFocus />
+                    </PopoverContent>
+                </Popover>
+                 {age && (
+                    <div className="bg-secondary p-4 rounded-xl mt-4 w-full">
+                        <h3 className="font-semibold mb-3 text-center">Your Age Is</h3>
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                            <StatCard value={age.years} label="Years" />
+                            <StatCard value={age.months} label="Months" />
+                            <StatCard value={age.days} label="Days" />
+                        </div>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    )
+}
+
+function WorkingDaysCalculator() {
+    const [startDate, setStartDate] = React.useState<Date | undefined>(new Date());
+    const [endDate, setEndDate] = React.useState<Date | undefined>(addDays(new Date(), 10));
+    const [holidays, setHolidays] = React.useState<string>("");
+    const [workingDays, setWorkingDays] = React.useState<number>(0);
+    
+    const calculate = () => {
+        if (!startDate || !endDate) return;
+        const businessDays = differenceInBusinessDays(endDate, startDate);
+        const holidayDates = holidays.split('\n').map(h => h.trim()).filter(Boolean).map(h => parseISO(h));
+        const holidayCount = holidayDates.filter(h => h >= startDate && h <= endDate && h.getDay() !== 0 && h.getDay() !== 6).length;
+        setWorkingDays(businessDays - holidayCount);
+    }
+    
+    return (
+        <Card>
+            <CardHeader><CardTitle className="text-center">Working Days Calculator</CardTitle></CardHeader>
+            <CardContent className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                    <Label>Start Date</Label>
+                    <Popover>
+                        <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{startDate ? format(startDate, "PPP") : <span>Pick date</span>}</Button></PopoverTrigger>
+                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={setStartDate} /></PopoverContent>
+                    </Popover>
+                </div>
+                 <div className="flex flex-col gap-1.5">
+                    <Label>End Date</Label>
+                    <Popover>
+                        <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{endDate ? format(endDate, "PPP") : <span>Pick date</span>}</Button></PopoverTrigger>
+                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={setEndDate} /></PopoverContent>
+                    </Popover>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                    <Label>Holidays (optional)</Label>
+                    <Textarea placeholder="Enter holidays, one per line in YYYY-MM-DD format" value={holidays} onChange={(e) => setHolidays(e.target.value)} />
+                </div>
+                <Button onClick={calculate}>Calculate Working Days</Button>
+                <div className="bg-secondary p-4 rounded-xl mt-4 text-center">
+                    <h3 className="font-semibold mb-2">Total Working Days</h3>
+                    <p className="text-4xl font-bold">{workingDays}</p>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
+
+function Countdown() {
+    const [targetDate, setTargetDate] = React.useState<Date | undefined>();
+    const [timeLeft, setTimeLeft] = React.useState<Duration | null>(null);
+
+    React.useEffect(() => {
+        if (!targetDate) return;
+
+        const timer = setInterval(() => {
+            const now = new Date();
+            if (targetDate > now) {
+                setTimeLeft(intervalToDuration({ start: now, end: targetDate }));
+            } else {
+                setTimeLeft(null);
+                clearInterval(timer);
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [targetDate]);
+
+    return (
+        <Card>
+            <CardHeader><CardTitle className="text-center">Countdown Timer</CardTitle></CardHeader>
+            <CardContent className="flex flex-col gap-4 items-center">
+                 <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {targetDate ? format(targetDate, "PPP") : <span>Pick a target date</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                        <Calendar mode="single" selected={targetDate} onSelect={setTargetDate} initialFocus />
+                    </PopoverContent>
+                </Popover>
+                {timeLeft ? (
+                     <div className="bg-secondary p-4 rounded-xl mt-4 w-full">
+                        <h3 className="font-semibold mb-3 text-center">Time Remaining</h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                            <StatCard value={timeLeft.days} label="Days" />
+                            <StatCard value={timeLeft.hours} label="Hours" />
+                            <StatCard value={timeLeft.minutes} label="Minutes" />
+                            <StatCard value={timeLeft.seconds} label="Seconds" />
+                        </div>
+                    </div>
+                ) : (
+                    <p className="text-muted-foreground mt-4">Please select a future date to start the countdown.</p>
+                )}
+            </CardContent>
+        </Card>
+    )
+}
+
+function StatCard({ value, label }: { value: number | undefined, label: string }) {
+    return (
+        <div>
+            <p className="text-3xl font-bold">{value || 0}</p>
+            <p className="text-sm text-muted-foreground">{label}</p>
+        </div>
+    )
+}
+
+function DateCalculator() {
+    const [activeTab, setActiveTab] = React.useState("difference");
+    
+    return (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5">
+                <TabsTrigger value="difference">Difference</TabsTrigger>
+                <TabsTrigger value="add-subtract">Add/Sub</TabsTrigger>
+                <TabsTrigger value="age">Age</TabsTrigger>
+                <TabsTrigger value="work-days">Work Days</TabsTrigger>
+                <TabsTrigger value="countdown">Countdown</TabsTrigger>
+            </TabsList>
+            <TabsContent value="difference" className="mt-4"><DateDifference /></TabsContent>
+            <TabsContent value="add-subtract" className="mt-4"><AddSubtractTime /></TabsContent>
+            <TabsContent value="age" className="mt-4"><AgeCalculator /></TabsContent>
+            <TabsContent value="work-days" className="mt-4"><WorkingDaysCalculator /></TabsContent>
+            <TabsContent value="countdown" className="mt-4"><Countdown /></TabsContent>
+        </Tabs>
+    )
 }
 
 
@@ -408,7 +648,7 @@ export function TimeUtilities() {
                 <Stopwatch />
             </TabsContent>
             <TabsContent value="date-diff" className="mt-4">
-                <DateDifference />
+                <DateCalculator />
             </TabsContent>
         </Tabs>
     </div>
