@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass } from "lucide-react";
 import { conversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import { parseConversionQuery, ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow";
 import { useToast } from "@/hooks/use-toast";
@@ -477,8 +477,8 @@ export function Converter() {
             <Clock />
             <span className="text-xs font-medium">{t('nav.history')}</span>
         </Link>
-         <Link href="/converter?tab=Unit&category=Time" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
-            <Clock />
+         <Link href="/time" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
+            <Hourglass />
             <span className="text-xs font-medium">Time</span>
         </Link>
       </div>
@@ -736,5 +736,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    

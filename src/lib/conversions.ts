@@ -1,4 +1,5 @@
-import { Ruler, Scale, Thermometer, Database, Clock, Zap, Square, Beaker } from 'lucide-react';
+
+import { Ruler, Scale, Thermometer, Database, Clock, Zap, Square, Beaker, Hourglass } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type Region = 'International' | 'India';
@@ -178,7 +179,7 @@ const timeFactors: LinearConversionFactors = { // to seconds
 };
 const timeCategory: ConversionCategory = {
     name: 'Time',
-    icon: Clock,
+    icon: Hourglass,
     units: timeUnits,
     convert: (value, from, to) => {
         const fromFactor = timeFactors[from];

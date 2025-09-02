@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
-import { ArrowRight, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, Home, StickyNote, CalculatorIcon, Clock } from "lucide-react";
+import { ArrowRight, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, Home, StickyNote, CalculatorIcon, Clock, Hourglass } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { getTodaysCalculations, getWeeklyCalculations } from "@/lib/utils";
@@ -132,8 +132,8 @@ export function Dashboard() {
             <Clock />
             <span className="text-xs font-medium">{t('nav.history')}</span>
         </Link>
-         <Link href="/converter?tab=Unit&category=Time" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
-            <Clock />
+         <Link href="/time" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
+            <Hourglass />
             <span className="text-xs font-medium">Time</span>
         </Link>
       </div>
@@ -234,5 +234,3 @@ export function Dashboard() {
     </div>
   );
 }
-
-    
