@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Home, Plus, Edit, Trash2, StickyNote, CalculatorIcon, Settings, Search, Bell, User } from 'lucide-react';
+import { Home, Plus, Edit, Trash2, StickyNote, CalculatorIcon, Settings, Search, Bell, User, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -85,7 +85,7 @@ export function Notepad() {
                 </div>
             </header>
 
-            <div className="grid grid-cols-4 gap-4 text-center">
+            <div className="grid grid-cols-5 gap-2 text-center">
                 <Link href="/" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
                     <Home />
                     <span className="text-xs font-medium">Dashboard</span>
@@ -97,6 +97,10 @@ export function Notepad() {
                 <Link href="/converter" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
                     <CalculatorIcon />
                     <span className="text-xs font-medium">Converter</span>
+                </Link>
+                 <Link href="/history" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
+                    <Clock />
+                    <span className="text-xs font-medium">History</span>
                 </Link>
                 <div className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
                     <Settings />
@@ -164,3 +168,5 @@ export function Notepad() {
         </div>
     );
 }
+
+    

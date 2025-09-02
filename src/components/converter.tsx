@@ -444,7 +444,7 @@ export function Converter() {
         </div>
       </header>
 
-      <div className="grid grid-cols-4 gap-4 text-center">
+      <div className="grid grid-cols-5 gap-2 text-center">
         <Link href="/" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <Home />
             <span className="text-xs font-medium">Dashboard</span>
@@ -456,6 +456,10 @@ export function Converter() {
         <Link href="/converter" className="flex flex-col items-center gap-2 p-2 rounded-lg bg-accent/20 border-accent border text-accent">
             <CalculatorIcon />
             <span className="text-xs font-medium">Converter</span>
+        </Link>
+        <Link href="/history" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
+            <Clock />
+            <span className="text-xs font-medium">History</span>
         </Link>
          <div className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <Settings />
@@ -509,11 +513,6 @@ export function Converter() {
           <div className="bg-card p-4 rounded-xl flex flex-col gap-4 mt-4">
             <div className="flex justify-between items-center">
               <h2 className="font-bold text-lg">Quick Convert</h2>
-              <Button variant="ghost" size="icon" asChild>
-                <Link href="/history">
-                  <Clock />
-                </Link>
-              </Button>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
@@ -719,3 +718,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
