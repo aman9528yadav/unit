@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const withPWA = require('@ducanh2912/next-pwa').default({
@@ -30,6 +31,13 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  turbo: {
+    rules: {
+      '**/*.ts': {
+        loaders: ['private-next-loader'],
+      },
+    },
   },
 };
 
