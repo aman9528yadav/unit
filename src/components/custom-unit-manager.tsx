@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Trash2, Edit } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit, FolderPlus, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,11 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { conversionCategories } from '@/lib/conversions';
+import { conversionCategories as baseConversionCategories } from '@/lib/conversions';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 
 const CUSTOM_UNITS_STORAGE_KEY = 'customUnits';
+const CUSTOM_CATEGORIES_STORAGE_KEY = 'customCategories';
+
 
 export interface CustomUnit {
     id: string;
@@ -36,12 +39,23 @@ export interface CustomUnit {
     factor: number;
 }
 
+export interface CustomCategory {
+    id: string;
+    name: string;
+    baseUnitName: string;
+    baseUnitSymbol: string;
+}
+
 export function CustomUnitManager() {
     const [units, setUnits] = useState<CustomUnit[]>([]);
+    const [categories, setCategories] = useState<CustomCategory[]>([]);
     const [isClient, setIsClient] = useState(false);
-    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [isAddUnitDialogOpen, setIsAddUnitDialogOpen] = useState(false);
+    const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    
     const [newUnit, setNewUnit] = useState({ name: '', symbol: '', category: '', factor: 1 });
+    const [newCategory, setNewCategory] = useState({ name: '', baseUnitName: '', baseUnitSymbol: '' });
     const [editingUnit, setEditingUnit] = useState<CustomUnit | null>(null);
     const { toast } = useToast();
 
@@ -51,16 +65,38 @@ export function CustomUnitManager() {
         if (savedUnits) {
             setUnits(JSON.parse(savedUnits));
         }
+        const savedCategories = localStorage.getItem(CUSTOM_CATEGORIES_STORAGE_KEY);
+        if (savedCategories) {
+            setCategories(JSON.parse(savedCategories));
+        }
     }, []);
+    
+    const allCategories = [
+        ...baseConversionCategories.filter(c => c.name !== 'Temperature').map(c => c.name),
+        ...categories.map(c => c.name)
+    ];
+
 
     const updateStoredUnits = (updatedUnits: CustomUnit[]) => {
         setUnits(updatedUnits);
         localStorage.setItem(CUSTOM_UNITS_STORAGE_KEY, JSON.stringify(updatedUnits));
+        // Manually trigger storage event for other tabs
+        window.dispatchEvent(new StorageEvent('storage', { key: CUSTOM_UNITS_STORAGE_KEY, newValue: JSON.stringify(updatedUnits) }));
+    };
+    
+    const updateStoredCategories = (updatedCategories: CustomCategory[]) => {
+        setCategories(updatedCategories);
+        localStorage.setItem(CUSTOM_CATEGORIES_STORAGE_KEY, JSON.stringify(updatedCategories));
+         window.dispatchEvent(new StorageEvent('storage', { key: CUSTOM_CATEGORIES_STORAGE_KEY, newValue: JSON.stringify(updatedCategories) }));
     };
     
     const handleInputChange = (field: keyof typeof newUnit, value: string | number) => {
         setNewUnit(prev => ({ ...prev, [field]: value }));
     }
+    
+    const handleCategoryInputChange = (field: keyof typeof newCategory, value: string) => {
+        setNewCategory(prev => ({ ...prev, [field]: value }));
+    };
 
     const handleEditInputChange = (field: keyof CustomUnit, value: string | number) => {
         if (editingUnit) {
@@ -80,7 +116,7 @@ export function CustomUnitManager() {
 
         toast({ title: "Unit Added!", description: `Successfully added ${newUnit.name}.` });
         setNewUnit({ name: '', symbol: '', category: '', factor: 1 });
-        setIsAddDialogOpen(false);
+        setIsAddUnitDialogOpen(false);
     };
 
     const handleEditUnit = (unit: CustomUnit) => {
@@ -99,11 +135,38 @@ export function CustomUnitManager() {
         setEditingUnit(null);
     };
 
-
     const handleDeleteUnit = (unitId: string) => {
         const updatedUnits = units.filter(u => u.id !== unitId);
         updateStoredUnits(updatedUnits);
         toast({ title: "Unit Removed", description: "The custom unit has been deleted." });
+    };
+    
+    const handleAddCategory = () => {
+        if (!newCategory.name || !newCategory.baseUnitName || !newCategory.baseUnitSymbol) {
+            toast({ title: "Incomplete Information", description: "Please fill out all fields to add a category.", variant: "destructive" });
+            return;
+        }
+
+        const newCustomCategory: CustomCategory = { ...newCategory, id: uuidv4() };
+        const updatedCategories = [...categories, newCustomCategory];
+        updateStoredCategories(updatedCategories);
+
+        toast({ title: "Category Added!", description: `Successfully added the "${newCategory.name}" category.` });
+        setNewCategory({ name: '', baseUnitName: '', baseUnitSymbol: '' });
+        setIsAddCategoryDialogOpen(false);
+    };
+
+    const handleDeleteCategory = (categoryId: string) => {
+        const categoryToDelete = categories.find(c => c.id === categoryId);
+        if (!categoryToDelete) return;
+
+        // Also remove all units associated with this category
+        const updatedUnits = units.filter(u => u.category !== categoryToDelete.name);
+        updateStoredUnits(updatedUnits);
+
+        const updatedCategories = categories.filter(c => c.id !== categoryId);
+        updateStoredCategories(updatedCategories);
+        toast({ title: "Category Removed", description: `The "${categoryToDelete.name}" category and its units have been deleted.` });
     };
 
     if (!isClient) {
@@ -119,82 +182,140 @@ export function CustomUnitManager() {
                             <ArrowLeft />
                         </Button>
                     </Link>
-                    <h1 className="text-xl font-bold">Custom Units</h1>
+                    <h1 className="text-xl font-bold">Manage Custom Data</h1>
                 </div>
-                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button size="icon">
-                            <Plus />
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Add New Custom Unit</DialogTitle>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="name" className="text-right">Name</Label>
-                                <Input id="name" placeholder="e.g., Furlong" className="col-span-3" value={newUnit.name} onChange={(e) => handleInputChange('name', e.target.value)} />
+                <div className='flex gap-2'>
+                    <Dialog open={isAddCategoryDialogOpen} onOpenChange={setIsAddCategoryDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button size="icon" variant="outline"><FolderPlus/></Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Add New Category</DialogTitle>
+                                <DialogDescription>Create a new category for conversions. All other units in this category will be relative to the base unit you define here.</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="cat-name" className="text-right">Category Name</Label>
+                                    <Input id="cat-name" placeholder="e.g., Pressure" className="col-span-3" value={newCategory.name} onChange={(e) => handleCategoryInputChange('name', e.target.value)} />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="base-unit-name" className="text-right">Base Unit Name</Label>
+                                    <Input id="base-unit-name" placeholder="e.g., Pascal" className="col-span-3" value={newCategory.baseUnitName} onChange={(e) => handleCategoryInputChange('baseUnitName', e.target.value)} />
+                                </div>
+                                 <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="base-unit-symbol" className="text-right">Base Unit Symbol</Label>
+                                    <Input id="base-unit-symbol" placeholder="e.g., Pa" className="col-span-3" value={newCategory.baseUnitSymbol} onChange={(e) => handleCategoryInputChange('baseUnitSymbol', e.target.value)} />
+                                </div>
                             </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="symbol" className="text-right">Symbol</Label>
-                                <Input id="symbol" placeholder="e.g., fur" className="col-span-3" value={newUnit.symbol} onChange={(e) => handleInputChange('symbol', e.target.value)} />
+                            <DialogFooter>
+                                <Button type="submit" onClick={handleAddCategory}>Add Category</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                    <Dialog open={isAddUnitDialogOpen} onOpenChange={setIsAddUnitDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button size="icon">
+                                <Plus />
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Add New Custom Unit</DialogTitle>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="name" className="text-right">Name</Label>
+                                    <Input id="name" placeholder="e.g., Furlong" className="col-span-3" value={newUnit.name} onChange={(e) => handleInputChange('name', e.target.value)} />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="symbol" className="text-right">Symbol</Label>
+                                    <Input id="symbol" placeholder="e.g., fur" className="col-span-3" value={newUnit.symbol} onChange={(e) => handleInputChange('symbol', e.target.value)} />
+                                </div>
+                                 <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="category" className="text-right">Category</Label>
+                                     <Select value={newUnit.category} onValueChange={(value) => handleInputChange('category', value)}>
+                                        <SelectTrigger className="col-span-3">
+                                            <SelectValue placeholder="Select a category" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {allCategories.map(cat => (
+                                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                 <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="factor" className="text-right">Factor</Label>
+                                    <Input id="factor" type="number" placeholder="e.g., 201.168" className="col-span-3" value={newUnit.factor} onChange={(e) => handleInputChange('factor', e.target.value)} />
+                                </div>
+                                 <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label className="text-right col-span-1"></Label>
+                                    <p className="col-span-3 text-sm text-muted-foreground">This factor is relative to the base unit of the selected category (e.g., for Length, the base is Meters).</p>
+                                </div>
                             </div>
-                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="category" className="text-right">Category</Label>
-                                 <Select value={newUnit.category} onValueChange={(value) => handleInputChange('category', value)}>
-                                    <SelectTrigger className="col-span-3">
-                                        <SelectValue placeholder="Select a category" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {conversionCategories.filter(c => c.name !== 'Temperature').map(cat => (
-                                            <SelectItem key={cat.name} value={cat.name}>{cat.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="factor" className="text-right">Factor</Label>
-                                <Input id="factor" type="number" placeholder="e.g., 201.168" className="col-span-3" value={newUnit.factor} onChange={(e) => handleInputChange('factor', e.target.value)} />
-                            </div>
-                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right col-span-1"></Label>
-                                <p className="col-span-3 text-sm text-muted-foreground">This factor is relative to the base unit of the selected category (e.g., for Length, the base is Meters).</p>
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button type="submit" onClick={handleAddUnit}>Add Unit</Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                            <DialogFooter>
+                                <Button type="submit" onClick={handleAddUnit}>Add Unit</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </header>
 
-            <div className="flex-grow">
-                {units.length === 0 ? (
-                    <div className="text-center text-muted-foreground mt-16 flex flex-col items-center gap-4">
-                        <p>You haven't added any custom units yet.</p>
-                        <p>Click the '+' button to add your first one.</p>
-                    </div>
-                ) : (
-                    <div className="space-y-2">
-                        {units.map((unit) => (
-                            <div key={unit.id} className="bg-card p-4 rounded-lg flex justify-between items-center">
-                                <div>
-                                    <p className="font-bold">{unit.name} ({unit.symbol})</p>
-                                    <p className="text-sm text-muted-foreground">{unit.category} (1 {unit.symbol} = {unit.factor} x base unit)</p>
+            <div className="flex-grow space-y-6">
+                <div>
+                    <h2 className="text-lg font-semibold mb-2 flex items-center gap-2"><Tag /> Custom Units</h2>
+                    {units.length === 0 ? (
+                        <div className="text-center text-muted-foreground mt-8 flex flex-col items-center gap-4 bg-card p-6 rounded-lg">
+                            <p>You haven't added any custom units yet.</p>
+                            <p>Click the '+' button to add your first one.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {units.map((unit) => (
+                                <div key={unit.id} className="bg-card p-4 rounded-lg flex justify-between items-center">
+                                    <div>
+                                        <p className="font-bold">{unit.name} ({unit.symbol})</p>
+                                        <p className="text-sm text-muted-foreground">{unit.category} (1 {unit.symbol} = {unit.factor} x base unit)</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button variant="ghost" size="icon" onClick={() => handleEditUnit(unit)}>
+                                            <Edit className="text-muted-foreground" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteUnit(unit.id)}>
+                                            <Trash2 className="text-destructive" />
+                                        </Button>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <Button variant="ghost" size="icon" onClick={() => handleEditUnit(unit)}>
-                                        <Edit className="text-muted-foreground" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteUnit(unit.id)}>
-                                        <Trash2 className="text-destructive" />
-                                    </Button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                 <div>
+                    <h2 className="text-lg font-semibold mb-2 flex items-center gap-2"><FolderPlus /> Custom Categories</h2>
+                    {categories.length === 0 ? (
+                        <div className="text-center text-muted-foreground mt-8 flex flex-col items-center gap-4 bg-card p-6 rounded-lg">
+                             <p>You haven't added any custom categories yet.</p>
+                             <p>Click the folder icon above to create one.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {categories.map((cat) => (
+                                <div key={cat.id} className="bg-card p-4 rounded-lg flex justify-between items-center">
+                                    <div>
+                                        <p className="font-bold">{cat.name}</p>
+                                        <p className="text-sm text-muted-foreground">Base Unit: {cat.baseUnitName} ({cat.baseUnitSymbol})</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(cat.id)}>
+                                            <Trash2 className="text-destructive" />
+                                        </Button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Edit Dialog */}
@@ -220,8 +341,8 @@ export function CustomUnitManager() {
                                         <SelectValue placeholder="Select a category" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {conversionCategories.filter(c => c.name !== 'Temperature').map(cat => (
-                                            <SelectItem key={cat.name} value={cat.name}>{cat.name}</SelectItem>
+                                        {allCategories.map(cat => (
+                                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -241,3 +362,5 @@ export function CustomUnitManager() {
         </div>
     );
 }
+
+    

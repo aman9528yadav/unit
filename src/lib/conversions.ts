@@ -18,7 +18,7 @@ type LinearConversionFactors = { [unitSymbol: string]: number };
 type ConversionFunctions = { [from: string]: { [to: string]: (value: number) => number } };
 
 export type ConversionCategory = {
-  name: 'Length' | 'Weight' | 'Temperature' | 'Data' | 'Time' | 'Speed' | 'Area' | 'Volume';
+  name: string; // Allow any string for custom categories
   icon: LucideIcon;
   units: Unit[];
   factors?: LinearConversionFactors;
