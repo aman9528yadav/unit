@@ -83,7 +83,7 @@ export function WelcomeForm() {
               variant="outline"
               size="icon"
               className="absolute bottom-0 right-0 rounded-full w-8 h-8 bg-accent border-accent hover:bg-accent/90"
-              onClick={() => fileInput_current?.click()}
+              onClick={() => fileInputRef.current?.click()}
             >
               <Pencil className="w-4 h-4 text-accent-foreground" />
             </Button>
