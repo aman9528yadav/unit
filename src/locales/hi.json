@@ -107,7 +107,9 @@
         "time": "समय",
         "speed": "गति",
         "area": "क्षेत्र",
-        "volume": "आयतन"
+        "volume": "आयतन",
+        "pressure": "दबाव",
+        "energy": "ऊर्जा"
     },
     "units": {
         "meters": "मीटर",
@@ -161,6 +163,16 @@
         "usquarts": "यूएस क्वार्ट्स",
         "uspints": "यूएस पिंट्स",
         "uscups": "यूएस कप",
-        "usfluidounces": "यूएस द्रव औंस"
+        "usfluidounces": "यूएस द्रव औंस",
+        "pascal": "पास्कल",
+        "kilopascal": "किलोपास्कल",
+        "bar": "बार",
+        "standardatmosphere": "मानक वायुमंडल",
+        "poundsperquareinch": "पाउंड प्रति वर्ग इंच",
+        "joule": "जूल",
+        "kilojoule": "किलोजूल",
+        "calorie": "कैलोरी",
+        "kilocalorie": "किलोकैलोरी",
+        "kilowatt-hour": "किलोवाट-घंटा"
     }
 }

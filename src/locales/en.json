@@ -107,7 +107,9 @@
         "time": "Time",
         "speed": "Speed",
         "area": "Area",
-        "volume": "Volume"
+        "volume": "Volume",
+        "pressure": "Pressure",
+        "energy": "Energy"
     },
     "units": {
         "meters": "Meters",
@@ -161,6 +163,16 @@
         "usquarts": "US Quarts",
         "uspints": "US Pints",
         "uscups": "US Cups",
-        "usfluidounces": "US Fluid Ounces"
+        "usfluidounces": "US Fluid Ounces",
+        "pascal": "Pascal",
+        "kilopascal": "Kilopascal",
+        "bar": "Bar",
+        "standardatmosphere": "Standard atmosphere",
+        "poundsperquareinch": "Pounds per square inch",
+        "joule": "Joule",
+        "kilojoule": "Kilojoule",
+        "calorie": "Calorie",
+        "kilocalorie": "Kilocalorie",
+        "kilowatt-hour": "Kilowatt-hour"
     }
 }

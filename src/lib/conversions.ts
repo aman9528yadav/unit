@@ -1,5 +1,5 @@
 
-import { Ruler, Scale, Thermometer, Database, Clock, Zap, Square, Beaker, Hourglass } from 'lucide-react';
+import { Ruler, Scale, Thermometer, Database, Clock, Zap, Square, Beaker, Hourglass, Gauge, Flame } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type Region = 'International' | 'India';
@@ -299,7 +299,63 @@ const volumeCategory: ConversionCategory = {
     },
 };
 
+// --- PRESSURE ---
+const pressureUnits: Unit[] = [
+    { name: 'Pascal', symbol: 'Pa', info: 'It is the standard unit' },
+    { name: 'Kilopascal', symbol: 'kPa', info: '1kPa = 1000 Pa' },
+    { name: 'Bar', symbol: 'bar', info: '1bar = 100,000 Pa' },
+    { name: 'Standard atmosphere', symbol: 'atm', info: '1atm ≈ 101325 Pa' },
+    { name: 'Pounds per square inch', symbol: 'psi', info: '1psi ≈ 6894.76 Pa' },
+];
+const pressureFactors: LinearConversionFactors = { // to Pascal
+    'Pa': 1,
+    'kPa': 1000,
+    'bar': 100000,
+    'atm': 101325,
+    'psi': 6894.76,
+};
+const pressureCategory: ConversionCategory = {
+    name: 'Pressure',
+    icon: Gauge,
+    units: pressureUnits,
+    factors: pressureFactors,
+    convert: function(value, from, to) {
+        const fromFactor = this.factors![from];
+        const toFactor = this.factors![to];
+        if (fromFactor === undefined || toFactor === undefined) return NaN;
+        const valueInBase = value * fromFactor;
+        return valueInBase / toFactor;
+    },
+};
 
-export const conversionCategories: ConversionCategory[] = [lengthCategory, weightCategory, temperatureCategory, dataCategory, timeCategory, speedCategory, areaCategory, volumeCategory];
+// --- ENERGY ---
+const energyUnits: Unit[] = [
+    { name: 'Joule', symbol: 'J', info: 'It is the standard unit' },
+    { name: 'Kilojoule', symbol: 'kJ', info: '1kJ = 1000 J' },
+    { name: 'Calorie', symbol: 'cal', info: '1cal ≈ 4.184 J' },
+    { name: 'Kilocalorie', symbol: 'kcal', info: '1kcal = 1000 cal' },
+    { name: 'Kilowatt-hour', symbol: 'kWh', info: '1kWh = 3.6e+6 J' },
+];
+const energyFactors: LinearConversionFactors = { // to Joule
+    'J': 1,
+    'kJ': 1000,
+    'cal': 4.184,
+    'kcal': 4184,
+    'kWh': 3600000,
+};
+const energyCategory: ConversionCategory = {
+    name: 'Energy',
+    icon: Flame,
+    units: energyUnits,
+    factors: energyFactors,
+    convert: function(value, from, to) {
+        const fromFactor = this.factors![from];
+        const toFactor = this.factors![to];
+        if (fromFactor === undefined || toFactor === undefined) return NaN;
+        const valueInBase = value * fromFactor;
+        return valueInBase / toFactor;
+    },
+};
 
-    
+
+export const conversionCategories: ConversionCategory[] = [lengthCategory, weightCategory, temperatureCategory, dataCategory, timeCategory, speedCategory, areaCategory, volumeCategory, pressureCategory, energyCategory];
