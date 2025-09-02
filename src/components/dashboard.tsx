@@ -66,9 +66,9 @@ export function Dashboard() {
             <Home />
             <span className="text-xs font-medium">Dashboard</span>
         </Link>
-         <Link href="/converter" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
+         <Link href="/notes" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <StickyNote />
-            <span className="text-xs font-medium">Converter</span>
+            <span className="text-xs font-medium">Notes</span>
         </Link>
         <Link href="/converter?tab=Calculator" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <Calculator />
