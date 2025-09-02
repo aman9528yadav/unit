@@ -70,9 +70,9 @@ export function Dashboard() {
             <StickyNote />
             <span className="text-xs font-medium">Notes</span>
         </Link>
-        <Link href="/converter?tab=Calculator" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
+        <Link href="/converter" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <Calculator />
-            <span className="text-xs font-medium">Calculator</span>
+            <span className="text-xs font-medium">Converter</span>
         </Link>
          <div className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
             <Settings />

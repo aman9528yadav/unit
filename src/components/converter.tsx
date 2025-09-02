@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon } from "lucide-react";
 import { conversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import { parseConversionQuery, ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow";
 import { useToast } from "@/hooks/use-toast";
@@ -427,7 +427,7 @@ export function Converter() {
                   <Home />
                 </Link>
               </Button>
-            <h1 className="text-xl font-bold">Unit Converter</h1>
+            <h1 className="text-xl font-bold">UniConvert</h1>
             <Button variant="ghost" size="icon" asChild>
                 <Link href="/history">
                   <Clock />
@@ -453,7 +453,7 @@ export function Converter() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="Unit">Unit</TabsTrigger>
+          <TabsTrigger value="Unit">Converter</TabsTrigger>
           <TabsTrigger value="Calculator">Calculator</TabsTrigger>
         </TabsList>
         <TabsContent value="Unit">
@@ -687,5 +687,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
