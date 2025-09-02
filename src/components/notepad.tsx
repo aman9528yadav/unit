@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,6 +56,7 @@ export interface Note {
     isFavorite?: boolean;
     deletedAt?: string | null;
     category?: string;
+    attachment?: string | null;
 }
 
 export const NOTES_STORAGE_KEY = 'userNotesV2';
@@ -316,7 +318,19 @@ export function Notepad() {
                                             <h2 className="font-semibold truncate">{note.title || 'Untitled Note'}</h2>
                                             {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
                                         </div>
-                                        <p className="text-sm text-muted-foreground line-clamp-2">{note.content || 'No content'}</p>
+                                         {note.attachment && layout === 'card' && (
+                                            <div className="relative w-full h-32 my-2 rounded-md overflow-hidden">
+                                                <Image src={note.attachment} alt="Note attachment" layout="fill" objectFit="cover" />
+                                            </div>
+                                        )}
+                                        <div className="flex gap-2">
+                                            {note.attachment && layout === 'list' && (
+                                                <div className="relative w-16 h-16 my-1 rounded-md overflow-hidden flex-shrink-0">
+                                                    <Image src={note.attachment} alt="Note attachment" layout="fill" objectFit="cover" />
+                                                </div>
+                                            )}
+                                            <p className="text-sm text-muted-foreground line-clamp-2">{note.content || 'No content'}</p>
+                                        </div>
                                         <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
                                             <span>{format(new Date(note.updatedAt), "d MMM yyyy, h:mm a")}</span>
                                             {note.category && <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full">{note.category}</span>}

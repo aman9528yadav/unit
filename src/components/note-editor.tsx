@@ -5,12 +5,13 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Star, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, ListTodo, Code2, Paperclip, Smile } from 'lucide-react';
+import { ArrowLeft, Save, Star, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, ListTodo, Code2, Paperclip, Smile, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Note, NOTES_STORAGE_KEY } from './notepad';
+import Image from 'next/image';
 
 
 export function NoteEditor({ noteId }: { noteId: string }) {
@@ -18,10 +19,12 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const [content, setContent] = useState('');
     const [category, setCategory] = useState('');
     const [isFavorite, setIsFavorite] = useState(false);
+    const [attachment, setAttachment] = useState<string | null>(null);
     const [isClient, setIsClient] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const isNewNote = noteId === 'new';
 
@@ -37,6 +40,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     setContent(noteToEdit.content);
                     setIsFavorite(noteToEdit.isFavorite || false);
                     setCategory(noteToEdit.category || '');
+                    setAttachment(noteToEdit.attachment || null);
                 } else {
                     // Note not found, redirect
                     toast({ title: "Note not found", variant: "destructive" });
@@ -103,8 +107,27 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             // For better UX, select the inserted text or placeholder
             textarea.focus();
             const selectionStart = start + prefix.length;
-            const selectionEnd = selectionStart + textToInsert.length + (formatType === 'link' ? 3 : 0);
-             setTimeout(() => textarea.setSelectionRange(selectionStart, selectionEnd), 0);
+            const selectionEnd = selectionStart + textToInsert.length;
+             setTimeout(() => {
+                textarea.setSelectionRange(selectionStart, selectionEnd)
+                 if(formatType === 'link' && !selectedText) {
+                    const urlSelectionStart = newContent.lastIndexOf('(') + 1;
+                    const urlSelectionEnd = newContent.lastIndexOf(')');
+                    textarea.setSelectionRange(urlSelectionStart, urlSelectionEnd);
+                 }
+             }, 0);
+        }
+    };
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setAttachment(reader.result as string);
+                toast({ title: "Image attached successfully!"});
+            };
+            reader.readAsDataURL(file);
         }
     };
     
@@ -133,6 +156,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 content,
                 isFavorite,
                 category,
+                attachment,
                 createdAt: now,
                 updatedAt: now,
                 deletedAt: null
@@ -147,6 +171,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     content,
                     isFavorite,
                     category,
+                    attachment,
                     updatedAt: now,
                 };
             }
@@ -218,7 +243,14 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <Button variant="ghost" size="icon" onClick={() => handleFormat('list-ordered')}><ListOrdered /></Button>
                     <Button variant="ghost" size="icon" onClick={showComingSoonToast}><ListTodo /></Button>
                     <Button variant="ghost" size="icon" onClick={showComingSoonToast}><Code2 /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}><ImageIcon /></Button>
+                    <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
                 </div>
+                {attachment && (
+                    <div className="relative w-full h-48">
+                        <Image src={attachment} alt="Note attachment" layout="fill" objectFit="contain" className="rounded-md" />
+                    </div>
+                )}
                 <Textarea
                     ref={textareaRef}
                     value={content}
