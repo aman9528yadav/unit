@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Loader2, Search, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker } from "lucide-react";
+import { ArrowRightLeft, Loader2, Search, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw } from "lucide-react";
 import { conversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import { suggestCategory, SuggestCategoryInput } from "@/ai/flows/smart-category-suggestion";
 import { parseConversionQuery } from "@/ai/flows/parse-conversion-flow";
@@ -171,6 +171,43 @@ export function Converter() {
   const handleConvertClick = () => {
     performConversion();
   };
+
+  const handleRestoreHistory = (item: string) => {
+    const parts = item.split(' ');
+    if (parts.length < 5) return; // Basic validation
+  
+    const value = parts[0];
+    const from = parts[1];
+    // parts[2] is '→'
+    const to = parts[4];
+  
+    // Find category that has both units
+    const category = conversionCategories.find(c => 
+      c.units.some(u => u.symbol === from) && c.units.some(u => u.symbol === to)
+    );
+  
+    if (category) {
+      const categoryUnits = category.units.filter(u => !u.region || u.region === region);
+      const fromUnitExists = categoryUnits.some(u => u.symbol === from);
+      const toUnitExists = categoryUnits.some(u => u.symbol === to);
+
+      if(fromUnitExists && toUnitExists) {
+        setSelectedCategory(category);
+        setInputValue(value);
+        setFromUnit(from);
+        setToUnit(to);
+        performConversion(parseFloat(value), from, to);
+      } else {
+        toast({ title: "Cannot restore", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive"});
+      }
+    } else {
+        toast({ title: "Cannot restore", description: "Could not determine the conversion category.", variant: "destructive"});
+    }
+  };
+
+  const handleDeleteHistory = (index: number) => {
+    setHistory(prev => prev.filter((_, i) => i !== index));
+  };
   
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white">
@@ -283,8 +320,12 @@ export function Converter() {
               </div>
               <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                   {history.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-2 rounded hover:bg-background">
+                      <div key={index} className="flex justify-between items-center p-2 rounded hover:bg-background group">
                         <span>{item}</span>
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <RotateCcw size={16} className="cursor-pointer hover:text-white" onClick={() => handleRestoreHistory(item)} />
+                            <Trash2 size={16} className="cursor-pointer hover:text-white" onClick={() => handleDeleteHistory(index)} />
+                        </div>
                       </div>
                   ))}
               </div>
