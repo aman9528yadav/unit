@@ -1,6 +1,8 @@
 
-import { Ruler, Scale, Thermometer, Database, Clock, Zap, Square, Beaker, Hourglass, Gauge, Flame } from 'lucide-react';
+
+import { Ruler, Scale, Thermometer, Database, Clock, Zap, Square, Beaker, Hourglass, Gauge, Flame, DollarSign } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { getLatestRate } from './currency';
 
 export type Region = 'International' | 'India';
 
@@ -22,7 +24,8 @@ export type ConversionCategory = {
   icon: LucideIcon;
   units: Unit[];
   factors?: LinearConversionFactors;
-  convert: (value: number, from: string, to: string, region?: Region) => number;
+  convert: (value: number, from: string, to: string, region?: Region) => number | Promise<number>;
+  type?: 'static' | 'live';
 };
 
 // --- LENGTH ---
@@ -357,5 +360,19 @@ const energyCategory: ConversionCategory = {
     },
 };
 
+// --- CURRENCY ---
+export const currencyCategory: ConversionCategory = {
+    name: 'Currency',
+    icon: DollarSign,
+    units: [], // Will be populated from API
+    type: 'live',
+    convert: async (value, from, to) => {
+        if (from === to) return value;
+        const rate = await getLatestRate(from, to);
+        if (rate === null) return NaN;
+        return value * rate;
+    }
+};
 
-export const conversionCategories: ConversionCategory[] = [lengthCategory, weightCategory, temperatureCategory, dataCategory, timeCategory, speedCategory, areaCategory, volumeCategory, pressureCategory, energyCategory];
+
+export const conversionCategories: ConversionCategory[] = [lengthCategory, weightCategory, temperatureCategory, dataCategory, timeCategory, speedCategory, areaCategory, volumeCategory, pressureCategory, energyCategory, currencyCategory];
