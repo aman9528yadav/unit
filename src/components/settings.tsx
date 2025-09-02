@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, History, CalculatorIcon } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
+import { useTheme } from "@/context/theme-context";
 import {
   Select,
   SelectContent,
@@ -20,9 +21,10 @@ export function Settings() {
   const [autoConvert, setAutoConvert] = useState(true);
   const [saveHistory, setSaveHistory] = useState(true);
   const { language, setLanguage, t } = useLanguage();
+  const { theme, setTheme } = useTheme();
 
   return (
-    <div className="w-full max-w-md mx-auto text-white flex flex-col gap-6 p-4 sm:p-6">
+    <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6">
       <header className="flex items-center gap-4">
         <Link href="/">
           <Button variant="ghost" size="icon">
@@ -61,8 +63,17 @@ export function Settings() {
              <SettingsItem 
               icon={Palette} 
               text={t('settings.general.theme')}
-              value={t('settings.general.lightMode')}
-              href="#"
+              control={
+                 <Select value={theme} onValueChange={(value) => setTheme(value as 'light' | 'dark')}>
+                  <SelectTrigger className="w-[120px] bg-secondary border-none">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="light">Light</SelectItem>
+                    <SelectItem value="dark">Dark</SelectItem>
+                  </SelectContent>
+                </Select>
+              }
               isLast={true}
             />
           </div>
@@ -118,8 +129,8 @@ interface SettingsItemProps {
 function SettingsItem({ icon: Icon, text, href, control, value, isLast = false }: SettingsItemProps) {
   const content = (
     <div className={`flex items-center p-4 ${!isLast ? 'border-b border-border' : ''}`}>
-      <div className="p-2 bg-indigo-500/20 rounded-full">
-        <Icon className="w-5 h-5 text-indigo-400" />
+      <div className="p-2 bg-primary/10 rounded-full">
+        <Icon className="w-5 h-5 text-primary" />
       </div>
       <span className="ml-4 font-medium flex-1">{text}</span>
       {control}
@@ -130,7 +141,7 @@ function SettingsItem({ icon: Icon, text, href, control, value, isLast = false }
 
   if (href) {
     return (
-      <Link href={href} className="hover:bg-white/5 transition-colors first:rounded-t-xl last:rounded-b-xl block">
+      <Link href={href} className="hover:bg-primary/5 transition-colors first:rounded-t-xl last:rounded-b-xl block">
         {content}
       </Link>
     );

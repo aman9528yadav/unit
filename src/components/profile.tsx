@@ -22,7 +22,7 @@ const menuItems = [
   { icon: User, text: "Profile", href: "/profile/edit" },
   { icon: Star, text: "Favorite", href: "/history" },
   { icon: Lock, text: "Privacy Policy", href: "/privacy-policy" },
-  { icon: Settings, text: "Settings", href: "#" },
+  { icon: Settings, text: "Settings", href: "/settings" },
   { icon: HelpCircle, text: "Help", href: "/help" },
   { icon: LogOut, text: "Logout", href: "#" },
 ];
@@ -56,11 +56,11 @@ export function Profile() {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto text-white flex flex-col">
-      <div className="bg-indigo-400/90 pb-8 rounded-b-3xl">
+    <div className="w-full max-w-md mx-auto text-foreground flex flex-col">
+      <div className="bg-primary/80 text-primary-foreground pb-8 rounded-b-3xl">
         <header className="p-4 flex items-center gap-4">
           <Link href="/">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="hover:bg-white/20">
               <ArrowLeft />
             </Button>
           </Link>
@@ -81,9 +81,9 @@ export function Profile() {
               <Button
                 variant="outline"
                 size="icon"
-                className="absolute bottom-0 right-0 rounded-full w-8 h-8 bg-yellow-400 border-yellow-400 hover:bg-yellow-500"
+                className="absolute bottom-0 right-0 rounded-full w-8 h-8 bg-accent border-accent hover:bg-accent/90"
               >
-                <Pencil className="w-4 h-4 text-black" />
+                <Pencil className="w-4 h-4 text-accent-foreground" />
               </Button>
             </Link>
           </div>
@@ -116,8 +116,8 @@ export function Profile() {
             <li key={index}>
               <Link href={item.href}>
                 <div className="flex items-center p-3 rounded-lg hover:bg-card transition-colors">
-                  <div className="p-2 bg-indigo-500/20 rounded-full">
-                    <item.icon className="w-5 h-5 text-indigo-400" />
+                  <div className="p-2 bg-primary/10 rounded-full">
+                    <item.icon className="w-5 h-5 text-primary" />
                   </div>
                   <span className="ml-4 font-medium">{item.text}</span>
                   <ChevronRight className="ml-auto w-5 h-5 text-muted-foreground" />

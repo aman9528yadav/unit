@@ -85,11 +85,11 @@ export function ProfileEditForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto text-white flex flex-col">
-      <div className="bg-indigo-400/90 pb-8 rounded-b-3xl">
+    <div className="w-full max-w-md mx-auto text-foreground flex flex-col">
+      <div className="bg-primary/80 text-primary-foreground pb-8 rounded-b-3xl">
         <header className="p-4 flex items-center gap-4">
           <Link href="/profile">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="hover:bg-white/20">
               <ArrowLeft />
             </Button>
           </Link>
@@ -116,10 +116,10 @@ export function ProfileEditForm() {
             <Button
               variant="outline"
               size="icon"
-              className="absolute bottom-0 right-0 rounded-full w-8 h-8 bg-yellow-400 border-yellow-400 hover:bg-yellow-500"
+              className="absolute bottom-0 right-0 rounded-full w-8 h-8 bg-accent border-accent hover:bg-accent/90"
               onClick={() => fileInputRef.current?.click()}
             >
-              <Pencil className="w-4 h-4 text-black" />
+              <Pencil className="w-4 h-4 text-accent-foreground" />
             </Button>
           </div>
           <h2 className="text-2xl font-bold mt-2">{profile.fullName}</h2>
@@ -198,7 +198,7 @@ export function ProfileEditForm() {
           <Button
             type="button"
             onClick={handleUpdate}
-            className="w-full h-12 bg-yellow-400 text-black font-bold text-base rounded-lg hover:bg-yellow-500 mt-6"
+            className="w-full h-12 bg-accent text-accent-foreground font-bold text-base rounded-lg hover:bg-accent/90 mt-6"
           >
             Update Profile
           </Button>
