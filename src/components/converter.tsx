@@ -1,7 +1,9 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, useTransition } from "react";
+import Link from 'next/link';
 import {
   Card,
   CardContent,
@@ -49,6 +51,13 @@ export function Converter() {
 
 
   useEffect(() => {
+    const storedHistory = localStorage.getItem("conversionHistory");
+    if (storedHistory) {
+      setHistory(JSON.parse(storedHistory));
+    }
+  }, []);
+
+  useEffect(() => {
     setFromUnit(currentUnits[0].symbol);
     setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
     setInputValue("1");
@@ -73,9 +82,10 @@ export function Converter() {
       setOutputValue(formattedResult);
       
       const conversionString = `${numValue} ${fromUnitValue} → ${formattedResult} ${toUnitValue}`;
-      if (!history.includes(conversionString)) {
-        setHistory(prev => [conversionString, ...prev].slice(0, 5));
-      }
+      
+      const newHistory = [conversionString, ...history.filter(item => item !== conversionString)];
+      setHistory(newHistory);
+      localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
     };
 
   useEffect(() => {
@@ -180,19 +190,35 @@ export function Converter() {
   };
 
   const handleDeleteHistory = (index: number) => {
-    setHistory(prev => prev.filter((_, i) => i !== index));
+    const newHistory = history.filter((_, i) => i !== index);
+    setHistory(newHistory);
+    localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
   };
   
+  const handleClearHistory = () => {
+    setHistory([]);
+    localStorage.removeItem("conversionHistory");
+  };
+
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white">
       <header className="flex flex-col gap-4">
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex space-x-2 pb-2">
-            {navItems.map((item, index) => (
-              <Button key={item} variant={index === 0 ? "secondary" : "outline"} className={`rounded-full ${index === 0 ? 'bg-accent text-accent-foreground' : 'border-gray-500'}`}>
-                {item}
-              </Button>
-            ))}
+            {navItems.map((item, index) => {
+              if (item === "History") {
+                return (
+                  <Button key={item} variant="outline" className="rounded-full border-gray-500" asChild>
+                    <Link href="/history">{item}</Link>
+                  </Button>
+                )
+              }
+              return (
+                <Button key={item} variant={index === 0 ? "secondary" : "outline"} className={`rounded-full ${index === 0 ? 'bg-accent text-accent-foreground' : 'border-gray-500'}`}>
+                  {item}
+                </Button>
+              )
+            })}
           </div>
           <ScrollBar orientation="horizontal" className="h-1" />
         </ScrollArea>
@@ -292,10 +318,10 @@ export function Converter() {
           <div className="bg-card p-4 rounded-xl flex flex-col gap-3">
               <div className="flex justify-between items-center">
                 <h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} /> Recent Conversions</h3>
-                <RefreshCw size={18} className="text-muted-foreground cursor-pointer hover:text-white" onClick={() => setHistory([])}/>
+                <RefreshCw size={18} className="text-muted-foreground cursor-pointer hover:text-white" onClick={handleClearHistory}/>
               </div>
               <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                  {history.map((item, index) => (
+                  {history.slice(0, 3).map((item, index) => (
                       <div key={index} className="flex justify-between items-center p-2 rounded hover:bg-background group">
                         <span>{item}</span>
                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -336,5 +362,3 @@ function InfoBox({ text }: { text: string }) {
         </div>
     )
 }
-
-    
