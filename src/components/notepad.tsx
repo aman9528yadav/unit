@@ -203,8 +203,8 @@ export function Notepad() {
     }
 
     return (
-        <div className="w-full max-w-md mx-auto text-white h-screen bg-background">
-            <SidebarProvider>
+        <SidebarProvider>
+            <div className="w-full max-w-md mx-auto text-white h-screen bg-background">
                 <Sidebar>
                     <SidebarContent>
                         <SidebarHeader>
@@ -232,19 +232,23 @@ export function Notepad() {
                                 <SidebarMenuButton onClick={() => { setView('trash'); setActiveCategory(null); }} isActive={view === 'trash'}><Trash2/>Recycle Bin</SidebarMenuButton>
                             </SidebarMenuItem>
                         </SidebarMenu>
-                         <SidebarSeparator />
-                         <SidebarGroup>
-                            <SidebarGroupLabel>Categories</SidebarGroupLabel>
-                            <SidebarMenu>
-                                {categories.map(cat => (
-                                    <SidebarMenuItem key={cat}>
-                                        <SidebarMenuButton onClick={() => handleCategoryClick(cat)} isActive={view === 'category' && activeCategory === cat}>
-                                            <Tag /> {cat}
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                ))}
-                            </SidebarMenu>
-                         </SidebarGroup>
+                        {categories.length > 0 && (
+                            <>
+                                <SidebarSeparator />
+                                <SidebarGroup>
+                                    <SidebarGroupLabel>Categories</SidebarGroupLabel>
+                                    <SidebarMenu>
+                                        {categories.map(cat => (
+                                            <SidebarMenuItem key={cat}>
+                                                <SidebarMenuButton onClick={() => handleCategoryClick(cat)} isActive={view === 'category' && activeCategory === cat}>
+                                                    <Tag /> {cat}
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                        ))}
+                                    </SidebarMenu>
+                                </SidebarGroup>
+                            </>
+                        )}
                     </SidebarContent>
                 </Sidebar>
 
@@ -373,9 +377,7 @@ export function Notepad() {
                         </AlertDialogContent>
                     </AlertDialog>
                 </SidebarInset>
-            </SidebarProvider>
-        </div>
+            </div>
+        </SidebarProvider>
     );
 }
-
-    
