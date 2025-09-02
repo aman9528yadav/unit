@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2 } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home } from "lucide-react";
 import { conversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import { parseConversionQuery } from "@/ai/flows/parse-conversion-flow";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -258,34 +258,22 @@ export function Converter() {
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white">
       <header className="flex flex-col gap-4">
-        <ScrollArea className="w-full whitespace-nowrap">
-          <div className="flex space-x-2 pb-2">
-            {navItems.map((item) => {
-              if (item === "History") {
-                return (
-                  <Button key={item} variant="outline" className="rounded-full border-gray-500" asChild>
-                    <Link href="/history">{item}</Link>
-                  </Button>
-                )
-              }
-              return (
-                <Button 
-                  key={item} 
-                  variant={activeTab === item ? "secondary" : "outline"} 
-                  className={`rounded-full ${activeTab === item ? 'bg-accent text-accent-foreground' : 'border-gray-500'}`}
-                  onClick={() => setActiveTab(item)}
-                >
-                  {item}
-                </Button>
-              )
-            })}
-          </div>
-          <ScrollBar orientation="horizontal" className="h-1" />
-        </ScrollArea>
+        <div className="flex justify-between items-center">
+             <Button variant="ghost" size="icon" asChild>
+                <Link href="/">
+                  <Home />
+                </Link>
+              </Button>
+            <h1 className="text-xl font-bold">Unit Converter</h1>
+            <Button variant="ghost" size="icon" asChild>
+                <Link href="/history">
+                  <Clock />
+                </Link>
+              </Button>
+        </div>
       </header>
 
-      {activeTab === 'Unit' && (
-        <>
+      <>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
@@ -403,11 +391,7 @@ export function Converter() {
               </div>
           )}
         </>
-      )}
-
-      {activeTab === 'Calculator' && (
-        <Calculator />
-      )}
+      
     </div>
   );
 }

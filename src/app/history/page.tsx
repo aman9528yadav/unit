@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Trash2, Clock, Star, RotateCcw } from "lucide-react";
+import { ArrowLeft, Trash2, Clock, Star, RotateCcw, Home } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -55,7 +55,7 @@ export default function HistoryPage() {
 
   const handleRestore = (item: string) => {
     localStorage.setItem("restoreConversion", item);
-    router.push("/");
+    router.push("/converter");
   };
   
   const handleClearAll = () => {
@@ -70,6 +70,7 @@ export default function HistoryPage() {
   }
   
   const favoriteItems = history.filter(item => favorites.includes(item));
+  const historyItems = history.filter(item => !favorites.includes(item));
 
 
   return (
@@ -78,7 +79,7 @@ export default function HistoryPage() {
         <header className="flex items-center justify-between">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/">
-              <ArrowLeft />
+              <Home />
             </Link>
           </Button>
           <h1 className="text-xl font-bold">History</h1>
@@ -130,12 +131,10 @@ export default function HistoryPage() {
             <div className="bg-card p-4 rounded-xl flex flex-col gap-3">
                 <h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} /> History</h3>
                 <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                    {history.map((item, index) => (
+                    {historyItems.map((item, index) => (
                         <div key={`hist-${index}`} className="flex justify-between items-center p-2 rounded hover:bg-background group">
                           <div className="flex items-center gap-2">
-                             {favorites.includes(item) && <Star size={16} className="text-yellow-400 fill-yellow-400" />}
-                             {!favorites.includes(item) && <Star size={16} className="text-transparent" />}
-                             <span>{item}</span>
+                             <span className="ml-5">{item}</span>
                           </div>
                           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                               <RotateCcw size={16} className="cursor-pointer hover:text-white" onClick={() => handleRestore(item)} />
@@ -152,7 +151,7 @@ export default function HistoryPage() {
             <h2 className="text-xl font-semibold">No History Yet</h2>
             <p>Your recent conversions will appear here.</p>
             <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-              <Link href="/">Start Converting</Link>
+              <Link href="/converter">Start Converting</Link>
             </Button>
           </div>
         )}
