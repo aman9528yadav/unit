@@ -7,25 +7,55 @@ import Image from 'next/image';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
-import { ArrowRight, LayoutDashboard, Calculator, Pencil, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, Home, StickyNote, CalculatorIcon, Clock } from "lucide-react";
+import { ArrowRight, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, Home, StickyNote, CalculatorIcon, Clock } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { getTodaysCalculations, getWeeklyCalculations } from "@/lib/utils";
+
+// This should match the key in notepad.tsx
+const NOTES_STORAGE_KEY = 'userNotesV2';
+
+interface Note {
+    id: string;
+    deletedAt?: string | null;
+}
+
+const getSavedNotesCount = () => {
+    if (typeof window === 'undefined') return 0;
+    const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
+    if (savedNotes) {
+        try {
+            const notes: Note[] = JSON.parse(savedNotes);
+            // Count only notes that are not in the recycle bin
+            return notes.filter(note => !note.deletedAt).length;
+        } catch (e) {
+            console.error("Failed to parse notes from storage", e);
+            return 0;
+        }
+    }
+    return 0;
+};
+
 
 export function Dashboard() {
   const [isClient, setIsClient] = useState(false);
   const [todayCalculations, setTodayCalculations] = useState(0);
   const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string, value: number}[]>([]);
-  const [savedNotes, setSavedNotes] = useState(11); // static for now
+  const [savedNotesCount, setSavedNotesCount] = useState(0);
 
   const updateCalculations = () => {
     setTodayCalculations(getTodaysCalculations());
     setWeeklyCalculations(getWeeklyCalculations());
   }
 
+  const updateNotesCount = () => {
+    setSavedNotesCount(getSavedNotesCount());
+  }
+
   useEffect(() => {
     setIsClient(true);
     updateCalculations();
+    updateNotesCount();
   }, []);
 
   // Effect to listen for storage changes from other tabs/windows
@@ -33,6 +63,9 @@ export function Dashboard() {
     const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'dailyCalculations') {
             updateCalculations();
+        }
+        if (e.key === NOTES_STORAGE_KEY) {
+            updateNotesCount();
         }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -173,10 +206,12 @@ export function Dashboard() {
             </Card>
              <Card className="bg-card p-4 rounded-2xl flex-1 flex flex-col items-center justify-center">
                 <p className="text-sm text-muted-foreground">No. Save Notes</p>
-                <p className="text-5xl font-bold">{String(savedNotes).padStart(2, '0')}</p>
+                <p className="text-5xl font-bold">{String(savedNotesCount).padStart(2, '0')}</p>
             </Card>
         </div>
       </div>
     </div>
   );
 }
+
+    
