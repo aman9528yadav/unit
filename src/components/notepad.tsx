@@ -308,9 +308,9 @@ export function Notepad() {
                 </header>
                 <div className="flex-grow overflow-y-auto px-4 pb-24">
                     {sortedNotes.length > 0 ? (
-                        <ul className={layout === 'list' ? "space-y-4" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
+                        <ul className={layout === 'list' ? "bg-card rounded-lg p-2 space-y-2" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
                             {sortedNotes.map(note => (
-                                <li key={note.id} className="bg-card p-4 rounded-lg cursor-pointer group">
+                                <li key={note.id} className={layout === 'card' ? "bg-card p-4 rounded-lg cursor-pointer group" : "p-2 rounded-lg cursor-pointer group hover:bg-background"}>
                                     <div onClick={() => router.push(`/notes/edit/${note.id}`)}>
                                         <div className="flex items-center justify-between">
                                             <h2 className="font-semibold truncate">{note.title || 'Untitled Note'}</h2>
@@ -379,5 +379,7 @@ export function Notepad() {
         </SidebarProvider>
     );
 }
+
+    
 
     
