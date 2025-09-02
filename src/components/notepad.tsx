@@ -176,10 +176,8 @@ export function Notepad() {
         <SidebarProvider>
         <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white pb-24 h-screen bg-background">
             <header className="flex items-center justify-between p-4">
-                 <SidebarTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                        <Menu />
-                    </Button>
+                 <SidebarTrigger>
+                    <Menu />
                  </SidebarTrigger>
                 <div className='text-center'>
                     <h1 className="text-2xl font-bold">{getHeading()}</h1>
