@@ -147,7 +147,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             textarea.focus();
             if (selectedText) {
                 // If text was selected, just place the cursor after the formatted text
-                textarea.setSelectionRange(start + newContent.length - content.length, start + newContent.length - content.length);
+                const finalCursorPos = start + (newContent.length - content.length);
+                textarea.setSelectionRange(finalCursorPos, finalCursorPos);
+
             } else {
                 // If no text was selected, select the placeholder text
                  textarea.setSelectionRange(newCursorPos, newCursorPos + placeholderLength);
@@ -212,3 +214,5 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
+
+    
