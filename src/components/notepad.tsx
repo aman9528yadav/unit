@@ -204,56 +204,56 @@ export function Notepad() {
 
     return (
         <SidebarProvider>
-            <div className="w-full max-w-md mx-auto text-white h-screen bg-background">
-                <Sidebar>
-                    <SidebarContent>
-                        <SidebarHeader>
-                            <h2 className="text-xl font-bold">UniConvert Notes</h2>
-                        </SidebarHeader>
-                        <SidebarMenu>
-                             <SidebarMenuItem>
-                                <SidebarMenuButton asChild>
-                                    <Link href="/">
-                                        <Home />
-                                        Dashboard
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        </SidebarMenu>
-                        <SidebarSeparator />
-                        <SidebarMenu>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton onClick={() => { setView('all'); setActiveCategory(null); }} isActive={view === 'all'}><StickyNote />All Notes</SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton onClick={() => { setView('favorites'); setActiveCategory(null); }} isActive={view === 'favorites'}><Star />Favorites</SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton onClick={() => { setView('trash'); setActiveCategory(null); }} isActive={view === 'trash'}><Trash2/>Recycle Bin</SidebarMenuButton>
-                            </SidebarMenuItem>
-                        </SidebarMenu>
-                        {categories.length > 0 && (
-                            <>
-                                <SidebarSeparator />
-                                <SidebarGroup>
-                                    <SidebarGroupLabel>Categories</SidebarGroupLabel>
-                                    <SidebarMenu>
-                                        {categories.map(cat => (
-                                            <SidebarMenuItem key={cat}>
-                                                <SidebarMenuButton onClick={() => handleCategoryClick(cat)} isActive={view === 'category' && activeCategory === cat}>
-                                                    <Tag /> {cat}
-                                                </SidebarMenuButton>
-                                            </SidebarMenuItem>
-                                        ))}
-                                    </SidebarMenu>
-                                </SidebarGroup>
-                            </>
-                        )}
-                    </SidebarContent>
-                </Sidebar>
+            <Sidebar>
+                <SidebarContent>
+                    <SidebarHeader>
+                        <h2 className="text-xl font-bold">UniConvert Notes</h2>
+                    </SidebarHeader>
+                    <SidebarMenu>
+                         <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                                <Link href="/">
+                                    <Home />
+                                    Dashboard
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                    <SidebarSeparator />
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton onClick={() => { setView('all'); setActiveCategory(null); }} isActive={view === 'all'}><StickyNote />All Notes</SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton onClick={() => { setView('favorites'); setActiveCategory(null); }} isActive={view === 'favorites'}><Star />Favorites</SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton onClick={() => { setView('trash'); setActiveCategory(null); }} isActive={view === 'trash'}><Trash2/>Recycle Bin</SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                    {categories.length > 0 && (
+                        <>
+                            <SidebarSeparator />
+                            <SidebarGroup>
+                                <SidebarGroupLabel>Categories</SidebarGroupLabel>
+                                <SidebarMenu>
+                                    {categories.map(cat => (
+                                        <SidebarMenuItem key={cat}>
+                                            <SidebarMenuButton onClick={() => handleCategoryClick(cat)} isActive={view === 'category' && activeCategory === cat}>
+                                                <Tag /> {cat}
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    ))}
+                                </SidebarMenu>
+                            </SidebarGroup>
+                        </>
+                    )}
+                </SidebarContent>
+            </Sidebar>
 
-                <SidebarInset className="flex flex-col pb-24">
-                     <header className="flex items-center justify-between p-4">
+            <SidebarInset className="flex flex-col h-screen">
+                <div className="w-full max-w-md mx-auto flex flex-col flex-1">
+                    <header className="flex items-center justify-between p-4">
                         <SidebarTrigger>
                            <Menu/>
                         </SidebarTrigger>
@@ -307,7 +307,7 @@ export function Notepad() {
                             </DropdownMenu>
                         </div>
                     </header>
-                    <div className="flex-grow overflow-y-auto px-4">
+                    <div className="flex-grow overflow-y-auto px-4 pb-24">
                         {sortedNotes.length > 0 ? (
                             <ul className={layout === 'list' ? "divide-y divide-border" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
                                 {sortedNotes.map(note => (
@@ -352,32 +352,32 @@ export function Notepad() {
                             </div>
                         )}
                     </div>
-                     <Link href="/notes/edit/new" passHref>
-                        <Button className="fixed bottom-8 right-1/2 translate-x-1/2 sm:right-8 sm:translate-x-0 w-16 h-16 rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90">
-                            <Edit size={24} />
-                        </Button>
-                    </Link>
-                    <AlertDialog open={!!noteToDelete}>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This will permanently delete the note. This action cannot be undone.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel onClick={() => setNoteToDelete(null)}>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => {
-                                    if(noteToDelete) handlePermanentDelete(noteToDelete);
-                                    setNoteToDelete(null);
-                                }}>
-                                    Delete Permanently
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                </SidebarInset>
-            </div>
+                </div>
+                <Link href="/notes/edit/new" passHref>
+                    <Button className="fixed bottom-8 right-1/2 translate-x-1/2 sm:right-8 sm:translate-x-0 w-16 h-16 rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90">
+                        <Edit size={24} />
+                    </Button>
+                </Link>
+                <AlertDialog open={!!noteToDelete}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete the note. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setNoteToDelete(null)}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => {
+                                if(noteToDelete) handlePermanentDelete(noteToDelete);
+                                setNoteToDelete(null);
+                            }}>
+                                Delete Permanently
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </SidebarInset>
         </SidebarProvider>
     );
 }
