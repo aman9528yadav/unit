@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
@@ -21,6 +21,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const [isClient, setIsClient] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const isNewNote = noteId === 'new';
 
@@ -105,16 +106,36 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     };
 
     const applyFormat = (formatType: 'bold' | 'italic' | 'list') => {
-        // This is a simplified implementation. A real app would use a proper editor library.
-        let newContent = content;
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = content.substring(start, end);
+
+        let newContent = '';
+        let newCursorPos = 0;
+
         if (formatType === 'bold') {
-            newContent += `**bold text**`;
+            const replacement = `**${selectedText || 'bold text'}**`;
+            newContent = `${content.substring(0, start)}${replacement}${content.substring(end)}`;
+            newCursorPos = start + (selectedText ? replacement.length : 2);
         } else if (formatType === 'italic') {
-            newContent += `*italic text*`;
+            const replacement = `*${selectedText || 'italic text'}*`;
+            newContent = `${content.substring(0, start)}${replacement}${content.substring(end)}`;
+            newCursorPos = start + (selectedText ? replacement.length : 1);
         } else if (formatType === 'list') {
-            newContent += `\n- List item`;
+            const replacement = `\n- ${selectedText || 'List item'}`;
+            newContent = `${content.substring(0, start)}${replacement}${content.substring(end)}`;
+            newCursorPos = start + replacement.length;
         }
+
         setContent(newContent);
+        // Focus and set cursor position after state update
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(newCursorPos, newCursorPos + (selectedText ? 0 : (formatType === 'bold' ? 9 : (formatType === 'italic' ? 11 : 9))));
+        }, 0);
     };
 
     if (!isClient) {
@@ -164,6 +185,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <Button variant="ghost" size="icon" onClick={() => applyFormat('list')}><List /></Button>
                 </div>
                 <Textarea
+                    ref={textareaRef}
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="Start typing your note here..."
@@ -173,5 +195,3 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
-
-    
