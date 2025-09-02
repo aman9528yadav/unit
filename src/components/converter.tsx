@@ -1,6 +1,7 @@
 
 "use client";
 
+import * as React from "react";
 import { useState, useEffect, useMemo, useTransition, useRef } from "react";
 import Link from 'next/link';
 import html2canvas from 'html2canvas';
@@ -41,33 +42,33 @@ export function Converter() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") || "Unit";
-  const [activeTab, setActiveTab] = useState(initialTab);
-  const [selectedCategory, setSelectedCategory] = useState<ConversionCategory>(conversionCategories[0]);
-  const [fromUnit, setFromUnit] = useState<string>(conversionCategories[0].units[0].symbol);
-  const [toUnit, setToUnit] = useState<string>(conversionCategories[0].units[1].symbol);
-  const [inputValue, setInputValue] = useState<string>("");
-  const [outputValue, setOutputValue] = useState<string>("");
-  const [history, setHistory] = useState<string[]>([]);
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [region, setRegion] = useState<Region>('International');
+  const [activeTab, setActiveTab] = React.useState(initialTab);
+  const [selectedCategory, setSelectedCategory] = React.useState<ConversionCategory>(conversionCategories[0]);
+  const [fromUnit, setFromUnit] = React.useState<string>(conversionCategories[0].units[0].symbol);
+  const [toUnit, setToUnit] = React.useState<string>(conversionCategories[0].units[1].symbol);
+  const [inputValue, setInputValue] = React.useState<string>("");
+  const [outputValue, setOutputValue] = React.useState<string>("");
+  const [history, setHistory] = React.useState<string[]>([]);
+  const [favorites, setFavorites] = React.useState<string[]>([]);
+  const [isFavorite, setIsFavorite] = React.useState(false);
+  const [region, setRegion] = React.useState<Region>('International');
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, startSearchTransition] = useTransition();
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [isSearching, startSearchTransition] = React.useTransition();
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  const imageExportRef = useRef<HTMLDivElement>(null);
+  const imageExportRef = React.useRef<HTMLDivElement>(null);
 
-  const currentUnits = useMemo(() => {
+  const currentUnits = React.useMemo(() => {
     return selectedCategory.units.filter(u => !u.region || u.region === region);
   }, [selectedCategory, region]);
 
-  const fromUnitInfo = useMemo(() => currentUnits.find(u => u.symbol === fromUnit)?.info, [currentUnits, fromUnit]);
-  const toUnitInfo = useMemo(() => currentUnits.find(u => u.symbol === toUnit)?.info, [currentUnits, toUnit]);
+  const fromUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === fromUnit)?.info, [currentUnits, fromUnit]);
+  const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit)?.info, [currentUnits, toUnit]);
 
 
-  useEffect(() => {
+  React.useEffect(() => {
     const storedHistory = localStorage.getItem("conversionHistory");
     const storedFavorites = localStorage.getItem("favoriteConversions");
     if (storedHistory) {
@@ -89,14 +90,14 @@ export function Converter() {
     return `${value} ${from} → ${formattedResult} ${to}`;
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     setFromUnit(currentUnits[0].symbol);
     setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
     setInputValue("1");
     setOutputValue("");
-  }, [selectedCategory, region]);
+  }, [selectedCategory, region, currentUnits]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const numValue = parseFloat(inputValue);
      if (isNaN(numValue) || !outputValue) {
       setIsFavorite(false);
@@ -143,7 +144,7 @@ export function Converter() {
     };
 
   
-  useEffect(() => {
+  React.useEffect(() => {
     if (debouncedSearchQuery.trim() === "") {
       return;
     }
