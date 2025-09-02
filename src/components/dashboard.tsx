@@ -21,6 +21,11 @@ interface Note {
     deletedAt?: string | null;
 }
 
+interface UserProfile {
+    fullName: string;
+    [key: string]: any;
+}
+
 const getSavedNotesCount = () => {
     if (typeof window === 'undefined') return 0;
     const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
@@ -40,6 +45,7 @@ const getSavedNotesCount = () => {
 
 export function Dashboard() {
   const [isClient, setIsClient] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [todayCalculations, setTodayCalculations] = useState(0);
   const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string, value: number}[]>([]);
   const [savedNotesCount, setSavedNotesCount] = useState(0);
@@ -56,6 +62,10 @@ export function Dashboard() {
 
   useEffect(() => {
     setIsClient(true);
+    const storedProfile = localStorage.getItem("userProfile");
+    if (storedProfile) {
+        setProfile(JSON.parse(storedProfile));
+    }
     updateCalculations();
     updateNotesCount();
   }, []);
@@ -68,6 +78,13 @@ export function Dashboard() {
         }
         if (e.key === NOTES_STORAGE_KEY) {
             updateNotesCount();
+        }
+        if (e.key === 'userProfile') {
+            if (e.newValue) {
+                setProfile(JSON.parse(e.newValue));
+            } else {
+                setProfile(null);
+            }
         }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -82,7 +99,7 @@ export function Dashboard() {
     <div className="w-full max-w-md mx-auto flex flex-col gap-6">
       <header className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">{t('dashboard.greeting', { name: "Aman" })}</h1>
+          <h1 className="text-2xl font-bold">{t('dashboard.greeting', { name: profile?.fullName || "User" })}</h1>
           <p className="text-muted-foreground">{t('dashboard.challenge')}</p>
         </div>
         <div className="flex items-center gap-2">

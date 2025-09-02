@@ -38,6 +38,11 @@ import { useLanguage } from "@/context/language-context";
 
 const regions: Region[] = ['International', 'India'];
 
+interface UserProfile {
+    fullName: string;
+    [key: string]: any;
+}
+
 // Offline parser to replace the AI flow
 const offlineParseConversionQuery = (query: string, allUnits: Unit[]): ParseConversionQueryOutput | null => {
     // Regex to capture value and units, e.g., "10.5 km to m"
@@ -94,6 +99,7 @@ export function Converter() {
   const [isSearching, startSearchTransition] = React.useTransition();
   const [isOnline, setIsOnline] = useState(true);
   const [parsedQuery, setParsedQuery] = useState<ParseConversionQueryOutput | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   const imageExportRef = React.useRef<HTMLDivElement>(null);
 
@@ -111,11 +117,15 @@ export function Converter() {
   React.useEffect(() => {
     const storedHistory = localStorage.getItem("conversionHistory");
     const storedFavorites = localStorage.getItem("favoriteConversions");
+    const storedProfile = localStorage.getItem("userProfile");
     if (storedHistory) {
       setHistory(JSON.parse(storedHistory));
     }
     if (storedFavorites) {
       setFavorites(JSON.parse(storedFavorites));
+    }
+    if (storedProfile) {
+        setProfile(JSON.parse(storedProfile));
     }
     
     const itemToRestore = localStorage.getItem("restoreConversion");
@@ -432,7 +442,7 @@ export function Converter() {
     <div className="w-full max-w-md mx-auto flex flex-col gap-4">
       <header className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">{t('dashboard.greeting', { name: "Aman" })}</h1>
+          <h1 className="text-2xl font-bold">{t('dashboard.greeting', { name: profile?.fullName || "User" })}</h1>
           <p className="text-muted-foreground">{t('converter.welcome')}</p>
         </div>
         <div className="flex items-center gap-2">
