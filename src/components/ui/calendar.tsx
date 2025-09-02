@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -85,6 +86,11 @@ function Calendar({
             }
           }
 
+          const caption =
+            props.name === 'months'
+              ? format(props.value as Date, 'MMM')
+              : (props.value as Date).getFullYear();
+              
           return (
             <Select
               onValueChange={(newValue) => {
@@ -96,13 +102,11 @@ function Calendar({
                 }
                 props.onChange?.(newDate);
               }}
-              value={props.value?.toString()}
+              value={props.name === 'months' ? (props.value as Date).getMonth().toString() : (props.value as Date).getFullYear().toString()}
             >
               <SelectTrigger>
                 <SelectValue>
-                  {props.name === 'months'
-                    ? format(props.value as Date, 'MMM')
-                    : (props.value as Date).getFullYear()}
+                  {caption}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
