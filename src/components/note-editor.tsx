@@ -5,13 +5,27 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Note, NOTES_STORAGE_KEY } from './notepad';
 import Image from 'next/image';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
+
+const FONT_COLORS = [
+  { name: 'Default', color: '#000000' },
+  { name: 'Red', color: '#E53E3E' },
+  { name: 'Green', color: '#48BB78' },
+  { name: 'Blue', color: '#4299E1' },
+  { name: 'Purple', color: '#9F7AEA' },
+];
 
 export function NoteEditor({ noteId }: { noteId: string }) {
     const [title, setTitle] = useState('');
@@ -59,10 +73,18 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     }, [content]);
 
 
-    const handleFormat = (command: string) => {
-        document.execCommand(command, false);
+    const handleFormat = (command: string, value?: string) => {
+        document.execCommand(command, false, value);
         editorRef.current?.focus();
         handleContentChange();
+    };
+    
+    const handleFormatBlock = (tag: string) => {
+      handleFormat('formatBlock', `<${tag}>`);
+    };
+
+    const handleColorChange = (color: string) => {
+      handleFormat('foreColor', color);
     };
 
     const handleContentChange = () => {
@@ -202,8 +224,38 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('insertUnorderedList')}><List /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('insertOrderedList')}><ListOrdered /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={showComingSoonToast}><Code2 /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e-preventDefault()} onClick={showComingSoonToast}><CaseSensitive /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={showComingSoonToast}><Palette /></Button>
+                    
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon"><CaseSensitive /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem onSelect={() => handleFormatBlock('h1')}>
+                                <Heading1 className="mr-2 h-4 w-4" /> Heading 1
+                            </DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => handleFormatBlock('h2')}>
+                                <Heading2 className="mr-2 h-4 w-4" /> Heading 2
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => handleFormatBlock('p')}>
+                                <Pilcrow className="mr-2 h-4 w-4" /> Paragraph
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon"><Palette /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            {FONT_COLORS.map(item => (
+                                <DropdownMenuItem key={item.name} onSelect={() => handleColorChange(item.color)}>
+                                    <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: item.color }} />
+                                    {item.name}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => fileInputRef.current?.click()}><ImageIcon /></Button>
                     <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
                 </div>
