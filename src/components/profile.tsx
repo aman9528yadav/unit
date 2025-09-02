@@ -18,15 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { getStreakData, StreakData } from "@/lib/streak";
-
-const menuItems = [
-  { icon: User, text: "Profile", href: "/profile/edit" },
-  { icon: Star, text: "Favorite", href: "/history" },
-  { icon: Lock, text: "Privacy Policy", href: "/privacy-policy" },
-  { icon: Settings, text: "Settings", href: "/settings" },
-  { icon: HelpCircle, text: "Help", href: "/help" },
-  { icon: LogOut, text: "Logout", href: "#" },
-];
+import { useRouter } from "next/navigation";
 
 const defaultProfile = {
     fullName: "Aman Yadav",
@@ -40,6 +32,7 @@ export function Profile() {
   const [profile, setProfile] = useState(defaultProfile);
   const [streakData, setStreakData] = useState<StreakData>({ bestStreak: 0, currentStreak: 0, daysNotOpened: 0 });
   const [isClient, setIsClient] = useState(false);
+  const router = useRouter();
   
   useEffect(() => {
     setIsClient(true);
@@ -53,6 +46,29 @@ export function Profile() {
     }
     setStreakData(getStreakData());
   }, []);
+
+  const handleLogout = () => {
+    // Clear all user-specific data
+    localStorage.removeItem("userProfile");
+    localStorage.removeItem("conversionHistory");
+    localStorage.removeItem("favoriteConversions");
+    localStorage.removeItem("dailyCalculations");
+    localStorage.removeItem("userNotesV2");
+    localStorage.removeItem("userVisitHistory");
+    // Optionally keep theme and language settings, or clear them too
+    // localStorage.removeItem("theme");
+    // localStorage.removeItem("language");
+    router.push("/welcome");
+  };
+
+  const menuItems = [
+    { icon: User, text: "Profile", href: "/profile/edit" },
+    { icon: Star, text: "Favorite", href: "/history" },
+    { icon: Lock, text: "Privacy Policy", href: "/privacy-policy" },
+    { icon: Settings, text: "Settings", href: "/settings" },
+    { icon: HelpCircle, text: "Help", href: "/help" },
+    { icon: LogOut, text: "Logout", onClick: handleLogout },
+  ];
 
   if (!isClient) {
     return null; // or a loading spinner
@@ -115,9 +131,8 @@ export function Profile() {
 
       <nav className="mt-6 px-4 flex-grow">
         <ul className="space-y-2">
-          {menuItems.map((item, index) => (
-            <li key={index}>
-              <Link href={item.href}>
+          {menuItems.map((item, index) => {
+             const content = (
                 <div className="flex items-center p-3 rounded-lg hover:bg-card transition-colors">
                   <div className="p-2 bg-primary/10 rounded-full">
                     <item.icon className="w-5 h-5 text-primary" />
@@ -125,9 +140,14 @@ export function Profile() {
                   <span className="ml-4 font-medium">{item.text}</span>
                   <ChevronRight className="ml-auto w-5 h-5 text-muted-foreground" />
                 </div>
-              </Link>
-            </li>
-          ))}
+              );
+
+            return (
+              <li key={index} onClick={item.onClick}>
+                {item.href ? <Link href={item.href}>{content}</Link> : content}
+              </li>
+            )
+          })}
         </ul>
       </nav>
     </div>
