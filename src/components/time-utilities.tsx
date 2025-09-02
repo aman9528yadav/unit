@@ -22,7 +22,7 @@ import {
   DialogTrigger,
   DialogFooter
 } from "@/components/ui/dialog"
-import { Label } from "../ui/label";
+import { Label } from "@/components/ui/label";
 
 
 function PomodoroTimer() {
@@ -414,5 +414,3 @@ export function TimeUtilities() {
     </div>
   );
 }
-
-    
