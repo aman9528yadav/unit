@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon } from "lucide-react";
 import { conversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
-import { parseConversionQuery } from "@/ai/flows/parse-conversion-flow";
+import { parseConversionQuery, ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -37,6 +37,42 @@ import { incrementTodaysCalculations } from "@/lib/utils";
 
 
 const regions: Region[] = ['International', 'India'];
+
+// Offline parser to replace the AI flow
+const offlineParseConversionQuery = (query: string, allUnits: Unit[]): ParseConversionQueryOutput | null => {
+    // Regex to capture value and units, e.g., "10.5 km to m"
+    const regex = /^\s*([0-9.,]+)\s*([a-zA-Z°/²³]+)\s*(?:to|in|as|)\s*([a-zA-Z°/²³]+)\s*$/i;
+    const match = query.match(regex);
+
+    if (!match) return null;
+
+    const [, valueStr, fromUnitStr, toUnitStr] = match;
+
+    const value = parseFloat(valueStr.replace(/,/g, ''));
+    if (isNaN(value)) return null;
+
+    // Find the full unit info from the symbols
+    const fromUnit = allUnits.find(u => u.symbol.toLowerCase() === fromUnitStr.toLowerCase());
+    const toUnit = allUnits.find(u => u.symbol.toLowerCase() === toUnitStr.toLowerCase());
+
+    if (!fromUnit || !toUnit) return null;
+
+    // Find the category that contains both units
+    const category = conversionCategories.find(c =>
+        c.units.some(u => u.symbol === fromUnit.symbol) &&
+        c.units.some(u => u.symbol === toUnit.symbol)
+    );
+
+    if (!category) return null;
+
+    return {
+        value,
+        fromUnit: fromUnit.symbol,
+        toUnit: toUnit.symbol,
+        category: category.name,
+    };
+};
+
 
 export function Converter() {
   const { toast } = useToast();
@@ -55,6 +91,8 @@ export function Converter() {
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isSearching, startSearchTransition] = React.useTransition();
+  const [isOnline, setIsOnline] = useState(true);
+
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -63,6 +101,9 @@ export function Converter() {
   const currentUnits = React.useMemo(() => {
     return selectedCategory.units.filter(u => !u.region || u.region === region);
   }, [selectedCategory, region]);
+  
+  const allUnits = React.useMemo(() => conversionCategories.flatMap(c => c.units), []);
+
 
   const fromUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === fromUnit)?.info, [currentUnits, fromUnit]);
   const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit)?.info, [currentUnits, toUnit]);
@@ -83,6 +124,19 @@ export function Converter() {
       handleRestoreHistory(itemToRestore);
       localStorage.removeItem("restoreConversion");
     }
+
+    // Check online status
+    setIsOnline(navigator.onLine);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+
   }, []);
   
   const getCurrentConversionString = (value: number, from: string, to: string, result: number) => {
@@ -147,41 +201,49 @@ export function Converter() {
   
   React.useEffect(() => {
     if (debouncedSearchQuery.trim() === "") {
-      return;
+        return;
     }
 
     startSearchTransition(async () => {
-      try {
-        const parsed = await parseConversionQuery({ query: debouncedSearchQuery });
-        const category = conversionCategories.find(c => c.name === parsed.category);
+        let parsed: ParseConversionQueryOutput | null = null;
+        try {
+            if (isOnline) {
+                parsed = await parseConversionQuery({ query: debouncedSearchQuery });
+            } else {
+                parsed = offlineParseConversionQuery(debouncedSearchQuery, allUnits);
+            }
 
-        if (category) {
-          const categoryUnits = category.units.filter(u => !u.region || u.region === region);
-          const fromUnitExists = categoryUnits.some(u => u.symbol === parsed.fromUnit);
-          const toUnitExists = categoryUnits.some(u => u.symbol === parsed.toUnit);
+            if (parsed) {
+                const category = conversionCategories.find(c => c.name === parsed!.category);
+                if (category) {
+                    const categoryUnits = category.units.filter(u => !u.region || u.region === region);
+                    const fromUnitExists = categoryUnits.some(u => u.symbol === parsed!.fromUnit);
+                    const toUnitExists = categoryUnits.some(u => u.symbol === parsed!.toUnit);
 
-          if (fromUnitExists && toUnitExists) {
-            setSelectedCategory(category);
-            setFromUnit(parsed.fromUnit);
-            setToUnit(parsed.toUnit);
-            setInputValue(String(parsed.value));
-            // We need to pass the parsed values directly to perform the conversion
-            // as the state updates might not be applied immediately.
-            performConversion(parsed.value, parsed.fromUnit, parsed.toUnit);
-            setSearchQuery(""); // Clear search
-          } else {
-             toast({ title: "Cannot perform conversion", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive"});
-          }
-        } else {
-          toast({ title: "Cannot perform conversion", description: "Could not determine the conversion category.", variant: "destructive"});
+                    if (fromUnitExists && toUnitExists) {
+                        setSelectedCategory(category);
+                        setInputValue(String(parsed.value));
+                        setFromUnit(parsed.fromUnit);
+                        setToUnit(parsed.toUnit);
+                        performConversion(parsed.value, parsed.fromUnit, parsed.toUnit);
+                        setSearchQuery(""); // Clear search
+                    } else {
+                        toast({ title: "Cannot perform conversion", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive" });
+                    }
+                } else {
+                    toast({ title: "Cannot perform conversion", description: "Could not determine the conversion category.", variant: "destructive" });
+                }
+            } else {
+                 toast({ title: "Invalid Search", description: "The search query could not be understood.", variant: "destructive" });
+            }
+        } catch (error) {
+            console.error("Search conversion failed:", error);
+            toast({ title: "Invalid Search", description: "The search query could not be understood.", variant: "destructive" });
         }
-      } catch (error) {
-        console.error("Search conversion failed:", error);
-        toast({ title: "Invalid Search", description: "The search query could not be understood.", variant: "destructive"});
-      }
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearchQuery, region]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [debouncedSearchQuery, region, isOnline, allUnits]);
+
 
   const handleCategoryChange = (categoryName: string) => {
     const category = conversionCategories.find(c => c.name === categoryName);
