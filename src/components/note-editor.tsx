@@ -207,6 +207,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     onInput={handleContentChange}
                     data-placeholder="Type your message"
                     className="w-full h-full flex-grow bg-transparent border-none resize-none focus-visible:outline-none text-base p-0 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
+                    style={{ direction: 'ltr' }}
                     dangerouslySetInnerHTML={{ __html: content }}
                 />
                 <div className="flex items-center gap-2 pt-2 border-t border-border">
@@ -218,7 +219,3 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
-
-    
-
-    
