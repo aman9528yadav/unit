@@ -57,6 +57,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 const noteToEdit = notes.find(note => note.id === noteId);
                 if (noteToEdit) {
                     setTitle(noteToEdit.title);
+                    // Set content state, which will trigger the next effect
                     setContent(noteToEdit.content);
                     setIsFavorite(noteToEdit.isFavorite || false);
                     setCategory(noteToEdit.category || '');
@@ -75,7 +76,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             editorRef.current.innerHTML = content;
             contentSetRef.current = true;
         }
-    }, [content]);
+    }, [content, isClient]);
 
     const applyStyle = (style: string, value: string) => {
         editorRef.current?.focus();
@@ -107,14 +108,12 @@ export function NoteEditor({ noteId }: { noteId: string }) {
              }
               document.execCommand('styleWithCSS', false, 'false');
         }
-       handleContentChange();
     };
 
 
     const handleFormat = (command: string, value?: string) => {
         document.execCommand(command, false, value);
         editorRef.current?.focus();
-        handleContentChange();
     };
     
     const handleFormatBlock = (tag: string) => {
@@ -123,12 +122,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
     const handleColorChange = (color: string) => {
       handleFormat('foreColor', color);
-    };
-
-    const handleContentChange = () => {
-        if(editorRef.current) {
-            setContent(editorRef.current.innerHTML);
-        }
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -228,7 +221,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         router.push('/notes');
     };
 
-    if (!isClient) {
+    if (!isClient && !isNewNote) {
         return null;
     }
 
@@ -350,7 +343,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                  <div
                     ref={editorRef}
                     contentEditable
-                    onInput={handleContentChange}
                     data-placeholder="Type your message"
                     className="w-full h-full flex-grow bg-transparent border-none resize-none focus-visible:outline-none text-base p-0 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
                     style={{ direction: 'ltr' }}
@@ -364,3 +356,5 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
+
+    
