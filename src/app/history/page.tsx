@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Trash2, Clock } from "lucide-react";
+import { ArrowLeft, Trash2, Clock, Star } from "lucide-react";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -20,25 +20,40 @@ import {
 
 export default function HistoryPage() {
   const [history, setHistory] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
     const storedHistory = localStorage.getItem("conversionHistory");
+    const storedFavorites = localStorage.getItem("favoriteConversions");
     if (storedHistory) {
       setHistory(JSON.parse(storedHistory));
+    }
+    if (storedFavorites) {
+      setFavorites(JSON.parse(storedFavorites));
     }
   }, []);
 
   const handleDeleteHistory = (index: number) => {
+    const itemToDelete = history[index];
     const newHistory = history.filter((_, i) => i !== index);
     setHistory(newHistory);
     localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
+
+    // Also remove from favorites if it exists there
+    if (favorites.includes(itemToDelete)) {
+      const newFavorites = favorites.filter(fav => fav !== itemToDelete);
+      setFavorites(newFavorites);
+      localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
+    }
   };
   
   const handleClearAll = () => {
     setHistory([]);
+    setFavorites([]); // Also clear favorites from state
     localStorage.removeItem("conversionHistory");
+    localStorage.removeItem("favoriteConversions"); // And from storage
   };
 
   if (!isClient) {
@@ -65,7 +80,7 @@ export default function HistoryPage() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will permanently delete all your conversion history. This action cannot be undone.
+                  This will permanently delete all your conversion history, including favorites. This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -83,7 +98,10 @@ export default function HistoryPage() {
               <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                   {history.map((item, index) => (
                       <div key={index} className="flex justify-between items-center p-2 rounded hover:bg-background group">
-                        <span>{item}</span>
+                        <div className="flex items-center gap-2">
+                           {favorites.includes(item) && <Star size={16} className="text-yellow-400 fill-yellow-400" />}
+                           <span>{item}</span>
+                        </div>
                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Trash2 size={16} className="cursor-pointer hover:text-white" onClick={() => handleDeleteHistory(index)} />
                         </div>

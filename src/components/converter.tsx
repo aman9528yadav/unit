@@ -37,6 +37,8 @@ export function Converter() {
   const [inputValue, setInputValue] = useState<string>("");
   const [outputValue, setOutputValue] = useState<string>("");
   const [history, setHistory] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [isFavorite, setIsFavorite] = useState(false);
   const [region, setRegion] = useState<Region>('International');
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,10 +56,19 @@ export function Converter() {
 
   useEffect(() => {
     const storedHistory = localStorage.getItem("conversionHistory");
+    const storedFavorites = localStorage.getItem("favoriteConversions");
     if (storedHistory) {
       setHistory(JSON.parse(storedHistory));
     }
+    if (storedFavorites) {
+      setFavorites(JSON.parse(storedFavorites));
+    }
   }, []);
+  
+  const getCurrentConversionString = (value: number, from: string, to: string, result: number) => {
+    const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
+    return `${value} ${from} → ${formattedResult} ${to}`;
+  };
 
   useEffect(() => {
     setFromUnit(currentUnits[0].symbol);
@@ -72,22 +83,26 @@ export function Converter() {
 
       if (isNaN(numValue) || !fromUnitValue || !toUnitValue) {
         setOutputValue("");
+        setIsFavorite(false);
         return;
       }
       const result = selectedCategory.convert(numValue, fromUnitValue, toUnitValue, region);
       if (isNaN(result)) {
         setOutputValue("");
+        setIsFavorite(false);
         return;
       }
       
       const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
       setOutputValue(formattedResult);
       
-      const conversionString = `${numValue} ${fromUnitValue} → ${formattedResult} ${toUnitValue}`;
+      const conversionString = getCurrentConversionString(numValue, fromUnitValue, toUnitValue, result);
       
       const newHistory = [conversionString, ...history.filter(item => item !== conversionString)];
       setHistory(newHistory);
       localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
+
+      setIsFavorite(favorites.includes(conversionString));
     };
 
   useEffect(() => {
@@ -95,9 +110,10 @@ export function Converter() {
       performConversion();
     } else {
       setOutputValue("");
+      setIsFavorite(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inputValue, fromUnit, toUnit, selectedCategory, region]);
+  }, [inputValue, fromUnit, toUnit, selectedCategory, region, favorites]);
   
   useEffect(() => {
     if (debouncedSearchQuery.trim() === "") {
@@ -157,6 +173,27 @@ export function Converter() {
   const handleConvertClick = () => {
     performConversion();
   };
+  
+  const handleToggleFavorite = () => {
+    const numValue = parseFloat(inputValue);
+    if (isNaN(numValue) || !outputValue) return;
+
+    const result = parseFloat(outputValue.replace(/,/g, ''));
+    const conversionString = getCurrentConversionString(numValue, fromUnit, toUnit, result);
+
+    let newFavorites: string[];
+    if (favorites.includes(conversionString)) {
+      newFavorites = favorites.filter(fav => fav !== conversionString);
+      toast({ title: "Removed from favorites." });
+    } else {
+      newFavorites = [conversionString, ...favorites];
+      toast({ title: "Added to favorites!" });
+    }
+    setFavorites(newFavorites);
+    localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
+    setIsFavorite(newFavorites.includes(conversionString));
+  };
+
 
   const handleRestoreHistory = (item: string) => {
     const parts = item.split(' ');
@@ -192,14 +229,24 @@ export function Converter() {
   };
 
   const handleDeleteHistory = (index: number) => {
+    const itemToDelete = history[index];
     const newHistory = history.filter((_, i) => i !== index);
     setHistory(newHistory);
     localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
+    
+    // Also remove from favorites if it's there
+    if (favorites.includes(itemToDelete)) {
+      const newFavorites = favorites.filter(fav => fav !== itemToDelete);
+      setFavorites(newFavorites);
+      localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
+    }
   };
   
   const handleClearHistory = () => {
     setHistory([]);
+    setFavorites([]);
     localStorage.removeItem("conversionHistory");
+    localStorage.removeItem("favoriteConversions");
   };
 
   return (
@@ -314,7 +361,11 @@ export function Converter() {
                             navigator.clipboard.writeText(outputValue)
                             toast({ title: "Copied to clipboard!"})
                             }} />
-                        <Star size={20} className="text-muted-foreground cursor-pointer hover:text-white" />
+                        <Star 
+                          size={20} 
+                          className={`cursor-pointer transition-colors ${isFavorite ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground hover:text-white'}`}
+                          onClick={handleToggleFavorite}
+                        />
                         <Share2 size={20} className="text-muted-foreground cursor-pointer hover:text-white" />
                      </div>
                 )}
@@ -332,7 +383,10 @@ export function Converter() {
                   <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                       {history.slice(0, 3).map((item, index) => (
                           <div key={index} className="flex justify-between items-center p-2 rounded hover:bg-background group">
-                            <span>{item}</span>
+                             <div className="flex items-center gap-2">
+                               {favorites.includes(item) && <Star size={16} className="text-yellow-400 fill-yellow-400" />}
+                               <span>{item}</span>
+                             </div>
                             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <RotateCcw size={16} className="cursor-pointer hover:text-white" onClick={() => handleRestoreHistory(item)} />
                                 <Trash2 size={16} className="cursor-pointer hover:text-white" onClick={() => handleDeleteHistory(index)} />
