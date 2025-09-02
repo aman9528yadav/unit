@@ -122,7 +122,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     }
 
     return (
-        <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white">
+        <div className="w-full max-w-md mx-auto flex flex-col gap-4">
             <header className="flex items-center justify-between">
                 <Button variant="ghost" size="icon" asChild>
                     <Link href="/notes">
@@ -173,3 +173,5 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
+
+    

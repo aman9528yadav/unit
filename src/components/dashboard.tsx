@@ -79,7 +79,7 @@ export function Dashboard() {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col gap-6 text-white">
+    <div className="w-full max-w-md mx-auto flex flex-col gap-6">
       <header className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">{t('dashboard.greeting', { name: "Aman" })}</h1>
@@ -180,13 +180,13 @@ export function Dashboard() {
 
       <div className="grid grid-cols-2 gap-4">
         <Card className="bg-indigo-400/20 border-indigo-400/50 p-4 col-span-1 rounded-2xl">
-            <h3 className="text-white/90 font-semibold mb-2">{t('dashboard.calculation')}</h3>
+            <h3 className="text-card-foreground/90 font-semibold mb-2">{t('dashboard.calculation')}</h3>
              <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={weeklyCalculations} margin={{ top: 5, right: 0, left: -30, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-                        <XAxis dataKey="name" tick={{ fill: 'white', fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fill: 'white', fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
                         <Tooltip
                             contentStyle={{
                                 backgroundColor: 'hsl(var(--background))',
@@ -194,16 +194,16 @@ export function Dashboard() {
                                 color: 'hsl(var(--foreground))',
                                 borderRadius: 'var(--radius)',
                             }}
-                            cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
+                            cursor={{ fill: 'hsla(var(--foreground), 0.1)' }}
                         />
-                        <Bar dataKey="value" fill="#fbbf24" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="value" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
             </div>
         </Card>
         <div className="col-span-1 flex flex-col gap-4">
-             <Card className="bg-card p-4 rounded-2xl shadow-lg shadow-black/30 flex-1 flex flex-col items-center justify-center">
-                 <p className="text-sm text-yellow-400 font-semibold">{t('dashboard.todayCalculation')}</p>
+             <Card className="bg-card p-4 rounded-2xl shadow-lg flex-1 flex flex-col items-center justify-center">
+                 <p className="text-sm text-accent font-semibold">{t('dashboard.todayCalculation')}</p>
                  <p className="text-5xl font-bold">{String(todayCalculations).padStart(2, '0')}</p>
             </Card>
              <Card className="bg-card p-4 rounded-2xl flex-1 flex flex-col items-center justify-center">
@@ -215,3 +215,5 @@ export function Dashboard() {
     </div>
   );
 }
+
+    

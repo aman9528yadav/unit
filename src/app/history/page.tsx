@@ -75,7 +75,7 @@ export default function HistoryPage() {
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-6">
-      <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white">
+      <div className="w-full max-w-md mx-auto flex flex-col gap-4">
         <header className="flex items-center justify-between">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/">
@@ -119,8 +119,8 @@ export default function HistoryPage() {
                                <span>{item}</span>
                             </div>
                             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <RotateCcw size={16} className="cursor-pointer hover:text-white" onClick={() => handleRestore(item)} />
-                                <Trash2 size={16} className="cursor-pointer hover:text-white" onClick={() => handleDelete(item)} />
+                                <RotateCcw size={16} className="cursor-pointer hover:text-foreground" onClick={() => handleRestore(item)} />
+                                <Trash2 size={16} className="cursor-pointer hover:text-foreground" onClick={() => handleDelete(item)} />
                             </div>
                           </div>
                       ))}
@@ -137,8 +137,8 @@ export default function HistoryPage() {
                              <span className="ml-5">{item}</span>
                           </div>
                           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <RotateCcw size={16} className="cursor-pointer hover:text-white" onClick={() => handleRestore(item)} />
-                              <Trash2 size={16} className="cursor-pointer hover:text-white" onClick={() => handleDelete(item)} />
+                              <RotateCcw size={16} className="cursor-pointer hover:text-foreground" onClick={() => handleRestore(item)} />
+                              <Trash2 size={16} className="cursor-pointer hover:text-foreground" onClick={() => handleDelete(item)} />
                           </div>
                         </div>
                     ))}
@@ -160,3 +160,5 @@ export default function HistoryPage() {
     </main>
   );
 }
+
+    

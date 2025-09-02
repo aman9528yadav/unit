@@ -53,7 +53,7 @@ export function WelcomeForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto text-white flex flex-col gap-8 p-4 sm:p-6">
+    <div className="w-full max-w-md mx-auto flex flex-col gap-8 p-4 sm:p-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold">Fill Your Profile</h1>
         <p className="text-muted-foreground mt-2 max-w-sm mx-auto">
@@ -61,7 +61,7 @@ export function WelcomeForm() {
         </p>
       </div>
       
-      <div className="bg-[#A19EFF]/20 py-8 rounded-2xl flex flex-col items-center relative">
+      <div className="bg-primary/20 py-8 rounded-2xl flex flex-col items-center relative">
          <div className="relative w-28 h-28">
             <Image
               src={imagePreview}
@@ -81,10 +81,10 @@ export function WelcomeForm() {
             <Button
               variant="outline"
               size="icon"
-              className="absolute bottom-0 right-0 rounded-full w-8 h-8 bg-yellow-400 border-yellow-400 hover:bg-yellow-500"
+              className="absolute bottom-0 right-0 rounded-full w-8 h-8 bg-accent border-accent hover:bg-accent/90"
               onClick={() => fileInputRef.current?.click()}
             >
-              <Pencil className="w-4 h-4 text-black" />
+              <Pencil className="w-4 h-4 text-accent-foreground" />
             </Button>
           </div>
       </div>
@@ -111,7 +111,7 @@ export function WelcomeForm() {
             <Button
               type="button"
               onClick={handleStart}
-              className="w-full h-14 bg-yellow-300 text-black font-bold text-lg rounded-full hover:bg-yellow-400"
+              className="w-full h-14 bg-accent text-accent-foreground font-bold text-lg rounded-full hover:bg-accent/90"
             >
               Start
             </Button>
@@ -121,3 +121,5 @@ export function WelcomeForm() {
     </div>
   );
 }
+
+    

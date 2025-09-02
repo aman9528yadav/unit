@@ -429,7 +429,7 @@ export function Converter() {
 
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white">
+    <div className="w-full max-w-md mx-auto flex flex-col gap-4">
       <header className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">{t('dashboard.greeting', { name: "Aman" })}</h1>
@@ -578,18 +578,18 @@ export function Converter() {
                 <span className={`text-lg ${!outputValue ? 'text-muted-foreground' : ''}`}>{outputValue || t('converter.resultPlaceholder')}</span>
                 {outputValue && (
                      <div className="flex items-center gap-3">
-                        <Copy size={20} className="text-muted-foreground cursor-pointer hover:text-white" onClick={() => {
+                        <Copy size={20} className="text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => {
                             navigator.clipboard.writeText(outputValue)
                             toast({ title: t('converter.toast.copied')})
                             }} />
                         <Star 
                           size={20} 
-                          className={`cursor-pointer transition-colors ${isFavorite ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground hover:text-white'}`}
+                          className={`cursor-pointer transition-colors ${isFavorite ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground hover:text-foreground'}`}
                           onClick={handleToggleFavorite}
                         />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Share2 size={20} className="text-muted-foreground cursor-pointer hover:text-white" />
+                                <Share2 size={20} className="text-muted-foreground cursor-pointer hover:text-foreground" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleExportAsImage}>
@@ -630,8 +630,8 @@ export function Converter() {
                                <span>{item}</span>
                              </div>
                             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <RotateCcw size={16} className="cursor-pointer hover:text-white" onClick={() => handleRestoreHistory(item)} />
-                                <Trash2 size={16} className="cursor-pointer hover:text-white" onClick={() => handleDeleteHistory(index)} />
+                                <RotateCcw size={16} className="cursor-pointer hover:text-foreground" onClick={() => handleRestoreHistory(item)} />
+                                <Trash2 size={16} className="cursor-pointer hover:text-foreground" onClick={() => handleDeleteHistory(index)} />
                             </div>
                           </div>
                       ))}
@@ -722,3 +722,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    

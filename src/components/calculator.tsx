@@ -80,11 +80,11 @@ export function Calculator() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white">
+    <div className="w-full max-w-md mx-auto flex flex-col gap-4">
         <div className="bg-card p-4 rounded-xl flex flex-col gap-4">
             {/* Display */}
             <div className="text-right h-28 flex flex-col justify-end p-4">
-                <p className="text-3xl text-gray-400 break-all">{expression || ' '}</p>
+                <p className="text-3xl text-muted-foreground break-all">{expression || ' '}</p>
                 <p className="text-6xl font-bold break-all">{result ? `=${result}`: ' '}</p>
             </div>
 
@@ -124,14 +124,14 @@ export function Calculator() {
           <div className="bg-card p-4 rounded-xl flex flex-col gap-3">
               <div className="flex justify-between items-center">
                 <h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} /> History</h3>
-                <RefreshCw size={18} className="text-muted-foreground cursor-pointer hover:text-white" onClick={() => setHistory([])}/>
+                <RefreshCw size={18} className="text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => setHistory([])}/>
               </div>
               <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                   {history.slice(0, 5).map((item, index) => (
                       <div key={index} className="flex justify-between items-center p-2 rounded hover:bg-background group">
                         <span>{item}</span>
                          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Trash2 size={16} className="cursor-pointer hover:text-white" onClick={() => setHistory(h => h.filter((_, i) => i !== index))} />
+                            <Trash2 size={16} className="cursor-pointer hover:text-foreground" onClick={() => setHistory(h => h.filter((_, i) => i !== index))} />
                         </div>
                       </div>
                   ))}
@@ -141,3 +141,5 @@ export function Calculator() {
     </div>
   );
 }
+
+    
