@@ -143,6 +143,7 @@ export function Calculator() {
                         <CalculatorButton onClick={() => handleFunctionClick('tan')} label="tan" className={buttonClasses.dark} />
                         <CalculatorButton onClick={() => handleFunctionClick('log')} label="log" className={buttonClasses.dark} />
                         <CalculatorButton onClick={() => handleFunctionClick('ln')} label="ln" className={buttonClasses.dark} />
+                        
                         <CalculatorButton onClick={() => handleButtonClick('(')} label="(" className={buttonClasses.dark} />
                         <CalculatorButton onClick={() => handleButtonClick(')')} label=")" className={buttonClasses.dark} />
                         <CalculatorButton onClick={() => handleFunctionClick('√')} label="√" className={buttonClasses.dark} />
@@ -160,32 +161,28 @@ export function Calculator() {
                 <CalculatorButton onClick={() => handleButtonClick('8')} label="8" className={buttonClasses.dark} />
                 <CalculatorButton onClick={() => handleButtonClick('9')} label="9" className={buttonClasses.dark} />
                 <CalculatorButton onClick={() => handleButtonClick('*')} label={<X />} className={buttonClasses.blue} />
-                {mode === 'scientific' && <CalculatorButton onClick={() => handleButtonClick('-')} label={<Minus />} className={buttonClasses.blue} /> }
+                {mode === 'scientific' &&  <CalculatorButton onClick={() => handleButtonClick('/')} label={<Divide />} className={buttonClasses.blue} /> }
 
 
                 <CalculatorButton onClick={() => handleButtonClick('4')} label="4" className={buttonClasses.dark} />
                 <CalculatorButton onClick={() => handleButtonClick('5')} label="5" className={buttonClasses.dark} />
                 <CalculatorButton onClick={() => handleButtonClick('6')} label="6" className={buttonClasses.dark} />
                 <CalculatorButton onClick={() => handleButtonClick('-')} label={<Minus />} className={buttonClasses.blue} />
-                {mode === 'scientific' && <CalculatorButton onClick={() => handleButtonClick('+')} label={<Plus />} className={buttonClasses.blue} /> }
-
+                {mode === 'scientific' &&  <CalculatorButton onClick={() => handleButtonClick('*')} label={<X />} className={buttonClasses.blue} /> }
 
                 <CalculatorButton onClick={() => handleButtonClick('1')} label="1" className={buttonClasses.dark} />
                 <CalculatorButton onClick={() => handleButtonClick('2')} label="2" className={buttonClasses.dark} />
                 <CalculatorButton onClick={() => handleButtonClick('3')} label="3" className={buttonClasses.dark} />
-                {mode === 'basic' && <CalculatorButton onClick={() => handleButtonClick('+')} label={<Plus />} className={buttonClasses.blue} /> }
-                <CalculatorButton onClick={handleCalculate} label={<Equal />} className={`${buttonClasses.blue} ${mode === 'basic' ? 'col-span-4' : 'col-span-2'}`} />
+                <CalculatorButton onClick={() => handleButtonClick('+')} label={<Plus />} className={buttonClasses.blue} />
+                {mode === 'scientific' && <CalculatorButton onClick={() => handleButtonClick('-')} label={<Minus />} className={buttonClasses.blue} /> }
                 
-                {mode === 'scientific' && <CalculatorButton onClick={() => handleButtonClick('0')} label="0" className={buttonClasses.dark} /> }
-                {mode === 'scientific' && <CalculatorButton onClick={() => handleButtonClick('.')} label="." className={buttonClasses.dark} /> }
+                
+                <CalculatorButton onClick={() => handleButtonClick('0')} label="0" className={`${buttonClasses.dark} ${mode === 'basic' ? 'col-span-2' : 'col-span-1'}`} />
+                <CalculatorButton onClick={() => handleButtonClick('.')} label="." className={buttonClasses.dark} />
+                {mode === 'basic' && <CalculatorButton onClick={handleCalculate} label={<Equal />} className={`${buttonClasses.blue}`} /> }
+                {mode === 'scientific' && <CalculatorButton onClick={() => handleButtonClick('+')} label={<Plus />} className={buttonClasses.blue} /> }
+                {mode === 'scientific' && <CalculatorButton onClick={handleCalculate} label={<Equal />} className={`${buttonClasses.blue} col-span-2`} /> }
 
-
-                {mode === 'basic' && (
-                     <>
-                        <CalculatorButton onClick={() => handleButtonClick('0')} label="0" className={`${buttonClasses.dark} col-span-2`} />
-                        <CalculatorButton onClick={() => handleButtonClick('.')} label="." className={buttonClasses.dark} />
-                    </>
-                )}
             </div>
         </div>
          {history.length > 0 && (
