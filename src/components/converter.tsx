@@ -25,7 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass } from "lucide-react";
-import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region, currencyCategory } from "@/lib/conversions";
+import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import { parseConversionQuery, ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -35,8 +35,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { incrementTodaysCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { CustomUnit, CustomCategory } from "./custom-unit-manager";
-import { useCurrencies } from "@/hooks/use-currencies";
-
 
 const regions: Region[] = ['International', 'India'];
 
@@ -89,12 +87,8 @@ export function Converter() {
 
   const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
   const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
-  const [conversionCategories, setConversionCategories] = useState<ConversionCategory[]>(baseConversionCategories);
-
-  const { currencies, loading: currenciesLoading } = useCurrencies();
-
-
-  useEffect(() => {
+  
+  const conversionCategories = useMemo(() => {
     const categoriesWithCustomData = [...baseConversionCategories].map(c => ({ ...c }));
 
     // Add custom categories
@@ -122,7 +116,7 @@ export function Converter() {
     });
 
     // Add custom units to their respective categories
-    const extendedCategories = categoriesWithCustomData.map(category => {
+    return categoriesWithCustomData.map(category => {
         const newCategory = { ...category, units: [...category.units] };
         if (newCategory.factors) {
           newCategory.factors = { ...newCategory.factors };
@@ -138,27 +132,22 @@ export function Converter() {
                     info: `1 ${cu.symbol} = ${cu.factor} base units`,
                 });
             }
-            if (newCategory.factors && newCategory.name !== 'Temperature') {
-                 newCategory.factors[cu.symbol] = cu.factor;
+             if (newCategory.factors && newCategory.name !== 'Temperature') {
+                newCategory.factors[cu.symbol] = cu.factor;
+
+                // Special case for Currency, assuming USD is base
+                if (newCategory.name === 'Currency') {
+                    if (!newCategory.factors['USD']) {
+                        newCategory.factors['USD'] = 1; // Add USD if not present
+                    }
+                }
             }
         });
         
         return newCategory;
     });
 
-    // Add currencies
-    if (currencies.length > 0) {
-      const currencyCatIndex = extendedCategories.findIndex(c => c.name === 'Currency');
-      if (currencyCatIndex !== -1) {
-        extendedCategories[currencyCatIndex] = {
-          ...currencyCategory,
-          units: currencies.map(c => ({ name: c.name, symbol: c.symbol, info: c.name })),
-        };
-      }
-    }
-
-    setConversionCategories(extendedCategories);
-  }, [customUnits, customCategories, currencies]);
+  }, [customUnits, customCategories]);
 
 
   const [selectedCategory, setSelectedCategory] = React.useState<ConversionCategory>(conversionCategories[0]);
@@ -652,14 +641,17 @@ export function Converter() {
                              <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            {conversionCategories.map(cat => (
+                            {conversionCategories.map(cat => {
+                                const Icon = cat.icon;
+                                return (
                                 <SelectItem key={cat.name} value={cat.name}>
                                     <div className="flex items-center gap-2">
-                                        <cat.icon className="w-4 h-4" />
+                                        <Icon className="w-4 h-4" />
                                         <span>{t(`categories.${cat.name.toLowerCase()}`, { defaultValue: cat.name })}</span>
                                     </div>
                                 </SelectItem>
-                            ))}
+                                )
+                            })}
                         </SelectContent>
                     </Select>
                 </div>
@@ -804,6 +796,7 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   ({ category, fromUnit, toUnit, inputValue, outputValue, t }, ref) => {
     const fromUnitInfo = category.units.find(u => u.symbol === fromUnit);
     const toUnitInfo = category.units.find(u => u.symbol === toUnit);
+    const Icon = category.icon;
 
     return (
       <div
@@ -812,7 +805,7 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
       >
         <div className="flex items-center gap-3">
           <div className="p-2 bg-indigo-500/20 rounded-full">
-            <category.icon className="w-6 h-6 text-indigo-400" />
+            <Icon className="w-6 h-6 text-indigo-400" />
           </div>
           <h2 className="text-2xl font-bold">{t(`categories.${category.name.toLowerCase()}`)} {t('converter.image.conversion')}</h2>
         </div>
@@ -837,7 +830,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
-
-    

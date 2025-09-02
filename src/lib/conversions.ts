@@ -2,7 +2,6 @@
 
 import { Ruler, Scale, Thermometer, Database, Clock, Zap, Square, Beaker, Hourglass, Gauge, Flame, DollarSign } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { getLatestRate } from './currency';
 
 export type Region = 'International' | 'India';
 
@@ -25,7 +24,6 @@ export type ConversionCategory = {
   units: Unit[];
   factors?: LinearConversionFactors;
   convert: (value: number, from: string, to: string, region?: Region) => number | Promise<number>;
-  type?: 'static' | 'live';
 };
 
 // --- LENGTH ---
@@ -361,17 +359,28 @@ const energyCategory: ConversionCategory = {
 };
 
 // --- CURRENCY ---
-export const currencyCategory: ConversionCategory = {
+const currencyUnits: Unit[] = [
+    { name: 'United States Dollar', symbol: 'USD', info: 'Base currency for manual rates' },
+];
+const currencyFactors: LinearConversionFactors = {
+    'USD': 1,
+};
+const currencyCategory: ConversionCategory = {
     name: 'Currency',
     icon: DollarSign,
-    units: [], // Will be populated from API
-    type: 'live',
-    convert: async (value, from, to) => {
-        if (from === to) return value;
-        const rate = await getLatestRate(from, to);
-        if (rate === null) return NaN;
-        return value * rate;
-    }
+    units: currencyUnits,
+    factors: currencyFactors,
+    convert: function(value, from, to) {
+        const fromFactor = this.factors![from]; // Factor relative to USD
+        const toFactor = this.factors![to]; // Factor relative to USD
+        if (fromFactor === undefined || toFactor === undefined) return NaN;
+        
+        // First, convert the value to the base currency (USD)
+        const valueInBase = value * fromFactor;
+        
+        // Then, convert from the base currency to the target currency
+        return valueInBase / toFactor;
+    },
 };
 
 
