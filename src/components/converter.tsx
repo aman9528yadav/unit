@@ -27,7 +27,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon } from "lucide-react";
 import { conversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import { parseConversionQuery, ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow";
-import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Calculator } from "./calculator";
@@ -92,9 +91,6 @@ export function Converter() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isSearching, startSearchTransition] = React.useTransition();
   const [isOnline, setIsOnline] = useState(true);
-
-
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   const imageExportRef = React.useRef<HTMLDivElement>(null);
 
@@ -199,8 +195,8 @@ export function Converter() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputValue, fromUnit, toUnit, selectedCategory, region, history, favorites]);
   
-  React.useEffect(() => {
-    if (debouncedSearchQuery.trim() === "") {
+  const handleSearch = async () => {
+    if (searchQuery.trim() === "" || isSearching) {
         return;
     }
 
@@ -208,9 +204,9 @@ export function Converter() {
         let parsed: ParseConversionQueryOutput | null = null;
         try {
             if (isOnline) {
-                parsed = await parseConversionQuery({ query: debouncedSearchQuery });
+                parsed = await parseConversionQuery({ query: searchQuery });
             } else {
-                parsed = offlineParseConversionQuery(debouncedSearchQuery, allUnits);
+                parsed = offlineParseConversionQuery(searchQuery, allUnits);
             }
 
             if (parsed) {
@@ -225,7 +221,10 @@ export function Converter() {
                         setInputValue(String(parsed.value));
                         setFromUnit(parsed.fromUnit);
                         setToUnit(parsed.toUnit);
-                        performConversion(parsed.value, parsed.fromUnit, parsed.toUnit);
+                        // Use a callback with setState to ensure conversion happens after state is updated
+                        React.startTransition(() => {
+                           performConversion(parsed!.value, parsed!.fromUnit, parsed!.toUnit);
+                        });
                         setSearchQuery(""); // Clear search
                     } else {
                         toast({ title: "Cannot perform conversion", description: `One of the units may belong to a different region. Current region: ${region}.`, variant: "destructive" });
@@ -241,9 +240,7 @@ export function Converter() {
             toast({ title: "Invalid Search", description: "The search query could not be understood.", variant: "destructive" });
         }
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [debouncedSearchQuery, region, isOnline, allUnits]);
-
+};
 
   const handleCategoryChange = (categoryName: string) => {
     const category = conversionCategories.find(c => c.name === categoryName);
@@ -453,16 +450,24 @@ export function Converter() {
         </TabsList>
         <TabsContent value="Unit">
           <div className="relative mt-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Search e.g., '10 km to m'"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               disabled={isSearching}
-              className="bg-card h-12 text-base pl-10 pr-10"
+              className="bg-card h-12 text-base pl-4 pr-12"
             />
-            {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />}
+             <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSearch}
+                disabled={isSearching}
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 text-muted-foreground hover:bg-accent/20"
+              >
+                {isSearching ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
+              </Button>
           </div>
           
     
