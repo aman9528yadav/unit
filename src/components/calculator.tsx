@@ -133,6 +133,7 @@ export function Calculator() {
       setResult(formattedResult);
       const newHistoryEntry = `${expression} = ${formattedResult}`;
       setHistory(prev => [newHistoryEntry, ...prev.filter(h => h !== newHistoryEntry)]);
+      localStorage.setItem('lastCalculation', newHistoryEntry); // Save for note editor
       incrementTodaysCalculations();
     } catch (error) {
       console.error(error)

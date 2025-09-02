@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -60,7 +60,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     // Set content state, which will trigger the next effect
                     setContent(noteToEdit.content);
                     setIsFavorite(noteToEdit.isFavorite || false);
-                    setCategory(noteToEdit.category || '');
+                    setCategory(noteToedit.category || '');
                     setAttachment(noteToEdit.attachment || null);
                 } else {
                     toast({ title: "Note not found", variant: "destructive" });
@@ -153,6 +153,16 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             toast({ title: "Invalid Font Size", variant: "destructive"});
         }
     }
+
+    const handleInsertCalculation = () => {
+        const lastCalc = localStorage.getItem('lastCalculation');
+        if (lastCalc && editorRef.current) {
+            editorRef.current.focus();
+            document.execCommand('insertText', false, lastCalc);
+        } else {
+            toast({ title: "No calculation found", description: "Perform a calculation in the calculator first."});
+        }
+    };
 
 
     const handleSave = () => {
@@ -331,6 +341,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => fileInputRef.current?.click()}><ImageIcon /></Button>
                     <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={handleInsertCalculation}><CalculatorIcon /></Button>
                 </div>
                 {attachment && (
                     <div className="relative w-full h-48 group">
@@ -356,5 +367,3 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
-
-    
