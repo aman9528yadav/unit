@@ -71,7 +71,7 @@ export function Settings() {
 
   const handleThemeChange = (value: string) => {
     if (value === 'light' || value === 'dark' || value === 'custom') {
-      setTheme(value);
+      setTheme(value as 'light' | 'dark' | 'custom');
     }
   }
 
@@ -157,8 +157,7 @@ export function Settings() {
             <SettingsItem 
               icon={Languages} 
               text={t('settings.unitConverter.customUnit')}
-              value={t('settings.unitConverter.off')}
-              href="#"
+              href="/settings/custom-units"
               isLast={true}
             />
           </div>
