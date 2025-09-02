@@ -477,9 +477,9 @@ export function Converter() {
             <Clock />
             <span className="text-xs font-medium">{t('nav.history')}</span>
         </Link>
-         <Link href="/settings" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
-            <Settings />
-            <span className="text-xs font-medium">{t('nav.settings')}</span>
+         <Link href="/converter?tab=Unit&category=Time" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
+            <Clock />
+            <span className="text-xs font-medium">Time</span>
         </Link>
       </div>
       
@@ -736,3 +736,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
