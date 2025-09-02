@@ -113,6 +113,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
         const selectedText = content.substring(start, end);
+        const beforeText = content.substring(0, start);
+        const afterText = content.substring(end);
 
         let newContent = '';
         let newCursorPos = 0;
@@ -121,13 +123,13 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         if (formatType === 'bold') {
             const placeholder = 'bold text';
             const replacement = `**${selectedText || placeholder}**`;
-            newContent = `${content.substring(0, start)}${replacement}${content.substring(end)}`;
+            newContent = `${beforeText}${replacement}${afterText}`;
             newCursorPos = start + 2;
             placeholderLength = placeholder.length;
         } else if (formatType === 'italic') {
              const placeholder = 'italic text';
             const replacement = `*${selectedText || placeholder}*`;
-            newContent = `${content.substring(0, start)}${replacement}${content.substring(end)}`;
+            newContent = `${beforeText}${replacement}${afterText}`;
             newCursorPos = start + 1;
             placeholderLength = placeholder.length;
         } else if (formatType === 'list') {
@@ -135,7 +137,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             // If the current line is not empty, add a newline before the list item
             const prefix = (start === 0 || content[start - 1] === '\n') ? '' : '\n';
             const replacement = `${prefix}- ${selectedText || placeholder}`;
-            newContent = `${content.substring(0, start)}${replacement}${content.substring(end)}`;
+            newContent = `${beforeText}${replacement}${afterText}`;
             newCursorPos = start + prefix.length + 2;
             placeholderLength = placeholder.length;
         }
@@ -147,9 +149,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             textarea.focus();
             if (selectedText) {
                 // If text was selected, just place the cursor after the formatted text
-                const finalCursorPos = start + (newContent.length - content.length);
+                const finalCursorPos = end + (newContent.length - content.length);
                 textarea.setSelectionRange(finalCursorPos, finalCursorPos);
-
             } else {
                 // If no text was selected, select the placeholder text
                  textarea.setSelectionRange(newCursorPos, newCursorPos + placeholderLength);
