@@ -12,39 +12,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Loader2 } from "lucide-react";
+import { ArrowRightLeft, Loader2, Search, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw } from "lucide-react";
 import { conversionCategories, ConversionCategory, Unit } from "@/lib/conversions";
-import { suggestCategory } from "@/ai/flows/smart-category-suggestion";
+import { suggestCategory, SuggestCategoryInput } from "@/ai/flows/smart-category-suggestion";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+
+const navItems = ["Unit", "Calculator", "Note", "Timer", "Date", "History"];
 
 export function Converter() {
   const { toast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState<ConversionCategory>(conversionCategories[0]);
   const [fromUnit, setFromUnit] = useState<string>(conversionCategories[0].units[0].symbol);
   const [toUnit, setToUnit] = useState<string>(conversionCategories[0].units[1].symbol);
-  const [inputValue, setInputValue] = useState<string>("1");
+  const [inputValue, setInputValue] = useState<string>("");
   const [outputValue, setOutputValue] = useState<string>("");
   const [history, setHistory] = useState<string[]>([]);
-  const [suggestedCategories, setSuggestedCategories] = useState<string[]>([]);
   
   const [isAiSuggesting, startAiSuggestion] = useTransition();
 
-  const debouncedInput = useDebounce(inputValue, 500);
+  const debouncedInput = useDebounce<SuggestCategoryInput>({input: inputValue, conversionHistory: history}, 500);
 
   const currentUnits = useMemo(() => selectedCategory.units, [selectedCategory]);
+  const fromUnitInfo = useMemo(() => currentUnits.find(u => u.symbol === fromUnit)?.info, [currentUnits, fromUnit]);
+  const toUnitInfo = useMemo(() => currentUnits.find(u => u.symbol === toUnit)?.info, [currentUnits, toUnit]);
+
 
   useEffect(() => {
     setFromUnit(currentUnits[0].symbol);
     setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
     setInputValue("1");
   }, [selectedCategory, currentUnits]);
-
-  useEffect(() => {
-    const performConversion = () => {
+  
+  const performConversion = () => {
       const numValue = parseFloat(inputValue);
       if (isNaN(numValue) || !fromUnit || !toUnit) {
         setOutputValue("");
@@ -56,41 +59,46 @@ export function Converter() {
         return;
       }
       
-      setOutputValue(result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false }));
+      const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
+      setOutputValue(formattedResult);
       
-      const conversionString = `${selectedCategory.name}: ${fromUnit} to ${toUnit}`;
+      const conversionString = `${numValue} ${fromUnit} → ${formattedResult} ${toUnit}`;
       if (!history.includes(conversionString)) {
         setHistory(prev => [conversionString, ...prev].slice(0, 5));
       }
     };
-    performConversion();
-  }, [inputValue, fromUnit, toUnit, selectedCategory, history]);
 
   useEffect(() => {
-    if (debouncedInput.trim() === "" || Number.isNaN(parseFloat(debouncedInput))) {
-        setSuggestedCategories([]);
+    if(inputValue) {
+      performConversion();
+    } else {
+      setOutputValue("");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputValue, fromUnit, toUnit, selectedCategory]);
+
+  useEffect(() => {
+    if (debouncedInput.input.trim() === "" || Number.isNaN(parseFloat(debouncedInput.input))) {
         return;
     }
     
     startAiSuggestion(async () => {
       try {
         const suggestions = await suggestCategory({
-            input: debouncedInput,
+            input: `${debouncedInput.input} ${fromUnit} to ${toUnit}`,
             conversionHistory: history
         });
-        setSuggestedCategories(suggestions.suggestedCategories.filter(c => conversionCategories.some(cc => cc.name === c)));
+        const suggested = conversionCategories.find(c => c.name === suggestions.suggestedCategories[0])
+        if (suggested && suggested.name !== selectedCategory.name) {
+          // You could potentially show a suggestion UI here
+          // For now, we won't auto-switch categories to avoid being too disruptive
+        }
       } catch (error) {
         console.error("AI suggestion failed:", error);
-        setSuggestedCategories([]);
-        toast({
-          variant: "destructive",
-          title: "AI Suggestion Error",
-          description: "Could not fetch smart category suggestions.",
-        })
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedInput, history, toast]);
+  }, [debouncedInput, history]);
 
   const handleCategoryChange = (categoryName: string) => {
     const category = conversionCategories.find(c => c.name === categoryName);
@@ -100,126 +108,158 @@ export function Converter() {
   };
 
   const handleSwapUnits = () => {
+    const currentInput = inputValue;
+    const currentOutput = outputValue;
     setFromUnit(toUnit);
     setToUnit(fromUnit);
-    setInputValue(outputValue.replace(/,/g, ''));
+    setInputValue(currentOutput.replace(/,/g, ''));
+    setOutputValue(currentInput);
+  };
+
+  const handleConvertClick = () => {
+    performConversion();
   };
   
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 md:p-6">
-      <header className="text-center mb-8">
-        <h1 className="text-4xl font-bold tracking-tight text-primary">UNIT CONVERTER</h1>
-      </header>
-      
-      <Tabs value={selectedCategory.name} onValueChange={handleCategoryChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-muted/80 backdrop-blur-sm rounded-lg p-1">
-          {conversionCategories.map(cat => (
-            <TabsTrigger key={cat.name} value={cat.name} className="flex items-center gap-2 text-base data-[state=active]:bg-background data-[state=active]:shadow-md">
-                <cat.icon className="w-5 h-5" />
-                <span>{cat.name}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        <Card className="mt-6 bg-card/50 border-2 border-border/80 rounded-2xl shadow-lg backdrop-blur-xl">
-          <CardContent className="p-6 md:p-8">
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 items-center">
-              <ConversionInput
-                label="FROM"
-                units={currentUnits}
-                selectedUnit={fromUnit}
-                onUnitChange={setFromUnit}
-                value={inputValue}
-                onValueChange={setInputValue}
-              />
-              
-              <Button variant="outline" size="icon" className="hidden md:flex justify-self-center self-center mt-8 rounded-full h-12 w-12 bg-background hover:bg-muted" onClick={handleSwapUnits} aria-label="Swap units">
-                <ArrowRightLeft className="w-5 h-5 text-muted-foreground" />
+    <div className="w-full max-w-md mx-auto flex flex-col gap-4 text-white">
+      <header className="flex flex-col gap-4">
+        <ScrollArea className="w-full whitespace-nowrap">
+          <div className="flex space-x-2 pb-2">
+            {navItems.map((item, index) => (
+              <Button key={item} variant={index === 0 ? "secondary" : "outline"} className={`rounded-full ${index === 0 ? 'bg-accent text-accent-foreground' : 'border-gray-500'}`}>
+                {item}
               </Button>
-              <Button variant="outline" className="flex md:hidden w-full mt-2" onClick={handleSwapUnits} aria-label="Swap units">
-                <ArrowRightLeft className="w-4 h-4 mr-2" />
-                Swap
-              </Button>
-
-              <ConversionInput
-                label="TO"
-                units={currentUnits}
-                selectedUnit={toUnit}
-                onUnitChange={setToUnit}
-                value={outputValue}
-                isReadOnly
-              />
-            </div>
-            { (isAiSuggesting || suggestedCategories.length > 0) && (
-              <div className="flex flex-wrap items-center gap-2 pt-6 justify-center">
-                  {isAiSuggesting ? (
-                      <div className="flex items-center text-sm text-muted-foreground gap-1.5 font-normal"><Loader2 className="h-4 w-4 animate-spin" /> Thinking...</div>
-                  ) : (
-                    <>
-                      {suggestedCategories.map(cat => (
-                          <Button key={cat} variant="ghost" size="sm" className="transition-colors hover:bg-accent/20" onClick={() => handleCategoryChange(cat)}>{cat}</Button>
-                      ))}
-                    </>
-                  )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </Tabs>
-    </div>
-  );
-}
-
-function ConversionInput({
-  label,
-  units,
-  selectedUnit,
-  onUnitChange,
-  value,
-  onValueChange,
-  isReadOnly = false
-}: {
-  label: string;
-  units: Unit[];
-  selectedUnit: string;
-  onUnitChange: (value: string) => void;
-  value: string;
-  onValueChange?: (value: string) => void;
-  isReadOnly?: boolean;
-}) {
-  return (
-    <div className="space-y-3">
-      <label className="text-sm font-semibold text-muted-foreground ml-2">{label}</label>
-      <div className="relative">
-        <Input
-          type={isReadOnly ? "text" : "number"}
-          value={value}
-          onChange={onValueChange ? (e) => onValueChange(e.target.value) : undefined}
-          readOnly={isReadOnly}
-          className="text-4xl font-bold h-auto py-3 pr-28 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 pl-2"
-          placeholder="0"
-        />
-        <div className="absolute right-0 top-0 h-full">
-          <UnitSelect units={units} value={selectedUnit} onValueChange={onUnitChange} />
+            ))}
+          </div>
+          <ScrollBar orientation="horizontal" className="h-1" />
+        </ScrollArea>
+        <div className="relative">
+          <Input 
+            className="bg-card border-gray-500 rounded-full pl-10 h-12" 
+            placeholder="search here Ex. 10 km to m" 
+          />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
         </div>
+      </header>
+
+      <div className="bg-card p-4 rounded-xl flex flex-col gap-4">
+        <h2 className="font-bold text-lg">Quick Convert</h2>
+        <p className="text-sm text-muted-foreground -mt-2">Enter a value and choose units. Converts automatically.</p>
+        
+        <div className="grid grid-cols-2 gap-4">
+            <div>
+                <label className="text-sm text-muted-foreground flex items-center gap-1.5"><Globe size={16}/> Region</label>
+                <Select value="International">
+                    <SelectTrigger className="bg-background mt-1">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="International">International</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+            <div>
+                <label className="text-sm text-muted-foreground flex items-center gap-1.5"><LayoutGrid size={16}/> Category</label>
+                 <Select value={selectedCategory.name} onValueChange={handleCategoryChange}>
+                    <SelectTrigger className="bg-background mt-1">
+                         <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {conversionCategories.map(cat => (
+                            <SelectItem key={cat.name} value={cat.name}>
+                                <div className="flex items-center gap-2">
+                                    <cat.icon className="w-4 h-4" />
+                                    <span>{cat.name}</span>
+                                </div>
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+
+        <div>
+            <label className="text-sm text-muted-foreground">From</label>
+            <Input
+                type="number"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                className="bg-background mt-1 h-12 text-lg"
+                placeholder="Enter Value"
+              />
+        </div>
+        
+        <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
+            <UnitSelect units={currentUnits} value={fromUnit} onValueChange={setFromUnit} />
+            <Button variant="outline" size="icon" className="rounded-full h-10 w-10 bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSwapUnits}>
+                <ArrowRightLeft className="w-5 h-5" />
+            </Button>
+            <UnitSelect units={currentUnits} value={toUnit} onValueChange={setToUnit} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 text-xs">
+            {fromUnitInfo && <InfoBox text={fromUnitInfo} />}
+            {toUnitInfo && <InfoBox text={toUnitInfo} />}
+        </div>
+        
+        <div className="bg-background rounded-lg p-4 flex justify-between items-center h-16">
+            <span className={`text-lg ${!outputValue ? 'text-muted-foreground' : ''}`}>{outputValue || "Result will appear here !"}</span>
+            {outputValue && (
+                 <div className="flex items-center gap-3">
+                    <Copy size={20} className="text-muted-foreground cursor-pointer hover:text-white" onClick={() => {
+                        navigator.clipboard.writeText(outputValue)
+                        toast({ title: "Copied to clipboard!"})
+                        }} />
+                    <Star size={20} className="text-muted-foreground cursor-pointer hover:text-white" />
+                    <Share2 size={20} className="text-muted-foreground cursor-pointer hover:text-white" />
+                 </div>
+            )}
+        </div>
+        
+        <Button onClick={handleConvertClick} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base font-bold">convert</Button>
       </div>
+
+      {history.length > 0 && (
+          <div className="bg-card p-4 rounded-xl flex flex-col gap-3">
+              <div className="flex justify-between items-center">
+                <h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} /> Recent Conversions</h3>
+                <RefreshCw size={18} className="text-muted-foreground cursor-pointer hover:text-white" onClick={() => setHistory([])}/>
+              </div>
+              <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                  {history.map((item, index) => (
+                      <div key={index} className="flex justify-between items-center p-2 rounded hover:bg-background">
+                        <span>{item}</span>
+                      </div>
+                  ))}
+              </div>
+          </div>
+      )}
     </div>
   );
 }
-
 
 function UnitSelect({ units, value, onValueChange }: { units: Unit[], value: string, onValueChange: (value: string) => void }) {
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className="h-full w-auto bg-transparent border-0 text-muted-foreground text-sm font-medium focus:ring-0">
+      <SelectTrigger className="bg-background h-12 text-base">
         <SelectValue placeholder="Unit" />
       </SelectTrigger>
       <SelectContent>
         {units.map(unit => (
           <SelectItem key={unit.symbol} value={unit.symbol}>
-            {unit.symbol}
+            {`${unit.name} (${unit.symbol})`}
           </SelectItem>
         ))}
       </SelectContent>
     </Select>
   );
+}
+
+function InfoBox({ text }: { text: string }) {
+    return (
+        <div className="bg-background/50 rounded-lg p-2 flex items-center gap-2">
+            <Info size={16} className="text-accent" />
+            <span className="text-muted-foreground">{text}</span>
+        </div>
+    )
 }
