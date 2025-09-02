@@ -73,27 +73,24 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     useEffect(() => {
         if (editorRef.current && content && !contentSetRef.current) {
             editorRef.current.innerHTML = content;
-            contentSetRef.current = true;
+            contentSetRef.current = true; // Mark that initial content has been set
         }
-    }, [content, isClient]);
+    }, [content]);
 
     const handleAutoSave = () => {
-        const currentContent = editorRef.current?.innerHTML || '';
-        if (!title.trim() && !currentContent.trim()) {
-            return;
-        }
         handleSave(true);
     };
 
     useEffect(() => {
-        // This is the cleanup function that will run when the component unmounts.
+        // This effect only runs on mount and unmount
+        // The cleanup function will be called when the component unmounts
         return () => {
             if (isDirty) {
                 handleAutoSave();
             }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isDirty, title]); // Re-run effect if isDirty or title changes.
+    }, [isDirty]); // Dependency on isDirty ensures the latest state is captured
 
     const applyStyle = (style: string, value: string) => {
         editorRef.current?.focus();
@@ -391,7 +388,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                  <div
                     ref={editorRef}
                     contentEditable
-                    onInput={() => setIsDirty(true)}
+                    onInput={() => {
+                        setIsDirty(true);
+                    }}
                     data-placeholder="Type your message"
                     className="w-full h-full flex-grow bg-transparent border-none resize-none focus-visible:outline-none text-base p-0 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
                     style={{ direction: 'ltr' }}
@@ -405,3 +404,5 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
+
+    
