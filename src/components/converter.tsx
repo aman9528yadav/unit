@@ -24,13 +24,17 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Calculator } from "./calculator";
+import { useSearchParams } from "next/navigation";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const navItems = ["Unit", "Calculator", "Note", "Timer", "Date", "History"];
+
 const regions: Region[] = ['International', 'India'];
 
 export function Converter() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("Unit");
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") || "Unit";
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [selectedCategory, setSelectedCategory] = useState<ConversionCategory>(conversionCategories[0]);
   const [fromUnit, setFromUnit] = useState<string>(conversionCategories[0].units[0].symbol);
   const [toUnit, setToUnit] = useState<string>(conversionCategories[0].units[1].symbol);
@@ -273,8 +277,13 @@ export function Converter() {
         </div>
       </header>
 
-      <>
-          <div className="relative">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="Unit">Unit</TabsTrigger>
+          <TabsTrigger value="Calculator">Calculator</TabsTrigger>
+        </TabsList>
+        <TabsContent value="Unit">
+          <div className="relative mt-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="text"
@@ -287,7 +296,7 @@ export function Converter() {
           </div>
           
     
-          <div className="bg-card p-4 rounded-xl flex flex-col gap-4">
+          <div className="bg-card p-4 rounded-xl flex flex-col gap-4 mt-4">
             <h2 className="font-bold text-lg">Quick Convert</h2>
             <p className="text-sm text-muted-foreground -mt-2">Enter a value and choose units. Converts automatically.</p>
             
@@ -369,7 +378,7 @@ export function Converter() {
           </div>
     
           {history.length > 0 && (
-              <div className="bg-card p-4 rounded-xl flex flex-col gap-3">
+              <div className="bg-card p-4 rounded-xl flex flex-col gap-3 mt-4">
                   <div className="flex justify-between items-center">
                     <h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} /> Recent Conversions</h3>
                     <RefreshCw size={18} className="text-muted-foreground cursor-pointer hover:text-white" onClick={handleClearHistory}/>
@@ -390,7 +399,13 @@ export function Converter() {
                   </div>
               </div>
           )}
-        </>
+        </TabsContent>
+        <TabsContent value="Calculator">
+          <div className="mt-4">
+            <Calculator />
+          </div>
+        </TabsContent>
+      </Tabs>
       
     </div>
   );
