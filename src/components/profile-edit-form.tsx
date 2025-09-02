@@ -84,7 +84,7 @@ export function ProfileEditForm() {
       title: "Profile Updated",
       description: "Your changes have been saved successfully.",
     });
-    router.push("/profile");
+    router.push("/profile/success");
   };
 
   return (

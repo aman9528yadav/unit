@@ -49,7 +49,7 @@ export function WelcomeForm() {
       title: "Profile Created!",
       description: "Welcome to UniConvert.",
     });
-    router.push("/");
+    router.push("/profile/success");
   };
 
   return (
@@ -121,5 +121,3 @@ export function WelcomeForm() {
     </div>
   );
 }
-
-    
