@@ -16,10 +16,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+export type CalculatorMode = 'basic' | 'scientific';
+
 export function Settings() {
   const [notifications, setNotifications] = useState(true);
   const [autoConvert, setAutoConvert] = useState(true);
   const [saveHistory, setSaveHistory] = useState(true);
+  const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>('scientific');
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
 
@@ -33,6 +36,11 @@ export function Settings() {
     if (savedSaveHistory !== null) {
       setSaveHistory(JSON.parse(savedSaveHistory));
     }
+    
+    const savedCalcMode = localStorage.getItem('calculatorMode') as CalculatorMode;
+    if (savedCalcMode) {
+        setCalculatorMode(savedCalcMode);
+    }
   }, []);
 
   const handleAutoConvertChange = (checked: boolean) => {
@@ -44,6 +52,11 @@ export function Settings() {
     setSaveHistory(checked);
     localStorage.setItem('saveHistory', JSON.stringify(checked));
   };
+  
+  const handleCalcModeChange = (mode: CalculatorMode) => {
+    setCalculatorMode(mode);
+    localStorage.setItem('calculatorMode', mode);
+  }
 
 
   return (
@@ -126,7 +139,21 @@ export function Settings() {
         <div>
           <h2 className="text-lg font-bold mb-3">{t('settings.calculator.title')}</h2>
            <div className="bg-card rounded-xl">
-            <SettingsItem icon={CalculatorIcon} text={t('settings.calculator.mode')} value={t('settings.calculator.basic')} href="#" />
+            <SettingsItem 
+                icon={CalculatorIcon} 
+                text={t('settings.calculator.mode')} 
+                control={
+                    <Select value={calculatorMode} onValueChange={(value) => handleCalcModeChange(value as CalculatorMode)}>
+                        <SelectTrigger className="w-[120px] bg-secondary border-none">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="basic">Basic</SelectItem>
+                            <SelectItem value="scientific">Scientific</SelectItem>
+                        </SelectContent>
+                    </Select>
+                }
+            />
              <SettingsItem 
               icon={History} 
               text={t('settings.calculator.saveHistory')}

@@ -94,6 +94,7 @@
             "title": "Calculator",
             "mode": "Mode",
             "basic": "Basic",
+            "scientific": "Scientific",
             "saveHistory": "Save history"
         }
     },
