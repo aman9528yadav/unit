@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Star, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import { Note, NOTES_STORAGE_KEY } from './notepad';
 export function NoteEditor({ noteId }: { noteId: string }) {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
+    const [isFavorite, setIsFavorite] = useState(false);
     const [isClient, setIsClient] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
@@ -32,6 +33,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 if (noteToEdit) {
                     setTitle(noteToEdit.title);
                     setContent(noteToEdit.content);
+                    setIsFavorite(noteToEdit.isFavorite || false);
                 } else {
                     // Note not found, redirect
                     toast({ title: "Note not found", variant: "destructive" });
@@ -60,8 +62,10 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 id: uuidv4(),
                 title,
                 content,
+                isFavorite,
                 createdAt: now,
                 updatedAt: now,
+                deletedAt: null
             };
             notes.push(newNote);
         } else {
@@ -71,6 +75,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     ...notes[noteIndex],
                     title,
                     content,
+                    isFavorite,
                     updatedAt: now,
                 };
             }
@@ -83,6 +88,18 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         });
         router.push('/notes');
     };
+    
+    const handleSoftDelete = () => {
+        const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
+        const notes: Note[] = savedNotes ? JSON.parse(savedNotes) : [];
+        const updatedNotes = notes.map(note => 
+            note.id === noteId ? { ...note, deletedAt: new Date().toISOString() } : note
+        );
+        localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(updatedNotes));
+        toast({ title: "Note moved to Recycle Bin." });
+        router.push('/notes');
+    };
+
 
     if (!isClient) {
         return null; // Or a loading skeleton
@@ -96,10 +113,21 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                         <ArrowLeft />
                     </Link>
                 </Button>
-                <h1 className="text-xl font-bold">{isNewNote ? 'New Note' : 'Edit Note'}</h1>
-                <Button variant="ghost" size="icon" onClick={handleSave}>
-                    <Save />
-                </Button>
+                <div className="flex items-center gap-2">
+                    {!isNewNote && (
+                         <Button variant="ghost" size="icon" onClick={() => setIsFavorite(!isFavorite)}>
+                            <Star className={isFavorite ? 'text-yellow-400 fill-yellow-400' : ''}/>
+                        </Button>
+                    )}
+                     {!isNewNote && (
+                        <Button variant="ghost" size="icon" onClick={handleSoftDelete}>
+                            <Trash2 />
+                        </Button>
+                    )}
+                    <Button variant="ghost" size="icon" onClick={handleSave}>
+                        <Save />
+                    </Button>
+                </div>
             </header>
             <div className="bg-card p-4 rounded-xl flex-grow flex flex-col gap-4">
                 <Input
@@ -119,3 +147,4 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     );
 }
 
+    
