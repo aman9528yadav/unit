@@ -1,8 +1,9 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useTransition } from "react";
+import { useState, useEffect, useMemo, useTransition, useRef } from "react";
 import Link from 'next/link';
+import html2canvas from 'html2canvas';
 import {
   Card,
   CardContent,
@@ -55,6 +56,8 @@ export function Converter() {
   const [isSearching, startSearchTransition] = useTransition();
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  const imageExportRef = useRef<HTMLDivElement>(null);
 
   const currentUnits = useMemo(() => {
     return selectedCategory.units.filter(u => !u.region || u.region === region);
@@ -319,6 +322,29 @@ export function Converter() {
     URL.revokeObjectURL(url);
     toast({ title: "Exported as TXT!" });
   };
+  
+  const handleExportAsImage = async () => {
+    const numValue = parseFloat(inputValue);
+     if (isNaN(numValue) || !outputValue || !imageExportRef.current) {
+        toast({ title: "Nothing to export", description: "Please perform a conversion first.", variant: "destructive" });
+        return;
+    }
+
+    try {
+        const canvas = await html2canvas(imageExportRef.current, { backgroundColor: null, scale: 3 });
+        const image = canvas.toDataURL("image/png", 1.0);
+        const link = document.createElement('a');
+        link.href = image;
+        link.download = `conversion-${numValue}${fromUnit}-to-${toUnit}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast({ title: "Exported as Image!" });
+    } catch (error) {
+        console.error('Error exporting as image:', error);
+        toast({ title: "Export failed", description: "Could not export the conversion as an image.", variant: "destructive" });
+    }
+  };
 
 
   return (
@@ -338,6 +364,21 @@ export function Converter() {
               </Button>
         </div>
       </header>
+      
+      {/* Element to be captured for image export */}
+      <div className="absolute -left-[9999px] -top-[9999px]">
+        {outputValue && (
+            <ConversionImage
+              ref={imageExportRef}
+              category={selectedCategory}
+              fromUnit={fromUnit}
+              toUnit={toUnit}
+              inputValue={inputValue}
+              outputValue={outputValue}
+            />
+        )}
+       </div>
+
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -354,7 +395,7 @@ export function Converter() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-card h-12 text-base pl-10 pr-10"
             />
-            {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />}
+            {isSearching && <Loader2 className="absolute right-3 top-1/2-translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />}
           </div>
           
     
@@ -436,7 +477,7 @@ export function Converter() {
                                 <Share2 size={20} className="text-muted-foreground cursor-pointer hover:text-white" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => toast({title: "Export not available yet"})}>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleExportAsImage}>
                                     <ImageIcon className="mr-2 h-4 w-4" />
                                     <span>Export as Image</span>
                                 </DropdownMenuItem>
@@ -521,7 +562,48 @@ function InfoBox({ text }: { text: string }) {
     )
 }
 
-    
+interface ConversionImageProps {
+    category: ConversionCategory;
+    fromUnit: string;
+    toUnit: string;
+    inputValue: string;
+    outputValue: string;
+}
 
-    
+const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
+  ({ category, fromUnit, toUnit, inputValue, outputValue }, ref) => {
+    const fromUnitInfo = category.units.find(u => u.symbol === fromUnit);
+    const toUnitInfo = category.units.find(u => u.symbol === toUnit);
 
+    return (
+      <div
+        ref={ref}
+        className="w-[350px] bg-[#0A102A] border border-indigo-400/50 text-white font-sans p-6 flex flex-col gap-4 rounded-xl"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-500/20 rounded-full">
+            <category.icon className="w-6 h-6 text-indigo-400" />
+          </div>
+          <h2 className="text-2xl font-bold">{category.name} Conversion</h2>
+        </div>
+        <div className="flex flex-col gap-2 text-center">
+            <p className="text-xl text-muted-foreground">{fromUnitInfo?.name}</p>
+            <p className="text-5xl font-bold">{inputValue}</p>
+            <p className="text-lg text-muted-foreground">{fromUnitInfo?.symbol}</p>
+        </div>
+        <div className="flex justify-center">
+            <ArrowRightLeft className="w-8 h-8 text-accent" />
+        </div>
+         <div className="flex flex-col gap-2 text-center">
+            <p className="text-xl text-muted-foreground">{toUnitInfo?.name}</p>
+            <p className="text-5xl font-bold">{outputValue}</p>
+            <p className="text-lg text-muted-foreground">{toUnitInfo?.symbol}</p>
+        </div>
+        <p className="text-center text-sm text-muted-foreground mt-4">
+            Generated by UniConvert
+        </p>
+      </div>
+    );
+  }
+);
+ConversionImage.displayName = 'ConversionImage';
