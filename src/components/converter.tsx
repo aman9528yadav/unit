@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2 } from "lucide-react";
 import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import { parseConversionQuery, ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow";
 import { useToast } from "@/hooks/use-toast";
@@ -42,7 +42,7 @@ const regions: Region[] = ['International', 'India'];
 
 interface UserProfile {
     fullName: string;
-    [key: string]: any;
+    [key:string]: any;
 }
 
 // Offline parser to replace the AI flow
@@ -168,6 +168,7 @@ export function Converter() {
   const [region, setRegion] = React.useState<Region>('International');
   const { t } = useLanguage();
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
+  const [isGraphVisible, setIsGraphVisible] = useState(false);
 
 
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -248,12 +249,14 @@ export function Converter() {
       setFromUnit(currentUnits[0].symbol);
       setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
       setInputValue("1");
+      setIsGraphVisible(false); // Hide graph when category changes
     }
   }, [selectedCategory, region, currentUnits]);
 
 
  const performConversion = React.useCallback(async () => {
     const numValue = parseFloat(inputValue);
+    setIsGraphVisible(false);
 
     if (isNaN(numValue) || !fromUnit || !toUnit) {
         setOutputValue("");
@@ -280,19 +283,18 @@ export function Converter() {
     const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
     setOutputValue(formattedResult);
 
-    // Prepare data for chart
-    if (categoryToUse.factors && categoryToUse.name !== 'Temperature') {
-        const fromFactor = categoryToUse.factors[fromUnit];
-        const toFactor = categoryToUse.factors[toUnit];
-
-        if (fromFactor !== undefined && toFactor !== undefined) {
-            const valueInBase = numValue * fromFactor;
-            const resultInBase = result * toFactor;
-            setChartData([
-                { name: fromUnit, value: valueInBase },
-                { name: toUnit, value: resultInBase }
-            ]);
-        }
+    // Prepare data for multi-unit comparison chart
+    if (categoryToUse.name !== 'Temperature') { // Charting temp isn't straightforward
+        const allUnitsInCategory = categoryToUse.units.filter(u => !u.region || u.region === region);
+        const chartDataPromises = allUnitsInCategory.map(async (unit) => {
+            const convertedValue = await categoryToUse.convert(numValue, fromUnit, unit.symbol, region);
+            return { 
+                name: unit.symbol, 
+                value: parseFloat(convertedValue.toFixed(5)) 
+            };
+        });
+        const newChartData = await Promise.all(chartDataPromises);
+        setChartData(newChartData);
     } else {
         setChartData([]);
     }
@@ -750,18 +752,31 @@ export function Converter() {
                 )}
             </div>
             
-            <Button onClick={handleConvertClick} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base font-bold">{t('converter.convertButton')}</Button>
+            <div className="flex gap-2">
+                <Button onClick={handleConvertClick} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base font-bold flex-grow">{t('converter.convertButton')}</Button>
+                {outputValue && chartData.length > 0 && (
+                    <Button variant="outline" onClick={() => setIsGraphVisible(v => !v)} className="h-12">
+                        <BarChart2 />
+                        Compare All
+                    </Button>
+                )}
+            </div>
           </div>
             
-            {chartData.length > 0 && (
+            {isGraphVisible && chartData.length > 0 && (
                 <div className="bg-card p-4 rounded-xl mt-4">
-                    <h3 className="font-bold text-lg mb-4 text-center">Visual Comparison</h3>
-                    <div className="h-40">
-                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.5} />
-                                <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
-                                <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} tickFormatter={(value) => value.toLocaleString()} />
+                    <h3 className="font-bold text-lg mb-4 text-center">Comparison for {inputValue} {fromUnit}</h3>
+                    <ScrollArea className="h-60 w-full">
+                         <ResponsiveContainer width="100%" height={chartData.length * 40}>
+                            <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.3} />
+                                <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
+                                <YAxis 
+                                    dataKey="name" 
+                                    type="category" 
+                                    width={60} 
+                                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                                />
                                 <Tooltip
                                     cursor={{fill: 'hsla(var(--muted), 0.5)'}}
                                     contentStyle={{
@@ -770,10 +785,11 @@ export function Converter() {
                                         borderRadius: 'var(--radius)',
                                     }}
                                 />
-                                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20} />
                             </BarChart>
                         </ResponsiveContainer>
-                    </div>
+                        <ScrollBar orientation="vertical" />
+                    </ScrollArea>
                 </div>
             )}
     
@@ -883,3 +899,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
