@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Clock, RefreshCw, Trash2, Delete, Divide, X, Minus, Plus, Equal, Sigma } from 'lucide-react';
+import { Clock, RefreshCw, Trash2, Delete, Divide, X, Minus, Plus, Equal, Sigma, RotateCcw } from 'lucide-react';
 import { incrementTodaysCalculations } from '@/lib/utils';
 import type { CalculatorMode } from './settings';
 
@@ -145,6 +145,12 @@ export function Calculator() {
       setResult('Error');
     }
   };
+
+  const handleRestore = (item: string) => {
+    const expressionToRestore = item.split(' = ')[0];
+    setExpression(expressionToRestore);
+    setResult('');
+  };
   
   if (!isClient) {
     return null; // Or a skeleton loader
@@ -250,6 +256,7 @@ const BasicLayout = () => (
                       <div key={index} className="flex justify-between items-center p-2 rounded hover:bg-background group">
                         <span>{item}</span>
                          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <RotateCcw size={16} className="cursor-pointer hover:text-foreground" onClick={() => handleRestore(item)} />
                             <Trash2 size={16} className="cursor-pointer hover:text-foreground" onClick={() => setHistory(h => h.filter((_, i) => i !== index))} />
                         </div>
                       </div>
