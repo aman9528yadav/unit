@@ -3,13 +3,12 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Clock, RefreshCw, Trash2, RotateCcw, Divide, X, Minus, Plus, Equal, Delete } from 'lucide-react';
+import { Clock, RefreshCw, Trash2, Delete, Divide, X, Minus, Plus, Equal } from 'lucide-react';
 
 const buttonClasses = {
-  gray: "bg-gray-700 hover:bg-gray-600 text-white",
-  blue: "bg-blue-500 hover:bg-blue-400 text-white",
-  dark: "bg-gray-800 hover:bg-gray-700 text-white",
-  operator: "bg-primary text-primary-foreground hover:bg-primary/90 text-2xl"
+  gray: "bg-muted hover:bg-muted/80 text-foreground",
+  blue: "bg-primary text-primary-foreground hover:bg-primary/90 text-2xl",
+  dark: "bg-secondary hover:bg-secondary/80 text-foreground",
 };
 
 const CalculatorButton = ({
@@ -61,13 +60,14 @@ export function Calculator() {
 
   const handleCalculate = () => {
     try {
+      if (!expression) return;
       // Avoid using eval in production. This is a simplified example.
       // A safer approach would be to use a library like math.js
       const evalResult = new Function('return ' + expression)();
       const formattedResult = evalResult.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: true });
       setResult(formattedResult);
       const newHistoryEntry = `${expression} = ${formattedResult}`;
-      setHistory(prev => [newHistoryEntry, ...prev]);
+      setHistory(prev => [newHistoryEntry, ...prev.filter(h => h !== newHistoryEntry)]);
     } catch (error) {
       setResult('Error');
     }
@@ -78,36 +78,36 @@ export function Calculator() {
         <div className="bg-card p-4 rounded-xl flex flex-col gap-4">
             {/* Display */}
             <div className="text-right h-28 flex flex-col justify-end p-4">
-                <p className="text-3xl text-gray-400 break-all">{expression}</p>
-                <p className="text-6xl font-bold break-all">{result || ' '}</p>
+                <p className="text-3xl text-gray-400 break-all">{expression || ' '}</p>
+                <p className="text-6xl font-bold break-all">{result ? `=${result}`: ' '}</p>
             </div>
 
             {/* Buttons */}
             <div className="grid grid-cols-4 gap-3">
-                <CalculatorButton onClick={() => {}} label="e" className={buttonClasses.gray} />
-                <CalculatorButton onClick={() => {}} label="μ" className={buttonClasses.gray} />
-                <CalculatorButton onClick={() => {}} label="sin" className={buttonClasses.gray} />
-                <CalculatorButton onClick={() => {}} label="deg" className={buttonClasses.gray} />
+                <CalculatorButton onClick={() => {}} label="e" className={buttonClasses.dark} />
+                <CalculatorButton onClick={() => {}} label="μ" className={buttonClasses.dark} />
+                <CalculatorButton onClick={() => {}} label="sin" className={buttonClasses.dark} />
+                <CalculatorButton onClick={() => {}} label="deg" className={buttonClasses.dark} />
 
                 <CalculatorButton onClick={handleClear} label="AC" className={buttonClasses.gray} />
                 <CalculatorButton onClick={handleBackspace} label={<Delete />} className={buttonClasses.gray} />
-                <CalculatorButton onClick={() => handleButtonClick('/')} label={<Divide />} className={buttonClasses.operator} />
-                <CalculatorButton onClick={() => handleButtonClick('*')} label={<X />} className={buttonClasses.operator} />
+                <CalculatorButton onClick={() => handleButtonClick('/')} label={<Divide />} className={buttonClasses.blue} />
+                <CalculatorButton onClick={() => handleButtonClick('*')} label={<X />} className={buttonClasses.blue} />
 
                 <CalculatorButton onClick={() => handleButtonClick('7')} label="7" className={buttonClasses.dark} />
                 <CalculatorButton onClick={() => handleButtonClick('8')} label="8" className={buttonClasses.dark} />
                 <CalculatorButton onClick={() => handleButtonClick('9')} label="9" className={buttonClasses.dark} />
-                <CalculatorButton onClick={() => handleButtonClick('-')} label={<Minus />} className={buttonClasses.operator} />
+                <CalculatorButton onClick={() => handleButtonClick('-')} label={<Minus />} className={buttonClasses.blue} />
 
                 <CalculatorButton onClick={() => handleButtonClick('4')} label="4" className={buttonClasses.dark} />
                 <CalculatorButton onClick={() => handleButtonClick('5')} label="5" className={buttonClasses.dark} />
                 <CalculatorButton onClick={() => handleButtonClick('6')} label="6" className={buttonClasses.dark} />
-                <CalculatorButton onClick={() => handleButtonClick('+')} label={<Plus />} className={buttonClasses.operator} />
+                <CalculatorButton onClick={() => handleButtonClick('+')} label={<Plus />} className={buttonClasses.blue} />
 
                 <CalculatorButton onClick={() => handleButtonClick('1')} label="1" className={buttonClasses.dark} />
                 <CalculatorButton onClick={() => handleButtonClick('2')} label="2" className={buttonClasses.dark} />
                 <CalculatorButton onClick={() => handleButtonClick('3')} label="3" className={buttonClasses.dark} />
-                <CalculatorButton onClick={handleCalculate} label={<Equal />} className={`${buttonClasses.operator} row-span-2`} />
+                <CalculatorButton onClick={handleCalculate} label={<Equal />} className={`${buttonClasses.blue} row-span-2`} />
 
                 <CalculatorButton onClick={() => handleButtonClick('0')} label="0" className={`${buttonClasses.dark} col-span-2`} />
                 <CalculatorButton onClick={() => handleButtonClick('.')} label="." className={buttonClasses.dark} />
@@ -135,4 +135,3 @@ export function Calculator() {
     </div>
   );
 }
-
