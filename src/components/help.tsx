@@ -58,9 +58,15 @@ export const defaultFaqs: FAQ[] = [
 export function Help() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [profile, setProfile] = useState(null);
   
   useEffect(() => {
     setIsClient(true);
+    const storedProfile = localStorage.getItem("userProfile");
+    if (storedProfile) {
+        setProfile(JSON.parse(storedProfile));
+    }
+
     const storedFaqs = localStorage.getItem(FAQ_STORAGE_KEY);
     if (storedFaqs) {
         setFaqs(JSON.parse(storedFaqs));
@@ -86,7 +92,7 @@ export function Help() {
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6">
       <header className="flex items-center gap-4">
-        <Link href="/profile">
+        <Link href={profile ? "/profile" : "/"}>
           <Button variant="ghost" size="icon">
             <ArrowLeft />
           </Button>
