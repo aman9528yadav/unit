@@ -140,32 +140,46 @@ export function Dashboard() {
         </div>
       </header>
 
-      <div className="grid grid-cols-5 gap-2 text-center">
-        <Link href="/" className="flex flex-col items-center gap-2 p-2 rounded-lg bg-accent/20 border-accent border text-accent">
-            <Home />
-            <span className="text-xs font-medium">{t('nav.dashboard')}</span>
-        </Link>
-         <Link href="/notes" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
-            <StickyNote />
-            <span className="text-xs font-medium">{t('nav.notes')}</span>
-        </Link>
-        <Link href="/converter" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
-            <CalculatorIcon />
-            <span className="text-xs font-medium">{t('nav.converter')}</span>
-        </Link>
-        <Link href="/history" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
-            <Clock />
-            <span className="text-xs font-medium">{t('nav.history')}</span>
-        </Link>
-         <Link href="/time" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
-            <Hourglass />
-            <span className="text-xs font-medium">Time</span>
-        </Link>
-      </div>
+      <Card className="bg-card p-4 rounded-2xl shadow-lg">
+          <CardContent className="p-2">
+             <div className="grid grid-cols-5 gap-2 text-center">
+                <Link href="/" className="flex flex-col items-center gap-2 p-2 rounded-lg bg-accent/20 border-accent border text-accent">
+                    <Home />
+                    <span className="text-xs font-medium">{t('nav.dashboard')}</span>
+                </Link>
+                 <Link href="/notes" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-secondary">
+                    <StickyNote />
+                    <span className="text-xs font-medium">{t('nav.notes')}</span>
+                </Link>
+                <Link href="/converter" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-secondary">
+                    <CalculatorIcon />
+                    <span className="text-xs font-medium">{t('nav.converter')}</span>
+                </Link>
+                <Link href="/history" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-secondary">
+                    <Clock />
+                    <span className="text-xs font-medium">{t('nav.history')}</span>
+                </Link>
+                 <Link href="/time" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-secondary">
+                    <Hourglass />
+                    <span className="text-xs font-medium">Time</span>
+                </Link>
+              </div>
+          </CardContent>
+      </Card>
       
        <div className="grid grid-cols-2 gap-4">
-        <Card className="bg-indigo-400/20 border-indigo-400/50 p-4 col-span-1 rounded-2xl">
-            <h3 className="text-card-foreground/90 font-semibold mb-2">{t('dashboard.calculation')}</h3>
+            <Card className="bg-card p-4 rounded-2xl shadow-lg col-span-1 flex flex-col items-center justify-center">
+                 <p className="text-sm text-accent font-semibold">{t('dashboard.todayCalculation')}</p>
+                 <p className="text-5xl font-bold">{String(todayCalculations).padStart(2, '0')}</p>
+            </Card>
+             <Card className="bg-card p-4 rounded-2xl col-span-1 flex flex-col items-center justify-center">
+                <p className="text-sm text-muted-foreground">{t('dashboard.savedNotes')}</p>
+                <p className="text-5xl font-bold">{String(savedNotesCount).padStart(2, '0')}</p>
+            </Card>
+        </div>
+        
+        <Card className="bg-indigo-400/20 border-indigo-400/50 p-4 rounded-2xl">
+            <h3 className="text-card-foreground/90 font-semibold mb-2 text-center">{t('dashboard.calculation')}</h3>
              <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={weeklyCalculations} margin={{ top: 5, right: 0, left: -30, bottom: 5 }}>
@@ -186,17 +200,6 @@ export function Dashboard() {
                 </ResponsiveContainer>
             </div>
         </Card>
-        <div className="col-span-1 flex flex-col gap-4">
-             <Card className="bg-card p-4 rounded-2xl shadow-lg flex-1 flex flex-col items-center justify-center">
-                 <p className="text-sm text-accent font-semibold">{t('dashboard.todayCalculation')}</p>
-                 <p className="text-5xl font-bold">{String(todayCalculations).padStart(2, '0')}</p>
-            </Card>
-             <Card className="bg-card p-4 rounded-2xl flex-1 flex flex-col items-center justify-center">
-                <p className="text-sm text-muted-foreground">{t('dashboard.savedNotes')}</p>
-                <p className="text-5xl font-bold">{String(savedNotesCount).padStart(2, '0')}</p>
-            </Card>
-        </div>
-      </div>
 
       <div>
         <div className="flex justify-between items-center mb-2">
@@ -269,7 +272,5 @@ export function Dashboard() {
     </div>
   );
 }
-
-    
 
     
