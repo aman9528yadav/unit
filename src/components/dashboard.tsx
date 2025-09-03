@@ -15,7 +15,7 @@ import { useLanguage } from "@/context/language-context";
 import { recordVisit } from "@/lib/streak";
 
 // This should match the key in notepad.tsx
-const NOTES_STORAGE_KEY = 'userNotesV2';
+const NOTES_STORAGE_KEY_BASE = 'userNotesV2';
 
 interface Note {
     id: string;
@@ -24,12 +24,15 @@ interface Note {
 
 interface UserProfile {
     fullName: string;
+    email: string;
     [key: string]: any;
 }
 
-const getSavedNotesCount = () => {
-    if (typeof window === 'undefined') return 0;
-    const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
+const getUserNotesKey = (email: string) => `${email}_${NOTES_STORAGE_KEY_BASE}`;
+
+const getSavedNotesCount = (email: string | null) => {
+    if (typeof window === 'undefined' || !email) return 0;
+    const savedNotes = localStorage.getItem(getUserNotesKey(email));
     if (savedNotes) {
         try {
             const notes: Note[] = JSON.parse(savedNotes);
@@ -52,46 +55,43 @@ export function Dashboard() {
   const [savedNotesCount, setSavedNotesCount] = useState(0);
   const { t } = useLanguage();
 
-  const updateCalculations = () => {
+  const updateStats = (email: string | null) => {
     setTodayCalculations(getTodaysCalculations());
     setWeeklyCalculations(getWeeklyCalculations());
-  }
-
-  const updateNotesCount = () => {
-    setSavedNotesCount(getSavedNotesCount());
+    setSavedNotesCount(getSavedNotesCount(email));
   }
 
   useEffect(() => {
     setIsClient(true);
-    recordVisit(); // Record the visit for streak tracking
     const storedProfile = localStorage.getItem("userProfile");
     if (storedProfile) {
-        setProfile(JSON.parse(storedProfile));
+        const parsedProfile = JSON.parse(storedProfile);
+        setProfile(parsedProfile);
+        recordVisit(parsedProfile.email); // Record the visit for streak tracking
+        updateStats(parsedProfile.email);
     }
-    updateCalculations();
-    updateNotesCount();
   }, []);
 
   // Effect to listen for storage changes from other tabs/windows
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'dailyCalculations') {
-            updateCalculations();
-        }
-        if (e.key === NOTES_STORAGE_KEY) {
-            updateNotesCount();
+        if (profile?.email && (e.key === `${profile.email}_dailyCalculations` || e.key === getUserNotesKey(profile.email))) {
+            updateStats(profile.email);
         }
         if (e.key === 'userProfile') {
             if (e.newValue) {
-                setProfile(JSON.parse(e.newValue));
+                const newProfile = JSON.parse(e.newValue);
+                setProfile(newProfile);
+                updateStats(newProfile.email);
             } else {
                 setProfile(null);
+                updateStats(null);
             }
         }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [profile]);
 
   if (!isClient) {
     return null; // Or a loading skeleton

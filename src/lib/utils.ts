@@ -6,6 +6,19 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+const getUserKey = (key: string) => {
+    if (typeof window === 'undefined') return key;
+    const profile = localStorage.getItem('userProfile');
+    if (!profile) return key; // No user, use global key (or handle as anonymous)
+    try {
+        const user = JSON.parse(profile);
+        return `${user.email}_${key}`;
+    } catch {
+        return key;
+    }
+};
+
+
 const getTodayString = () => {
   return new Date().toISOString().split('T')[0];
 }
@@ -24,7 +37,7 @@ export function getWeeklyCalculations(): { name: string; value: number }[] {
     });
   }
 
-  const storedData = localStorage.getItem(CALCULATION_STORAGE_KEY);
+  const storedData = localStorage.getItem(getUserKey(CALCULATION_STORAGE_KEY));
   const data: DailyCalculationData = storedData ? JSON.parse(storedData) : {};
   
   const today = new Date();
@@ -45,7 +58,7 @@ export function getWeeklyCalculations(): { name: string; value: number }[] {
 export function getTodaysCalculations(): number {
   if (typeof window === 'undefined') return 0;
   
-  const storedData = localStorage.getItem(CALCULATION_STORAGE_KEY);
+  const storedData = localStorage.getItem(getUserKey(CALCULATION_STORAGE_KEY));
   if (!storedData) {
     return 0;
   }
@@ -63,7 +76,8 @@ export function incrementTodaysCalculations() {
   if (typeof window === 'undefined') return;
 
   const today = getTodayString();
-  const storedData = localStorage.getItem(CALCULATION_STORAGE_KEY);
+  const userKey = getUserKey(CALCULATION_STORAGE_KEY);
+  const storedData = localStorage.getItem(userKey);
   
   let data: DailyCalculationData = {};
   if (storedData) {
@@ -76,11 +90,11 @@ export function incrementTodaysCalculations() {
 
   data[today] = (data[today] || 0) + 1;
   
-  localStorage.setItem(CALCULATION_STORAGE_KEY, JSON.stringify(data));
+  localStorage.setItem(userKey, JSON.stringify(data));
 
   // Dispatch a storage event so other tabs can update
   window.dispatchEvent(new StorageEvent('storage', {
-    key: CALCULATION_STORAGE_KEY,
+    key: userKey,
     newValue: JSON.stringify(data),
   }));
 }

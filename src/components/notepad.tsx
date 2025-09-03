@@ -59,11 +59,20 @@ export interface Note {
     attachment?: string | null;
 }
 
-export const NOTES_STORAGE_KEY = 'userNotesV2';
+export const NOTES_STORAGE_KEY_BASE = 'userNotesV2';
 
 type NoteView = 'all' | 'favorites' | 'trash' | 'category';
 type LayoutView = 'list' | 'card';
 type SortKey = 'updatedAt' | 'createdAt' | 'title';
+
+const getUserNotesKey = (email: string) => `${email}_${NOTES_STORAGE_KEY_BASE}`;
+
+interface UserProfile {
+    fullName: string;
+    email: string;
+    [key: string]: any;
+}
+
 
 export function Notepad() {
     const [notes, setNotes] = useState<Note[]>([]);
@@ -75,6 +84,7 @@ export function Notepad() {
     const [sortKey, setSortKey] = useState<SortKey>('updatedAt');
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchVisible, setIsSearchVisible] = useState(false);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
     const { toast } = useToast();
@@ -82,7 +92,18 @@ export function Notepad() {
     
     useEffect(() => {
         setIsClient(true);
-        const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
+        const storedProfile = localStorage.getItem('userProfile');
+        if (storedProfile) {
+            const parsedProfile = JSON.parse(storedProfile);
+            setProfile(parsedProfile);
+            loadNotes(parsedProfile.email);
+        } else {
+            router.push('/welcome');
+        }
+    }, [router]);
+    
+    const loadNotes = (email: string) => {
+        const savedNotes = localStorage.getItem(getUserNotesKey(email));
         if (savedNotes) {
             const parsedNotes: Note[] = JSON.parse(savedNotes);
             const thirtyDaysAgo = new Date();
@@ -96,15 +117,17 @@ export function Notepad() {
             });
 
             if (freshNotes.length !== parsedNotes.length) {
-                localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(freshNotes));
+                localStorage.setItem(getUserNotesKey(email), JSON.stringify(freshNotes));
             }
             setNotes(freshNotes);
         }
-    }, []);
+    }
+
 
     const updateNotes = (newNotes: Note[]) => {
+        if (!profile?.email) return;
         setNotes(newNotes);
-        localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(newNotes));
+        localStorage.setItem(getUserNotesKey(profile.email), JSON.stringify(newNotes));
     };
 
     const handleSoftDelete = (noteId: string) => {
@@ -394,5 +417,3 @@ export function Notepad() {
         </SidebarProvider>
     );
 }
-
-    

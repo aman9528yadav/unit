@@ -9,7 +9,7 @@ import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Note, NOTES_STORAGE_KEY } from './notepad';
+import { Note, NOTES_STORAGE_KEY_BASE } from './notepad';
 import Image from 'next/image';
 import {
   DropdownMenu,
@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 
+const getUserNotesKey = (email: string) => `${email}_${NOTES_STORAGE_KEY_BASE}`;
 
 const FONT_COLORS = [
   { name: 'Default', color: 'inherit' },
@@ -29,6 +30,13 @@ const FONT_COLORS = [
   { name: 'Purple', color: '#9F7AEA' },
 ];
 
+interface UserProfile {
+    fullName: string;
+    email: string;
+    [key: string]: any;
+}
+
+
 export function NoteEditor({ noteId }: { noteId: string }) {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -38,6 +46,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const [isClient, setIsClient] = useState(false);
     const [customFontSize, setCustomFontSize] = useState('16');
     const [isDirty, setIsDirty] = useState(false);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
+
 
     const router = useRouter();
     const { toast } = useToast();
@@ -50,23 +60,31 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
     useEffect(() => {
         setIsClient(true);
-        if (!isNewNote) {
-            const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
-            if (savedNotes) {
-                const notes: Note[] = JSON.parse(savedNotes);
-                const noteToEdit = notes.find(note => note.id === noteId);
-                if (noteToEdit) {
-                    setTitle(noteToEdit.title);
-                    setContent(noteToEdit.content);
-                    contentSetRef.current = false;
-                    setIsFavorite(noteToEdit.isFavorite || false);
-                    setCategory(noteToEdit.category || '');
-                    setAttachment(noteToEdit.attachment || null);
-                } else {
-                    toast({ title: "Note not found", variant: "destructive" });
-                    router.push('/notes');
+        const storedProfile = localStorage.getItem('userProfile');
+        if (storedProfile) {
+            const parsedProfile = JSON.parse(storedProfile);
+            setProfile(parsedProfile);
+
+            if (!isNewNote && parsedProfile.email) {
+                const savedNotes = localStorage.getItem(getUserNotesKey(parsedProfile.email));
+                if (savedNotes) {
+                    const notes: Note[] = JSON.parse(savedNotes);
+                    const noteToEdit = notes.find(note => note.id === noteId);
+                    if (noteToEdit) {
+                        setTitle(noteToEdit.title);
+                        setContent(noteToEdit.content);
+                        contentSetRef.current = false;
+                        setIsFavorite(noteToEdit.isFavorite || false);
+                        setCategory(noteToEdit.category || '');
+                        setAttachment(noteToEdit.attachment || null);
+                    } else {
+                        toast({ title: "Note not found", variant: "destructive" });
+                        router.push('/notes');
+                    }
                 }
             }
+        } else {
+            router.push('/welcome');
         }
     }, [noteId, isNewNote, router, toast]);
 
@@ -194,6 +212,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
 
     const handleSave = (isAutoSave = false) => {
+        if (!profile?.email) return;
+
          const currentContent = editorRef.current?.innerHTML || '';
         if (!title.trim() && !currentContent.trim()) {
             if (!isAutoSave) {
@@ -206,7 +226,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             return;
         }
 
-        const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
+        const notesKey = getUserNotesKey(profile.email);
+        const savedNotes = localStorage.getItem(notesKey);
         const notes: Note[] = savedNotes ? JSON.parse(savedNotes) : [];
         const now = new Date().toISOString();
 
@@ -238,7 +259,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             }
         }
 
-        localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+        localStorage.setItem(notesKey, JSON.stringify(notes));
         setIsDirty(false);
 
         if (!isAutoSave) {
@@ -251,16 +272,17 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     };
     
     const handleSoftDelete = () => {
-        if (isNewNote) {
+        if (isNewNote || !profile?.email) {
              router.push('/notes');
              return;
         };
-        const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
+        const notesKey = getUserNotesKey(profile.email);
+        const savedNotes = localStorage.getItem(notesKey);
         const notes: Note[] = savedNotes ? JSON.parse(savedNotes) : [];
         const updatedNotes = notes.map(note => 
             note.id === noteId ? { ...note, deletedAt: new Date().toISOString() } : note
         );
-        localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(updatedNotes));
+        localStorage.setItem(notesKey, JSON.stringify(updatedNotes));
         setIsDirty(false);
         toast({ title: "Note moved to Recycle Bin." });
         router.push('/notes');
@@ -404,5 +426,3 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
-
-    

@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { getStreakData, StreakData } from "@/lib/streak";
 import { useRouter } from "next/navigation";
+import { auth } from "@/lib/firebase";
 
 const defaultProfile = {
     fullName: "Aman Yadav",
@@ -43,23 +44,21 @@ export function Profile() {
         parsed.birthday = format(new Date(parsed.dob), "MMMM do");
       }
       setProfile(parsed);
+      setStreakData(getStreakData(parsed.email));
     }
-    setStreakData(getStreakData());
   }, []);
 
   const handleLogout = () => {
-    // Clear all app-related data from localStorage for a full reset.
-    // This is more robust than removing items one by one.
-    if (typeof window !== 'undefined') {
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('user') || key.includes('History') || key.includes('Conversion') || key.includes('Calc') || key.includes('daily') || key.includes('theme') || key.includes('language')) {
-                 localStorage.removeItem(key);
-            }
-        });
-        // A simpler but more aggressive alternative:
-        // localStorage.clear();
-    }
-    router.push("/welcome");
+    auth.signOut().then(() => {
+        // Clear only the generic user profile key.
+        // User-specific data remains in localStorage for when they log back in.
+        localStorage.removeItem("userProfile");
+        toast({ title: "Logged Out", description: "You have been successfully logged out." });
+        router.push("/welcome");
+    }).catch((error) => {
+        console.error("Logout Error:", error);
+        toast({ title: "Logout Failed", description: "An error occurred while logging out.", variant: "destructive" });
+    });
   };
 
   const menuItems = [

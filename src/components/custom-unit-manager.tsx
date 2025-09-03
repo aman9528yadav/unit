@@ -27,8 +27,15 @@ import { conversionCategories as baseConversionCategories } from '@/lib/conversi
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 
-const CUSTOM_UNITS_STORAGE_KEY = 'customUnits';
-const CUSTOM_CATEGORIES_STORAGE_KEY = 'customCategories';
+const getStorageKey = (baseKey: string, email: string) => `${email}_${baseKey}`;
+
+const CUSTOM_UNITS_STORAGE_KEY_BASE = 'customUnits';
+const CUSTOM_CATEGORIES_STORAGE_KEY_BASE = 'customCategories';
+
+interface UserProfile {
+    email: string;
+    [key: string]: any;
+}
 
 
 export interface CustomUnit {
@@ -50,6 +57,7 @@ export function CustomUnitManager() {
     const [units, setUnits] = useState<CustomUnit[]>([]);
     const [categories, setCategories] = useState<CustomCategory[]>([]);
     const [isClient, setIsClient] = useState(false);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
     const [isAddUnitDialogOpen, setIsAddUnitDialogOpen] = useState(false);
     const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -61,15 +69,24 @@ export function CustomUnitManager() {
 
     useEffect(() => {
         setIsClient(true);
-        const savedUnits = localStorage.getItem(CUSTOM_UNITS_STORAGE_KEY);
+        const storedProfile = localStorage.getItem('userProfile');
+        if (storedProfile) {
+            const parsedProfile = JSON.parse(storedProfile);
+            setProfile(parsedProfile);
+            loadCustomData(parsedProfile.email);
+        }
+    }, []);
+    
+    const loadCustomData = (email: string) => {
+        const savedUnits = localStorage.getItem(getStorageKey(CUSTOM_UNITS_STORAGE_KEY_BASE, email));
         if (savedUnits) {
             setUnits(JSON.parse(savedUnits));
         }
-        const savedCategories = localStorage.getItem(CUSTOM_CATEGORIES_STORAGE_KEY);
+        const savedCategories = localStorage.getItem(getStorageKey(CUSTOM_CATEGORIES_STORAGE_KEY_BASE, email));
         if (savedCategories) {
             setCategories(JSON.parse(savedCategories));
         }
-    }, []);
+    }
     
     const allCategories = [
         ...baseConversionCategories.filter(c => c.name !== 'Temperature').map(c => c.name),
@@ -99,16 +116,19 @@ export function CustomUnitManager() {
 
 
     const updateStoredUnits = (updatedUnits: CustomUnit[]) => {
+        if (!profile) return;
         setUnits(updatedUnits);
-        localStorage.setItem(CUSTOM_UNITS_STORAGE_KEY, JSON.stringify(updatedUnits));
-        // Manually trigger storage event for other tabs
-        window.dispatchEvent(new StorageEvent('storage', { key: CUSTOM_UNITS_STORAGE_KEY, newValue: JSON.stringify(updatedUnits) }));
+        const key = getStorageKey(CUSTOM_UNITS_STORAGE_KEY_BASE, profile.email);
+        localStorage.setItem(key, JSON.stringify(updatedUnits));
+        window.dispatchEvent(new StorageEvent('storage', { key, newValue: JSON.stringify(updatedUnits) }));
     };
     
     const updateStoredCategories = (updatedCategories: CustomCategory[]) => {
+        if (!profile) return;
         setCategories(updatedCategories);
-        localStorage.setItem(CUSTOM_CATEGORIES_STORAGE_KEY, JSON.stringify(updatedCategories));
-         window.dispatchEvent(new StorageEvent('storage', { key: CUSTOM_CATEGORIES_STORAGE_KEY, newValue: JSON.stringify(updatedCategories) }));
+        const key = getStorageKey(CUSTOM_CATEGORIES_STORAGE_KEY_BASE, profile.email);
+        localStorage.setItem(key, JSON.stringify(updatedCategories));
+         window.dispatchEvent(new StorageEvent('storage', { key, newValue: JSON.stringify(updatedCategories) }));
     };
     
     const handleInputChange = (field: keyof typeof newUnit, value: string | number) => {

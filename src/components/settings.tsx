@@ -18,7 +18,10 @@ import {
 
 export type CalculatorMode = 'basic' | 'scientific';
 
+const getUserKey = (key: string, email: string) => `${email}_${key}`;
+
 export function Settings() {
+  const [profile, setProfile] = useState<{ email: string } | null>(null);
   const [notifications, setNotifications] = useState(true);
   const [autoConvert, setAutoConvert] = useState(true);
   const [saveConversionHistory, setSaveConversionHistory] = useState(true);
@@ -28,45 +31,52 @@ export function Settings() {
   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
-    const savedAutoConvert = localStorage.getItem('autoConvert');
-    if (savedAutoConvert !== null) {
-      setAutoConvert(JSON.parse(savedAutoConvert));
-    }
-
-    const savedConversionHistory = localStorage.getItem('saveConversionHistory');
-    if (savedConversionHistory !== null) {
-      setSaveConversionHistory(JSON.parse(savedConversionHistory));
-    }
-
-    const savedCalcHistory = localStorage.getItem('saveCalcHistory');
-    if (savedCalcHistory !== null) {
-      setSaveCalcHistory(JSON.parse(savedCalcHistory));
-    }
-    
-    const savedCalcMode = localStorage.getItem('calculatorMode') as CalculatorMode;
-    if (savedCalcMode) {
-        setCalculatorMode(savedCalcMode);
+    const storedProfile = localStorage.getItem('userProfile');
+    if (storedProfile) {
+      const parsedProfile = JSON.parse(storedProfile);
+      setProfile(parsedProfile);
+      loadSettings(parsedProfile.email);
     }
   }, []);
 
+  const loadSettings = (email: string) => {
+    const savedAutoConvert = localStorage.getItem(getUserKey('autoConvert', email));
+    if (savedAutoConvert !== null) setAutoConvert(JSON.parse(savedAutoConvert));
+
+    const savedConversionHistory = localStorage.getItem(getUserKey('saveConversionHistory', email));
+    if (savedConversionHistory !== null) setSaveConversionHistory(JSON.parse(savedConversionHistory));
+
+    const savedCalcHistory = localStorage.getItem(getUserKey('saveCalcHistory', email));
+    if (savedCalcHistory !== null) setSaveCalcHistory(JSON.parse(savedCalcHistory));
+    
+    const savedCalcMode = localStorage.getItem(getUserKey('calculatorMode', email)) as CalculatorMode;
+    if (savedCalcMode) setCalculatorMode(savedCalcMode);
+  };
+  
+  const setItemForUser = (key: string, value: any) => {
+    if (profile?.email) {
+      localStorage.setItem(getUserKey(key, profile.email), JSON.stringify(value));
+    }
+  };
+
   const handleAutoConvertChange = (checked: boolean) => {
     setAutoConvert(checked);
-    localStorage.setItem('autoConvert', JSON.stringify(checked));
+    setItemForUser('autoConvert', checked);
   };
 
   const handleSaveConversionHistoryChange = (checked: boolean) => {
     setSaveConversionHistory(checked);
-    localStorage.setItem('saveConversionHistory', JSON.stringify(checked));
+    setItemForUser('saveConversionHistory', checked);
   };
 
   const handleSaveCalcHistoryChange = (checked: boolean) => {
     setSaveCalcHistory(checked);
-    localStorage.setItem('saveCalcHistory', JSON.stringify(checked));
+    setItemForUser('saveCalcHistory', checked);
   };
   
   const handleCalcModeChange = (mode: CalculatorMode) => {
     setCalculatorMode(mode);
-    localStorage.setItem('calculatorMode', mode);
+    setItemForUser('calculatorMode', mode);
   }
 
   const handleThemeChange = (value: string) => {

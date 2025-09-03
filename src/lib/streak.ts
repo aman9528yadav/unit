@@ -1,7 +1,7 @@
 
 import { format, differenceInCalendarDays, subDays, parseISO } from 'date-fns';
 
-const STREAK_STORAGE_KEY = 'userVisitHistory';
+const STREAK_STORAGE_KEY_BASE = 'userVisitHistory';
 
 export interface StreakData {
     currentStreak: number;
@@ -9,32 +9,39 @@ export interface StreakData {
     daysNotOpened: number;
 }
 
+const getUserStreakKey = (email: string) => `${email}_${STREAK_STORAGE_KEY_BASE}`;
+
 // Ensure window is defined before accessing localStorage
-const getVisits = (): string[] => {
+const getVisits = (email: string): string[] => {
     if (typeof window === 'undefined') {
         return [];
     }
-    const storedVisits = localStorage.getItem(STREAK_STORAGE_KEY);
+    const storedVisits = localStorage.getItem(getUserStreakKey(email));
     return storedVisits ? JSON.parse(storedVisits) : [];
 };
 
-const setVisits = (visits: string[]) => {
+const setVisits = (visits: string[], email: string) => {
     if (typeof window !== 'undefined') {
-        localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify(visits));
+        localStorage.setItem(getUserStreakKey(email), JSON.stringify(visits));
     }
 };
 
-export const recordVisit = () => {
-    const visits = getVisits();
+export const recordVisit = (email?: string | null) => {
+    if (!email) return;
+    const visits = getVisits(email);
     const today = format(new Date(), 'yyyy-MM-dd');
     if (!visits.includes(today)) {
         const updatedVisits = [...visits, today];
-        setVisits(updatedVisits);
+        setVisits(updatedVisits, email);
     }
 };
 
-export const getStreakData = (): StreakData => {
-    const visits = getVisits();
+export const getStreakData = (email?: string | null): StreakData => {
+    if (!email) {
+         return { currentStreak: 0, bestStreak: 0, daysNotOpened: 0 };
+    }
+
+    const visits = getVisits(email);
     if (visits.length === 0) {
         return { currentStreak: 0, bestStreak: 0, daysNotOpened: 0 };
     }
