@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,12 +10,25 @@ import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { ArrowLeft, MailCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (emailSent) {
+      const timer = setTimeout(() => {
+        router.push('/welcome');
+      }, 5000); // Redirect after 5 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [emailSent, router]);
+
 
   const handleResetPassword = async () => {
     if (!email) {
@@ -44,11 +57,11 @@ export function ForgotPasswordForm() {
             <MailCheck className="w-20 h-20 text-primary mx-auto mb-6" />
             <h1 className="text-3xl font-bold text-primary mb-4">Check Your Email</h1>
             <p className="text-muted-foreground mb-6">
-                A password reset link has been sent to <strong>{email}</strong>. Please check your inbox (and spam folder) to reset your password.
+                A password reset link has been sent to <strong>{email}</strong>. You will be redirected to the login page shortly.
             </p>
             <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 <Link href="/welcome">
-                 Back to Login
+                 Back to Login Now
                 </Link>
             </Button>
         </div>
