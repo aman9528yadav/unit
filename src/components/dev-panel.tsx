@@ -273,7 +273,6 @@ export function DevPanel() {
                     </pre>
                 </CardContent>
             </Card>
-
             <Button onClick={() => router.push('/')} variant="outline" className="mt-4">Back to App</Button>
         </div>
     );

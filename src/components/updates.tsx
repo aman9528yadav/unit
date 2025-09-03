@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Gift, Zap, Rocket, Timer } from "lucide-react";
-import { format, intervalToDuration } from "date-fns";
+import { format, intervalToDuration, differenceInDays } from "date-fns";
 
 const updates = [
   {
@@ -42,23 +42,12 @@ const UPDATE_TIMER_STORAGE_KEY = "nextUpdateTime";
 
 export function Updates() {
   const [targetDate, setTargetDate] = useState<Date | null>(null);
-  const [timeLeft, setTimeLeft] = useState<Duration | null>(null);
+  const [timeLeft, setTimeLeft] = useState<Duration & { totalDays?: number } | null>(null);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    loadTargetDate();
-    
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === UPDATE_TIMER_STORAGE_KEY) {
-        loadTargetDate();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
-
 
   const loadTargetDate = () => {
     const savedDate = localStorage.getItem(UPDATE_TIMER_STORAGE_KEY);
@@ -74,9 +63,25 @@ export function Updates() {
         setTargetDate(null);
     }
   };
+  
+  useEffect(() => {
+    if(!isClient) return;
+    
+    loadTargetDate();
+    
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === UPDATE_TIMER_STORAGE_KEY) {
+        loadTargetDate();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [isClient]);
+
 
   useEffect(() => {
-    if (!targetDate) {
+    if (!targetDate || !isClient) {
       setTimeLeft(null);
       return;
     }
@@ -85,7 +90,8 @@ export function Updates() {
       const now = new Date();
       if (targetDate > now) {
         const duration = intervalToDuration({ start: now, end: targetDate });
-        setTimeLeft(duration);
+        const totalDays = differenceInDays(targetDate, now);
+        setTimeLeft({ ...duration, totalDays });
       } else {
         setTimeLeft(null);
         setTargetDate(null);
@@ -95,7 +101,7 @@ export function Updates() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [targetDate]);
+  }, [targetDate, isClient]);
 
 
   return (
@@ -117,7 +123,7 @@ export function Updates() {
             </div>
             <div className="grid grid-cols-4 gap-2">
                 <div className='bg-background p-3 rounded-lg'>
-                    <p className="text-3xl font-bold">{String(timeLeft.days || 0)}</p>
+                    <p className="text-3xl font-bold">{String(timeLeft.totalDays || 0)}</p>
                     <p className="text-xs text-muted-foreground">Days</p>
                 </div>
                 <div className='bg-background p-3 rounded-lg'>
