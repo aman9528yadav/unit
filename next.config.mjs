@@ -1,14 +1,8 @@
 
-import type {NextConfig} from 'next';
+import nextPwa from '@ducanh2912/next-pwa';
 
-const withPWA = require('@ducanh2912/next-pwa').default({
-  dest: 'public',
-  disable: process.env.NODE_ENV === 'development',
-  register: true,
-  skipWaiting: true,
-});
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
@@ -32,9 +26,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  experimental: {
-    allowedDevOrigins: ["6000-firebase-studio-1756782450705.cluster-y3k7ko3fang56qzieg3trwgyfg.cloudworkstations.dev"],
-  }
 };
 
-export default withPWA(nextConfig);
+
+// Only apply PWA plugin when not in Turbopack development mode
+const withPWA = nextPwa({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true,
+});
+
+export default process.env.TURBOPACK ? nextConfig : withPWA(nextConfig);
