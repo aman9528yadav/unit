@@ -5,13 +5,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
+import { addNotification } from '@/lib/notifications';
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -42,6 +43,8 @@ export function DevPanel() {
     const [duration, setDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const [updateText, setUpdateText] = useState('');
     const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+    const [notificationTitle, setNotificationTitle] = useState('');
+    const [notificationDescription, setNotificationDescription] = useState('');
     const router = useRouter();
     const { toast } = useToast();
 
@@ -149,6 +152,17 @@ export function DevPanel() {
         });
     };
 
+    const handleSendNotification = () => {
+        if (!notificationTitle || !notificationDescription) {
+            toast({ title: "Incomplete", description: "Please fill out both title and description.", variant: "destructive" });
+            return;
+        }
+        addNotification({ title: notificationTitle, description: notificationDescription });
+        setNotificationTitle('');
+        setNotificationDescription('');
+        toast({ title: "Notification Sent!", description: "The broadcast has been sent to all users." });
+    };
+
 
     if (!isClient) {
         return null;
@@ -208,9 +222,10 @@ export function DevPanel() {
             </header>
 
             <Tabs defaultValue="updates" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="updates">Updates</TabsTrigger>
                     <TabsTrigger value="content">Content</TabsTrigger>
+                    <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
                     <TabsTrigger value="security">Security</TabsTrigger>
                     <TabsTrigger value="data">Raw Data</TabsTrigger>
                 </TabsList>
@@ -278,6 +293,38 @@ export function DevPanel() {
                                 <p>Manage Help & Support FAQs</p>
                                 <Button onClick={() => router.push('/dev/help')}>Edit Content</Button>
                             </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="broadcast" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Send /> Notification Broadcaster</CardTitle>
+                            <CardDescription>Send a notification to all active users of the application.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <Label htmlFor="notificationTitle">Title</Label>
+                                <Input 
+                                    id="notificationTitle" 
+                                    value={notificationTitle}
+                                    onChange={(e) => setNotificationTitle(e.target.value)}
+                                    placeholder="e.g., New Feature!"
+                                />
+                            </div>
+                             <div>
+                                <Label htmlFor="notificationDescription">Description</Label>
+                                <Textarea 
+                                    id="notificationDescription"
+                                    value={notificationDescription}
+                                    onChange={(e) => setNotificationDescription(e.target.value)}
+                                    placeholder="Describe the notification..."
+                                    rows={3}
+                                />
+                            </div>
+                            <Button onClick={handleSendNotification} className="w-full">
+                                Send Broadcast
+                            </Button>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -356,3 +403,5 @@ export function DevPanel() {
         </div>
     );
 }
+
+    
