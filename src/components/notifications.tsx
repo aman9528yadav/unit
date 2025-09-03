@@ -2,7 +2,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Bell, Check, Info, Rocket, Trash2, X } from "lucide-react";
+import Link from "next/link";
+import { Bell, Check, Info, Rocket, Trash2, X, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,11 +12,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuFooter,
 } from "@/components/ui/dropdown-menu";
 import { getNotifications, markAsRead, removeNotification, removeAllNotifications, type AppNotification } from "@/lib/notifications";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+
+
+const getUserKey = (key: string, email: string | null) => `${email || 'guest'}_${key}`;
 
 const iconMap: { [key in AppNotification['icon']]: React.ReactNode } = {
     info: <Info className="text-blue-500" />,
@@ -25,11 +28,17 @@ const iconMap: { [key in AppNotification['icon']]: React.ReactNode } = {
 
 export function Notifications() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [areNotificationsEnabled, setAreNotificationsEnabled] = useState(true);
+  const [profile, setProfile] = useState<{ email: string } | null>(null);
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     setIsClient(true);
+    const storedProfile = localStorage.getItem("userProfile");
+    if (storedProfile) {
+        setProfile(JSON.parse(storedProfile));
+    }
   }, []);
   
   const loadNotifications = () => {
@@ -37,13 +46,23 @@ export function Notifications() {
       setNotifications(storedNotifications);
   }
 
+  const checkNotificationSetting = () => {
+    const userKey = profile?.email || 'guest';
+    const enabled = localStorage.getItem(getUserKey('notificationsEnabled', userKey));
+    setAreNotificationsEnabled(enabled === null ? true : JSON.parse(enabled));
+  }
+  
   useEffect(() => {
     if (isClient) {
         loadNotifications();
+        checkNotificationSetting();
         
         const handleStorageChange = (event: StorageEvent) => {
             if (event.key === 'appNotifications') {
                 loadNotifications();
+            }
+             if (event.key === getUserKey('notificationsEnabled', profile?.email || 'guest')) {
+                checkNotificationSetting();
             }
         };
 
@@ -52,7 +71,7 @@ export function Notifications() {
             window.removeEventListener('storage', handleStorageChange);
         };
     }
-  }, [isClient]);
+  }, [isClient, profile]);
 
   const handleMarkAsRead = (id: string) => {
     markAsRead(id);
@@ -98,7 +117,7 @@ export function Notifications() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell />
-          {unreadCount > 0 && (
+          {areNotificationsEnabled && unreadCount > 0 && (
             <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
               {unreadCount}
             </span>
@@ -108,12 +127,23 @@ export function Notifications() {
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex justify-between items-center p-2">
             <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
-             {unreadCount > 0 && (
+             {areNotificationsEnabled && unreadCount > 0 && (
                 <Button variant="link" size="sm" onClick={handleMarkAllAsRead} className="h-auto p-0">Mark all as read</Button>
              )}
         </div>
         <DropdownMenuSeparator />
-        {notifications.length > 0 ? (
+        {!areNotificationsEnabled ? (
+            <div className="p-4 text-center text-sm text-muted-foreground flex flex-col items-center gap-4">
+                <Bell className="w-10 h-10"/>
+                <p>Notifications are currently disabled.</p>
+                <Button asChild>
+                    <Link href="/settings">
+                        <Settings className="mr-2"/>
+                        Enable Notifications
+                    </Link>
+                </Button>
+            </div>
+        ) : notifications.length > 0 ? (
           <>
             {notifications.map((notification) => (
             <DropdownMenuItem 

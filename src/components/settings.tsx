@@ -36,27 +36,41 @@ export function Settings() {
       const parsedProfile = JSON.parse(storedProfile);
       setProfile(parsedProfile);
       loadSettings(parsedProfile.email);
+    } else {
+        loadSettings('guest'); // Load guest settings
     }
   }, []);
 
-  const loadSettings = (email: string) => {
-    const savedAutoConvert = localStorage.getItem(getUserKey('autoConvert', email));
+  const loadSettings = (userKey: string) => {
+    const savedNotifications = localStorage.getItem(getUserKey('notificationsEnabled', userKey));
+    if (savedNotifications !== null) setNotifications(JSON.parse(savedNotifications));
+    
+    const savedAutoConvert = localStorage.getItem(getUserKey('autoConvert', userKey));
     if (savedAutoConvert !== null) setAutoConvert(JSON.parse(savedAutoConvert));
 
-    const savedConversionHistory = localStorage.getItem(getUserKey('saveConversionHistory', email));
+    const savedConversionHistory = localStorage.getItem(getUserKey('saveConversionHistory', userKey));
     if (savedConversionHistory !== null) setSaveConversionHistory(JSON.parse(savedConversionHistory));
 
-    const savedCalcHistory = localStorage.getItem(getUserKey('saveCalcHistory', email));
+    const savedCalcHistory = localStorage.getItem(getUserKey('saveCalcHistory', userKey));
     if (savedCalcHistory !== null) setSaveCalcHistory(JSON.parse(savedCalcHistory));
     
-    const savedCalcMode = localStorage.getItem(getUserKey('calculatorMode', email)) as CalculatorMode;
+    const savedCalcMode = localStorage.getItem(getUserKey('calculatorMode', userKey)) as CalculatorMode;
     if (savedCalcMode) setCalculatorMode(savedCalcMode);
   };
   
   const setItemForUser = (key: string, value: any) => {
-    if (profile?.email) {
-      localStorage.setItem(getUserKey(key, profile.email), JSON.stringify(value));
-    }
+    const userKey = profile?.email || 'guest';
+    localStorage.setItem(getUserKey(key, userKey), JSON.stringify(value));
+  };
+  
+  const handleNotificationsChange = (checked: boolean) => {
+    setNotifications(checked);
+    setItemForUser('notificationsEnabled', checked);
+     // Dispatch a storage event so other components can react
+    window.dispatchEvent(new StorageEvent('storage', {
+        key: getUserKey('notificationsEnabled', profile?.email || 'guest'),
+        newValue: JSON.stringify(checked),
+    }));
   };
 
   const handleAutoConvertChange = (checked: boolean) => {
@@ -106,7 +120,7 @@ export function Settings() {
             <SettingsItem 
               icon={Bell} 
               text={t('settings.general.notifications')}
-              control={<Switch checked={notifications} onCheckedChange={setNotifications} />} 
+              control={<Switch checked={notifications} onCheckedChange={handleNotificationsChange} />} 
             />
             <SettingsItem 
               icon={Languages} 
