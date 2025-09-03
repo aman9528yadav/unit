@@ -14,7 +14,6 @@ import {
   HelpCircle,
   LogOut,
   Pencil,
-  Rocket,
   Code,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -70,7 +69,6 @@ export function Profile() {
   const menuItems = [
     { icon: User, text: "Profile", href: "/profile/edit" },
     { icon: Star, text: "Favorite", href: "/history" },
-    { icon: Rocket, text: "What's New", href: "/updates" },
     { icon: Lock, text: "Privacy Policy", href: "/privacy-policy" },
     { icon: Settings, text: "Settings", href: "/settings" },
     { icon: HelpCircle, text: "Help", href: "/help" },
