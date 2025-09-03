@@ -18,8 +18,12 @@ const getUserKey = (key: string, email: string | null) => {
 
 
 const getTodayString = () => {
-  return new Date().toISOString().split('T')[0];
-}
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
 
 const CALCULATION_STORAGE_KEY = 'dailyCalculations';
 
@@ -44,7 +48,12 @@ export function getWeeklyCalculations(email: string | null): { name: string; val
   const last7Days = eachDayOfInterval({ start: weekAgo, end: today });
   
   return last7Days.map(date => {
-    const formattedDateKey = format(date, 'yyyy-MM-dd');
+    // Format the key for lookup in the same local format
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const formattedDateKey = `${year}-${month}-${day}`;
+
     const dayName = format(date, 'MMM d');
     return {
       name: dayName,
