@@ -13,7 +13,6 @@ import {
   Settings,
   HelpCircle,
   LogOut,
-  Pencil,
   Code,
   Gift
 } from "lucide-react";
@@ -66,7 +65,6 @@ export function Profile() {
   };
 
   const menuItems = [
-    { icon: User, text: "Profile", href: "/profile/edit" },
     { icon: Star, text: "Favorite", href: "/history" },
     { icon: Gift, text: "What's New", href: "/updates" },
     { icon: Lock, text: "Privacy Policy", href: "/privacy-policy" },
@@ -108,15 +106,6 @@ export function Profile() {
               className="rounded-full border-4 border-white object-cover w-28 h-28"
               data-ai-hint="profile picture"
             />
-            <Link href="/profile/edit">
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute bottom-0 right-0 rounded-full w-8 h-8 bg-accent border-accent hover:bg-accent/90"
-              >
-                <Pencil className="w-4 h-4 text-accent-foreground" />
-              </Button>
-            </Link>
           </div>
           <h2 className="text-2xl font-bold mt-2">{profile.fullName}</h2>
           <p className="text-sm">{profile.email}</p>
