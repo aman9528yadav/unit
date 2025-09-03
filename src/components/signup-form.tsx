@@ -36,14 +36,21 @@ export function SignupForm() {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await sendEmailVerification(result.user);
       
+      const profile = {
+        fullName: fullName,
+        email: email,
+        profileImage: "https://picsum.photos/200", // Default profile image
+      };
+      localStorage.setItem("userProfile", JSON.stringify(profile));
+
       toast({ 
         title: "Verification Email Sent", 
-        description: "Please check your inbox to verify your email address before logging in.",
+        description: "Please check your inbox to verify your email address. You will be redirected.",
         duration: 9000,
       });
 
-      // Don't save profile or redirect yet. User needs to verify first.
-      router.push("/welcome");
+      // Redirect to success page after signup
+      router.push("/profile/success");
 
     } catch (error: any) {
       console.error("Error during email sign-up:", error);
@@ -75,11 +82,11 @@ export function SignupForm() {
 
       localStorage.setItem("userProfile", JSON.stringify(profile));
       toast({ title: "Account Created!", description: `Welcome, ${profile.fullName}!` });
-      router.push("/");
+      router.push("/profile/success");
 
     } catch (error: any) {
       console.error("Error during Google sign-up:", error);
-      toast({ title: "Sign-up Failed", description: error.message, variant: "destructive" });
+      toast({ title: "Sign-up Failed", description: "Could not sign up with Google. Please try again.", variant: "destructive" });
     } finally {
         setIsSubmitting(false);
     }

@@ -46,15 +46,13 @@ export function WelcomeForm() {
         return;
       }
       
-      toast({ title: "Login Successful" });
-      
       const profile = {
         fullName: user.displayName || email.split('@')[0], // Fallback for email/pass users
         email: user.email || "",
         profileImage: user.photoURL || "https://picsum.photos/200",
       };
       localStorage.setItem("userProfile", JSON.stringify(profile));
-      router.push("/");
+      router.push("/profile/success");
 
     } catch (error: any) {
        toast({ title: "Login Failed", description: "Invalid email or password. Please try again.", variant: "destructive" });
@@ -77,12 +75,11 @@ export function WelcomeForm() {
       };
 
       localStorage.setItem("userProfile", JSON.stringify(profile));
-      toast({ title: "Login Successful!", description: `Welcome back, ${profile.fullName}!` });
-      router.push("/");
+      router.push("/profile/success");
 
     } catch (error: any) {
       console.error("Error during Google sign-in:", error);
-      toast({ title: "Sign-in Failed", description: error.message, variant: "destructive" });
+      toast({ title: "Sign-in Failed", description: "Could not sign in with Google. Please try again.", variant: "destructive" });
     } finally {
         setIsSubmitting(false);
     }
