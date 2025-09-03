@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Camera, Eye, EyeOff, Calendar as CalendarIcon, User, Lock } from "lucide-react";
+import { ArrowLeft, Camera, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,6 +61,14 @@ export function ProfileEditForm() {
       reader.readAsDataURL(file);
     }
   };
+  
+  const handleRemoveImage = () => {
+    setProfile(prev => ({...prev, profileImage: ''}));
+    toast({
+        title: "Profile photo removed",
+        description: "Your profile photo will be removed when you save changes.",
+    })
+  }
 
   const handleSaveChanges = async () => {
     if (!profile.fullName) {
@@ -122,7 +130,7 @@ export function ProfileEditForm() {
       } catch (error: any) {
         console.error("Password change error:", error);
         let title = "Password Change Failed";
-        let description = "An error occurred. Please try again.";
+        let description = "The current password you entered is incorrect.";
         if (error.code === 'auth/wrong-password') {
             title = "Incorrect Password";
             description = "The current password you entered is incorrect.";
@@ -173,6 +181,16 @@ export function ProfileEditForm() {
           >
             <Camera />
           </Button>
+           {profile.profileImage && (
+             <Button
+                size="icon"
+                variant="destructive"
+                className="absolute bottom-1 left-1 rounded-full w-10 h-10"
+                onClick={handleRemoveImage}
+              >
+                <Trash2 />
+            </Button>
+           )}
         </div>
       </div>
 
