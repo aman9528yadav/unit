@@ -44,20 +44,22 @@ export function Updates() {
   const [targetDate, setTargetDate] = useState<Date | null>(null);
   const [timeLeft, setTimeLeft] = useState<Duration | null>(null);
 
-  useEffect(() => {
-    const loadTargetDate = () => {
-      const savedDate = localStorage.getItem(UPDATE_TIMER_STORAGE_KEY);
-      if (savedDate) {
-        const date = new Date(savedDate);
-        if (!isNaN(date.getTime()) && date > new Date()) {
-          setTargetDate(date);
-        } else {
-          setTargetDate(null);
-          localStorage.removeItem(UPDATE_TIMER_STORAGE_KEY);
-        }
+  const loadTargetDate = () => {
+    const savedDate = localStorage.getItem(UPDATE_TIMER_STORAGE_KEY);
+    if (savedDate) {
+      const date = new Date(savedDate);
+      if (!isNaN(date.getTime()) && date > new Date()) {
+        setTargetDate(date);
+      } else {
+        setTargetDate(null);
+        localStorage.removeItem(UPDATE_TIMER_STORAGE_KEY);
       }
-    };
+    } else {
+        setTargetDate(null);
+    }
+  };
 
+  useEffect(() => {
     loadTargetDate();
 
     const handleStorageChange = (event: StorageEvent) => {
