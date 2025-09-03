@@ -154,20 +154,20 @@ export function SignupForm() {
 
   if (emailSent) {
     return (
-        <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-[#1A1A1A] text-white p-6 text-center">
-            <h1 className="text-3xl font-bold text-yellow-400 mb-4">Verify Your Email</h1>
+        <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-background text-foreground p-6 text-center">
+            <h1 className="text-3xl font-bold text-primary mb-4">Verify Your Email</h1>
             <p className="text-muted-foreground mb-6">
                 A verification link has been sent to <strong>{email}</strong>. Please check your inbox and click the link to activate your account.
             </p>
              <p className="text-sm text-muted-foreground mb-6">Once verified, you will be automatically redirected to the login page.</p>
-            <Button onClick={handleResendEmail} className="w-full h-12 bg-[#333333] hover:bg-[#444444] border border-gray-600 rounded-full text-lg" disabled={!canResend || isSubmitting}>
+            <Button onClick={handleResendEmail} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-lg" disabled={!canResend || isSubmitting}>
                 {isSubmitting ? 'Sending...' : (canResend ? 'Resend Email' : `Resend in ${resendTimer}s`)}
             </Button>
             <p className="text-center text-sm text-muted-foreground mt-8">
                 Wrong email?{" "}
-                <Link href="/signup" onClick={() => setEmailSent(false)} className="font-semibold text-yellow-400 hover:underline">
+                <button onClick={() => setEmailSent(false)} className="font-semibold text-primary hover:underline">
                  Go back
-                </Link>
+                </button>
             </p>
         </div>
     )
@@ -232,7 +232,7 @@ export function SignupForm() {
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="absolute right-3 top-9 text-muted-foreground"
                     >
-                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        {showConfirmarameters ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                 </div>
             </div>
@@ -269,3 +269,5 @@ export function SignupForm() {
     </div>
   );
 }
+
+    
