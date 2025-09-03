@@ -135,7 +135,7 @@ export function SignupForm() {
       localStorage.setItem("userProfile", JSON.stringify(profile));
       router.push("/profile/success");
 
-    } catch (error: any) => {
+    } catch (error: any) {
       console.error("Error during Google sign-up:", error);
       toast({ title: "Sign-up Failed", description: "Could not sign up with Google. Please try again.", variant: "destructive" });
     } finally {
@@ -246,7 +246,7 @@ export function SignupForm() {
             </div>
         </div>
         <div className="flex justify-center gap-4">
-            <Button onClick={handleGoogleSignup} variant="outline" size="icon" className="rounded-full" disabled={isSubmitting}>
+            <Button onClick={handleGoogleLogin} variant="outline" size="icon" className="rounded-full" disabled={isSubmitting}>
                 <Image src="/google-logo.svg" alt="Google" width={20} height={20} />
             </Button>
         </div>
