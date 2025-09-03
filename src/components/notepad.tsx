@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home } from 'lucide-react';
+import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home, ShieldX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -78,6 +78,7 @@ export function Notepad() {
     const [notes, setNotes] = useState<Note[]>([]);
     const [isClient, setIsClient] = useState(false);
     const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
+    const [showEmptyTrashDialog, setShowEmptyTrashDialog] = useState(false);
     const [view, setView] = useState<NoteView>('all');
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [layout, setLayout] = useState<LayoutView>('list');
@@ -171,6 +172,19 @@ export function Notepad() {
             note.id === noteId ? { ...note, isFavorite: !note.isFavorite } : note
         );
         updateNotes(updatedNotes);
+    };
+    
+    const handleRestoreAll = () => {
+        const updatedNotes = notes.map(note => note.deletedAt ? { ...note, deletedAt: null } : note);
+        updateNotes(updatedNotes);
+        toast({ title: "All notes restored." });
+    };
+
+    const handleEmptyTrash = () => {
+        const updatedNotes = notes.filter(note => !note.deletedAt);
+        updateNotes(updatedNotes);
+        toast({ title: "Recycle Bin emptied." });
+        setShowEmptyTrashDialog(false);
     };
 
     const categories = [...new Set(notes.filter(n => !n.deletedAt && n.category).map(n => n.category!))];
@@ -347,6 +361,16 @@ export function Notepad() {
                     </div>
                 </header>
                 <div className="flex-grow overflow-y-auto px-4 pb-24">
+                     {view === 'trash' && sortedNotes.length > 0 && (
+                        <div className="flex justify-end gap-2 mb-4">
+                            <Button variant="outline" onClick={handleRestoreAll}>
+                                <RotateCcw className="mr-2 h-4 w-4" /> Restore All
+                            </Button>
+                            <Button variant="destructive" onClick={() => setShowEmptyTrashDialog(true)}>
+                                <ShieldX className="mr-2 h-4 w-4" /> Delete All
+                            </Button>
+                        </div>
+                    )}
                     {sortedNotes.length > 0 ? (
                         <ul className={layout === 'list' ? "bg-card rounded-lg p-2 space-y-2" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
                             {sortedNotes.map(note => (
@@ -427,7 +451,25 @@ export function Notepad() {
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
+                <AlertDialog open={showEmptyTrashDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure you want to empty the trash?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete all notes in the recycle bin. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setShowEmptyTrashDialog(false)}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleEmptyTrash}>
+                                Delete All
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </SidebarInset>
         </SidebarProvider>
     );
 }
+
+    
