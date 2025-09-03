@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
+import { Notifications } from "./notifications";
 
 
 // This should match the key in notepad.tsx
@@ -133,7 +134,7 @@ export function Dashboard() {
         </div>
         <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon"><Search /></Button>
-            <Button variant="ghost" size="icon"><Bell /></Button>
+            <Notifications />
              <Button variant="ghost" size="icon" onClick={handleProfileClick}>
                 <User />
               </Button>

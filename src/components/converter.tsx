@@ -37,6 +37,7 @@ import { useLanguage } from "@/context/language-context";
 import { CustomUnit, CustomCategory } from "./custom-unit-manager";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { cn } from "@/lib/utils";
+import { Notifications } from "./notifications";
 
 
 const regions: Region[] = ['International', 'India'];
@@ -573,7 +574,7 @@ export function Converter() {
         </div>
         <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon"><Search /></Button>
-            <Button variant="ghost" size="icon"><Bell /></Button>
+            <Notifications />
             <Button variant="ghost" size="icon" asChild>
               <Link href="/profile">
                 <User />
