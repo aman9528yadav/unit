@@ -6,12 +6,13 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ShieldAlert, Trash2, BellRing, Code, KeyRound } from 'lucide-react';
+import { ShieldAlert, Trash2, Code, KeyRound, Lock } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 
-const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com"; // Hardcoded developer email
-const DEV_PASSWORD = "121212"; // Hardcoded developer password
+const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
+const DEFAULT_DEV_PASSWORD = "121212";
+const DEV_PASSWORD_STORAGE_KEY = "developer_password";
 
 interface UserProfile {
     email: string;
@@ -23,6 +24,9 @@ export function DevPanel() {
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [password, setPassword] = useState('');
+    const [devPassword, setDevPassword] = useState(DEFAULT_DEV_PASSWORD);
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [isClient, setIsClient] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
@@ -30,6 +34,12 @@ export function DevPanel() {
     useEffect(() => {
         setIsClient(true);
         const storedProfile = localStorage.getItem('userProfile');
+        const storedDevPassword = localStorage.getItem(DEV_PASSWORD_STORAGE_KEY);
+        
+        if (storedDevPassword) {
+            setDevPassword(storedDevPassword);
+        }
+
         if (storedProfile) {
             const parsedProfile = JSON.parse(storedProfile);
             setProfile(parsedProfile);
@@ -40,14 +50,13 @@ export function DevPanel() {
     }, []);
     
     const handlePasswordSubmit = () => {
-        if (password === DEV_PASSWORD) {
+        if (password === devPassword) {
             setIsAuthenticated(true);
             toast({ title: "Access Granted", description: "Welcome to the Developer Panel." });
         } else {
             toast({ title: "Access Denied", description: "Incorrect password.", variant: "destructive" });
         }
     };
-
 
     const handleClearLocalStorage = () => {
         if (window.confirm("Are you sure you want to clear ALL local storage data? This will log you out and delete all guest data.")) {
@@ -57,12 +66,24 @@ export function DevPanel() {
         }
     };
     
-    const handleTriggerToast = () => {
-        toast({ title: "Test Notification", description: "This is a test toast from the dev panel." });
-    }
+    const handleChangePassword = () => {
+        if (!newPassword || newPassword !== confirmNewPassword) {
+            toast({ title: "Password Mismatch", description: "The new passwords do not match.", variant: "destructive" });
+            return;
+        }
+        if (newPassword.length < 6) {
+            toast({ title: "Password Too Short", description: "Password must be at least 6 characters.", variant: "destructive" });
+            return;
+        }
+        localStorage.setItem(DEV_PASSWORD_STORAGE_KEY, newPassword);
+        setDevPassword(newPassword);
+        setNewPassword('');
+        setConfirmNewPassword('');
+        toast({ title: "Password Updated", description: "Developer password has been changed successfully." });
+    };
 
     if (!isClient) {
-        return null; // or a loading skeleton
+        return null;
     }
 
     if (!isAuthorized) {
@@ -112,17 +133,44 @@ export function DevPanel() {
             
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Trash2 /> Actions</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Trash2 /> General Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
                         <p>Clear all app data</p>
                         <Button variant="destructive" onClick={handleClearLocalStorage}>Clear Local Storage</Button>
                     </div>
-                     <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                        <p>Send a test notification</p>
-                        <Button variant="secondary" onClick={handleTriggerToast}>Trigger Toast</Button>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Lock /> Change Password</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div>
+                        <Label htmlFor="newPassword">New Password</Label>
+                        <Input
+                            id="newPassword"
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="Enter new password"
+                        />
                     </div>
+                    <div>
+                        <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+                        <Input
+                            id="confirmNewPassword"
+                            type="password"
+                            value={confirmNewPassword}
+                            onChange={(e) => setConfirmNewPassword(e.target.value)}
+                            placeholder="Confirm new password"
+                        />
+                    </div>
+                    <Button onClick={handleChangePassword} className="w-full">
+                        Update Developer Password
+                    </Button>
                 </CardContent>
             </Card>
 
