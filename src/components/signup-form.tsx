@@ -29,39 +29,37 @@ export function SignupForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    let timerInterval: NodeJS.Timeout | null = null;
     if (resendTimer > 0) {
-      interval = setInterval(() => {
+      timerInterval = setInterval(() => {
         setResendTimer(prev => prev - 1);
       }, 1000);
     } else if (resendTimer === 0 && emailSent) {
       setCanResend(true);
     }
     return () => {
-      if (interval) clearInterval(interval);
+      if (timerInterval) clearInterval(timerInterval);
     };
   }, [resendTimer, emailSent]);
   
   useEffect(() => {
-    if (!currentUser) return;
+    if (!emailSent || !auth.currentUser) return;
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) {
-            user.reload().then(() => {
-                if(user.emailVerified) {
-                    unsubscribe(); // Stop listening
-                    toast({
-                        title: "Email Verified!",
-                        description: "Your account is active. Please log in.",
-                    });
-                    router.push('/welcome');
-                }
+    const verificationInterval = setInterval(async () => {
+        // The user object needs to be reloaded to get the latest emailVerified status.
+        await auth.currentUser?.reload();
+        if (auth.currentUser?.emailVerified) {
+            clearInterval(verificationInterval);
+            toast({
+                title: "Email Verified!",
+                description: "Your account is active. Please log in.",
             });
+            router.push('/welcome');
         }
-    });
+    }, 3000); // Check every 3 seconds
 
-    return () => unsubscribe();
-  }, [currentUser, router, toast]);
+    return () => clearInterval(verificationInterval); // Cleanup on component unmount
+  }, [emailSent, router, toast]);
 
 
   const startResendTimer = () => {
@@ -70,10 +68,10 @@ export function SignupForm() {
   };
 
   const handleResendEmail = async () => {
-    if (currentUser) {
+    if (auth.currentUser) {
         setIsSubmitting(true);
         try {
-            await sendEmailVerification(currentUser);
+            await sendEmailVerification(auth.currentUser);
             toast({
                 title: "Verification Email Sent",
                 description: "A new verification link has been sent to your email address.",
@@ -101,18 +99,9 @@ export function SignupForm() {
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await sendEmailVerification(result.user);
-      setCurrentUser(result.user); // Save user for resend logic
+      // We don't need to set current user from state anymore, auth.currentUser will be available.
       setEmailSent(true);
       startResendTimer();
-      
-      const profile = {
-        fullName: fullName,
-        email: email,
-        profileImage: "https://picsum.photos/200", // Default profile image
-      };
-      // We'll save the profile when the user successfully logs in for the first time
-      // This prevents saving a profile for an unverified email.
-      // localStorage.setItem("userProfile", JSON.stringify(profile));
 
     } catch (error: any) {
       console.error("Error during email sign-up:", error);
@@ -159,7 +148,7 @@ export function SignupForm() {
             <p className="text-muted-foreground mb-6">
                 A verification link has been sent to <strong>{email}</strong>. Please check your inbox and click the link to activate your account.
             </p>
-             <p className="text-sm text-muted-foreground mb-6">Once verified, you will be automatically redirected to the login page.</p>
+             <p className="text-sm text-muted-foreground mb-6">This page will automatically redirect after you have verified your email.</p>
             <Button onClick={handleResendEmail} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-lg" disabled={!canResend || isSubmitting}>
                 {isSubmitting ? 'Sending...' : (canResend ? 'Resend Email' : `Resend in ${resendTimer}s`)}
             </Button>
