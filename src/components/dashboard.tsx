@@ -8,8 +8,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 import { ArrowRight, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, Home, StickyNote, CalculatorIcon, Clock, Hourglass, Sparkles, LogIn } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { getTodaysCalculations, getWeeklyCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { recordVisit } from "@/lib/streak";
@@ -164,6 +162,41 @@ export function Dashboard() {
             <span className="text-xs font-medium">Time</span>
         </Link>
       </div>
+      
+       <div className="grid grid-cols-2 gap-4">
+        <Card className="bg-indigo-400/20 border-indigo-400/50 p-4 col-span-1 rounded-2xl">
+            <h3 className="text-card-foreground/90 font-semibold mb-2">{t('dashboard.calculation')}</h3>
+             <div className="h-40">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={weeklyCalculations} margin={{ top: 5, right: 0, left: -30, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: 'hsl(var(--background))',
+                                borderColor: 'hsl(var(--border))',
+                                color: 'hsl(var(--foreground))',
+                                borderRadius: 'var(--radius)',
+                            }}
+                            cursor={{ fill: 'hsla(var(--foreground), 0.1)' }}
+                        />
+                        <Bar dataKey="value" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+        </Card>
+        <div className="col-span-1 flex flex-col gap-4">
+             <Card className="bg-card p-4 rounded-2xl shadow-lg flex-1 flex flex-col items-center justify-center">
+                 <p className="text-sm text-accent font-semibold">{t('dashboard.todayCalculation')}</p>
+                 <p className="text-5xl font-bold">{String(todayCalculations).padStart(2, '0')}</p>
+            </Card>
+             <Card className="bg-card p-4 rounded-2xl flex-1 flex flex-col items-center justify-center">
+                <p className="text-sm text-muted-foreground">{t('dashboard.savedNotes')}</p>
+                <p className="text-5xl font-bold">{String(savedNotesCount).padStart(2, '0')}</p>
+            </Card>
+        </div>
+      </div>
 
       <div>
         <div className="flex justify-between items-center mb-2">
@@ -213,56 +246,6 @@ export function Dashboard() {
         </div>
       </div>
       
-       <div className="flex flex-col gap-3">
-            <div className="flex items-center space-x-2">
-                <Checkbox id="terms1" checked className="border-accent data-[state=checked]:bg-accent" />
-                <label htmlFor="terms1" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    {t('dashboard.feature1')}
-                </label>
-            </div>
-            <div className="flex items-center space-x-2">
-                <Checkbox id="terms2" checked className="border-accent data-[state=checked]:bg-accent" />
-                <label htmlFor="terms2" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    {t('dashboard.feature2')}
-                </label>
-            </div>
-        </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="bg-indigo-400/20 border-indigo-400/50 p-4 col-span-1 rounded-2xl">
-            <h3 className="text-card-foreground/90 font-semibold mb-2">{t('dashboard.calculation')}</h3>
-             <div className="h-40">
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={weeklyCalculations} margin={{ top: 5, right: 0, left: -30, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                        <Tooltip
-                            contentStyle={{
-                                backgroundColor: 'hsl(var(--background))',
-                                borderColor: 'hsl(var(--border))',
-                                color: 'hsl(var(--foreground))',
-                                borderRadius: 'var(--radius)',
-                            }}
-                            cursor={{ fill: 'hsla(var(--foreground), 0.1)' }}
-                        />
-                        <Bar dataKey="value" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
-        </Card>
-        <div className="col-span-1 flex flex-col gap-4">
-             <Card className="bg-card p-4 rounded-2xl shadow-lg flex-1 flex flex-col items-center justify-center">
-                 <p className="text-sm text-accent font-semibold">{t('dashboard.todayCalculation')}</p>
-                 <p className="text-5xl font-bold">{String(todayCalculations).padStart(2, '0')}</p>
-            </Card>
-             <Card className="bg-card p-4 rounded-2xl flex-1 flex flex-col items-center justify-center">
-                <p className="text-sm text-muted-foreground">{t('dashboard.savedNotes')}</p>
-                <p className="text-5xl font-bold">{String(savedNotesCount).padStart(2, '0')}</p>
-            </Card>
-        </div>
-      </div>
-      
        <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
         <AlertDialogContent>
           <AlertDialogHeader className="items-center text-center">
@@ -286,5 +269,7 @@ export function Dashboard() {
     </div>
   );
 }
+
+    
 
     
