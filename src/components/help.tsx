@@ -21,7 +21,7 @@ export interface FAQ {
 
 export const FAQ_STORAGE_KEY = 'faqData';
 
-const defaultFaqs: FAQ[] = [
+export const defaultFaqs: FAQ[] = [
     {
         id: uuidv4(),
         question: "How do I use the Unit Converter?",
