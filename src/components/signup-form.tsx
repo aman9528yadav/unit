@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, sendEmailVerification, User, onAuthStateChanged } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, sendEmailVerification, User } from "firebase/auth";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";

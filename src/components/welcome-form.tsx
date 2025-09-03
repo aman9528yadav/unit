@@ -31,8 +31,6 @@ export function WelcomeForm() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // This assumes email is verified at sign-up.
-      // If you want to enforce it here, you can add:
       if (!user.emailVerified) {
          toast({ 
            title: "Login Failed", 
