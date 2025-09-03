@@ -117,7 +117,7 @@ export function Updates() {
             </div>
             <div className="grid grid-cols-4 gap-2">
                 <div className='bg-background p-3 rounded-lg'>
-                    <p className="text-3xl font-bold">{String(timeLeft.days || 0).padStart(2, '0')}</p>
+                    <p className="text-3xl font-bold">{String(timeLeft.days || 0)}</p>
                     <p className="text-xs text-muted-foreground">Days</p>
                 </div>
                 <div className='bg-background p-3 rounded-lg'>
