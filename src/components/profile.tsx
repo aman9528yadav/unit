@@ -115,7 +115,7 @@ export function Profile() {
                 size="icon"
                 className="absolute bottom-0 right-0 rounded-full w-8 h-8 bg-accent border-accent hover:bg-accent/90"
               >
-                <a><Pencil className="w-4 h-4 text-accent-foreground" /></a>
+                <span><Pencil className="w-4 h-4 text-accent-foreground" /></span>
               </Button>
             </Link>
           </div>
