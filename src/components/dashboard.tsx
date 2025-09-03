@@ -168,44 +168,48 @@ export function Dashboard() {
       <div>
         <div className="flex justify-between items-center mb-2">
             <h2 className="font-bold text-lg">{t('dashboard.recommendations')}</h2>
-            <Link href="#" className="text-sm text-accent flex items-center gap-1">
+            <Link href="/help" className="text-sm text-accent flex items-center gap-1">
                 {t('dashboard.seeAll')} <ArrowRight size={16} />
             </Link>
         </div>
         <div className="grid grid-cols-2 gap-4">
-            <Card className="bg-card border-none overflow-hidden">
-                <div className="relative">
-                    <Image src="https://picsum.photos/300/200" alt="Smart Search" width={300} height={200} className="w-full h-24 object-cover" data-ai-hint="digital analytics" />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <PlayCircle size={32} className="text-white/80" />
+            <Link href="/help">
+                <Card className="bg-card border-none overflow-hidden h-full">
+                    <div className="relative">
+                        <Image src="https://picsum.photos/300/200" alt="Smart Search" width={300} height={200} className="w-full h-24 object-cover" data-ai-hint="digital analytics" />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <PlayCircle size={32} className="text-white/80" />
+                        </div>
+                         <div className="absolute top-2 right-2 bg-yellow-400 p-1 rounded-full">
+                            <Star size={12} className="text-black" />
+                        </div>
                     </div>
-                     <div className="absolute top-2 right-2 bg-yellow-400 p-1 rounded-full">
-                        <Star size={12} className="text-black" />
+                    <CardContent className="p-3">
+                        <h3 className="font-bold text-sm">{t('dashboard.smartSearch')}</h3>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                            <span className="flex items-center gap-1"><ClockIcon size={14} /> 05 {t('dashboard.minutes')}</span>
+                            <span className="flex items-center gap-1"><User size={14} /> Aman</span>
+                        </div>
+                    </CardContent>
+                </Card>
+            </Link>
+            <Link href="/help">
+                <Card className="bg-card border-none overflow-hidden h-full">
+                     <div className="relative">
+                        <Image src="https://picsum.photos/300/200" alt="How to use Smart Calc" width={300} height={200} className="w-full h-24 object-cover" data-ai-hint="financial calculator" />
+                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <PlayCircle size={32} className="text-white/80" />
+                        </div>
                     </div>
-                </div>
-                <CardContent className="p-3">
-                    <h3 className="font-bold text-sm">{t('dashboard.smartSearch')}</h3>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                        <span className="flex items-center gap-1"><ClockIcon size={14} /> 05 {t('dashboard.minutes')}</span>
-                        <span className="flex items-center gap-1"><User size={14} /> Aman</span>
-                    </div>
-                </CardContent>
-            </Card>
-            <Card className="bg-card border-none overflow-hidden">
-                 <div className="relative">
-                    <Image src="https://picsum.photos/300/200" alt="How to use Smart Calc" width={300} height={200} className="w-full h-24 object-cover" data-ai-hint="financial calculator" />
-                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <PlayCircle size={32} className="text-white/80" />
-                    </div>
-                </div>
-                <CardContent className="p-3">
-                    <h3 className="font-bold text-sm">{t('dashboard.howToUseCalc')}</h3>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                        <span className="flex items-center gap-1"><ClockIcon size={14} /> 15 {t('dashboard.minutes')}</span>
-                        <span className="flex items-center gap-1"><User size={14} /> Aman</span>
-                    </div>
-                </CardContent>
-            </Card>
+                    <CardContent className="p-3">
+                        <h3 className="font-bold text-sm">{t('dashboard.howToUseCalc')}</h3>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                            <span className="flex items-center gap-1"><ClockIcon size={14} /> 15 {t('dashboard.minutes')}</span>
+                            <span className="flex items-center gap-1"><User size={14} /> Aman</span>
+                        </div>
+                    </CardContent>
+                </Card>
+            </Link>
         </div>
       </div>
       
@@ -282,3 +286,5 @@ export function Dashboard() {
     </div>
   );
 }
+
+    
