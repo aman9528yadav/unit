@@ -102,9 +102,6 @@ export function WelcomeForm() {
             <Button onClick={handleGoogleLogin} variant="outline" size="icon" className="rounded-full bg-transparent border-gray-600 hover:bg-gray-700">
                 <Image src="/google-logo.svg" alt="Google" width={20} height={20} />
             </Button>
-             <Button variant="outline" size="icon" className="rounded-full bg-transparent border-gray-600 hover:bg-gray-700">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M22.06 12.06c0-7.78-6.28-14.06-14.06-14.06s-14.06 6.28-14.06 14.06c0 6.95 5.07 12.7 11.69 13.94v-9.88h-3.5v-4.06h3.5v-3.04c0-3.47 2.06-5.38 5.25-5.38 1.5 0 2.78.11 3.15.16v3.63h-2.14c-1.68 0-2.01.8-2.01 1.97v2.56h4.01l-.52 4.06h-3.49v9.88c6.62-1.24 11.69-7 11.69-13.94z"/></svg>
-            </Button>
         </div>
         <p className="text-center text-sm text-muted-foreground mt-8">
             Don't have an account?{" "}
