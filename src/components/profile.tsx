@@ -15,6 +15,7 @@ import {
   LogOut,
   Pencil,
   Code,
+  Gift
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -55,8 +56,6 @@ export function Profile() {
 
   const handleLogout = () => {
     auth.signOut().then(() => {
-        // Clear only the generic user profile key.
-        // User-specific data remains in localStorage for when they log back in.
         localStorage.removeItem("userProfile");
         toast({ title: "Logged Out", description: "You have been successfully logged out." });
         router.push("/welcome");
@@ -69,6 +68,7 @@ export function Profile() {
   const menuItems = [
     { icon: User, text: "Profile", href: "/profile/edit" },
     { icon: Star, text: "Favorite", href: "/history" },
+    { icon: Gift, text: "What's New", href: "/updates" },
     { icon: Lock, text: "Privacy Policy", href: "/privacy-policy" },
     { icon: Settings, text: "Settings", href: "/settings" },
     { icon: HelpCircle, text: "Help", href: "/help" },
