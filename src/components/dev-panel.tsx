@@ -103,7 +103,14 @@ export function DevPanel() {
             toast({ title: 'Invalid Date/Time', description: 'Please select both a date and a time.', variant: 'destructive' });
             return;
         }
-        const targetDateTime = new Date(`${countdownDate}T${countdownTime}`);
+        // Correctly parse date and time parts to avoid timezone issues
+        const [year, month, day] = countdownDate.split('-').map(Number);
+        const [hours, minutes] = countdownTime.split(':').map(Number);
+        
+        // Create date in local timezone then convert to ISO string.
+        // Note: Month is 0-indexed in JavaScript's Date constructor.
+        const targetDateTime = new Date(year, month - 1, day, hours, minutes);
+
         if (isNaN(targetDateTime.getTime())) {
             toast({ title: 'Invalid Date/Time', description: 'The selected date or time is not valid.', variant: 'destructive' });
             return;
@@ -282,4 +289,5 @@ export function DevPanel() {
             <Button onClick={() => router.push('/')} variant="outline" className="mt-4">Back to App</Button>
         </div>
     );
-}
+
+    
