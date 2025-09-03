@@ -52,14 +52,16 @@ export function Updates() {
       <div className="relative pl-8">
         <div className="absolute left-4 top-4 bottom-4 w-0.5 bg-border"></div>
         {updates.map((update, index) => (
-            <div key={index} className="mb-8 relative">
-                <div className={`absolute left-[-18px] top-1.5 p-2 rounded-full border-4 border-background ${update.bgColor} ${update.textColor}`}>
-                    <update.icon className="w-5 h-5" />
-                </div>
-                <div className="bg-card p-4 rounded-xl">
-                    <p className="text-sm text-muted-foreground mb-1">
-                      {format(new Date(update.date), "d MMM yyyy, h:mm a")}
+            <div key={index} className="mb-6 relative">
+                <div className="flex items-center mb-2">
+                    <div className={`absolute left-[-18px] top-1 p-2 rounded-full border-4 border-background ${update.bgColor} ${update.textColor}`}>
+                        <update.icon className="w-5 h-5" />
+                    </div>
+                    <p className="text-sm text-muted-foreground ml-8">
+                        {format(new Date(update.date), "d MMM yyyy, h:mm a")}
                     </p>
+                </div>
+                <div className="bg-card p-4 rounded-xl ml-8">
                     <h2 className="text-lg font-semibold text-foreground mb-2">{update.title}</h2>
                     <p className="text-sm text-muted-foreground">{update.description}</p>
                 </div>
