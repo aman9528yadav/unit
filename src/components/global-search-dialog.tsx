@@ -146,7 +146,7 @@ export function GlobalSearchDialog() {
           <Search />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-xl p-0 gap-0">
+      <DialogContent className="p-0 gap-0">
         <DialogHeader className="p-4 border-b">
             <div className="flex items-center gap-2">
                 <Search className="text-muted-foreground" />
