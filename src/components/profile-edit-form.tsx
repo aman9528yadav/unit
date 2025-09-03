@@ -158,7 +158,7 @@ export function ProfileEditForm() {
           </div>
           <div>
             <Label htmlFor="email" className="text-muted-foreground">Email</Label>
-            <Input id="email" type="email" value={profile.email} onChange={handleChange} className="bg-secondary mt-1 h-12 rounded-lg" readOnly/>
+            <Input id="email" type="email" value={profile.email} className="bg-secondary mt-1 h-12 rounded-lg" readOnly/>
           </div>
           <div>
             <Label htmlFor="mobile" className="text-muted-foreground">Mobile Number</Label>

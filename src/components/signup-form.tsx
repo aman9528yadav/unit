@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, sendEmailVerification, User } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, sendEmailVerification, updateProfile, User } from "firebase/auth";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
@@ -24,7 +24,6 @@ export function SignupForm() {
   const [emailSent, setEmailSent] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [canResend, setCanResend] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -52,9 +51,9 @@ export function SignupForm() {
             clearInterval(verificationInterval);
             toast({
                 title: "Email Verified!",
-                description: "Your account is active. Please log in.",
+                description: "Your account is active. You will be redirected.",
             });
-            router.push('/welcome');
+            router.push('/profile/success');
         }
     }, 3000); // Check every 3 seconds
 
@@ -98,8 +97,11 @@ export function SignupForm() {
     setIsSubmitting(true);
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
+      // Save the user's full name to their profile
+      await updateProfile(result.user, { displayName: fullName });
+      
       await sendEmailVerification(result.user);
-      // We don't need to set current user from state anymore, auth.currentUser will be available.
+      
       setEmailSent(true);
       startResendTimer();
 
@@ -148,7 +150,7 @@ export function SignupForm() {
             <p className="text-muted-foreground mb-6">
                 A verification link has been sent to <strong>{email}</strong>. Please check your inbox and click the link to activate your account.
             </p>
-             <p className="text-sm text-muted-foreground mb-6">This page will automatically redirect after you have verified your email.</p>
+             <p className="text-sm text-muted-foreground mb-6">Once verified, you will be automatically redirected.</p>
             <Button onClick={handleResendEmail} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-lg" disabled={!canResend || isSubmitting}>
                 {isSubmitting ? 'Sending...' : (canResend ? 'Resend Email' : `Resend in ${resendTimer}s`)}
             </Button>
