@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
 import { Notifications } from "./notifications";
+import { GlobalSearchDialog } from "./global-search-dialog";
 
 
 // This should match the key in notepad.tsx
@@ -133,7 +134,7 @@ export function Dashboard() {
           <p className="text-muted-foreground">{t('dashboard.challenge')}</p>
         </div>
         <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon"><Search /></Button>
+            <GlobalSearchDialog />
             <Notifications />
              <Button variant="ghost" size="icon" onClick={handleProfileClick}>
                 <User />

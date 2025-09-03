@@ -38,6 +38,7 @@ import { CustomUnit, CustomCategory } from "./custom-unit-manager";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { cn } from "@/lib/utils";
 import { Notifications } from "./notifications";
+import { GlobalSearchDialog } from "./global-search-dialog";
 
 
 const regions: Region[] = ['International', 'India'];
@@ -573,7 +574,7 @@ export function Converter() {
           <p className="text-muted-foreground">{t('converter.welcome')}</p>
         </div>
         <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon"><Search /></Button>
+            <GlobalSearchDialog />
             <Notifications />
             <Button variant="ghost" size="icon" asChild>
               <Link href="/profile">
