@@ -47,6 +47,16 @@ export function Updates() {
 
   useEffect(() => {
     setIsClient(true);
+    loadTargetDate();
+    
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === UPDATE_TIMER_STORAGE_KEY) {
+        loadTargetDate();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
 
@@ -64,19 +74,6 @@ export function Updates() {
         setTargetDate(null);
     }
   };
-
-  useEffect(() => {
-    loadTargetDate();
-
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === UPDATE_TIMER_STORAGE_KEY) {
-        loadTargetDate();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
 
   useEffect(() => {
     if (!targetDate) {
