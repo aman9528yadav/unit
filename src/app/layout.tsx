@@ -5,6 +5,51 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { LanguageProvider } from '@/context/language-context';
 import { ThemeProvider } from '@/context/theme-context';
+import React, { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+
+function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
+    const router = useRouter();
+    const pathname = usePathname();
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isClient) return;
+
+        const checkMaintenanceMode = () => {
+            const isMaintenanceMode = localStorage.getItem('maintenanceMode') === 'true';
+            const isAllowedPath = pathname === '/maintenance' || pathname.startsWith('/dev');
+            
+            if (isMaintenanceMode && !isAllowedPath) {
+                router.replace('/maintenance');
+            }
+        };
+
+        checkMaintenanceMode();
+
+        const handleStorageChange = (event: StorageEvent) => {
+            if (event.key === 'maintenanceMode') {
+                checkMaintenanceMode();
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, [isClient, pathname, router]);
+
+    if (!isClient) {
+        return null;
+    }
+
+    return <>{children}</>;
+}
+
 
 export default function RootLayout({
   children,
@@ -25,7 +70,9 @@ export default function RootLayout({
             <link rel="apple-touch-icon" href="/icon-192x192.png" />
           </head>
           <body className="font-body antialiased">
-            {children}
+            <MaintenanceRedirect>
+                {children}
+            </MaintenanceRedirect>
             <Toaster />
           </body>
         </html>

@@ -6,11 +6,12 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText } from 'lucide-react';
+import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from './ui/switch';
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -18,6 +19,7 @@ const DEFAULT_DEV_PASSWORD = "121212";
 const DEV_PASSWORD_STORAGE_KEY = "developer_password";
 const UPDATE_TIMER_STORAGE_KEY = "nextUpdateTime";
 const UPDATE_TEXT_STORAGE_KEY = "nextUpdateText";
+const MAINTENANCE_MODE_STORAGE_KEY = "maintenanceMode";
 
 
 interface UserProfile {
@@ -39,6 +41,7 @@ export function DevPanel() {
     const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
     const [duration, setDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const [updateText, setUpdateText] = useState('');
+    const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -47,12 +50,16 @@ export function DevPanel() {
         const storedProfile = localStorage.getItem('userProfile');
         const storedDevPassword = localStorage.getItem(DEV_PASSWORD_STORAGE_KEY);
         const storedUpdateText = localStorage.getItem(UPDATE_TEXT_STORAGE_KEY);
+        const storedMaintenanceMode = localStorage.getItem(MAINTENANCE_MODE_STORAGE_KEY);
         
         if (storedDevPassword) {
             setDevPassword(storedDevPassword);
         }
          if (storedUpdateText) {
             setUpdateText(storedUpdateText);
+        }
+        if (storedMaintenanceMode) {
+            setIsMaintenanceMode(storedMaintenanceMode === 'true');
         }
 
         if (storedProfile) {
@@ -132,6 +139,16 @@ export function DevPanel() {
         toast({ title: 'Update Text Saved' });
     };
 
+    const handleMaintenanceModeToggle = (checked: boolean) => {
+        setIsMaintenanceMode(checked);
+        localStorage.setItem(MAINTENANCE_MODE_STORAGE_KEY, String(checked));
+        window.dispatchEvent(new StorageEvent('storage', { key: MAINTENANCE_MODE_STORAGE_KEY, newValue: String(checked) }));
+        toast({
+            title: `Maintenance Mode ${checked ? 'Enabled' : 'Disabled'}`,
+            description: `The app is now ${checked ? 'in' : 'out of'} maintenance mode.`,
+        });
+    };
+
 
     if (!isClient) {
         return null;
@@ -203,6 +220,17 @@ export function DevPanel() {
                             <CardTitle className="flex items-center gap-2"><Timer /> Update Management</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <Label htmlFor="maintenance-mode" className="flex items-center gap-2 cursor-pointer">
+                                    <ServerCog />
+                                    Maintenance Mode
+                                </Label>
+                                <Switch
+                                    id="maintenance-mode"
+                                    checked={isMaintenanceMode}
+                                    onCheckedChange={handleMaintenanceModeToggle}
+                                />
+                            </div>
                             <Label>Set Countdown Duration</Label>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
