@@ -1,4 +1,6 @@
 
+"use client";
+
 import { DevPanel } from "@/components/dev-panel";
 
 export default function DevPage() {

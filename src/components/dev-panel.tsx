@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText } from 'lucide-react';
+import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
@@ -191,8 +191,9 @@ export function DevPanel() {
             </header>
 
             <Tabs defaultValue="updates" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="updates">Updates</TabsTrigger>
+                    <TabsTrigger value="content">Content</TabsTrigger>
                     <TabsTrigger value="security">Security</TabsTrigger>
                     <TabsTrigger value="data">Raw Data</TabsTrigger>
                 </TabsList>
@@ -235,6 +236,19 @@ export function DevPanel() {
                                     rows={4}
                                 />
                                 <Button onClick={handleSaveUpdateText} className="w-full">Save Details</Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                 <TabsContent value="content" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><FileText /> Content Management</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                           <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <p>Manage Help & Support FAQs</p>
+                                <Button onClick={() => router.push('/dev/help')}>Edit Content</Button>
                             </div>
                         </CardContent>
                     </Card>
