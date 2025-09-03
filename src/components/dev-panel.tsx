@@ -10,6 +10,8 @@ import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, Notebook
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 const DEFAULT_DEV_PASSWORD = "121212";
@@ -188,117 +190,127 @@ export function DevPanel() {
                 <p className="text-muted-foreground">Tools for testing and debugging.</p>
             </header>
 
-             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Timer /> Update Management</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <Label>Set Countdown Duration</Label>
-                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="days" className="text-xs">Days</Label>
-                            <Input id="days" type="number" value={duration.days} onChange={(e) => handleDurationChange('days', e.target.value)} placeholder="0" />
-                        </div>
-                         <div>
-                            <Label htmlFor="hours" className="text-xs">Hours</Label>
-                            <Input id="hours" type="number" value={duration.hours} onChange={(e) => handleDurationChange('hours', e.target.value)} placeholder="0" />
-                        </div>
-                         <div>
-                            <Label htmlFor="minutes" className="text-xs">Minutes</Label>
-                            <Input id="minutes" type="number" value={duration.minutes} onChange={(e) => handleDurationChange('minutes', e.target.value)} placeholder="0" />
-                        </div>
-                         <div>
-                            <Label htmlFor="seconds" className="text-xs">Seconds</Label>
-                            <Input id="seconds" type="number" value={duration.seconds} onChange={(e) => handleDurationChange('seconds', e.target.value)} placeholder="0" />
-                        </div>
-                    </div>
-                     <div className="flex gap-2">
-                        <Button onClick={handleSetTimer} className="w-full">Set Timer</Button>
-                        <Button onClick={handleClearTimer} variant="destructive" className="w-full">Clear Timer</Button>
-                    </div>
-                     <div className="pt-4 space-y-2">
-                        <Label htmlFor="updateText" className="flex items-center gap-2"><NotebookText /> Upcoming Feature Details</Label>
-                        <Textarea 
-                            id="updateText"
-                            value={updateText}
-                            onChange={(e) => setUpdateText(e.target.value)}
-                            placeholder="Describe what's coming in the next update..."
-                            rows={4}
-                        />
-                        <Button onClick={handleSaveUpdateText} className="w-full">Save Details</Button>
-                     </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Lock /> Security & Data</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                        <p>Clear all app data</p>
-                        <Button variant="destructive" onClick={handleClearLocalStorage}>Clear Local Storage</Button>
-                    </div>
-                    <div>
-                        <Label htmlFor="newPassword">New Developer Password</Label>
-                         <div className="relative mt-1">
-                            <Input
-                                id="newPassword"
-                                type={showNewPassword ? "text" : "password"}
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                placeholder="Enter new password"
-                                className="pr-10"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowNewPassword(!showNewPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                            >
-                                {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                            </button>
-                        </div>
-                    </div>
-                    <div>
-                         <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
-                        <div className="relative mt-1">
-                            <Input
-                                id="confirmNewPassword"
-                                type={showConfirmNewPassword ? "text" : "password"}
-                                value={confirmNewPassword}
-                                onChange={(e) => setConfirmNewPassword(e.target.value)}
-                                placeholder="Confirm new password"
-                                 className="pr-10"
-                            />
-                             <button
-                                type="button"
-                                onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                            >
-                                {showConfirmNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                            </button>
-                        </div>
-                    </div>
-                    <Button onClick={handleChangePassword} className="w-full">
-                        Update Password
-                    </Button>
-                </CardContent>
-            </Card>
-
-            <Card>
-                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Code /> Raw Data</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <h3 className="font-semibold mb-2">User Profile</h3>
-                    <pre className="bg-secondary p-4 rounded-md text-xs overflow-auto">
-                        {JSON.stringify(profile, null, 2)}
-                    </pre>
-                </CardContent>
-            </Card>
+            <Tabs defaultValue="updates" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="updates">Updates</TabsTrigger>
+                    <TabsTrigger value="security">Security</TabsTrigger>
+                    <TabsTrigger value="data">Raw Data</TabsTrigger>
+                </TabsList>
+                <TabsContent value="updates" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Timer /> Update Management</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <Label>Set Countdown Duration</Label>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="days" className="text-xs">Days</Label>
+                                    <Input id="days" type="number" value={duration.days} onChange={(e) => handleDurationChange('days', e.target.value)} placeholder="0" />
+                                </div>
+                                <div>
+                                    <Label htmlFor="hours" className="text-xs">Hours</Label>
+                                    <Input id="hours" type="number" value={duration.hours} onChange={(e) => handleDurationChange('hours', e.target.value)} placeholder="0" />
+                                </div>
+                                <div>
+                                    <Label htmlFor="minutes" className="text-xs">Minutes</Label>
+                                    <Input id="minutes" type="number" value={duration.minutes} onChange={(e) => handleDurationChange('minutes', e.target.value)} placeholder="0" />
+                                </div>
+                                <div>
+                                    <Label htmlFor="seconds" className="text-xs">Seconds</Label>
+                                    <Input id="seconds" type="number" value={duration.seconds} onChange={(e) => handleDurationChange('seconds', e.target.value)} placeholder="0" />
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button onClick={handleSetTimer} className="w-full">Set Timer</Button>
+                                <Button onClick={handleClearTimer} variant="destructive" className="w-full">Clear Timer</Button>
+                            </div>
+                            <div className="pt-4 space-y-2">
+                                <Label htmlFor="updateText" className="flex items-center gap-2"><NotebookText /> Upcoming Feature Details</Label>
+                                <Textarea 
+                                    id="updateText"
+                                    value={updateText}
+                                    onChange={(e) => setUpdateText(e.target.value)}
+                                    placeholder="Describe what's coming in the next update..."
+                                    rows={4}
+                                />
+                                <Button onClick={handleSaveUpdateText} className="w-full">Save Details</Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="security" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Lock /> Security & Data</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <p>Clear all app data</p>
+                                <Button variant="destructive" onClick={handleClearLocalStorage}>Clear Local Storage</Button>
+                            </div>
+                            <div>
+                                <Label htmlFor="newPassword">New Developer Password</Label>
+                                <div className="relative mt-1">
+                                    <Input
+                                        id="newPassword"
+                                        type={showNewPassword ? "text" : "password"}
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        placeholder="Enter new password"
+                                        className="pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNewPassword(!showNewPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                    >
+                                        {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+                                <div className="relative mt-1">
+                                    <Input
+                                        id="confirmNewPassword"
+                                        type={showConfirmNewPassword ? "text" : "password"}
+                                        value={confirmNewPassword}
+                                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                        placeholder="Confirm new password"
+                                        className="pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                    >
+                                        {showConfirmNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
+                                </div>
+                            </div>
+                            <Button onClick={handleChangePassword} className="w-full">
+                                Update Password
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="data" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Code /> Raw Data</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <h3 className="font-semibold mb-2">User Profile</h3>
+                            <pre className="bg-secondary p-4 rounded-md text-xs overflow-auto">
+                                {JSON.stringify(profile, null, 2)}
+                            </pre>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
+            
             <Button onClick={() => router.push('/')} variant="outline" className="mt-4">Back to App</Button>
         </div>
     );
 }
-
-    
