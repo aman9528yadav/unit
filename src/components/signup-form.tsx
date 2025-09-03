@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { ArrowLeft } from "lucide-react";
@@ -20,9 +20,10 @@ export function SignupForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleEmailSignup = async () => {
-    if (!email || !password || !fullName) {
+    if (!email || !password || !fullName || !confirmPassword) {
       toast({ title: "Please fill all fields", variant: "destructive" });
       return;
     }
@@ -30,21 +31,19 @@ export function SignupForm() {
       toast({ title: "Passwords do not match", variant: "destructive" });
       return;
     }
+    setIsSubmitting(true);
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
-      const user = result.user;
+      await sendEmailVerification(result.user);
       
-      const profile = {
-        fullName: fullName,
-        email: user.email || "",
-        profileImage: user.photoURL || "https://picsum.photos/200",
-        nickname: fullName.split(' ')[0] || "User",
-        mobile: user.phoneNumber || ""
-      };
+      toast({ 
+        title: "Verification Email Sent", 
+        description: "Please check your inbox to verify your email address before logging in.",
+        duration: 9000,
+      });
 
-      localStorage.setItem("userProfile", JSON.stringify(profile));
-      toast({ title: "Account Created!", description: `Welcome, ${profile.fullName}!` });
-      router.push("/");
+      // Don't save profile or redirect yet. User needs to verify first.
+      router.push("/welcome");
 
     } catch (error: any) {
       console.error("Error during email sign-up:", error);
@@ -52,24 +51,26 @@ export function SignupForm() {
       if (error.code === 'auth/email-already-in-use') {
         description = "This email address is already in use. Please log in or use a different email.";
       } else if (error.code === 'auth/weak-password') {
-        description = "The password is too weak. Please choose a stronger password.";
+        description = "The password is too weak. Please choose a stronger password (at least 6 characters).";
       }
       toast({ title: "Sign-up Failed", description, variant: "destructive" });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
   const handleGoogleSignup = async () => {
     const provider = new GoogleAuthProvider();
+    setIsSubmitting(true);
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
+      // For Google sign-in, email is automatically verified.
       const profile = {
         fullName: user.displayName || "New User",
         email: user.email || "",
         profileImage: user.photoURL || "https://picsum.photos/200",
-        nickname: user.displayName?.split(' ')[0] || "User",
-        mobile: user.phoneNumber || ""
       };
 
       localStorage.setItem("userProfile", JSON.stringify(profile));
@@ -79,6 +80,8 @@ export function SignupForm() {
     } catch (error: any) {
       console.error("Error during Google sign-up:", error);
       toast({ title: "Sign-up Failed", description: error.message, variant: "destructive" });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -87,7 +90,7 @@ export function SignupForm() {
        
       <header className="flex items-center gap-4 mb-8">
         <Link href="/welcome">
-            <Button variant="ghost" size="icon" className="text-yellow-400">
+            <Button variant="ghost" size="icon" className="text-yellow-400 hover:bg-yellow-400/10">
                 <ArrowLeft />
             </Button>
         </Link>
@@ -124,12 +127,19 @@ export function SignupForm() {
       </p>
 
       <div className="mt-4 space-y-4">
-        <Button onClick={handleEmailSignup} className="w-full h-12 bg-[#333333] hover:bg-[#444444] border border-gray-600 rounded-full text-lg">
-            Sign Up
+        <Button onClick={handleEmailSignup} className="w-full h-12 bg-[#333333] hover:bg-[#444444] border border-gray-600 rounded-full text-lg" disabled={isSubmitting}>
+            {isSubmitting ? 'Signing Up...' : 'Sign Up'}
         </Button>
-        <p className="text-center text-sm text-muted-foreground">or sign up with</p>
+        <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-600"></span>
+            </div>
+            <div className="relative flex justify-center text-sm">
+                <span className="bg-[#1A1A1A] px-2 text-muted-foreground">or sign up with</span>
+            </div>
+        </div>
         <div className="flex justify-center gap-4">
-            <Button onClick={handleGoogleSignup} variant="outline" size="icon" className="rounded-full bg-transparent border-gray-600 hover:bg-gray-700">
+            <Button onClick={handleGoogleSignup} variant="outline" size="icon" className="rounded-full bg-transparent border-gray-600 hover:bg-gray-700" disabled={isSubmitting}>
                 <Image src="/google-logo.svg" alt="Google" width={20} height={20} />
             </Button>
         </div>

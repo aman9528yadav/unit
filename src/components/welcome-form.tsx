@@ -10,11 +10,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendEmailVerification } from "firebase/auth";
 
 export function WelcomeForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -23,29 +24,48 @@ export function WelcomeForm() {
         toast({ title: "Login Failed", description: "Please enter both email and password.", variant: "destructive" });
         return;
     }
+    setIsSubmitting(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      if (!user.emailVerified) {
+        toast({
+          title: "Email Not Verified",
+          description: "Please check your inbox and verify your email before logging in.",
+          variant: "destructive",
+          action: (
+            <Button variant="secondary" onClick={() => sendEmailVerification(user)}>
+                Resend Email
+            </Button>
+          ),
+          duration: 9000,
+        });
+        await auth.signOut(); // Log the user out
+        setIsSubmitting(false);
+        return;
+      }
+      
       toast({ title: "Login Successful" });
       
-      const user = auth.currentUser;
-      if (user) {
-         const profile = {
-            fullName: user.displayName || "User",
-            email: user.email || "",
-            profileImage: user.photoURL || "https://picsum.photos/200",
-            nickname: user.displayName?.split(' ')[0] || "User",
-            mobile: user.phoneNumber || ""
-          };
-          localStorage.setItem("userProfile", JSON.stringify(profile));
-      }
+      const profile = {
+        fullName: user.displayName || email.split('@')[0], // Fallback for email/pass users
+        email: user.email || "",
+        profileImage: user.photoURL || "https://picsum.photos/200",
+      };
+      localStorage.setItem("userProfile", JSON.stringify(profile));
       router.push("/");
+
     } catch (error: any) {
        toast({ title: "Login Failed", description: "Invalid email or password. Please try again.", variant: "destructive" });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
   const handleGoogleLogin = async () => {
      const provider = new GoogleAuthProvider();
+     setIsSubmitting(true);
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
@@ -54,8 +74,6 @@ export function WelcomeForm() {
         fullName: user.displayName || "New User",
         email: user.email || "",
         profileImage: user.photoURL || "https://picsum.photos/200",
-        nickname: user.displayName?.split(' ')[0] || "User",
-        mobile: user.phoneNumber || ""
       };
 
       localStorage.setItem("userProfile", JSON.stringify(profile));
@@ -65,6 +83,8 @@ export function WelcomeForm() {
     } catch (error: any) {
       console.error("Error during Google sign-in:", error);
       toast({ title: "Sign-in Failed", description: error.message, variant: "destructive" });
+    } finally {
+        setIsSubmitting(false);
     }
   }
 
@@ -98,12 +118,19 @@ export function WelcomeForm() {
       </div>
       
       <div className="mt-8 space-y-4">
-        <Button onClick={handleLogin} className="w-full h-12 bg-[#333333] hover:bg-[#444444] border border-gray-600 rounded-full text-lg">
-            Log In
+        <Button onClick={handleLogin} className="w-full h-12 bg-[#333333] hover:bg-[#444444] border border-gray-600 rounded-full text-lg" disabled={isSubmitting}>
+           {isSubmitting ? 'Logging In...' : 'Log In'}
         </Button>
-        <p className="text-center text-sm text-muted-foreground">or sign up with</p>
+        <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-600"></span>
+            </div>
+            <div className="relative flex justify-center text-sm">
+                <span className="bg-[#1A1A1A] px-2 text-muted-foreground">or log in with</span>
+            </div>
+        </div>
         <div className="flex justify-center gap-4">
-            <Button onClick={handleGoogleLogin} variant="outline" size="icon" className="rounded-full bg-transparent border-gray-600 hover:bg-gray-700">
+            <Button onClick={handleGoogleLogin} variant="outline" size="icon" className="rounded-full bg-transparent border-gray-600 hover:bg-gray-700" disabled={isSubmitting}>
                 <Image src="/google-logo.svg" alt="Google" width={20} height={20} />
             </Button>
         </div>
