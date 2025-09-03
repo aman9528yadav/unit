@@ -10,8 +10,8 @@ import { ShieldAlert, Trash2, BellRing, Code, KeyRound } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 
-const DEVELOPER_EMAIL = "aman@example.com"; // Hardcoded developer email
-const DEV_PASSWORD = "password123"; // Hardcoded developer password
+const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com"; // Hardcoded developer email
+const DEV_PASSWORD = "991770"; // Hardcoded developer password
 
 interface UserProfile {
     email: string;
