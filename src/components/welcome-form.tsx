@@ -19,6 +19,10 @@ export function WelcomeForm() {
   const router = useRouter();
 
   const handleLogin = async () => {
+    if (!email || !password) {
+        toast({ title: "Login Failed", description: "Please enter both email and password.", variant: "destructive" });
+        return;
+    }
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({ title: "Login Successful" });
@@ -36,7 +40,7 @@ export function WelcomeForm() {
       }
       router.push("/");
     } catch (error: any) {
-       toast({ title: "Login Failed", description: error.message, variant: "destructive" });
+       toast({ title: "Login Failed", description: "Invalid email or password. Please try again.", variant: "destructive" });
     }
   };
 

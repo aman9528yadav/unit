@@ -48,7 +48,13 @@ export function SignupForm() {
 
     } catch (error: any) {
       console.error("Error during email sign-up:", error);
-      toast({ title: "Sign-up Failed", description: error.message, variant: "destructive" });
+      let description = "An unexpected error occurred. Please try again.";
+      if (error.code === 'auth/email-already-in-use') {
+        description = "This email address is already in use. Please log in or use a different email.";
+      } else if (error.code === 'auth/weak-password') {
+        description = "The password is too weak. Please choose a stronger password.";
+      }
+      toast({ title: "Sign-up Failed", description, variant: "destructive" });
     }
   };
 
