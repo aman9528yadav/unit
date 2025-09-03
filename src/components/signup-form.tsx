@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, sendEmailVerification, User } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, sendEmailVerification, User, onAuthStateChanged } from "firebase/auth";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 
 export function SignupForm() {
   const { toast } = useToast();
@@ -25,6 +25,8 @@ export function SignupForm() {
   const [resendTimer, setResendTimer] = useState(0);
   const [canResend, setCanResend] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -39,6 +41,27 @@ export function SignupForm() {
       if (interval) clearInterval(interval);
     };
   }, [resendTimer, emailSent]);
+  
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+            user.reload().then(() => {
+                if(user.emailVerified) {
+                    unsubscribe(); // Stop listening
+                    toast({
+                        title: "Email Verified!",
+                        description: "Your account is active. Please log in.",
+                    });
+                    router.push('/welcome');
+                }
+            });
+        }
+    });
+
+    return () => unsubscribe();
+  }, [currentUser, router, toast]);
 
 
   const startResendTimer = () => {
@@ -87,7 +110,9 @@ export function SignupForm() {
         email: email,
         profileImage: "https://picsum.photos/200", // Default profile image
       };
-      localStorage.setItem("userProfile", JSON.stringify(profile));
+      // We'll save the profile when the user successfully logs in for the first time
+      // This prevents saving a profile for an unverified email.
+      // localStorage.setItem("userProfile", JSON.stringify(profile));
 
     } catch (error: any) {
       console.error("Error during email sign-up:", error);
@@ -110,7 +135,6 @@ export function SignupForm() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
-      // For Google sign-in, email is automatically verified.
       const profile = {
         fullName: user.displayName || "New User",
         email: user.email || "",
@@ -135,13 +159,14 @@ export function SignupForm() {
             <p className="text-muted-foreground mb-6">
                 A verification link has been sent to <strong>{email}</strong>. Please check your inbox and click the link to activate your account.
             </p>
+             <p className="text-sm text-muted-foreground mb-6">Once verified, you will be automatically redirected to the login page.</p>
             <Button onClick={handleResendEmail} className="w-full h-12 bg-[#333333] hover:bg-[#444444] border border-gray-600 rounded-full text-lg" disabled={!canResend || isSubmitting}>
                 {isSubmitting ? 'Sending...' : (canResend ? 'Resend Email' : `Resend in ${resendTimer}s`)}
             </Button>
             <p className="text-center text-sm text-muted-foreground mt-8">
-                Already verified?{" "}
-                <Link href="/welcome" className="font-semibold text-yellow-400 hover:underline">
-                 Log In
+                Wrong email?{" "}
+                <Link href="/signup" onClick={() => setEmailSent(false)} className="font-semibold text-yellow-400 hover:underline">
+                 Go back
                 </Link>
             </p>
         </div>
@@ -149,66 +174,94 @@ export function SignupForm() {
   }
 
   return (
-    <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-[#1A1A1A] text-white p-6">
+    <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-background text-foreground p-6">
        
       <header className="flex items-center gap-4 mb-8">
         <Link href="/welcome">
-            <Button variant="ghost" size="icon" className="text-yellow-400 hover:bg-yellow-400/10">
+            <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10">
                 <ArrowLeft />
             </Button>
         </Link>
-        <h1 className="text-2xl font-bold text-yellow-400">Create Account</h1>
+        <h1 className="text-2xl font-bold text-primary">Create Account</h1>
       </header>
 
        <div className="text-center mb-8">
             <h2 className="text-2xl font-bold">Let's Start!</h2>
       </div>
       
-       <div className="bg-[#4D4D4D] p-8 rounded-2xl">
+       <div className="bg-card p-8 rounded-2xl">
             <div className="space-y-4">
                  <div>
                     <Label htmlFor="fullName">Full name</Label>
-                    <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Aman Yadav" className="bg-white text-black mt-2"/>
+                    <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Aman Yadav" className="bg-secondary mt-2"/>
                 </div>
                 <div>
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@example.com" className="bg-white text-black mt-2"/>
+                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@example.com" className="bg-secondary mt-2"/>
                 </div>
-                <div>
+                <div className="relative">
                     <Label htmlFor="password">Password</Label>
-                    <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="**********" className="bg-white text-black mt-2"/>
+                    <Input 
+                      id="password" 
+                      type={showPassword ? "text" : "password"} 
+                      value={password} 
+                      onChange={(e) => setPassword(e.target.value)} 
+                      placeholder="**********" 
+                      className="bg-secondary mt-2 pr-10"
+                    />
+                     <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-9 text-muted-foreground"
+                    >
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
                 </div>
-                 <div>
+                 <div className="relative">
                     <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="**********" className="bg-white text-black mt-2"/>
+                    <Input 
+                      id="confirmPassword" 
+                      type={showConfirmPassword ? "text" : "password"} 
+                      value={confirmPassword} 
+                      onChange={(e) => setConfirmPassword(e.target.value)} 
+                      placeholder="**********" 
+                      className="bg-secondary mt-2 pr-10"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-9 text-muted-foreground"
+                    >
+                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
                 </div>
             </div>
       </div>
       
       <p className="text-center text-xs text-muted-foreground my-6">
-          By continuing, you agree to <Link href="#" className="text-yellow-400">Terms of Use</Link> and <Link href="#" className="text-yellow-400">Privacy Policy</Link>.
+          By continuing, you agree to <Link href="#" className="text-primary">Terms of Use</Link> and <Link href="#" className="text-primary">Privacy Policy</Link>.
       </p>
 
       <div className="mt-4 space-y-4">
-        <Button onClick={handleEmailSignup} className="w-full h-12 bg-[#333333] hover:bg-[#444444] border border-gray-600 rounded-full text-lg" disabled={isSubmitting}>
+        <Button onClick={handleEmailSignup} className="w-full h-12 bg-primary hover:bg-primary/90 rounded-full text-lg text-primary-foreground" disabled={isSubmitting}>
             {isSubmitting ? 'Signing Up...' : 'Sign Up'}
         </Button>
         <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-600"></span>
+                <span className="w-full border-t border-border"></span>
             </div>
             <div className="relative flex justify-center text-sm">
-                <span className="bg-[#1A1A1A] px-2 text-muted-foreground">or sign up with</span>
+                <span className="bg-background px-2 text-muted-foreground">or sign up with</span>
             </div>
         </div>
         <div className="flex justify-center gap-4">
-            <Button onClick={handleGoogleSignup} variant="outline" size="icon" className="rounded-full bg-transparent border-gray-600 hover:bg-gray-700" disabled={isSubmitting}>
+            <Button onClick={handleGoogleSignup} variant="outline" size="icon" className="rounded-full" disabled={isSubmitting}>
                 <Image src="/google-logo.svg" alt="Google" width={20} height={20} />
             </Button>
         </div>
         <p className="text-center text-sm text-muted-foreground mt-8">
             Already have an account?{" "}
-            <Link href="/welcome" className="font-semibold text-yellow-400 hover:underline">
+            <Link href="/welcome" className="font-semibold text-primary hover:underline">
              Log in
             </Link>
         </p>

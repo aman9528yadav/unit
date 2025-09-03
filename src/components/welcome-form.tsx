@@ -10,11 +10,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendEmailVerification } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { Eye, EyeOff } from "lucide-react";
 
 export function WelcomeForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -29,8 +31,17 @@ export function WelcomeForm() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // This check is now removed. We assume verification happened at signup.
-      // if (!user.emailVerified) { ... }
+      // This assumes email is verified at sign-up.
+      // If you want to enforce it here, you can add:
+      if (!user.emailVerified) {
+         toast({ 
+           title: "Login Failed", 
+           description: "Please verify your email address before logging in. Check your inbox for the verification link.", 
+           variant: "destructive" 
+         });
+         setIsSubmitting(false);
+         return;
+      }
       
       const profile = {
         fullName: user.displayName || email.split('@')[0], // Fallback for email/pass users
@@ -72,9 +83,9 @@ export function WelcomeForm() {
   }
 
   return (
-    <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-[#1A1A1A] text-white p-6">
+    <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-background text-foreground p-6">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-yellow-400">Log In</h1>
+        <h1 className="text-3xl font-bold text-primary">Log In</h1>
       </div>
 
       <div className="text-center mb-8">
@@ -84,42 +95,56 @@ export function WelcomeForm() {
           </p>
       </div>
       
-      <div className="bg-[#4D4D4D] p-8 rounded-2xl">
+      <div className="bg-card p-8 rounded-2xl">
           <div className="space-y-6">
             <div>
                 <Label htmlFor="email">Username or email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-white text-black mt-2" placeholder="example@example.com" />
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-secondary mt-2" placeholder="example@example.com" />
             </div>
-            <div>
+            <div className="relative">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-white text-black mt-2" placeholder="**********" />
+                <Input 
+                  id="password" 
+                  type={showPassword ? "text" : "password"} 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  className="bg-secondary mt-2 pr-10" 
+                  placeholder="**********" 
+                />
+                <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-9 text-muted-foreground"
+                >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
                  <div className="text-right mt-2">
-                    <Link href="#" className="text-xs text-yellow-400 hover:underline">Forgot Password?</Link>
+                    <Link href="#" className="text-xs text-primary hover:underline">Forgot Password?</Link>
                 </div>
             </div>
           </div>
       </div>
       
       <div className="mt-8 space-y-4">
-        <Button onClick={handleLogin} className="w-full h-12 bg-[#333333] hover:bg-[#444444] border border-gray-600 rounded-full text-lg" disabled={isSubmitting}>
+        <Button onClick={handleLogin} className="w-full h-12 bg-primary hover:bg-primary/90 rounded-full text-lg text-primary-foreground" disabled={isSubmitting}>
            {isSubmitting ? 'Logging In...' : 'Log In'}
         </Button>
         <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-600"></span>
+                <span className="w-full border-t border-border"></span>
             </div>
             <div className="relative flex justify-center text-sm">
-                <span className="bg-[#1A1A1A] px-2 text-muted-foreground">or log in with</span>
+                <span className="bg-background px-2 text-muted-foreground">or log in with</span>
             </div>
         </div>
         <div className="flex justify-center gap-4">
-            <Button onClick={handleGoogleLogin} variant="outline" size="icon" className="rounded-full bg-transparent border-gray-600 hover:bg-gray-700" disabled={isSubmitting}>
+            <Button onClick={handleGoogleLogin} variant="outline" size="icon" className="rounded-full" disabled={isSubmitting}>
                 <Image src="/google-logo.svg" alt="Google" width={20} height={20} />
             </Button>
         </div>
         <p className="text-center text-sm text-muted-foreground mt-8">
             Don't have an account?{" "}
-            <Link href="/signup" className="font-semibold text-yellow-400 hover:underline">
+            <Link href="/signup" className="font-semibold text-primary hover:underline">
              Sign Up
             </Link>
         </p>
