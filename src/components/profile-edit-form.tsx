@@ -13,9 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { Calendar } from "../ui/calendar";
+import { Calendar } from "@/components/ui/calendar";
 
 export function ProfileEditForm() {
   const [profile, setProfile] = useState({ fullName: '', email: '', profileImage: '', dob: '' });
@@ -76,11 +76,15 @@ export function ProfileEditForm() {
           photoURL: profile.profileImage,
         });
 
-        const updatedProfile = { ...profile };
+        // We also need to update the dob in our local storage profile
+        const storedProfile = localStorage.getItem("userProfile");
+        const existingProfile = storedProfile ? JSON.parse(storedProfile) : {};
+        const updatedProfile = { ...existingProfile, ...profile };
+
         localStorage.setItem("userProfile", JSON.stringify(updatedProfile));
         
-        toast({ title: "Profile Updated", description: "Your profile has been updated successfully." });
-        router.push("/profile");
+        toast({ title: "Profile Updated", description: "Your personal information has been updated." });
+        router.push("/profile/success");
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -205,6 +209,9 @@ export function ProfileEditForm() {
               </PopoverContent>
             </Popover>
           </div>
+           <Button onClick={handleSaveChanges} className="w-full" disabled={isSubmitting}>
+             {isSubmitting ? "Saving..." : "Save Personal Info"}
+           </Button>
         </CardContent>
       </Card>
 
@@ -234,9 +241,6 @@ export function ProfileEditForm() {
         </CardContent>
       </Card>
       
-      <Button onClick={handleSaveChanges} className="w-full h-12" disabled={isSubmitting}>
-        {isSubmitting ? "Saving..." : "Save Changes"}
-      </Button>
     </div>
   );
 }
