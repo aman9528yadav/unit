@@ -1,10 +1,11 @@
 
 "use client";
 
+import { useState, useEffect } from 'react';
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Gift, Zap, Rocket } from "lucide-react";
-import { format } from "date-fns";
+import { ArrowLeft, Gift, Zap, Rocket, Timer } from "lucide-react";
+import { format, intervalToDuration } from "date-fns";
 
 const updates = [
   {
@@ -36,8 +37,62 @@ const updates = [
   },
 ];
 
+const UPDATE_TIMER_STORAGE_KEY = "nextUpdateTime";
+
 
 export function Updates() {
+  const [targetDate, setTargetDate] = useState<Date | null>(null);
+  const [timeLeft, setTimeLeft] = useState<Duration | null>(null);
+
+  useEffect(() => {
+    const loadTargetDate = () => {
+      const savedDate = localStorage.getItem(UPDATE_TIMER_STORAGE_KEY);
+      if (savedDate) {
+        const date = new Date(savedDate);
+        if (!isNaN(date.getTime()) && date > new Date()) {
+          setTargetDate(date);
+        } else {
+          setTargetDate(null);
+          localStorage.removeItem(UPDATE_TIMER_STORAGE_KEY);
+        }
+      }
+    };
+
+    loadTargetDate();
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === UPDATE_TIMER_STORAGE_KEY) {
+        loadTargetDate();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  useEffect(() => {
+    if (!targetDate) {
+      setTimeLeft(null);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      const now = new Date();
+      if (targetDate > now) {
+        const duration = intervalToDuration({ start: now, end: targetDate });
+        setTimeLeft(duration);
+      } else {
+        setTimeLeft(null);
+        setTargetDate(null);
+        localStorage.removeItem(UPDATE_TIMER_STORAGE_KEY);
+        clearInterval(timer);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6">
       <header className="flex items-center gap-4">
@@ -48,6 +103,33 @@ export function Updates() {
         </Link>
         <h1 className="text-xl font-bold">What's New</h1>
       </header>
+
+      {timeLeft && (
+        <div className="bg-card p-6 rounded-xl text-center">
+            <div className='flex items-center justify-center gap-2 mb-4'>
+                <Timer className="text-accent" />
+                <h2 className="text-lg font-bold text-foreground">Next Update In</h2>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+                <div className='bg-background p-3 rounded-lg'>
+                    <p className="text-3xl font-bold">{String(timeLeft.days || 0).padStart(2, '0')}</p>
+                    <p className="text-xs text-muted-foreground">Days</p>
+                </div>
+                <div className='bg-background p-3 rounded-lg'>
+                    <p className="text-3xl font-bold">{String(timeLeft.hours || 0).padStart(2, '0')}</p>
+                    <p className="text-xs text-muted-foreground">Hours</p>
+                </div>
+                 <div className='bg-background p-3 rounded-lg'>
+                    <p className="text-3xl font-bold">{String(timeLeft.minutes || 0).padStart(2, '0')}</p>
+                    <p className="text-xs text-muted-foreground">Minutes</p>
+                </div>
+                 <div className='bg-background p-3 rounded-lg'>
+                    <p className="text-3xl font-bold">{String(timeLeft.seconds || 0).padStart(2, '0')}</p>
+                    <p className="text-xs text-muted-foreground">Seconds</p>
+                </div>
+            </div>
+        </div>
+      )}
 
       <div className="relative pl-8">
         <div className="absolute left-4 top-4 bottom-4 w-0.5 bg-border"></div>

@@ -6,13 +6,14 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff } from 'lucide-react';
+import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 const DEFAULT_DEV_PASSWORD = "121212";
 const DEV_PASSWORD_STORAGE_KEY = "developer_password";
+const UPDATE_TIMER_STORAGE_KEY = "nextUpdateTime";
 
 interface UserProfile {
     email: string;
@@ -31,6 +32,8 @@ export function DevPanel() {
     const [showAuthPassword, setShowAuthPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+    const [countdownDate, setCountdownDate] = useState('');
+    const [countdownTime, setCountdownTime] = useState('');
     const router = useRouter();
     const { toast } = useToast();
 
@@ -50,6 +53,16 @@ export function DevPanel() {
                 setIsAuthorized(true);
             }
         }
+
+        const storedTimer = localStorage.getItem(UPDATE_TIMER_STORAGE_KEY);
+        if (storedTimer) {
+            const date = new Date(storedTimer);
+            if (!isNaN(date.getTime())) {
+                setCountdownDate(date.toISOString().split('T')[0]);
+                setCountdownTime(date.toTimeString().split(' ')[0].substring(0, 5));
+            }
+        }
+
     }, []);
     
     const handlePasswordSubmit = () => {
@@ -83,6 +96,29 @@ export function DevPanel() {
         setNewPassword('');
         setConfirmNewPassword('');
         toast({ title: "Password Updated", description: "Developer password has been changed successfully." });
+    };
+
+    const handleSetTimer = () => {
+        if (!countdownDate || !countdownTime) {
+            toast({ title: 'Invalid Date/Time', description: 'Please select both a date and a time.', variant: 'destructive' });
+            return;
+        }
+        const targetDateTime = new Date(`${countdownDate}T${countdownTime}`);
+        if (isNaN(targetDateTime.getTime())) {
+            toast({ title: 'Invalid Date/Time', description: 'The selected date or time is not valid.', variant: 'destructive' });
+            return;
+        }
+        localStorage.setItem(UPDATE_TIMER_STORAGE_KEY, targetDateTime.toISOString());
+        window.dispatchEvent(new StorageEvent('storage', { key: UPDATE_TIMER_STORAGE_KEY, newValue: targetDateTime.toISOString() }));
+        toast({ title: 'Countdown Set!', description: `Timer set for ${targetDateTime.toLocaleString()}` });
+    };
+
+    const handleClearTimer = () => {
+        localStorage.removeItem(UPDATE_TIMER_STORAGE_KEY);
+        window.dispatchEvent(new StorageEvent('storage', { key: UPDATE_TIMER_STORAGE_KEY, newValue: null }));
+        setCountdownDate('');
+        setCountdownTime('');
+        toast({ title: 'Countdown Cleared' });
     };
 
     if (!isClient) {
@@ -198,6 +234,36 @@ export function DevPanel() {
                     <Button onClick={handleChangePassword} className="w-full">
                         Update Developer Password
                     </Button>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Timer /> Update Countdown</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <div>
+                        <Label htmlFor="countdownDate">Target Date</Label>
+                        <Input
+                            id="countdownDate"
+                            type="date"
+                            value={countdownDate}
+                            onChange={(e) => setCountdownDate(e.target.value)}
+                        />
+                    </div>
+                     <div>
+                        <Label htmlFor="countdownTime">Target Time</Label>
+                        <Input
+                            id="countdownTime"
+                            type="time"
+                            value={countdownTime}
+                            onChange={(e) => setCountdownTime(e.target.value)}
+                        />
+                    </div>
+                     <div className="flex gap-2">
+                        <Button onClick={handleSetTimer} className="w-full">Set Timer</Button>
+                        <Button onClick={handleClearTimer} variant="destructive" className="w-full">Clear Timer</Button>
+                    </div>
                 </CardContent>
             </Card>
 
