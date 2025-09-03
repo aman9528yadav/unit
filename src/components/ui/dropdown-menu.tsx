@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -181,6 +182,20 @@ const DropdownMenuShortcut = ({
 }
 DropdownMenuShortcut.displayName = "DropdownMenuShortcut"
 
+const DropdownMenuFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={cn("flex items-center justify-center p-1", className)}
+      {...props}
+    />
+  );
+});
+DropdownMenuFooter.displayName = "DropdownMenuFooter";
+
 export {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -197,4 +212,5 @@ export {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
+  DropdownMenuFooter,
 }

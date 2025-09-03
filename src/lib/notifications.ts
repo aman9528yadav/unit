@@ -70,4 +70,35 @@ export function markAsRead(id: string) {
     }));
 }
 
+/**
+ * Removes a specific notification.
+ * @param id - The ID of the notification to remove.
+ */
+export function removeNotification(id: string) {
+    if (typeof window === 'undefined') return;
+
+    const notifications = getNotifications();
+    const updatedNotifications = notifications.filter(n => n.id !== id);
+    localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(updatedNotifications));
+    
+    window.dispatchEvent(new StorageEvent('storage', {
+        key: NOTIFICATIONS_STORAGE_KEY,
+        newValue: JSON.stringify(updatedNotifications),
+    }));
+}
+
+/**
+ * Removes all notifications.
+ */
+export function removeAllNotifications() {
+    if (typeof window === 'undefined') return;
+
+    localStorage.removeItem(NOTIFICATIONS_STORAGE_KEY);
+    
+    window.dispatchEvent(new StorageEvent('storage', {
+        key: NOTIFICATIONS_STORAGE_KEY,
+        newValue: '[]',
+    }));
+}
+
     

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Bell, Check, Info, Rocket } from "lucide-react";
+import { Bell, Check, Info, Rocket, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,8 +11,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuFooter,
 } from "@/components/ui/dropdown-menu";
-import { getNotifications, markAsRead, type AppNotification } from "@/lib/notifications";
+import { getNotifications, markAsRead, removeNotification, removeAllNotifications, type AppNotification } from "@/lib/notifications";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
@@ -57,6 +58,19 @@ export function Notifications() {
     markAsRead(id);
     loadNotifications();
   };
+  
+  const handleRemoveNotification = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation(); // Prevent dropdown item from being triggered
+    removeNotification(id);
+    loadNotifications();
+    toast({ title: "Notification removed." });
+  }
+
+  const handleRemoveAll = () => {
+      removeAllNotifications();
+      loadNotifications();
+      toast({ title: "All notifications cleared." });
+  }
 
   const handleMarkAllAsRead = () => {
     notifications.forEach(n => {
@@ -100,10 +114,11 @@ export function Notifications() {
         </div>
         <DropdownMenuSeparator />
         {notifications.length > 0 ? (
-            notifications.map((notification) => (
+          <>
+            {notifications.map((notification) => (
             <DropdownMenuItem 
                 key={notification.id} 
-                className={`flex items-start gap-3 p-2 cursor-pointer ${!notification.read ? 'bg-accent/20' : ''}`}
+                className={`flex items-start gap-3 p-2 cursor-pointer group relative ${!notification.read ? 'bg-accent/20' : ''}`}
                 onSelect={(e) => { e.preventDefault(); handleMarkAsRead(notification.id); }}
             >
                 <div className="flex-shrink-0 mt-1">{iconMap[notification.icon]}</div>
@@ -113,8 +128,21 @@ export function Notifications() {
                 <p className="text-xs text-muted-foreground/80 mt-1">{formatDistanceToNow(new Date(notification.createdAt))} ago</p>
                 </div>
                  {!notification.read && <div className="w-2 h-2 rounded-full bg-primary self-center"></div>}
+                 <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full opacity-0 group-hover:opacity-100"
+                    onClick={(e) => handleRemoveNotification(e, notification.id)}
+                 >
+                    <X className="w-4 h-4"/>
+                 </Button>
             </DropdownMenuItem>
-            ))
+            ))}
+             <DropdownMenuSeparator />
+             <DropdownMenuItem onSelect={handleRemoveAll} className="flex items-center justify-center gap-2 text-muted-foreground">
+                <Trash2 className="w-4 h-4"/> Clear All
+             </DropdownMenuItem>
+          </>
         ) : (
              <DropdownMenuItem className="text-center text-muted-foreground" disabled>
                 You have no notifications.
