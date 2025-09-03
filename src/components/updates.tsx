@@ -43,6 +43,12 @@ const UPDATE_TIMER_STORAGE_KEY = "nextUpdateTime";
 export function Updates() {
   const [targetDate, setTargetDate] = useState<Date | null>(null);
   const [timeLeft, setTimeLeft] = useState<Duration | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
 
   const loadTargetDate = () => {
     const savedDate = localStorage.getItem(UPDATE_TIMER_STORAGE_KEY);
@@ -106,7 +112,7 @@ export function Updates() {
         <h1 className="text-xl font-bold">What's New</h1>
       </header>
 
-      {timeLeft && (
+      {isClient && timeLeft && (
         <div className="bg-card p-6 rounded-xl text-center">
             <div className='flex items-center justify-center gap-2 mb-4'>
                 <Timer className="text-accent" />
@@ -142,7 +148,7 @@ export function Updates() {
                         <update.icon className="w-5 h-5" />
                     </div>
                     <p className="text-sm text-muted-foreground ml-8">
-                        {format(new Date(update.date), "d MMM yyyy, h:mm a")}
+                        {isClient ? format(new Date(update.date), "d MMM yyyy, h:mm a") : ''}
                     </p>
                 </div>
                 <div className="bg-card p-4 rounded-xl ml-8">
