@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2 } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2, ChevronDown } from "lucide-react";
 import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import { parseConversionQuery, ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +36,7 @@ import { incrementTodaysCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { CustomUnit, CustomCategory } from "./custom-unit-manager";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { cn } from "@/lib/utils";
 
 
 const regions: Region[] = ['International', 'India'];
@@ -667,24 +668,12 @@ export function Converter() {
                 </div>
                 <div>
                     <label className="text-sm text-muted-foreground flex items-center gap-1.5"><LayoutGrid size={16}/> {t('converter.category')}</label>
-                     <Select value={selectedCategory.name} onValueChange={handleCategoryChange}>
-                        <SelectTrigger className="bg-background mt-1">
-                             <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {conversionCategories.map(cat => {
-                                const Icon = cat.icon;
-                                return (
-                                <SelectItem key={cat.name} value={cat.name}>
-                                    <div className="flex items-center gap-2">
-                                        <Icon className="w-4 h-4" />
-                                        <span>{t(`categories.${cat.name.toLowerCase()}`, { defaultValue: cat.name })}</span>
-                                    </div>
-                                </SelectItem>
-                                )
-                            })}
-                        </SelectContent>
-                    </Select>
+                     <CategorySelector 
+                        categories={conversionCategories}
+                        selectedCategory={selectedCategory}
+                        onCategoryChange={handleCategoryChange}
+                        t={t}
+                     />
                 </div>
             </div>
     
@@ -824,6 +813,49 @@ export function Converter() {
       
     </div>
   );
+}
+
+function CategorySelector({ categories, selectedCategory, onCategoryChange, t }: { categories: ConversionCategory[], selectedCategory: ConversionCategory, onCategoryChange: (name: string) => void, t: (key: string, params?: any) => string }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const SelectedIcon = selectedCategory.icon;
+
+    return (
+        <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="bg-background mt-1 w-full justify-between">
+                    <div className="flex items-center gap-2">
+                        <SelectedIcon className="w-4 h-4 text-accent" />
+                        <span>{t(`categories.${selectedCategory.name.toLowerCase()}`, { defaultValue: selectedCategory.name })}</span>
+                    </div>
+                    <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] p-2">
+                <div className="grid grid-cols-3 gap-2">
+                    {categories.map(cat => {
+                        const Icon = cat.icon;
+                        const isSelected = cat.name === selectedCategory.name;
+                        return (
+                            <button
+                                key={cat.name}
+                                onClick={() => {
+                                    onCategoryChange(cat.name);
+                                    setIsOpen(false);
+                                }}
+                                className={cn(
+                                    "flex flex-col items-center justify-center gap-2 p-2 rounded-lg aspect-square transition-colors",
+                                    isSelected ? "bg-primary/20 text-primary" : "hover:bg-muted"
+                                )}
+                            >
+                                <Icon className="w-6 h-6" />
+                                <span className="text-xs text-center">{t(`categories.${cat.name.toLowerCase()}`, { defaultValue: cat.name })}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
 }
 
 function UnitSelect({ units, value, onValueChange, t }: { units: Unit[], value: string, onValueChange: (value: string) => void, t: (key: string, params?: any) => string }) {
