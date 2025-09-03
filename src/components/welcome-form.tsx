@@ -79,6 +79,11 @@ export function WelcomeForm() {
         setIsSubmitting(false);
     }
   }
+  
+  const handleSkip = () => {
+    // Just navigate to the home page, no user profile is set
+    router.push("/");
+  };
 
   return (
     <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-background text-foreground p-6">
@@ -140,6 +145,11 @@ export function WelcomeForm() {
                 <Image src="/google-logo.svg" alt="Google" width={20} height={20} />
             </Button>
         </div>
+
+         <div className="text-center">
+             <Button variant="link" onClick={handleSkip} className="text-muted-foreground">Skip for now</Button>
+        </div>
+
         <p className="text-center text-sm text-muted-foreground mt-8">
             Don't have an account?{" "}
             <Link href="/signup" className="font-semibold text-primary hover:underline">

@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 
-const getUserNotesKey = (email: string) => `${email}_${NOTES_STORAGE_KEY_BASE}`;
+const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
 
 const FONT_COLORS = [
   { name: 'Default', color: 'inherit' },
@@ -57,6 +57,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const isNewNote = noteId === 'new';
     
     const contentSetRef = useRef(false);
+    const notesKey = getUserNotesKey(profile?.email || null);
+
 
     useEffect(() => {
         setIsClient(true);
@@ -64,29 +66,29 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         if (storedProfile) {
             const parsedProfile = JSON.parse(storedProfile);
             setProfile(parsedProfile);
+        }
+    }, []);
 
-            if (!isNewNote && parsedProfile.email) {
-                const savedNotes = localStorage.getItem(getUserNotesKey(parsedProfile.email));
-                if (savedNotes) {
-                    const notes: Note[] = JSON.parse(savedNotes);
-                    const noteToEdit = notes.find(note => note.id === noteId);
-                    if (noteToEdit) {
-                        setTitle(noteToEdit.title);
-                        setContent(noteToEdit.content);
-                        contentSetRef.current = false;
-                        setIsFavorite(noteToEdit.isFavorite || false);
-                        setCategory(noteToEdit.category || '');
-                        setAttachment(noteToEdit.attachment || null);
-                    } else {
-                        toast({ title: "Note not found", variant: "destructive" });
-                        router.push('/notes');
-                    }
+    useEffect(() => {
+        if (!isNewNote && notesKey) {
+            const savedNotes = localStorage.getItem(notesKey);
+            if (savedNotes) {
+                const notes: Note[] = JSON.parse(savedNotes);
+                const noteToEdit = notes.find(note => note.id === noteId);
+                if (noteToEdit) {
+                    setTitle(noteToEdit.title);
+                    setContent(noteToEdit.content);
+                    contentSetRef.current = false;
+                    setIsFavorite(noteToEdit.isFavorite || false);
+                    setCategory(noteToEdit.category || '');
+                    setAttachment(noteToEdit.attachment || null);
+                } else {
+                    toast({ title: "Note not found", variant: "destructive" });
+                    router.push('/notes');
                 }
             }
-        } else {
-            router.push('/welcome');
         }
-    }, [noteId, isNewNote, router, toast]);
+    }, [noteId, isNewNote, router, toast, notesKey]);
 
     useEffect(() => {
         if (editorRef.current && content && !contentSetRef.current) {
@@ -212,8 +214,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
 
     const handleSave = (isAutoSave = false) => {
-        if (!profile?.email) return;
-
          const currentContent = editorRef.current?.innerHTML || '';
         if (!title.trim() && !currentContent.trim()) {
             if (!isAutoSave) {
@@ -226,7 +226,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             return;
         }
 
-        const notesKey = getUserNotesKey(profile.email);
         const savedNotes = localStorage.getItem(notesKey);
         const notes: Note[] = savedNotes ? JSON.parse(savedNotes) : [];
         const now = new Date().toISOString();
@@ -272,11 +271,10 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     };
     
     const handleSoftDelete = () => {
-        if (isNewNote || !profile?.email) {
+        if (isNewNote) {
              router.push('/notes');
              return;
         };
-        const notesKey = getUserNotesKey(profile.email);
         const savedNotes = localStorage.getItem(notesKey);
         const notes: Note[] = savedNotes ? JSON.parse(savedNotes) : [];
         const updatedNotes = notes.map(note => 

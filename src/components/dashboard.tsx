@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { getTodaysCalculations, getWeeklyCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { recordVisit } from "@/lib/streak";
+import { cn } from "@/lib/utils";
 
 // This should match the key in notepad.tsx
 const NOTES_STORAGE_KEY_BASE = 'userNotesV2';
@@ -31,8 +32,10 @@ interface UserProfile {
 const getUserNotesKey = (email: string) => `${email}_${NOTES_STORAGE_KEY_BASE}`;
 
 const getSavedNotesCount = (email: string | null) => {
-    if (typeof window === 'undefined' || !email) return 0;
-    const savedNotes = localStorage.getItem(getUserNotesKey(email));
+    if (typeof window === 'undefined') return 0;
+    // For guests, use a generic key
+    const storageKey = email ? getUserNotesKey(email) : 'guest_userNotesV2';
+    const savedNotes = localStorage.getItem(storageKey);
     if (savedNotes) {
         try {
             const notes: Note[] = JSON.parse(savedNotes);
@@ -56,8 +59,8 @@ export function Dashboard() {
   const { t } = useLanguage();
 
   const updateStats = (email: string | null) => {
-    setTodayCalculations(getTodaysCalculations());
-    setWeeklyCalculations(getWeeklyCalculations());
+    setTodayCalculations(getTodaysCalculations(email));
+    setWeeklyCalculations(getWeeklyCalculations(email));
     setSavedNotesCount(getSavedNotesCount(email));
   }
 
@@ -69,6 +72,8 @@ export function Dashboard() {
         setProfile(parsedProfile);
         recordVisit(parsedProfile.email); // Record the visit for streak tracking
         updateStats(parsedProfile.email);
+    } else {
+        updateStats(null); // For guest users
     }
   }, []);
 
@@ -101,14 +106,14 @@ export function Dashboard() {
     <div className="w-full max-w-md mx-auto flex flex-col gap-6">
       <header className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">{t('dashboard.greeting', { name: profile?.fullName || "User" })}</h1>
+          <h1 className="text-2xl font-bold">{t('dashboard.greeting', { name: profile?.fullName || "Guest" })}</h1>
           <p className="text-muted-foreground">{t('dashboard.challenge')}</p>
         </div>
         <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon"><Search /></Button>
             <Button variant="ghost" size="icon"><Bell /></Button>
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/profile">
+            <Button variant="ghost" size="icon" asChild disabled={!profile}>
+              <Link href="/profile" className={cn(!profile && "pointer-events-none opacity-50")}>
                 <User />
               </Link>
             </Button>

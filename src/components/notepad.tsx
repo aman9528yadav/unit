@@ -65,7 +65,7 @@ type NoteView = 'all' | 'favorites' | 'trash' | 'category';
 type LayoutView = 'list' | 'card';
 type SortKey = 'updatedAt' | 'createdAt' | 'title';
 
-const getUserNotesKey = (email: string) => `${email}_${NOTES_STORAGE_KEY_BASE}`;
+const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
 
 interface UserProfile {
     fullName: string;
@@ -90,20 +90,33 @@ export function Notepad() {
     const { toast } = useToast();
     const router = useRouter();
     
+    const notesKey = getUserNotesKey(profile?.email || null);
+
     useEffect(() => {
         setIsClient(true);
         const storedProfile = localStorage.getItem('userProfile');
         if (storedProfile) {
             const parsedProfile = JSON.parse(storedProfile);
             setProfile(parsedProfile);
-            loadNotes(parsedProfile.email);
-        } else {
-            router.push('/welcome');
         }
-    }, [router]);
+    }, []);
+
+    useEffect(() => {
+        loadNotes();
+        // Add event listener for storage changes
+        const handleStorageChange = (event: StorageEvent) => {
+            if (event.key === notesKey) {
+                loadNotes();
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, [notesKey]);
     
-    const loadNotes = (email: string) => {
-        const savedNotes = localStorage.getItem(getUserNotesKey(email));
+    const loadNotes = () => {
+        const savedNotes = localStorage.getItem(notesKey);
         if (savedNotes) {
             const parsedNotes: Note[] = JSON.parse(savedNotes);
             const thirtyDaysAgo = new Date();
@@ -117,17 +130,18 @@ export function Notepad() {
             });
 
             if (freshNotes.length !== parsedNotes.length) {
-                localStorage.setItem(getUserNotesKey(email), JSON.stringify(freshNotes));
+                localStorage.setItem(notesKey, JSON.stringify(freshNotes));
             }
             setNotes(freshNotes);
+        } else {
+            setNotes([]);
         }
     }
 
 
     const updateNotes = (newNotes: Note[]) => {
-        if (!profile?.email) return;
         setNotes(newNotes);
-        localStorage.setItem(getUserNotesKey(profile.email), JSON.stringify(newNotes));
+        localStorage.setItem(notesKey, JSON.stringify(newNotes));
     };
 
     const handleSoftDelete = (noteId: string) => {

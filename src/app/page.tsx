@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -12,13 +13,10 @@ export default function Home() {
   const { language } = useLanguage(); // Load language context
 
   useEffect(() => {
-    const profile = localStorage.getItem("userProfile");
-    if (!profile) {
-      router.replace("/welcome"); // Redirect to the new login page
-    } else {
-      setLoading(false);
-    }
-  }, [router]);
+    // We no longer redirect to /welcome. 
+    // The Dashboard component will handle the guest vs. logged-in state.
+    setLoading(false);
+  }, []);
 
   if (loading) {
     return (
