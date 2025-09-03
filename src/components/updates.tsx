@@ -4,11 +4,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Gift, Zap, Rocket } from "lucide-react";
+import { format } from "date-fns";
 
 const updates = [
   {
     version: "v2.1.0",
-    date: "August 2024",
+    date: "2024-08-15T10:00:00Z",
     title: "Time Utilities & Pomodoro Timer",
     description: "Introducing a new suite of time management tools, including a Pomodoro timer, stopwatch, and various date calculators to boost your productivity.",
     icon: Zap,
@@ -17,7 +18,7 @@ const updates = [
   },
   {
     version: "v2.0.0",
-    date: "July 2024",
+    date: "2024-07-20T09:00:00Z",
     title: "Custom Units & Categories",
     description: "You can now create your own custom units and even new conversion categories directly from the settings page for ultimate personalization.",
     icon: Gift,
@@ -26,7 +27,7 @@ const updates = [
   },
   {
     version: "v1.0.0",
-    date: "June 2024",
+    date: "2024-06-01T12:00:00Z",
     title: "Initial Launch",
     description: "Welcome to UniConvert! The initial version includes a robust unit converter, a scientific calculator, and a notepad for all your needs.",
     icon: Rocket,
@@ -56,7 +57,9 @@ export function Updates() {
                     <update.icon className="w-5 h-5" />
                 </div>
                 <div className="bg-card p-4 rounded-xl">
-                    <p className="text-sm text-muted-foreground mb-1">{update.date}</p>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {format(new Date(update.date), "d MMM yyyy, h:mm a")}
+                    </p>
                     <h2 className="text-lg font-semibold text-foreground mb-2">{update.title}</h2>
                     <p className="text-sm text-muted-foreground">{update.description}</p>
                 </div>
@@ -66,4 +69,3 @@ export function Updates() {
     </div>
   );
 }
-
