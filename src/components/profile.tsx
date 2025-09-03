@@ -14,7 +14,8 @@ import {
   HelpCircle,
   LogOut,
   Code,
-  Gift
+  Gift,
+  Pencil
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -106,6 +107,11 @@ export function Profile() {
               className="rounded-full border-4 border-white object-cover w-28 h-28"
               data-ai-hint="profile picture"
             />
+             <Link href="/profile/edit" passHref>
+                <Button variant="outline" size="icon" className="absolute bottom-0 right-0 rounded-full w-8 h-8 bg-background text-foreground hover:bg-muted">
+                    <Pencil size={16} />
+                </Button>
+             </Link>
           </div>
           <h2 className="text-2xl font-bold mt-2">{profile.fullName}</h2>
           <p className="text-sm">{profile.email}</p>
