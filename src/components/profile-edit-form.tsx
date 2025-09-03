@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Pencil, CalendarIcon } from "lucide-react";
+import { ArrowLeft, Pencil, CalendarIcon, KeyRound, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getStreakData, StreakData } from "@/lib/streak";
+import { auth } from "@/lib/firebase";
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
 
 
 const defaultProfile = {
@@ -45,6 +47,14 @@ export function ProfileEditForm() {
   const [dob, setDob] = useState<Date | undefined>(new Date(defaultProfile.dob));
   const [imagePreview, setImagePreview] = useState<string>(defaultProfile.profileImage);
   const [streakData, setStreakData] = useState<StreakData>({ bestStreak: 0, currentStreak: 0, daysNotOpened: 0 });
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const router = useRouter();
@@ -99,8 +109,40 @@ export function ProfileEditForm() {
     router.push("/profile/success");
   };
 
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast({ title: "Incomplete fields", description: "Please fill all password fields.", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Passwords do not match", description: "Your new password and confirmation do not match.", variant: "destructive" });
+      return;
+    }
+
+    const user = auth.currentUser;
+    if (user && user.email) {
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      try {
+        await reauthenticateWithCredential(user, credential);
+        await updatePassword(user, newPassword);
+        toast({ title: "Password Updated", description: "Your password has been changed successfully." });
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } catch (error: any) {
+        console.error("Password change error:", error);
+        let description = "An error occurred. Please try again.";
+        if (error.code === 'auth/wrong-password') {
+          description = "The current password you entered is incorrect.";
+        }
+        toast({ title: "Update Failed", description, variant: "destructive" });
+      }
+    }
+  };
+
+
   return (
-    <div className="w-full max-w-md mx-auto text-foreground flex flex-col">
+    <div className="w-full max-w-md mx-auto text-foreground flex flex-col gap-6 pb-8">
       <div className="bg-primary/80 text-primary-foreground pb-8 rounded-b-3xl">
         <header className="p-4 flex items-center gap-4">
           <Link href="/profile">
@@ -137,13 +179,10 @@ export function ProfileEditForm() {
               <Pencil className="w-4 h-4 text-accent-foreground" />
             </Button>
           </div>
-          <h2 className="text-2xl font-bold mt-2">{profile.fullName}</h2>
-          <p className="text-sm">{profile.email}</p>
-          <p className="text-sm">Birthday: {profile.birthday}</p>
         </div>
       </div>
 
-      <div className="bg-card text-card-foreground p-4 rounded-xl -mt-6 mx-4 shadow-lg flex justify-around text-center">
+      <div className="bg-card text-card-foreground p-4 rounded-xl -mt-16 mx-4 shadow-lg flex justify-around text-center">
         <div>
           <p className="text-lg font-bold">{streakData.bestStreak} Days</p>
           <p className="text-xs text-muted-foreground">Best Streak</p>
@@ -218,6 +257,36 @@ export function ProfileEditForm() {
             Update Profile
           </Button>
         </form>
+
+        <div className="mt-8 pt-6 border-t border-border">
+          <h3 className="text-lg font-bold flex items-center gap-2 mb-4"><KeyRound/> Change Password</h3>
+          <div className="space-y-4">
+              <div>
+                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <div className="relative mt-1">
+                      <Input id="currentPassword" type={showCurrentPassword ? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="bg-secondary pr-10" />
+                      <button type="button" onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"><Eye size={20} /></button>
+                  </div>
+              </div>
+               <div>
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <div className="relative mt-1">
+                      <Input id="newPassword" type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="bg-secondary pr-10" />
+                      <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"><Eye size={20} /></button>
+                  </div>
+              </div>
+               <div>
+                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                   <div className="relative mt-1">
+                      <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="bg-secondary pr-10" />
+                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"><Eye size={20} /></button>
+                  </div>
+              </div>
+              <Button type="button" onClick={handleChangePassword} className="w-full">
+                  Change Password
+              </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
