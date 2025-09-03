@@ -7,13 +7,25 @@ import Image from 'next/image';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
-import { ArrowRight, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, Home, StickyNote, CalculatorIcon, Clock, Hourglass } from "lucide-react";
+import { ArrowRight, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, Home, StickyNote, CalculatorIcon, Clock, Hourglass, Sparkles, LogIn } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { getTodaysCalculations, getWeeklyCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { recordVisit } from "@/lib/streak";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useRouter } from "next/navigation";
+
 
 // This should match the key in notepad.tsx
 const NOTES_STORAGE_KEY_BASE = 'userNotesV2';
@@ -57,6 +69,9 @@ export function Dashboard() {
   const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string, value: number}[]>([]);
   const [savedNotesCount, setSavedNotesCount] = useState(0);
   const { t } = useLanguage();
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const router = useRouter();
+
 
   const updateStats = (email: string | null) => {
     setTodayCalculations(getTodaysCalculations(email));
@@ -97,6 +112,15 @@ export function Dashboard() {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [profile]);
+  
+  const handleProfileClick = () => {
+    if (profile) {
+      router.push('/profile');
+    } else {
+      setShowLoginDialog(true);
+    }
+  };
+
 
   if (!isClient) {
     return null; // Or a loading skeleton
@@ -112,11 +136,9 @@ export function Dashboard() {
         <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon"><Search /></Button>
             <Button variant="ghost" size="icon"><Bell /></Button>
-            <Button variant="ghost" size="icon" asChild disabled={!profile}>
-              <Link href="/profile" className={cn(!profile && "pointer-events-none opacity-50")}>
+             <Button variant="ghost" size="icon" onClick={handleProfileClick}>
                 <User />
-              </Link>
-            </Button>
+              </Button>
         </div>
       </header>
 
@@ -236,6 +258,27 @@ export function Dashboard() {
             </Card>
         </div>
       </div>
+      
+       <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader className="items-center text-center">
+            <div className="p-3 bg-primary/10 rounded-full mb-4 w-fit">
+              <Sparkles className="w-8 h-8 text-primary" />
+            </div>
+            <AlertDialogTitle className="text-2xl">Unlock Your Profile</AlertDialogTitle>
+            <AlertDialogDescription className="max-w-xs">
+              Log in or create an account to personalize your experience, save preferences, and access your history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-col-reverse gap-2">
+            <AlertDialogCancel>Not Now</AlertDialogCancel>
+            <AlertDialogAction onClick={() => router.push('/welcome')} className="bg-primary hover:bg-primary/90">
+              <LogIn className="mr-2"/>
+              Continue to Login
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
