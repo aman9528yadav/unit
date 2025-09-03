@@ -36,10 +36,6 @@ export default function HistoryPage() {
       setFavorites(JSON.parse(storedFavorites));
     }
   }, []);
-  
-  const getHistoryIndex = (item: string) => {
-    return history.findIndex(h => h === item);
-  }
 
   const handleDelete = (itemToDelete: string) => {
     const newHistory = history.filter(h => h !== itemToDelete);
@@ -65,28 +61,39 @@ export default function HistoryPage() {
     localStorage.removeItem("favoriteConversions");
   };
 
+  const handleToggleFavorite = (item: string) => {
+    let newFavorites: string[];
+    if (favorites.includes(item)) {
+      newFavorites = favorites.filter(fav => fav !== item);
+    } else {
+      newFavorites = [item, ...favorites];
+    }
+    setFavorites(newFavorites);
+    localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
+  };
+
+
   if (!isClient) {
     return null; // or a loading spinner
   }
-  
-  const favoriteItems = history.filter(item => favorites.includes(item));
-  const historyItems = history.filter(item => !favorites.includes(item));
-
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-6">
       <div className="w-full max-w-md mx-auto flex flex-col gap-4">
         <header className="flex items-center justify-between">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/">
-              <Home />
-            </Link>
-          </Button>
-          <h1 className="text-xl font-bold">History</h1>
+            <Button variant="ghost" size="icon" asChild>
+                <Link href="/">
+                    <Home />
+                </Link>
+            </Button>
+            <div className="text-center">
+                <h1 className="text-xl font-bold">History</h1>
+                <p className="text-sm text-muted-foreground">{history.length} items</p>
+            </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="icon" disabled={history.length === 0}>
-                <Trash2 />
+              <Button variant="ghost" size="icon" disabled={history.length === 0}>
+                <Trash2 className="text-destructive"/>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -98,7 +105,7 @@ export default function HistoryPage() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleClearAll}>
+                <AlertDialogAction onClick={handleClearAll} className="bg-destructive hover:bg-destructive/90">
                   Clear All
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -107,50 +114,30 @@ export default function HistoryPage() {
         </header>
         
         {history.length > 0 ? (
-          <div className="flex flex-col gap-4">
-            {favoriteItems.length > 0 && (
-              <div className="bg-card p-4 rounded-xl flex flex-col gap-3">
-                  <h3 className="font-bold text-lg flex items-center gap-2"><Star size={20} className="text-yellow-400" /> Favorites</h3>
-                  <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                      {favoriteItems.map((item, index) => (
-                          <div key={`fav-${index}`} className="flex justify-between items-center p-2 rounded hover:bg-background group">
-                            <div className="flex items-center gap-2">
-                               <Star size={16} className="text-yellow-400 fill-yellow-400" />
-                               <span>{item}</span>
-                            </div>
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <RotateCcw size={16} className="cursor-pointer hover:text-foreground" onClick={() => handleRestore(item)} />
-                                <Trash2 size={16} className="cursor-pointer hover:text-foreground" onClick={() => handleDelete(item)} />
-                            </div>
-                          </div>
-                      ))}
-                  </div>
-              </div>
-            )}
-
-            <div className="bg-card p-4 rounded-xl flex flex-col gap-3">
-                <h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} /> History</h3>
-                <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                    {historyItems.map((item, index) => (
-                        <div key={`hist-${index}`} className="flex justify-between items-center p-2 rounded hover:bg-background group">
-                          <div className="flex items-center gap-2">
-                             <span className="ml-5">{item}</span>
-                          </div>
-                          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <RotateCcw size={16} className="cursor-pointer hover:text-foreground" onClick={() => handleRestore(item)} />
-                              <Trash2 size={16} className="cursor-pointer hover:text-foreground" onClick={() => handleDelete(item)} />
-                          </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
+          <div className="flex flex-col gap-3">
+            {history.map((item, index) => (
+                 <div key={index} className="bg-card p-4 rounded-xl flex items-center justify-between group">
+                    <div className="flex-1 cursor-pointer" onClick={() => handleRestore(item)}>
+                        <p className="text-sm text-muted-foreground">{item.split('→')[0]}</p>
+                        <p className="font-bold text-lg">→ {item.split('→')[1]}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => handleToggleFavorite(item)}>
+                            <Star className={`transition-colors ${favorites.includes(item) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"}`}/>
+                        </Button>
+                         <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
+                            <Trash2 className="text-muted-foreground group-hover:text-destructive transition-colors"/>
+                        </Button>
+                    </div>
+                 </div>
+            ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center text-center text-muted-foreground bg-card p-8 rounded-xl gap-4">
+          <div className="flex flex-col items-center justify-center text-center text-muted-foreground bg-card p-8 rounded-xl gap-4 mt-16">
             <Clock size={48} />
             <h2 className="text-xl font-semibold">No History Yet</h2>
             <p>Your recent conversions will appear here.</p>
-            <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
+            <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90 mt-4">
               <Link href="/converter">Start Converting</Link>
             </Button>
           </div>
@@ -160,5 +147,3 @@ export default function HistoryPage() {
     </main>
   );
 }
-
-    
