@@ -29,26 +29,12 @@ export function WelcomeForm() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      if (!user.emailVerified) {
-        toast({
-          title: "Email Not Verified",
-          description: "Please check your inbox and verify your email before logging in.",
-          variant: "destructive",
-          action: (
-            <Button variant="secondary" onClick={() => sendEmailVerification(user)}>
-                Resend Email
-            </Button>
-          ),
-          duration: 9000,
-        });
-        await auth.signOut(); // Log the user out
-        setIsSubmitting(false);
-        return;
-      }
+      // This check is now removed. We assume verification happened at signup.
+      // if (!user.emailVerified) { ... }
       
       const profile = {
         fullName: user.displayName || email.split('@')[0], // Fallback for email/pass users
-        email: user.email || "",
+        email: user.email,
         profileImage: user.photoURL || "https://picsum.photos/200",
       };
       localStorage.setItem("userProfile", JSON.stringify(profile));
@@ -70,7 +56,7 @@ export function WelcomeForm() {
       
       const profile = {
         fullName: user.displayName || "New User",
-        email: user.email || "",
+        email: user.email,
         profileImage: user.photoURL || "https://picsum.photos/200",
       };
 

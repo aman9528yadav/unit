@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, sendEmailVerification, User } from "firebase/auth";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { ArrowLeft } from "lucide-react";
@@ -21,6 +21,49 @@ export function SignupForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+  const [canResend, setCanResend] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer(prev => prev - 1);
+      }, 1000);
+    } else if (resendTimer === 0 && emailSent) {
+      setCanResend(true);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [resendTimer, emailSent]);
+
+
+  const startResendTimer = () => {
+    setResendTimer(30);
+    setCanResend(false);
+  };
+
+  const handleResendEmail = async () => {
+    if (currentUser) {
+        setIsSubmitting(true);
+        try {
+            await sendEmailVerification(currentUser);
+            toast({
+                title: "Verification Email Sent",
+                description: "A new verification link has been sent to your email address.",
+            });
+            startResendTimer();
+        } catch (error) {
+            console.error("Error resending verification email:", error);
+            toast({ title: "Error", description: "Failed to resend verification email.", variant: "destructive" });
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+  };
 
   const handleEmailSignup = async () => {
     if (!email || !password || !fullName || !confirmPassword) {
@@ -35,6 +78,9 @@ export function SignupForm() {
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await sendEmailVerification(result.user);
+      setCurrentUser(result.user); // Save user for resend logic
+      setEmailSent(true);
+      startResendTimer();
       
       const profile = {
         fullName: fullName,
@@ -42,15 +88,6 @@ export function SignupForm() {
         profileImage: "https://picsum.photos/200", // Default profile image
       };
       localStorage.setItem("userProfile", JSON.stringify(profile));
-
-      toast({ 
-        title: "Verification Email Sent", 
-        description: "Please check your inbox to verify your email address. You will be redirected.",
-        duration: 9000,
-      });
-
-      // Redirect to success page after signup
-      router.push("/profile/success");
 
     } catch (error: any) {
       console.error("Error during email sign-up:", error);
@@ -81,7 +118,6 @@ export function SignupForm() {
       };
 
       localStorage.setItem("userProfile", JSON.stringify(profile));
-      toast({ title: "Account Created!", description: `Welcome, ${profile.fullName}!` });
       router.push("/profile/success");
 
     } catch (error: any) {
@@ -91,6 +127,26 @@ export function SignupForm() {
         setIsSubmitting(false);
     }
   };
+
+  if (emailSent) {
+    return (
+        <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-[#1A1A1A] text-white p-6 text-center">
+            <h1 className="text-3xl font-bold text-yellow-400 mb-4">Verify Your Email</h1>
+            <p className="text-muted-foreground mb-6">
+                A verification link has been sent to <strong>{email}</strong>. Please check your inbox and click the link to activate your account.
+            </p>
+            <Button onClick={handleResendEmail} className="w-full h-12 bg-[#333333] hover:bg-[#444444] border border-gray-600 rounded-full text-lg" disabled={!canResend || isSubmitting}>
+                {isSubmitting ? 'Sending...' : (canResend ? 'Resend Email' : `Resend in ${resendTimer}s`)}
+            </Button>
+            <p className="text-center text-sm text-muted-foreground mt-8">
+                Already verified?{" "}
+                <Link href="/welcome" className="font-semibold text-yellow-400 hover:underline">
+                 Log In
+                </Link>
+            </p>
+        </div>
+    )
+  }
 
   return (
     <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-[#1A1A1A] text-white p-6">
