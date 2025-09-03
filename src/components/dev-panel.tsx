@@ -32,8 +32,7 @@ export function DevPanel() {
     const [showAuthPassword, setShowAuthPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
-    const [countdownDate, setCountdownDate] = useState('');
-    const [countdownTime, setCountdownTime] = useState('');
+    const [duration, setDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const router = useRouter();
     const { toast } = useToast();
 
@@ -53,16 +52,6 @@ export function DevPanel() {
                 setIsAuthorized(true);
             }
         }
-
-        const storedTimer = localStorage.getItem(UPDATE_TIMER_STORAGE_KEY);
-        if (storedTimer) {
-            const date = new Date(storedTimer);
-            if (!isNaN(date.getTime())) {
-                setCountdownDate(date.toISOString().split('T')[0]);
-                setCountdownTime(date.toTimeString().split(' ')[0].substring(0, 5));
-            }
-        }
-
     }, []);
     
     const handlePasswordSubmit = () => {
@@ -98,23 +87,23 @@ export function DevPanel() {
         toast({ title: "Password Updated", description: "Developer password has been changed successfully." });
     };
 
-    const handleSetTimer = () => {
-        if (!countdownDate || !countdownTime) {
-            toast({ title: 'Invalid Date/Time', description: 'Please select both a date and a time.', variant: 'destructive' });
-            return;
-        }
-        // Correctly parse date and time parts to avoid timezone issues
-        const [year, month, day] = countdownDate.split('-').map(Number);
-        const [hours, minutes] = countdownTime.split(':').map(Number);
-        
-        // Create date in local timezone then convert to ISO string.
-        // Note: Month is 0-indexed in JavaScript's Date constructor.
-        const targetDateTime = new Date(year, month - 1, day, hours, minutes);
+    const handleDurationChange = (unit: keyof typeof duration, value: string) => {
+        const numValue = parseInt(value, 10);
+        setDuration(prev => ({ ...prev, [unit]: isNaN(numValue) ? 0 : numValue }));
+    };
 
-        if (isNaN(targetDateTime.getTime())) {
-            toast({ title: 'Invalid Date/Time', description: 'The selected date or time is not valid.', variant: 'destructive' });
+    const handleSetTimer = () => {
+        const now = new Date();
+        const { days, hours, minutes, seconds } = duration;
+        const totalMilliseconds = (days * 86400 + hours * 3600 + minutes * 60 + seconds) * 1000;
+        
+        if(totalMilliseconds <= 0) {
+            toast({ title: 'Invalid Duration', description: 'Please enter a positive duration.', variant: 'destructive' });
             return;
         }
+
+        const targetDateTime = new Date(now.getTime() + totalMilliseconds);
+
         localStorage.setItem(UPDATE_TIMER_STORAGE_KEY, targetDateTime.toISOString());
         window.dispatchEvent(new StorageEvent('storage', { key: UPDATE_TIMER_STORAGE_KEY, newValue: targetDateTime.toISOString() }));
         toast({ title: 'Countdown Set!', description: `Timer set for ${targetDateTime.toLocaleString()}` });
@@ -123,8 +112,7 @@ export function DevPanel() {
     const handleClearTimer = () => {
         localStorage.removeItem(UPDATE_TIMER_STORAGE_KEY);
         window.dispatchEvent(new StorageEvent('storage', { key: UPDATE_TIMER_STORAGE_KEY, newValue: null }));
-        setCountdownDate('');
-        setCountdownTime('');
+        setDuration({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         toast({ title: 'Countdown Cleared' });
     };
 
@@ -249,23 +237,23 @@ export function DevPanel() {
                     <CardTitle className="flex items-center gap-2"><Timer /> Update Countdown</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                     <div>
-                        <Label htmlFor="countdownDate">Target Date</Label>
-                        <Input
-                            id="countdownDate"
-                            type="date"
-                            value={countdownDate}
-                            onChange={(e) => setCountdownDate(e.target.value)}
-                        />
-                    </div>
-                     <div>
-                        <Label htmlFor="countdownTime">Target Time</Label>
-                        <Input
-                            id="countdownTime"
-                            type="time"
-                            value={countdownTime}
-                            onChange={(e) => setCountdownTime(e.target.value)}
-                        />
+                     <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label htmlFor="days">Days</Label>
+                            <Input id="days" type="number" value={duration.days} onChange={(e) => handleDurationChange('days', e.target.value)} placeholder="0" />
+                        </div>
+                         <div>
+                            <Label htmlFor="hours">Hours</Label>
+                            <Input id="hours" type="number" value={duration.hours} onChange={(e) => handleDurationChange('hours', e.target.value)} placeholder="0" />
+                        </div>
+                         <div>
+                            <Label htmlFor="minutes">Minutes</Label>
+                            <Input id="minutes" type="number" value={duration.minutes} onChange={(e) => handleDurationChange('minutes', e.target.value)} placeholder="0" />
+                        </div>
+                         <div>
+                            <Label htmlFor="seconds">Seconds</Label>
+                            <Input id="seconds" type="number" value={duration.seconds} onChange={(e) => handleDurationChange('seconds', e.target.value)} placeholder="0" />
+                        </div>
                     </div>
                      <div className="flex gap-2">
                         <Button onClick={handleSetTimer} className="w-full">Set Timer</Button>
@@ -289,6 +277,4 @@ export function DevPanel() {
             <Button onClick={() => router.push('/')} variant="outline" className="mt-4">Back to App</Button>
         </div>
     );
-
-    
-
+}
