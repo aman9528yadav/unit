@@ -20,6 +20,7 @@ import { format } from "date-fns";
 import { getStreakData, StreakData } from "@/lib/streak";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
 
 const defaultProfile = {
     fullName: "Aman Yadav",
@@ -34,6 +35,7 @@ export function Profile() {
   const [streakData, setStreakData] = useState<StreakData>({ bestStreak: 0, currentStreak: 0, daysNotOpened: 0 });
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
   
   useEffect(() => {
     setIsClient(true);
