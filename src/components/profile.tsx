@@ -108,6 +108,11 @@ export function Profile() {
               className="rounded-full border-4 border-white object-cover w-28 h-28"
               data-ai-hint="profile picture"
             />
+             <Button asChild size="icon" className="absolute bottom-0 right-0 rounded-full w-8 h-8">
+              <Link href="/profile/edit">
+                <Pencil />
+              </Link>
+            </Button>
           </div>
           <h2 className="text-2xl font-bold mt-2">{profile.fullName}</h2>
           <p className="text-sm">{profile.email}</p>
