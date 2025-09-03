@@ -28,7 +28,16 @@ const defaultProfile = {
     profileImage: "https://picsum.photos/200",
 };
 
-interface UserProfile extends ReturnType<typeof defaultProfile> {}
+interface UserProfile {
+    fullName: string;
+    email: string;
+    birthday: string;
+    mobile: string;
+    dob: string;
+    weight: string;
+    height: string;
+    profileImage: string;
+}
 
 
 export function ProfileEditForm() {
@@ -44,14 +53,15 @@ export function ProfileEditForm() {
     const storedProfile = localStorage.getItem("userProfile");
     if (storedProfile) {
         const parsedProfile = JSON.parse(storedProfile);
-        setProfile(parsedProfile);
-        if (parsedProfile.dob && !isNaN(new Date(parsedProfile.dob).getTime())) {
-          setDob(new Date(parsedProfile.dob));
+        const completeProfile = { ...defaultProfile, ...parsedProfile };
+        setProfile(completeProfile);
+        if (completeProfile.dob && !isNaN(new Date(completeProfile.dob).getTime())) {
+          setDob(new Date(completeProfile.dob));
         }
-        if(parsedProfile.profileImage) {
-            setImagePreview(parsedProfile.profileImage);
+        if(completeProfile.profileImage) {
+            setImagePreview(completeProfile.profileImage);
         }
-        setStreakData(getStreakData(parsedProfile.email));
+        setStreakData(getStreakData(completeProfile.email));
     }
   }, []);
 
