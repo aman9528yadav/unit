@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 export default function HistoryPage() {
@@ -72,10 +73,29 @@ export default function HistoryPage() {
     localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
   };
 
-
   if (!isClient) {
     return null; // or a loading spinner
   }
+  
+  const favoriteItems = history.filter(item => favorites.includes(item));
+  const historyItems = history; // The history tab will show all items
+
+  const HistoryItem = ({ item }: { item: string }) => (
+    <div className="bg-card p-4 rounded-xl flex items-center justify-between group">
+        <div className="flex-1 cursor-pointer" onClick={() => handleRestore(item)}>
+            <p className="text-sm text-muted-foreground">{item.split('→')[0]}</p>
+            <p className="font-bold text-lg">→ {item.split('→')[1]}</p>
+        </div>
+        <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => handleToggleFavorite(item)}>
+                <Star className={`transition-colors ${favorites.includes(item) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"}`}/>
+            </Button>
+             <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
+                <Trash2 className="text-muted-foreground group-hover:text-destructive transition-colors"/>
+            </Button>
+        </div>
+     </div>
+  );
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-6">
@@ -86,10 +106,7 @@ export default function HistoryPage() {
                     <Home />
                 </Link>
             </Button>
-            <div className="text-center">
-                <h1 className="text-xl font-bold">History</h1>
-                <p className="text-sm text-muted-foreground">{history.length} items</p>
-            </div>
+            <h1 className="text-xl font-bold">History</h1>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="ghost" size="icon" disabled={history.length === 0}>
@@ -113,35 +130,48 @@ export default function HistoryPage() {
           </AlertDialog>
         </header>
         
-        {history.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {history.map((item, index) => (
-                 <div key={index} className="bg-card p-4 rounded-xl flex items-center justify-between group">
-                    <div className="flex-1 cursor-pointer" onClick={() => handleRestore(item)}>
-                        <p className="text-sm text-muted-foreground">{item.split('→')[0]}</p>
-                        <p className="font-bold text-lg">→ {item.split('→')[1]}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleToggleFavorite(item)}>
-                            <Star className={`transition-colors ${favorites.includes(item) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"}`}/>
-                        </Button>
-                         <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
-                            <Trash2 className="text-muted-foreground group-hover:text-destructive transition-colors"/>
-                        </Button>
-                    </div>
-                 </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center text-center text-muted-foreground bg-card p-8 rounded-xl gap-4 mt-16">
-            <Clock size={48} />
-            <h2 className="text-xl font-semibold">No History Yet</h2>
-            <p>Your recent conversions will appear here.</p>
-            <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90 mt-4">
-              <Link href="/converter">Start Converting</Link>
-            </Button>
-          </div>
-        )}
+        <Tabs defaultValue="history" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="history">History</TabsTrigger>
+                <TabsTrigger value="favorites">Favorites</TabsTrigger>
+            </TabsList>
+            <TabsContent value="history" className="mt-4">
+                 {historyItems.length > 0 ? (
+                  <div className="flex flex-col gap-3">
+                    {historyItems.map((item, index) => (
+                         <HistoryItem key={`hist-${index}`} item={item} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-center text-muted-foreground bg-card p-8 rounded-xl gap-4 mt-16">
+                    <Clock size={48} />
+                    <h2 className="text-xl font-semibold">No History Yet</h2>
+                    <p>Your recent conversions will appear here.</p>
+                    <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90 mt-4">
+                      <Link href="/converter">Start Converting</Link>
+                    </Button>
+                  </div>
+                )}
+            </TabsContent>
+            <TabsContent value="favorites" className="mt-4">
+                {favoriteItems.length > 0 ? (
+                  <div className="flex flex-col gap-3">
+                    {favoriteItems.map((item, index) => (
+                         <HistoryItem key={`fav-${index}`} item={item} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-center text-muted-foreground bg-card p-8 rounded-xl gap-4 mt-16">
+                    <Star size={48} />
+                    <h2 className="text-xl font-semibold">No Favorites Yet</h2>
+                    <p>Star a conversion to see it here.</p>
+                     <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90 mt-4">
+                      <Link href="/converter">Start Converting</Link>
+                    </Button>
+                  </div>
+                )}
+            </TabsContent>
+        </Tabs>
 
       </div>
     </main>
