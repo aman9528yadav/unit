@@ -121,11 +121,13 @@ export function ProfileEditForm() {
         setConfirmPassword('');
       } catch (error: any) {
         console.error("Password change error:", error);
+        let title = "Password Change Failed";
         let description = "An error occurred. Please try again.";
         if (error.code === 'auth/wrong-password') {
+            title = "Incorrect Password";
             description = "The current password you entered is incorrect.";
         }
-        toast({ title: "Password Change Failed", description, variant: "destructive" });
+        toast({ title, description, variant: "destructive" });
       } finally {
         setIsSubmitting(false);
       }
