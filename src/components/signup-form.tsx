@@ -135,7 +135,7 @@ export function SignupForm() {
       localStorage.setItem("userProfile", JSON.stringify(profile));
       router.push("/profile/success");
 
-    } catch (error: any) {
+    } catch (error: any) => {
       console.error("Error during Google sign-up:", error);
       toast({ title: "Sign-up Failed", description: "Could not sign up with Google. Please try again.", variant: "destructive" });
     } finally {
