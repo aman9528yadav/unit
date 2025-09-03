@@ -122,7 +122,7 @@ export function WelcomeForm() {
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
                  <div className="text-right mt-2">
-                    <Link href="#" className="text-xs text-primary hover:underline">Forgot Password?</Link>
+                    <Link href="/forgot-password" className="text-xs text-primary hover:underline">Forgot Password?</Link>
                 </div>
             </div>
           </div>
