@@ -15,6 +15,7 @@ import {
   LogOut,
   Pencil,
   Rocket,
+  Code,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -22,6 +23,8 @@ import { getStreakData, StreakData } from "@/lib/streak";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+
+const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 
 const defaultProfile = {
     fullName: "Aman Yadav",
@@ -71,8 +74,15 @@ export function Profile() {
     { icon: Lock, text: "Privacy Policy", href: "/privacy-policy" },
     { icon: Settings, text: "Settings", href: "/settings" },
     { icon: HelpCircle, text: "Help", href: "/help" },
-    { icon: LogOut, text: "Logout", onClick: handleLogout },
   ];
+
+  if (isClient && profile.email === DEVELOPER_EMAIL) {
+    menuItems.push({ icon: Code, text: "Developer", href: "/dev" });
+  }
+
+  // Add logout at the end
+  menuItems.push({ icon: LogOut, text: "Logout", onClick: handleLogout });
+
 
   if (!isClient) {
     return null; // or a loading spinner
