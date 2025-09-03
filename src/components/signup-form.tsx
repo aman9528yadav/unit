@@ -11,7 +11,7 @@ import { auth } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { ArrowLeft } from "lucide-react";
 
 export function SignupForm() {
   const { toast } = useToast();
@@ -19,31 +19,17 @@ export function SignupForm() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [confirmationResult, setConfirmationResult] = useState<any>(null);
-  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
   
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
-
-  const setupRecaptcha = () => {
-    if (!recaptchaContainerRef.current) return;
-    
-    // Ensure the container is empty before creating a new verifier
-    recaptchaContainerRef.current.innerHTML = "";
-
-    const recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-      'size': 'invisible',
-      'callback': (response: any) => {
-        // reCAPTCHA solved, allow signInWithPhoneNumber.
-      }
-    });
-    return recaptchaVerifier;
-  }
 
   const handleEmailSignup = async () => {
     if (!email || !password || !fullName) {
       toast({ title: "Please fill all fields", variant: "destructive" });
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast({ title: "Passwords do not match", variant: "destructive" });
       return;
     }
     try {
@@ -67,54 +53,6 @@ export function SignupForm() {
       toast({ title: "Sign-up Failed", description: error.message, variant: "destructive" });
     }
   };
-
-  const handlePhoneSignup = async () => {
-    if (!phone) {
-        toast({ title: "Please enter a phone number", variant: "destructive" });
-        return;
-    }
-    try {
-        const recaptchaVerifier = setupRecaptcha();
-        if (!recaptchaVerifier) {
-            toast({ title: "Recaptcha setup failed", variant: "destructive" });
-            return;
-        }
-        const result = await signInWithPhoneNumber(auth, phone, recaptchaVerifier);
-        setConfirmationResult(result);
-        setIsOtpSent(true);
-        toast({ title: "OTP Sent!", description: "Please check your phone for the verification code." });
-    } catch (error: any) {
-        console.error("Error during phone sign-up:", error);
-        toast({ title: "Phone Sign-up Failed", description: error.message, variant: "destructive" });
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-     if (!otp) {
-        toast({ title: "Please enter the OTP", variant: "destructive" });
-        return;
-    }
-    try {
-        await confirmationResult.confirm(otp);
-        const user = auth.currentUser;
-        if (user) {
-            const profile = {
-                fullName: "New User", // Or prompt for name
-                email: user.email || "",
-                profileImage: user.photoURL || "https://picsum.photos/200",
-                nickname: "User",
-                mobile: user.phoneNumber || ""
-            };
-            localStorage.setItem("userProfile", JSON.stringify(profile));
-            toast({ title: "Account Verified!", description: "Welcome!" });
-            router.push("/");
-        }
-    } catch (error: any) {
-         console.error("Error during OTP verification:", error);
-        toast({ title: "OTP Verification Failed", description: error.message, variant: "destructive" });
-    }
-  }
-
 
   const handleGoogleSignup = async () => {
     const provider = new GoogleAuthProvider();
@@ -141,74 +79,58 @@ export function SignupForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col items-center justify-center gap-8 p-4 sm:p-6 min-h-screen">
+    <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-[#1A1A1A] text-white p-6">
        <div ref={recaptchaContainerRef}></div>
-       <div className="text-center">
-        <h1 className="text-3xl font-bold">Create Account</h1>
-        <p className="text-muted-foreground mt-2 max-w-sm mx-auto">
-          Join UniConvert to get access to all features and save your preferences.
-        </p>
+       
+      <header className="flex items-center gap-4 mb-8">
+        <Link href="/welcome">
+            <Button variant="ghost" size="icon" className="text-yellow-400">
+                <ArrowLeft />
+            </Button>
+        </Link>
+        <h1 className="text-2xl font-bold text-yellow-400">Create Account</h1>
+      </header>
+
+       <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold">Let's Start!</h2>
       </div>
       
-       <Tabs defaultValue="google" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="google">Google</TabsTrigger>
-            <TabsTrigger value="email">Email</TabsTrigger>
-            <TabsTrigger value="phone">Phone</TabsTrigger>
-        </TabsList>
-        <TabsContent value="google" className="mt-6">
-            <Button onClick={handleGoogleSignup} className="w-full h-12 bg-card text-card-foreground font-bold text-base rounded-lg hover:bg-card/90 border flex items-center justify-center gap-2">
-                <Image src="/google-logo.svg" alt="Google" width={24} height={24} />
-                Sign up with Google
-            </Button>
-        </TabsContent>
-        <TabsContent value="email" className="mt-6">
+       <div className="bg-[#4D4D4D] p-8 rounded-2xl">
             <div className="space-y-4">
                  <div>
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Aman Yadav" className="mt-1"/>
+                    <Label htmlFor="fullName">Full name</Label>
+                    <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="example@example.com" className="bg-white text-black mt-2"/>
                 </div>
                 <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="aman@example.com" className="mt-1"/>
+                    <Label htmlFor="email">Email or Mobile Number</Label>
+                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="+123 567 89000" className="bg-white text-black mt-2"/>
                 </div>
                 <div>
                     <Label htmlFor="password">Password</Label>
-                    <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="mt-1"/>
+                    <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="**********" className="bg-white text-black mt-2"/>
                 </div>
-                <Button onClick={handleEmailSignup} className="w-full h-12">Sign up with Email</Button>
+                 <div>
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="**********" className="bg-white text-black mt-2"/>
+                </div>
             </div>
-        </TabsContent>
-         <TabsContent value="phone" className="mt-6">
-            <div className="space-y-4">
-                {!isOtpSent ? (
-                    <>
-                        <div>
-                            <Label htmlFor="phone">Phone Number</Label>
-                            <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 123 456 7890" className="mt-1"/>
-                        </div>
-                        <Button onClick={handlePhoneSignup} className="w-full h-12">Send OTP</Button>
-                    </>
-                ) : (
-                    <>
-                        <div>
-                            <Label htmlFor="otp">Verification Code</Label>
-                            <Input id="otp" type="text" value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="123456" className="mt-1"/>
-                        </div>
-                        <Button onClick={handleVerifyOtp} className="w-full h-12">Verify OTP</Button>
-                    </>
-                )}
-            </div>
-        </TabsContent>
-      </Tabs>
-
-
-       <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <Link href="/welcome" className="font-semibold text-primary hover:underline">
-          Log in
-        </Link>
+      </div>
+      
+      <p className="text-center text-xs text-muted-foreground my-6">
+          By continuing, you agree to <Link href="#" className="text-yellow-400">Terms of Use</Link> and <Link href="#" className="text-yellow-400">Privacy Policy</Link>.
       </p>
-    </div>
-  );
-}
+
+      <div className="mt-4 space-y-4">
+        <Button onClick={handleEmailSignup} className="w-full h-12 bg-[#333333] hover:bg-[#444444] border border-gray-600 rounded-full text-lg">
+            Sign Up
+        </Button>
+        <p className="text-center text-sm text-muted-foreground">or sign up with</p>
+        <div className="flex justify-center gap-4">
+            <Button onClick={handleGoogleSignup} variant="outline" size="icon" className="rounded-full bg-transparent border-gray-600 hover:bg-gray-700">
+                <Image src="/google-logo.svg" alt="Google" width={20} height={20} />
+            </Button>
+             <Button variant="outline" size="icon" className="rounded-full bg-transparent border-gray-600 hover:bg-gray-700">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M22.06 12.06c0-7.78-6.28-14.06-14.06-14.06s-14.06 6.28-14.06 14.06c0 6.95 5.07 12.7 11.69 13.94v-9.88h-3.5v-4.06h3.5v-3.04c0-3.47 2.06-5.38 5.25-5.38 1.5 0 2.78.11 3.15.16v3.63h-2.14c-1.68 0-2.01.8-2.01 1.97v2.56h4.01l-.52 4.06h-3.49v9.88c6.62-1.24 11.69-7 11.69-13.94z"/></svg>
+            </Button>
+             <Button variant="outline" size="icon" className="rounded-full bg-transparent border-gray-600 hover:bg-gray-700">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0m4.25 5.75-.89.89a.25.25 0 0 1-.35 0l-.89-.89a2.5 2.5 0 1 0-3.54 3.54l.89.89a.25.25 0 0 1 0 .35l-.89.89a2.5 2.5 0 1 0 3.54 3.54l.89-.89a.25.25 0 0 1 .35 0l.89.89a2.5 2.5 0 1 0 3.54-3.54l-.89-.89a.25.25

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,7 +14,7 @@ export default function Home() {
   useEffect(() => {
     const profile = localStorage.getItem("userProfile");
     if (!profile) {
-      router.replace("/welcome");
+      router.replace("/welcome"); // Redirect to the new login page
     } else {
       setLoading(false);
     }
