@@ -6,14 +6,17 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer } from 'lucide-react';
+import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 const DEFAULT_DEV_PASSWORD = "121212";
 const DEV_PASSWORD_STORAGE_KEY = "developer_password";
 const UPDATE_TIMER_STORAGE_KEY = "nextUpdateTime";
+const UPDATE_TEXT_STORAGE_KEY = "nextUpdateText";
+
 
 interface UserProfile {
     email: string;
@@ -33,6 +36,7 @@ export function DevPanel() {
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
     const [duration, setDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+    const [updateText, setUpdateText] = useState('');
     const router = useRouter();
     const { toast } = useToast();
 
@@ -40,9 +44,13 @@ export function DevPanel() {
         setIsClient(true);
         const storedProfile = localStorage.getItem('userProfile');
         const storedDevPassword = localStorage.getItem(DEV_PASSWORD_STORAGE_KEY);
+        const storedUpdateText = localStorage.getItem(UPDATE_TEXT_STORAGE_KEY);
         
         if (storedDevPassword) {
             setDevPassword(storedDevPassword);
+        }
+         if (storedUpdateText) {
+            setUpdateText(storedUpdateText);
         }
 
         if (storedProfile) {
@@ -115,6 +123,13 @@ export function DevPanel() {
         setDuration({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         toast({ title: 'Countdown Cleared' });
     };
+    
+    const handleSaveUpdateText = () => {
+        localStorage.setItem(UPDATE_TEXT_STORAGE_KEY, updateText);
+         window.dispatchEvent(new StorageEvent('storage', { key: UPDATE_TEXT_STORAGE_KEY, newValue: updateText }));
+        toast({ title: 'Update Text Saved' });
+    };
+
 
     if (!isClient) {
         return null;
@@ -172,86 +187,28 @@ export function DevPanel() {
                 <h1 className="text-2xl font-bold">Developer Panel</h1>
                 <p className="text-muted-foreground">Tools for testing and debugging.</p>
             </header>
-            
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Trash2 /> General Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                        <p>Clear all app data</p>
-                        <Button variant="destructive" onClick={handleClearLocalStorage}>Clear Local Storage</Button>
-                    </div>
-                </CardContent>
-            </Card>
 
-            <Card>
+             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Lock /> Change Password</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Timer /> Update Management</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="relative">
-                        <Label htmlFor="newPassword">New Password</Label>
-                        <Input
-                            id="newPassword"
-                            type={showNewPassword ? "text" : "password"}
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            placeholder="Enter new password"
-                            className="pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowNewPassword(!showNewPassword)}
-                            className="absolute right-3 top-8 text-muted-foreground"
-                        >
-                            {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                        </button>
-                    </div>
-                    <div className="relative">
-                        <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
-                        <Input
-                            id="confirmNewPassword"
-                            type={showConfirmNewPassword ? "text" : "password"}
-                            value={confirmNewPassword}
-                            onChange={(e) => setConfirmNewPassword(e.target.value)}
-                            placeholder="Confirm new password"
-                             className="pr-10"
-                        />
-                         <button
-                            type="button"
-                            onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                            className="absolute right-3 top-8 text-muted-foreground"
-                        >
-                            {showConfirmNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                        </button>
-                    </div>
-                    <Button onClick={handleChangePassword} className="w-full">
-                        Update Developer Password
-                    </Button>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Timer /> Update Countdown</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                     <Label>Set Countdown Duration</Label>
                      <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="days">Days</Label>
+                            <Label htmlFor="days" className="text-xs">Days</Label>
                             <Input id="days" type="number" value={duration.days} onChange={(e) => handleDurationChange('days', e.target.value)} placeholder="0" />
                         </div>
                          <div>
-                            <Label htmlFor="hours">Hours</Label>
+                            <Label htmlFor="hours" className="text-xs">Hours</Label>
                             <Input id="hours" type="number" value={duration.hours} onChange={(e) => handleDurationChange('hours', e.target.value)} placeholder="0" />
                         </div>
                          <div>
-                            <Label htmlFor="minutes">Minutes</Label>
+                            <Label htmlFor="minutes" className="text-xs">Minutes</Label>
                             <Input id="minutes" type="number" value={duration.minutes} onChange={(e) => handleDurationChange('minutes', e.target.value)} placeholder="0" />
                         </div>
                          <div>
-                            <Label htmlFor="seconds">Seconds</Label>
+                            <Label htmlFor="seconds" className="text-xs">Seconds</Label>
                             <Input id="seconds" type="number" value={duration.seconds} onChange={(e) => handleDurationChange('seconds', e.target.value)} placeholder="0" />
                         </div>
                     </div>
@@ -259,6 +216,72 @@ export function DevPanel() {
                         <Button onClick={handleSetTimer} className="w-full">Set Timer</Button>
                         <Button onClick={handleClearTimer} variant="destructive" className="w-full">Clear Timer</Button>
                     </div>
+                     <div className="pt-4 space-y-2">
+                        <Label htmlFor="updateText" className="flex items-center gap-2"><NotebookText /> Upcoming Feature Details</Label>
+                        <Textarea 
+                            id="updateText"
+                            value={updateText}
+                            onChange={(e) => setUpdateText(e.target.value)}
+                            placeholder="Describe what's coming in the next update..."
+                            rows={4}
+                        />
+                        <Button onClick={handleSaveUpdateText} className="w-full">Save Details</Button>
+                     </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Lock /> Security & Data</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                        <p>Clear all app data</p>
+                        <Button variant="destructive" onClick={handleClearLocalStorage}>Clear Local Storage</Button>
+                    </div>
+                    <div>
+                        <Label htmlFor="newPassword">New Developer Password</Label>
+                         <div className="relative mt-1">
+                            <Input
+                                id="newPassword"
+                                type={showNewPassword ? "text" : "password"}
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                placeholder="Enter new password"
+                                className="pr-10"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                            >
+                                {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                         <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+                        <div className="relative mt-1">
+                            <Input
+                                id="confirmNewPassword"
+                                type={showConfirmNewPassword ? "text" : "password"}
+                                value={confirmNewPassword}
+                                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                placeholder="Confirm new password"
+                                 className="pr-10"
+                            />
+                             <button
+                                type="button"
+                                onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                            >
+                                {showConfirmNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                        </div>
+                    </div>
+                    <Button onClick={handleChangePassword} className="w-full">
+                        Update Password
+                    </Button>
                 </CardContent>
             </Card>
 
@@ -277,3 +300,5 @@ export function DevPanel() {
         </div>
     );
 }
+
+    

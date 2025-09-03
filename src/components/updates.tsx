@@ -38,19 +38,29 @@ const updates = [
 ];
 
 const UPDATE_TIMER_STORAGE_KEY = "nextUpdateTime";
+const UPDATE_TEXT_STORAGE_KEY = "nextUpdateText";
 
 
 export function Updates() {
   const [targetDate, setTargetDate] = useState<Date | null>(null);
   const [timeLeft, setTimeLeft] = useState<Duration & { totalDays?: number } | null>(null);
+  const [updateText, setUpdateText] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const loadTargetDate = () => {
+  const loadData = () => {
     const savedDate = localStorage.getItem(UPDATE_TIMER_STORAGE_KEY);
+    const savedText = localStorage.getItem(UPDATE_TEXT_STORAGE_KEY);
+    
+    if (savedText) {
+        setUpdateText(savedText);
+    } else {
+        setUpdateText(null);
+    }
+
     if (savedDate) {
       const date = new Date(savedDate);
       if (!isNaN(date.getTime()) && date > new Date()) {
@@ -67,11 +77,11 @@ export function Updates() {
   useEffect(() => {
     if(!isClient) return;
     
-    loadTargetDate();
+    loadData();
     
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === UPDATE_TIMER_STORAGE_KEY) {
-        loadTargetDate();
+      if (event.key === UPDATE_TIMER_STORAGE_KEY || event.key === UPDATE_TEXT_STORAGE_KEY) {
+        loadData();
       }
     };
 
@@ -123,7 +133,7 @@ export function Updates() {
             </div>
             <div className="grid grid-cols-4 gap-2">
                 <div className='bg-background p-3 rounded-lg'>
-                    <p className="text-3xl font-bold">{String(timeLeft.totalDays || 0)}</p>
+                    <p className="text-3xl font-bold">{timeLeft.totalDays}</p>
                     <p className="text-xs text-muted-foreground">Days</p>
                 </div>
                 <div className='bg-background p-3 rounded-lg'>
@@ -139,6 +149,12 @@ export function Updates() {
                     <p className="text-xs text-muted-foreground">Seconds</p>
                 </div>
             </div>
+             {updateText && (
+                <div className="mt-4 text-left p-4 bg-secondary rounded-lg">
+                    <h3 className="font-semibold mb-2 text-foreground">What to expect:</h3>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{updateText}</p>
+                </div>
+            )}
         </div>
       )}
 
@@ -164,3 +180,5 @@ export function Updates() {
     </div>
   );
 }
+
+    
