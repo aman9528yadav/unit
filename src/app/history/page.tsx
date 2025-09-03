@@ -87,8 +87,8 @@ export default function HistoryPage() {
             <p className="font-bold text-lg">→ {item.split('→')[1]}</p>
         </div>
         <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => handleToggleFavorite(item)}>
-                <Star className={`transition-colors ${favorites.includes(item) ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground"}`}/>
+             <Button variant="ghost" size="icon" onClick={() => handleRestore(item)}>
+                <RotateCcw className="text-muted-foreground group-hover:text-primary transition-colors"/>
             </Button>
              <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
                 <Trash2 className="text-muted-foreground group-hover:text-destructive transition-colors"/>
