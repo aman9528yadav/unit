@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ShieldAlert, Trash2, Code, KeyRound, Lock } from 'lucide-react';
+import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 
@@ -28,6 +28,9 @@ export function DevPanel() {
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [isClient, setIsClient] = useState(false);
+    const [showAuthPassword, setShowAuthPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -104,16 +107,24 @@ export function DevPanel() {
                 <h1 className="text-2xl font-bold">Developer Access</h1>
                 <p className="text-muted-foreground">This page is restricted. Please enter the password to continue.</p>
                 <div className="w-full space-y-4 text-left">
-                     <div>
+                     <div className="relative">
                         <Label htmlFor="password">Password</Label>
                         <Input 
                             id="password" 
-                            type="password" 
+                            type={showAuthPassword ? "text" : "password"} 
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit()}
                             placeholder="Enter developer password" 
+                            className="pr-10"
                         />
+                         <button
+                            type="button"
+                            onClick={() => setShowAuthPassword(!showAuthPassword)}
+                            className="absolute right-3 top-8 text-muted-foreground"
+                        >
+                            {showAuthPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
                     </div>
                     <Button onClick={handlePasswordSubmit} className="w-full">
                         Authenticate
@@ -148,25 +159,41 @@ export function DevPanel() {
                     <CardTitle className="flex items-center gap-2"><Lock /> Change Password</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div>
+                    <div className="relative">
                         <Label htmlFor="newPassword">New Password</Label>
                         <Input
                             id="newPassword"
-                            type="password"
+                            type={showNewPassword ? "text" : "password"}
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             placeholder="Enter new password"
+                            className="pr-10"
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-3 top-8 text-muted-foreground"
+                        >
+                            {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
                     </div>
-                    <div>
+                    <div className="relative">
                         <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
                         <Input
                             id="confirmNewPassword"
-                            type="password"
+                            type={showConfirmNewPassword ? "text" : "password"}
                             value={confirmNewPassword}
                             onChange={(e) => setConfirmNewPassword(e.target.value)}
                             placeholder="Confirm new password"
+                             className="pr-10"
                         />
+                         <button
+                            type="button"
+                            onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                            className="absolute right-3 top-8 text-muted-foreground"
+                        >
+                            {showConfirmNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
                     </div>
                     <Button onClick={handleChangePassword} className="w-full">
                         Update Developer Password
