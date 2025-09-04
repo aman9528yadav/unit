@@ -45,6 +45,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const showFooter = pathname !== '/maintenance';
+
   return (
     <ThemeProvider>
       <LanguageProvider>
@@ -59,9 +62,18 @@ export default function RootLayout({
             <link rel="apple-touch-icon" href="/icon-192x192.png" />
           </head>
           <body className="font-body antialiased">
-            <MaintenanceRedirect>
-                {children}
-            </MaintenanceRedirect>
+            <div className="flex flex-col min-h-screen">
+                <main className="flex-grow">
+                    <MaintenanceRedirect>
+                        {children}
+                    </MaintenanceRedirect>
+                </main>
+                {showFooter && (
+                    <footer className="text-center p-4 bg-card text-muted-foreground text-sm border-t">
+                        <p>&copy; {new Date().getFullYear()} Sutradhaar | Owned by Aman Yadav. All Rights Reserved.</p>
+                    </footer>
+                )}
+            </div>
             <Toaster />
           </body>
         </html>
