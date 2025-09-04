@@ -65,6 +65,45 @@ function PomodoroTimer() {
 
     const audioRef = React.useRef<HTMLAudioElement>(null);
 
+    const switchMode = React.useCallback((newMode: typeof mode, userInitiated = false) => {
+        setIsActive(!userInitiated);
+        let newMinutes: number;
+        switch (newMode) {
+            case 'work': newMinutes = settings.pomodoroLength; break;
+            case 'shortBreak': newMinutes = settings.shortBreakLength; break;
+            case 'longBreak': newMinutes = settings.longBreakLength; break;
+        }
+
+        const newPomodoros = (newMode === 'work' && userInitiated) ? 0 : pomodoros;
+        setPomodoros(newPomodoros);
+        
+        setMode(newMode);
+        setMinutes(newMinutes);
+        setSeconds(0);
+
+        if (!userInitiated) { // Auto-switch
+             if (audioRef.current) {
+                audioRef.current.play().catch(e => console.error("Error playing sound:", e));
+             }
+             const endTime = new Date().getTime() + newMinutes * 60 * 1000;
+             localStorage.setItem('pomodoroState', JSON.stringify({
+                 endTime: endTime,
+                 mode: newMode,
+                 pomodoros: newPomodoros,
+                 isPaused: false,
+             }));
+        } else { // Manual switch by user
+             localStorage.setItem('pomodoroState', JSON.stringify({
+                remainingTime: newMinutes * 60 * 1000,
+                mode: newMode,
+                pomodoros: newPomodoros,
+                isPaused: true,
+            }));
+        }
+
+    }, [pomodoros, settings]);
+
+
     // Initialize from localStorage
     React.useEffect(() => {
         const savedSettings = localStorage.getItem('pomodoroSettings');
@@ -74,23 +113,30 @@ function PomodoroTimer() {
 
         const savedState = localStorage.getItem('pomodoroState');
         if (savedState) {
-            const { endTime, mode: savedMode, pomodoros: savedPomodoros, isPaused } = JSON.parse(savedState);
+            const { endTime, remainingTime, mode: savedMode, pomodoros: savedPomodoros, isPaused } = JSON.parse(savedState);
+            const now = new Date().getTime();
+
+            setMode(savedMode);
+            setPomodoros(savedPomodoros);
+
             if (isPaused) {
-                // If it was paused, just restore the time
-                const remaining = Math.ceil(endTime / 1000);
+                const remaining = Math.ceil(remainingTime / 1000);
                 setMinutes(Math.floor(remaining / 60));
                 setSeconds(remaining % 60);
-                setMode(savedMode);
-                setPomodoros(savedPomodoros);
                 setIsActive(false);
-            } else if (endTime && new Date().getTime() < endTime) {
-                // If it was running, recalculate remaining time and resume
-                setMode(savedMode);
-                setPomodoros(savedPomodoros);
+            } else if (endTime && now < endTime) {
+                const remaining = Math.ceil((endTime - now) / 1000);
+                setMinutes(Math.floor(remaining / 60));
+                setSeconds(remaining % 60);
                 setIsActive(true);
+            } else {
+                 // Timer expired while away
+                 // We can't know for sure how many cycles passed, so we just switch to the next mode.
+                 const nextMode = savedMode === 'work' ? 'shortBreak' : 'work';
+                 switchMode(nextMode, true);
             }
         }
-    }, []);
+    }, [switchMode]);
 
     // Timer logic effect
     React.useEffect(() => {
@@ -102,43 +148,34 @@ function PomodoroTimer() {
         const worker = workerRef.current;
 
         const handleTick = () => {
-             const savedState = localStorage.getItem('pomodoroState');
-             if (!savedState) {
-                setIsActive(false);
-                return;
-             }
-
-             const { endTime, isPaused } = JSON.parse(savedState);
-             if (isPaused) {
-                setIsActive(false);
-                return;
-             }
-
-             const remaining = endTime - new Date().getTime();
-             
-             if (remaining > 0) {
-                 setMinutes(Math.floor((remaining / 1000) / 60));
-                 setSeconds(Math.floor((remaining / 1000) % 60));
-             } else {
-                 setMinutes(0);
-                 setSeconds(0);
-                 setIsActive(false);
-                 
-                 if (audioRef.current) {
-                    audioRef.current.play().catch(e => console.error("Error playing sound:", e));
+             setTime(prevTime => {
+                 if (prevTime <= 0) {
+                     const newPomodoroCount = mode === 'work' ? pomodoros + 1 : pomodoros;
+                     if(mode === 'work') setPomodoros(newPomodoroCount);
+                     
+                     const newMode = mode === 'work'
+                        ? (newPomodoroCount % settings.pomodorosUntilLongBreak === 0 ? 'longBreak' : 'shortBreak')
+                        : 'work';
+                     
+                     switchMode(newMode, false);
+                     return 0; // Return 0 to prevent further negative countdown
                  }
-
-                 let newMode: typeof mode;
-                 if (mode === 'work') {
-                     const newPomodoroCount = pomodoros + 1;
-                     setPomodoros(newPomodoroCount);
-                     newMode = newPomodoroCount % settings.pomodorosUntilLongBreak === 0 ? 'longBreak' : 'shortBreak';
-                 } else {
-                     newMode = 'work';
-                 }
-                 switchMode(newMode);
-             }
+                 return prevTime - 1;
+             });
         }
+        
+        const setTime = (updater: (prevTime: number) => number) => {
+            setMinutes(m => {
+                setSeconds(s => {
+                    const totalSeconds = m * 60 + s;
+                    const newTotalSeconds = updater(totalSeconds);
+                    setMinutes(Math.floor(newTotalSeconds / 60));
+                    setSeconds(newTotalSeconds % 60);
+                    return newTotalSeconds % 60;
+                });
+                return m;
+            });
+        };
 
         if (isActive) {
             worker.onmessage = handleTick;
@@ -150,7 +187,7 @@ function PomodoroTimer() {
         return () => {
              worker.postMessage({ type: 'stop' });
         };
-    }, [isActive, mode, pomodoros, settings]);
+    }, [isActive, mode, pomodoros, settings, switchMode]);
 
     // Cleanup worker on component unmount
      React.useEffect(() => {
@@ -164,72 +201,29 @@ function PomodoroTimer() {
         const newState = !isActive;
         setIsActive(newState);
         
-        const savedState = localStorage.getItem('pomodoroState');
-        const currentState = savedState ? JSON.parse(savedState) : {};
+        const savedState = JSON.parse(localStorage.getItem('pomodoroState') || '{}');
 
         if (newState) { // Starting or resuming
-            const remainingMs = currentState.isPaused 
-                ? currentState.endTime // If paused, endTime is actually remainingTime
+            const remainingMs = savedState.isPaused 
+                ? savedState.remainingTime
                 : (minutes * 60 + seconds) * 1000;
             const newEndTime = new Date().getTime() + remainingMs;
-            localStorage.setItem('pomodoroState', JSON.stringify({ ...currentState, endTime: newEndTime, isPaused: false }));
+            localStorage.setItem('pomodoroState', JSON.stringify({ ...savedState, endTime: newEndTime, isPaused: false }));
         } else { // Pausing
             const remaining = (minutes * 60 + seconds) * 1000;
-            localStorage.setItem('pomodoroState', JSON.stringify({ ...currentState, endTime: remaining, isPaused: true }));
+            localStorage.setItem('pomodoroState', JSON.stringify({ ...savedState, remainingTime: remaining, isPaused: true }));
         }
     };
 
-    const reset = (newMode: 'work' | 'shortBreak' | 'longBreak') => {
-        setIsActive(false);
-        let newMinutes: number;
-        switch (newMode) {
-            case 'work': newMinutes = settings.pomodoroLength; break;
-            case 'shortBreak': newMinutes = settings.shortBreakLength; break;
-            case 'longBreak': newMinutes = settings.longBreakLength; break;
-        }
-        setMinutes(newMinutes);
-        setSeconds(0);
-        setMode(newMode);
-
-        const newPomodoros = newMode === 'work' ? 0 : pomodoros;
-        setPomodoros(newPomodoros);
-
-        localStorage.setItem('pomodoroState', JSON.stringify({
-            endTime: newMinutes * 60 * 1000,
-            mode: newMode,
-            pomodoros: newPomodoros,
-            isPaused: true,
-        }));
-    };
-
-    const switchMode = (newMode: typeof mode, userInitiated = false) => {
-        if(userInitiated) {
-             reset(newMode);
-        } else {
-            // This is for auto-switching after a cycle completes
-            setIsActive(true);
-            let newMinutes: number;
-            switch (newMode) {
-                case 'work': newMinutes = settings.pomodoroLength; break;
-                case 'shortBreak': newMinutes = settings.shortBreakLength; break;
-                case 'longBreak': newMinutes = settings.longBreakLength; break;
-            }
-            setMode(newMode);
-            const endTime = new Date().getTime() + newMinutes * 60 * 1000;
-            localStorage.setItem('pomodoroState', JSON.stringify({
-                 endTime: endTime,
-                 mode: newMode,
-                 pomodoros: pomodoros,
-                 isPaused: false,
-            }));
-        }
+    const reset = () => {
+        switchMode(mode, true);
     };
     
     const handleSettingsSave = (newSettings: typeof settings) => {
         setSettings(newSettings);
         localStorage.setItem('pomodoroSettings', JSON.stringify(newSettings));
         setIsSettingsOpen(false);
-        reset(mode); // Reset with new settings
+        reset(); 
     }
 
     return (
@@ -252,7 +246,7 @@ function PomodoroTimer() {
                         {isActive ? <Pause/> : <Play/>}
                         {isActive ? 'Pause' : 'Start'}
                     </Button>
-                    <Button onClick={() => reset(mode)} variant="outline" className="w-24 h-12 text-lg">
+                    <Button onClick={reset} variant="outline" className="w-24 h-12 text-lg">
                         <RotateCcw/> Reset
                     </Button>
                     <PomodoroSettingsDialog
@@ -331,13 +325,11 @@ function Stopwatch() {
         if (savedState) {
             const { time: savedTime, isRunning: wasRunning, startTime: savedStartTime, laps: savedLaps } = JSON.parse(savedState);
             setLaps(savedLaps || []);
-            if (wasRunning) {
-                // If it was running, calculate elapsed time and resume
+            if (wasRunning && savedStartTime) {
                 const elapsed = Date.now() - savedStartTime;
                 setTime(savedTime + elapsed);
                 setIsRunning(true);
             } else {
-                // If paused, just restore the time
                 setTime(savedTime);
                 setIsRunning(false);
             }
@@ -382,7 +374,7 @@ function Stopwatch() {
         const currentlyRunning = !isRunning;
         setIsRunning(currentlyRunning);
         if (currentlyRunning) {
-            // Starting
+            // Starting or resuming
              localStorage.setItem('stopwatchState', JSON.stringify({
                 time: time,
                 startTime: Date.now(),
@@ -393,7 +385,7 @@ function Stopwatch() {
             // Pausing
             localStorage.setItem('stopwatchState', JSON.stringify({
                 time: time,
-                startTime: 0, // Not needed when paused
+                startTime: 0, 
                 isRunning: false,
                 laps: laps
             }));
@@ -408,6 +400,7 @@ function Stopwatch() {
     };
 
     const lap = () => {
+        if (!isRunning) return;
         const newLaps = [...laps, time];
         setLaps(newLaps);
         const state = JSON.parse(localStorage.getItem('stopwatchState') || '{}');
@@ -443,7 +436,7 @@ function Stopwatch() {
                     <Button onClick={reset} variant="outline" className="w-24 h-12 text-lg">
                         <RotateCcw/> Reset
                     </Button>
-                     <Button onClick={lap} variant="outline" className="w-24 h-12 text-lg" disabled={!isRunning && time === 0}>
+                     <Button onClick={lap} variant="outline" className="w-24 h-12 text-lg" disabled={!isRunning}>
                         <Flag/> Lap
                     </Button>
                 </div>
@@ -828,6 +821,3 @@ export function TimeUtilities() {
     </div>
   );
 }
-
-    
-    
