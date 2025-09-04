@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2, ChevronDown } from "lucide-react";
 import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
-import { parseConversionQuery, ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow";
+import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Calculator } from "./calculator";
@@ -176,7 +176,6 @@ export function Converter() {
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isSearching, startSearchTransition] = React.useTransition();
-  const [isOnline, setIsOnline] = useState(true);
   const [parsedQuery, setParsedQuery] = useState<ParseConversionQueryOutput | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [autoConvert, setAutoConvert] = useState(true);
@@ -214,13 +213,6 @@ export function Converter() {
       handleRestoreHistory(itemToRestore);
       localStorage.removeItem("restoreConversion");
     }
-
-    // Check online status
-    setIsOnline(navigator.onLine);
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
     
     const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'customUnits') {
@@ -234,8 +226,6 @@ export function Converter() {
 
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
       window.removeEventListener('storage', handleStorageChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -377,14 +367,9 @@ export function Converter() {
         return;
     }
 
-    startSearchTransition(async () => {
-        let parsed: ParseConversionQueryOutput | null = null;
+    startSearchTransition(() => {
         try {
-            if (isOnline) {
-                parsed = await parseConversionQuery({ query: searchQuery });
-            } else {
-                parsed = offlineParseConversionQuery(searchQuery, allUnits);
-            }
+            const parsed = offlineParseConversionQuery(searchQuery, allUnits);
 
             if (parsed) {
                 setParsedQuery(parsed);
@@ -934,4 +919,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
 );
 ConversionImage.displayName = 'ConversionImage';
 
+    
     
