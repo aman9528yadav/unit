@@ -12,7 +12,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
-import { addNotification } from '@/lib/notifications';
+import { sendGlobalNotification } from '@/services/firestore';
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -152,15 +152,25 @@ export function DevPanel() {
         });
     };
 
-    const handleSendNotification = () => {
+    const handleSendNotification = async () => {
         if (!notificationTitle || !notificationDescription) {
             toast({ title: "Incomplete", description: "Please fill out both title and description.", variant: "destructive" });
             return;
         }
-        addNotification({ title: notificationTitle, description: notificationDescription });
-        setNotificationTitle('');
-        setNotificationDescription('');
-        toast({ title: "Notification Sent!", description: "The broadcast has been sent to all users." });
+        
+        try {
+            await sendGlobalNotification({ 
+                title: notificationTitle, 
+                description: notificationDescription,
+                icon: 'new', // Default icon for new broadcasts
+            });
+            setNotificationTitle('');
+            setNotificationDescription('');
+            toast({ title: "Notification Sent!", description: "The broadcast has been sent to all users." });
+        } catch (error) {
+            console.error("Failed to send notification:", error);
+            toast({ title: "Broadcast Failed", description: "Could not send notification. Check console for errors.", variant: "destructive" });
+        }
     };
 
 
@@ -352,7 +362,7 @@ export function DevPanel() {
                                     <button
                                         type="button"
                                         onClick={() => setShowNewPassword(!showNewPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                        className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground"
                                     >
                                         {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>
@@ -372,7 +382,7 @@ export function DevPanel() {
                                     <button
                                         type="button"
                                         onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                        className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground"
                                     >
                                         {showConfirmNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                     </button>

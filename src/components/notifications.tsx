@@ -13,10 +13,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getNotifications, markAsRead, removeNotification, removeAllNotifications, type AppNotification } from "@/lib/notifications";
+import { getNotificationsWithReadStatus, markAsRead, removeAllNotifications, type AppNotification } from "@/lib/notifications";
+import { listenToGlobalNotifications } from "@/services/firestore";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-
 
 const getUserKey = (key: string, email: string | null) => `${email || 'guest'}_${key}`;
 
@@ -41,11 +41,6 @@ export function Notifications() {
     }
   }, []);
   
-  const loadNotifications = () => {
-      const storedNotifications = getNotifications();
-      setNotifications(storedNotifications);
-  }
-
   const checkNotificationSetting = () => {
     const userKey = profile?.email || 'guest';
     const enabled = localStorage.getItem(getUserKey('notificationsEnabled', userKey));
@@ -54,20 +49,28 @@ export function Notifications() {
   
   useEffect(() => {
     if (isClient) {
-        loadNotifications();
         checkNotificationSetting();
         
+        const unsubscribe = listenToGlobalNotifications((globalNotifications) => {
+          const notificationsWithStatus = getNotificationsWithReadStatus(globalNotifications);
+          setNotifications(notificationsWithStatus);
+        });
+
         const handleStorageChange = (event: StorageEvent) => {
-            if (event.key === 'appNotifications') {
-                loadNotifications();
+            // This listens for changes in read status from other tabs
+            if (event.key === 'readAppNotifications') {
+                const globalNotifications = notifications.map(({read, ...rest}) => rest); // Get current global data
+                const updatedNotifications = getNotificationsWithReadStatus(globalNotifications);
+                setNotifications(updatedNotifications);
             }
-             if (event.key === getUserKey('notificationsEnabled', profile?.email || 'guest')) {
-                checkNotificationSetting();
-            }
+            if (event.key === getUserKey('notificationsEnabled', profile?.email || 'guest')) {
+               checkNotificationSetting();
+           }
         };
 
         window.addEventListener('storage', handleStorageChange);
         return () => {
+            unsubscribe();
             window.removeEventListener('storage', handleStorageChange);
         };
     }
@@ -75,19 +78,14 @@ export function Notifications() {
 
   const handleMarkAsRead = (id: string) => {
     markAsRead(id);
-    loadNotifications();
+    // Optimistically update the UI without waiting for a re-render from storage event
+    setNotifications(prev => prev.map(n => n.id === id ? {...n, read: true} : n));
   };
   
-  const handleRemoveNotification = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation(); // Prevent dropdown item from being triggered
-    removeNotification(id);
-    loadNotifications();
-    toast({ title: "Notification removed." });
-  }
-
   const handleRemoveAll = () => {
       removeAllNotifications();
-      loadNotifications();
+      // Optimistically update UI
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       toast({ title: "All notifications cleared." });
   }
 
@@ -97,7 +95,8 @@ export function Notifications() {
             markAsRead(n.id);
         }
     });
-    loadNotifications();
+    // Optimistically update UI
+    setNotifications(prev => prev.map(n => ({...n, read: true})));
     toast({ title: "All notifications marked as read."});
   };
 
@@ -158,14 +157,7 @@ export function Notifications() {
                 <p className="text-xs text-muted-foreground/80 mt-1">{formatDistanceToNow(new Date(notification.createdAt))} ago</p>
                 </div>
                  {!notification.read && <div className="w-2 h-2 rounded-full bg-primary self-center"></div>}
-                 <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="absolute top-1 right-1 w-6 h-6 rounded-full opacity-0 group-hover:opacity-100"
-                    onClick={(e) => handleRemoveNotification(e, notification.id)}
-                 >
-                    <X className="w-4 h-4"/>
-                 </Button>
+                 {/* Remove button is not part of this implementation as users shouldn't delete global notifications */}
             </DropdownMenuItem>
             ))}
              <DropdownMenuSeparator />
