@@ -176,7 +176,6 @@ export function Converter() {
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isSearching, startSearchTransition] = React.useTransition();
-  const [parsedQuery, setParsedQuery] = useState<ParseConversionQueryOutput | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [autoConvert, setAutoConvert] = useState(true);
 
@@ -247,17 +246,17 @@ export function Converter() {
   }, [selectedCategory, region, currentUnits]);
 
 
- const performConversion = React.useCallback(async () => {
-    const numValue = parseFloat(inputValue);
+ const performConversion = React.useCallback(async (value: string | number, from: string, to: string) => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
     setIsGraphVisible(false);
 
-    if (isNaN(numValue) || !fromUnit || !toUnit) {
+    if (isNaN(numValue) || !from || !to) {
         setOutputValue("");
         setChartData([]);
         return;
     }
 
-    const categoryToUse = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit) && c.units.some(u => u.symbol === toUnit)) || selectedCategory;
+    const categoryToUse = conversionCategories.find(c => c.units.some(u => u.symbol === from) && c.units.some(u => u.symbol === to));
 
     if (!categoryToUse) {
         setOutputValue("");
@@ -265,7 +264,7 @@ export function Converter() {
         return;
     }
 
-    const result = await categoryToUse.convert(numValue, fromUnit, toUnit, region);
+    const result = await categoryToUse.convert(numValue, from, to, region);
 
     if (result === undefined || isNaN(result)) {
         setOutputValue("");
@@ -280,7 +279,7 @@ export function Converter() {
     if (categoryToUse.name !== 'Temperature') { // Charting temp isn't straightforward
         const allUnitsInCategory = categoryToUse.units.filter(u => !u.region || u.region === region);
         const chartDataPromises = allUnitsInCategory.map(async (unit) => {
-            const convertedValue = await categoryToUse.convert(numValue, fromUnit, unit.symbol, region);
+            const convertedValue = await categoryToUse.convert(numValue, from, unit.symbol, region);
             return { 
                 name: unit.symbol, 
                 value: parseFloat(convertedValue.toFixed(5)) 
@@ -292,41 +291,16 @@ export function Converter() {
         setChartData([]);
     }
 
-}, [inputValue, fromUnit, toUnit, selectedCategory, region, conversionCategories]);
+}, [region, conversionCategories]);
 
   
   // Perform conversion whenever inputs change if auto-convert is on
   useEffect(() => {
     if (autoConvert) {
-      performConversion();
+      performConversion(inputValue, fromUnit, toUnit);
     }
-  }, [performConversion, autoConvert]);
+  }, [inputValue, fromUnit, toUnit, autoConvert, performConversion]);
   
-  // This effect runs after a search query has been parsed and state has been set.
-  useEffect(() => {
-    if (parsedQuery) {
-      const category = conversionCategories.find(c => c.name === parsedQuery.category);
-      if (category) {
-        const categoryUnits = category.units.filter(u => !u.region || u.region === region);
-        const fromUnitExists = categoryUnits.some(u => u.symbol === parsedQuery.fromUnit);
-        const toUnitExists = categoryUnits.some(u => u.symbol === parsedQuery.toUnit);
-
-        if (fromUnitExists && toUnitExists) {
-          setSelectedCategory(category);
-          setFromUnit(parsedQuery.fromUnit);
-          setToUnit(parsedQuery.toUnit);
-          setInputValue(String(parsedQuery.value));
-          setSearchQuery(""); // Clear search
-        } else {
-          toast({ title: t('converter.toast.cannotConvert'), description: t('converter.toast.regionError', { region }), variant: "destructive" });
-        }
-      } else {
-        toast({ title: t('converter.toast.cannotConvert'), description: t('converter.toast.categoryError'), variant: "destructive" });
-      }
-      setParsedQuery(null); // Reset parsed query
-    }
-  }, [parsedQuery, region, toast, t, conversionCategories]);
-
   const handleSaveToHistory = React.useCallback(() => {
     const saveConversionHistory = JSON.parse(localStorage.getItem('saveConversionHistory') || 'true');
     if (!saveConversionHistory) return;
@@ -362,7 +336,7 @@ export function Converter() {
     setIsFavorite(favorites.includes(conversionString));
   }, [inputValue, fromUnit, toUnit, outputValue, favorites, handleSaveToHistory]);
 
-  const handleSearch = async () => {
+ const handleSearch = () => {
     if (searchQuery.trim() === "" || isSearching) {
         return;
     }
@@ -372,9 +346,28 @@ export function Converter() {
             const parsed = offlineParseConversionQuery(searchQuery, allUnits);
 
             if (parsed) {
-                setParsedQuery(parsed);
+                const category = conversionCategories.find(c => c.name === parsed.category);
+                if (category) {
+                    const categoryUnits = category.units.filter(u => !u.region || u.region === region);
+                    const fromUnitExists = categoryUnits.some(u => u.symbol === parsed.fromUnit);
+                    const toUnitExists = categoryUnits.some(u => u.symbol === parsed.toUnit);
+
+                    if (fromUnitExists && toUnitExists) {
+                        setSelectedCategory(category);
+                        setFromUnit(parsed.fromUnit);
+                        setToUnit(parsed.toUnit);
+                        setInputValue(String(parsed.value));
+                        // Perform conversion immediately after setting state from search
+                        performConversion(parsed.value, parsed.fromUnit, parsed.toUnit);
+                        setSearchQuery(""); // Clear search
+                    } else {
+                        toast({ title: t('converter.toast.cannotConvert'), description: t('converter.toast.regionError', { region }), variant: "destructive" });
+                    }
+                } else {
+                    toast({ title: t('converter.toast.cannotConvert'), description: t('converter.toast.categoryError'), variant: "destructive" });
+                }
             } else {
-                 toast({ title: t('converter.toast.invalidSearch'), description: t('converter.toast.queryError'), variant: "destructive" });
+                toast({ title: t('converter.toast.invalidSearch'), description: t('converter.toast.queryError'), variant: "destructive" });
             }
         } catch (error) {
             console.error("Search conversion failed:", error);
@@ -382,6 +375,7 @@ export function Converter() {
         }
     });
 };
+
 
   const handleCategoryChange = (categoryName: string) => {
     const category = conversionCategories.find(c => c.name === categoryName);
@@ -403,7 +397,7 @@ export function Converter() {
   };
 
   const handleConvertClick = () => {
-    performConversion();
+    performConversion(inputValue, fromUnit, toUnit);
   };
   
   const handleToggleFavorite = () => {
