@@ -94,7 +94,7 @@ export function WelcomeForm() {
       <div className="text-center mb-8">
           <h2 className="text-2xl font-bold">Welcome</h2>
           <p className="text-muted-foreground mt-2 text-sm">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.
+            Your all-in-one solution for seamless unit conversions, calculations, and note-taking. Log in to sync your data across devices.
           </p>
       </div>
       
