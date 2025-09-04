@@ -12,16 +12,11 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
-import { sendGlobalNotification } from '@/services/firestore';
+import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode } from '@/services/firestore';
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 const DEFAULT_DEV_PASSWORD = "121312";
-const DEV_PASSWORD_STORAGE_KEY = "developer_password";
-const UPDATE_TIMER_STORAGE_KEY = "nextUpdateTime";
-const UPDATE_TEXT_STORAGE_KEY = "nextUpdateText";
-const MAINTENANCE_MODE_STORAGE_KEY = "maintenanceMode";
-
 
 interface UserProfile {
     email: string;
@@ -33,13 +28,8 @@ export function DevPanel() {
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [password, setPassword] = useState('');
-    const [devPassword, setDevPassword] = useState(DEFAULT_DEV_PASSWORD);
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [isClient, setIsClient] = useState(false);
     const [showAuthPassword, setShowAuthPassword] = useState(false);
-    const [showNewPassword, setShowNewPassword] = useState(false);
-    const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
     const [duration, setDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const [updateText, setUpdateText] = useState('');
     const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
@@ -51,20 +41,12 @@ export function DevPanel() {
     useEffect(() => {
         setIsClient(true);
         const storedProfile = localStorage.getItem('userProfile');
-        const storedDevPassword = localStorage.getItem(DEV_PASSWORD_STORAGE_KEY);
-        const storedUpdateText = localStorage.getItem(UPDATE_TEXT_STORAGE_KEY);
-        const storedMaintenanceMode = localStorage.getItem(MAINTENANCE_MODE_STORAGE_KEY);
         
-        if (storedDevPassword) {
-            setDevPassword(storedDevPassword);
-        }
-         if (storedUpdateText) {
+        const storedUpdateText = localStorage.getItem("nextUpdateText");
+        if (storedUpdateText) {
             setUpdateText(storedUpdateText);
         }
-        if (storedMaintenanceMode) {
-            setIsMaintenanceMode(storedMaintenanceMode === 'true');
-        }
-
+        
         if (storedProfile) {
             const parsedProfile = JSON.parse(storedProfile);
             setProfile(parsedProfile);
@@ -72,10 +54,16 @@ export function DevPanel() {
                 setIsAuthorized(true);
             }
         }
+
+        const unsubscribe = listenToGlobalMaintenanceMode((status) => {
+            setIsMaintenanceMode(status);
+        });
+
+        return () => unsubscribe();
     }, []);
     
     const handlePasswordSubmit = () => {
-        if (password === devPassword) {
+        if (password === DEFAULT_DEV_PASSWORD) {
             setIsAuthenticated(true);
             toast({ title: "Access Granted", description: "Welcome to the Developer Panel." });
         } else {
@@ -91,22 +79,6 @@ export function DevPanel() {
         }
     };
     
-    const handleChangePassword = () => {
-        if (!newPassword || newPassword !== confirmNewPassword) {
-            toast({ title: "Password Mismatch", description: "The new passwords do not match.", variant: "destructive" });
-            return;
-        }
-        if (newPassword.length < 6) {
-            toast({ title: "Password Too Short", description: "Password must be at least 6 characters.", variant: "destructive" });
-            return;
-        }
-        localStorage.setItem(DEV_PASSWORD_STORAGE_KEY, newPassword);
-        setDevPassword(newPassword);
-        setNewPassword('');
-        setConfirmNewPassword('');
-        toast({ title: "Password Updated", description: "Developer password has been changed successfully." });
-    };
-
     const handleDurationChange = (unit: keyof typeof duration, value: string) => {
         const numValue = parseInt(value, 10);
         setDuration(prev => ({ ...prev, [unit]: isNaN(numValue) ? 0 : numValue }));
@@ -124,32 +96,35 @@ export function DevPanel() {
 
         const targetDateTime = new Date(now.getTime() + totalMilliseconds);
 
-        localStorage.setItem(UPDATE_TIMER_STORAGE_KEY, targetDateTime.toISOString());
-        window.dispatchEvent(new StorageEvent('storage', { key: UPDATE_TIMER_STORAGE_KEY, newValue: targetDateTime.toISOString() }));
+        localStorage.setItem("nextUpdateTime", targetDateTime.toISOString());
+        window.dispatchEvent(new StorageEvent('storage', { key: "nextUpdateTime", newValue: targetDateTime.toISOString() }));
         toast({ title: 'Countdown Set!', description: `Timer set for ${targetDateTime.toLocaleString()}` });
     };
 
     const handleClearTimer = () => {
-        localStorage.removeItem(UPDATE_TIMER_STORAGE_KEY);
-        window.dispatchEvent(new StorageEvent('storage', { key: UPDATE_TIMER_STORAGE_KEY, newValue: null }));
+        localStorage.removeItem("nextUpdateTime");
+        window.dispatchEvent(new StorageEvent('storage', { key: "nextUpdateTime", newValue: null }));
         setDuration({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         toast({ title: 'Countdown Cleared' });
     };
     
     const handleSaveUpdateText = () => {
-        localStorage.setItem(UPDATE_TEXT_STORAGE_KEY, updateText);
-         window.dispatchEvent(new StorageEvent('storage', { key: UPDATE_TEXT_STORAGE_KEY, newValue: updateText }));
+        localStorage.setItem("nextUpdateText", updateText);
+         window.dispatchEvent(new StorageEvent('storage', { key: "nextUpdateText", newValue: updateText }));
         toast({ title: 'Update Text Saved' });
     };
 
-    const handleMaintenanceModeToggle = (checked: boolean) => {
-        setIsMaintenanceMode(checked);
-        localStorage.setItem(MAINTENANCE_MODE_STORAGE_KEY, String(checked));
-        window.dispatchEvent(new StorageEvent('storage', { key: MAINTENANCE_MODE_STORAGE_KEY, newValue: String(checked) }));
-        toast({
-            title: `Maintenance Mode ${checked ? 'Enabled' : 'Disabled'}`,
-            description: `The app is now ${checked ? 'in' : 'out of'} maintenance mode.`,
-        });
+    const handleMaintenanceModeToggle = async (checked: boolean) => {
+        try {
+            await setGlobalMaintenanceMode(checked);
+            toast({
+                title: `Maintenance Mode ${checked ? 'Enabled' : 'Disabled'}`,
+                description: `The app status has been updated globally.`,
+            });
+        } catch (error) {
+            console.error("Failed to set maintenance mode:", error);
+            toast({ title: "Error", description: "Could not update maintenance status.", variant: "destructive" });
+        }
     };
 
     const handleSendNotification = async () => {
@@ -232,12 +207,11 @@ export function DevPanel() {
             </header>
 
             <Tabs defaultValue="updates" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="updates">Updates</TabsTrigger>
                     <TabsTrigger value="content">Content</TabsTrigger>
                     <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
-                    <TabsTrigger value="security">Security</TabsTrigger>
-                    <TabsTrigger value="data">Raw Data</TabsTrigger>
+                    <TabsTrigger value="data">Data</TabsTrigger>
                 </TabsList>
                 <TabsContent value="updates" className="mt-4">
                     <Card>
@@ -338,72 +312,16 @@ export function DevPanel() {
                         </CardContent>
                     </Card>
                 </TabsContent>
-                <TabsContent value="security" className="mt-4">
+                <TabsContent value="data" className="mt-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><Lock /> Security & Data</CardTitle>
+                            <CardTitle className="flex items-center gap-2"><Trash2 /> Data Management</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
                                 <p>Clear all app data</p>
                                 <Button variant="destructive" onClick={handleClearLocalStorage}>Clear Local Storage</Button>
                             </div>
-                            <div>
-                                <Label htmlFor="newPassword">New Developer Password</Label>
-                                <div className="relative mt-1">
-                                    <Input
-                                        id="newPassword"
-                                        type={showNewPassword ? "text" : "password"}
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        placeholder="Enter new password"
-                                        className="pr-10"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowNewPassword(!showNewPassword)}
-                                        className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground"
-                                    >
-                                        {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                    </button>
-                                </div>
-                            </div>
-                            <div>
-                                <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
-                                <div className="relative mt-1">
-                                    <Input
-                                        id="confirmNewPassword"
-                                        type={showConfirmNewPassword ? "text" : "password"}
-                                        value={confirmNewPassword}
-                                        onChange={(e) => setConfirmNewPassword(e.target.value)}
-                                        placeholder="Confirm new password"
-                                        className="pr-10"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                                        className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground"
-                                    >
-                                        {showConfirmNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                    </button>
-                                </div>
-                            </div>
-                            <Button onClick={handleChangePassword} className="w-full">
-                                Update Password
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="data" className="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><Code /> Raw Data</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <h3 className="font-semibold mb-2">User Profile</h3>
-                            <pre className="bg-secondary p-4 rounded-md text-xs overflow-auto">
-                                {JSON.stringify(profile, null, 2)}
-                            </pre>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -413,5 +331,3 @@ export function DevPanel() {
         </div>
     );
 }
-
-    

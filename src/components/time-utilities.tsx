@@ -13,7 +13,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format, differenceInDays, differenceInWeeks, differenceInMonths, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, addYears, subYears, intervalToDuration, differenceInBusinessDays, parseISO } from 'date-fns';
 import { Home, Play, Pause, RotateCcw, Flag, CalendarIcon, ArrowRight, Hourglass, Trash2, Settings, Minus, Plus } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -602,13 +602,16 @@ function DateCalculator() {
     
     return (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5">
-                <TabsTrigger value="difference">Difference</TabsTrigger>
-                <TabsTrigger value="add-subtract">Add/Sub</TabsTrigger>
-                <TabsTrigger value="age">Age</TabsTrigger>
-                <TabsTrigger value="work-days">Work Days</TabsTrigger>
-                <TabsTrigger value="countdown">Countdown</TabsTrigger>
-            </TabsList>
+            <ScrollArea className="w-full whitespace-nowrap rounded-lg">
+                <TabsList className="inline-flex">
+                    <TabsTrigger value="difference">Difference</TabsTrigger>
+                    <TabsTrigger value="add-subtract">Add/Sub</TabsTrigger>
+                    <TabsTrigger value="age">Age</TabsTrigger>
+                    <TabsTrigger value="work-days">Work Days</TabsTrigger>
+                    <TabsTrigger value="countdown">Countdown</TabsTrigger>
+                </TabsList>
+                <ScrollBar orientation="horizontal" />
+            </ScrollArea>
             <TabsContent value="difference" className="mt-4"><DateDifference /></TabsContent>
             <TabsContent value="add-subtract" className="mt-4"><AddSubtractTime /></TabsContent>
             <TabsContent value="age" className="mt-4"><AgeCalculator /></TabsContent>
