@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format, differenceInDays, differenceInWeeks, differenceInMonths, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, addYears, subYears, intervalToDuration, differenceInBusinessDays, parseISO } from 'date-fns';
-import { Home, Play, Pause, RotateCcw, Flag, CalendarIcon, ArrowRight, Hourglass, Trash2, Settings, Minus, Plus } from "lucide-react";
+import { Home, Play, Pause, RotateCcw, Flag, CalendarIcon, ArrowRight, Hourglass, Trash2, Settings, Minus, Plus, ArrowDown } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
@@ -320,9 +320,9 @@ function DateDifference() {
                 <CardTitle className="text-center">Time Between Dates</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-4">
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-medium text-center md:text-left">Start Date</label>
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-full flex flex-col gap-1.5">
+                        <Label>Start Date</Label>
                          <Popover>
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start text-left font-normal">
@@ -335,9 +335,9 @@ function DateDifference() {
                             </PopoverContent>
                         </Popover>
                     </div>
-                    <ArrowRight className="hidden md:block mx-auto text-muted-foreground" />
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-medium text-center md:text-left">End Date</label>
+                    <ArrowDown className="text-muted-foreground" />
+                    <div className="w-full flex flex-col gap-1.5">
+                        <Label>End Date</Label>
                          <Popover>
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start text-left font-normal">
@@ -657,3 +657,5 @@ export function TimeUtilities() {
     </div>
   );
 }
+
+    
