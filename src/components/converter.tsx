@@ -567,10 +567,14 @@ export function Converter() {
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-4">
-      <header className="flex justify-between items-center sticky top-0 z-50 bg-background py-4">
-        <div>
-          <h1 className="text-2xl font-bold">{t('dashboard.greeting', { name: profile?.fullName || "User" })}</h1>
-          <p className="text-muted-foreground">{t('converter.welcome')}</p>
+      <header className="flex items-center justify-between sticky top-0 z-50 bg-background py-4">
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="/">
+              <Home />
+          </Link>
+        </Button>
+        <div className="flex-1 text-center">
+            <h1 className="text-2xl font-bold">Converter</h1>
         </div>
         <div className="flex items-center gap-2">
             {profile && <GlobalSearchDialog />}
@@ -585,29 +589,6 @@ export function Converter() {
               </Button>
         </div>
       </header>
-
-      <div className="grid grid-cols-5 gap-2 text-center">
-        <Link href="/" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
-            <Home />
-            <span className="text-xs font-medium">{t('nav.dashboard')}</span>
-        </Link>
-         <Link href="/notes" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
-            <StickyNote />
-            <span className="text-xs font-medium">{t('nav.notes')}</span>
-        </Link>
-        <Link href="/converter" className="flex flex-col items-center gap-2 p-2 rounded-lg bg-accent/20 border-accent border text-accent">
-            <CalculatorIcon />
-            <span className="text-xs font-medium">{t('nav.converter')}</span>
-        </Link>
-        <Link href="/history" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
-            <Clock />
-            <span className="text-xs font-medium">{t('nav.history')}</span>
-        </Link>
-         <Link href="/time" className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-card">
-            <Hourglass />
-            <span className="text-xs font-medium">Time</span>
-        </Link>
-      </div>
       
       {/* Element to be captured for image export */}
       <div className="absolute -left-[9999px] -top-[9999px]">
