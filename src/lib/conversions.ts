@@ -3,7 +3,7 @@
 import { Ruler, Scale, Thermometer, Database, Clock, Zap, Square, Beaker, Hourglass, Gauge, Flame, DollarSign, Fuel } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export type Region = 'International' | 'India';
+export type Region = 'International' | 'India' | 'Japan' | 'Korea' | 'China' | 'Middle East';
 
 export type Unit = {
   name: string;
@@ -38,6 +38,7 @@ const lengthUnits: Unit[] = [
   { name: 'Inches', symbol: 'in', info: '1in = 0.0254 m' },
   { name: 'Nautical Miles', symbol: 'nmi', info: '1nmi = 1852 m' },
   { name: 'Gaj', symbol: 'gaj', info: '1 gaj = 0.9144 m', region: 'India' },
+  { name: 'Li', symbol: 'li', info: '1 li = 500 m', region: 'China' },
 ];
 const lengthFactors: LinearConversionFactors = { // to meter
   'm': 1,
@@ -50,6 +51,7 @@ const lengthFactors: LinearConversionFactors = { // to meter
   'in': 0.0254,
   'nmi': 1852,
   'gaj': 0.9144,
+  'li': 500,
 };
 const lengthCategory: ConversionCategory = {
   name: 'Length',
@@ -233,6 +235,9 @@ const areaUnits: Unit[] = [
     { name: 'Hectares', symbol: 'ha', info: '1ha = 10,000 m²' },
     { name: 'Acres', symbol: 'acre', info: '1 acre ≈ 4046.86 m²' },
     { name: 'Bigha', symbol: 'bigha', info: 'Varies by region', region: 'India' },
+    { name: 'Tsubo', symbol: 'tsubo', info: '1 tsubo ≈ 3.306 m²', region: 'Japan' },
+    { name: 'Pyeong', symbol: 'pyeong', info: '1 pyeong ≈ 3.306 m²', region: 'Korea' },
+    { name: 'Dunam', symbol: 'dunam', info: '1 dunam = 1000 m²', region: 'Middle East' },
 ];
 const areaFactors: LinearConversionFactors = { // to m²
   'm²': 1,
@@ -243,6 +248,9 @@ const areaFactors: LinearConversionFactors = { // to m²
   'ha': 10000,
   'acre': 4046.86,
   'bigha': 2508.38, // Note: This is an approximation for some regions.
+  'tsubo': 3.305785,
+  'pyeong': 3.305785,
+  'dunam': 1000,
 };
 const areaCategory: ConversionCategory = {
     name: 'Area',
@@ -463,3 +471,4 @@ const fuelEconomyCategory: ConversionCategory = {
 
 
 export const conversionCategories: ConversionCategory[] = [lengthCategory, weightCategory, temperatureCategory, dataCategory, timeCategory, speedCategory, areaCategory, volumeCategory, pressureCategory, energyCategory, currencyCategory, fuelEconomyCategory];
+

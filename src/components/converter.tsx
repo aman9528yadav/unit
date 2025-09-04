@@ -43,7 +43,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 
-const regions: Region[] = ['International', 'India'];
+const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
 
 interface UserProfile {
     fullName: string;
