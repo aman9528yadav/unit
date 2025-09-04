@@ -12,7 +12,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
-import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode } from '@/services/firestore';
+import { sendGlobalNotification } from '@/services/firestore';
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -55,11 +55,9 @@ export function DevPanel() {
             }
         }
 
-        const unsubscribe = listenToGlobalMaintenanceMode((status) => {
-            setIsMaintenanceMode(status);
-        });
+        const maintenanceStatus = localStorage.getItem('maintenanceMode') === 'true';
+        setIsMaintenanceMode(maintenanceStatus);
 
-        return () => unsubscribe();
     }, []);
     
     const handlePasswordSubmit = () => {
@@ -114,17 +112,18 @@ export function DevPanel() {
         toast({ title: 'Update Text Saved' });
     };
 
-    const handleMaintenanceModeToggle = async (checked: boolean) => {
-        try {
-            await setGlobalMaintenanceMode(checked);
-            toast({
-                title: `Maintenance Mode ${checked ? 'Enabled' : 'Disabled'}`,
-                description: `The app status has been updated globally.`,
-            });
-        } catch (error) {
-            console.error("Failed to set maintenance mode:", error);
-            toast({ title: "Error", description: "Could not update maintenance status.", variant: "destructive" });
-        }
+    const handleMaintenanceModeToggle = (checked: boolean) => {
+        setIsMaintenanceMode(checked);
+        localStorage.setItem('maintenanceMode', String(checked));
+        // Dispatch a storage event so other open tabs can react.
+        window.dispatchEvent(new StorageEvent('storage', { 
+            key: 'maintenanceMode',
+            newValue: String(checked)
+        }));
+        toast({
+            title: `Maintenance Mode ${checked ? 'Enabled' : 'Disabled'}`,
+            description: `Users will now be ${checked ? 'redirected' : 'able to access the app'}.`,
+        });
     };
 
     const handleSendNotification = async () => {
@@ -207,9 +206,8 @@ export function DevPanel() {
             </header>
 
             <Tabs defaultValue="updates" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="updates">Updates</TabsTrigger>
-                    <TabsTrigger value="content">Content</TabsTrigger>
                     <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
                     <TabsTrigger value="data">Data</TabsTrigger>
                 </TabsList>
@@ -263,19 +261,6 @@ export function DevPanel() {
                                     rows={4}
                                 />
                                 <Button onClick={handleSaveUpdateText} className="w-full">Save Details</Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                 <TabsContent value="content" className="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><FileText /> Content Management</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                           <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                <p>Manage Help & Support FAQs</p>
-                                <Button onClick={() => router.push('/dev/help')}>Edit Content</Button>
                             </div>
                         </CardContent>
                     </Card>
