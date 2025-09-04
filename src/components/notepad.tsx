@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home, ShieldX } from 'lucide-react';
+import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home, ShieldX, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -30,21 +30,8 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu"
 import { useToast } from '@/hooks/use-toast';
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarTrigger,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarInset,
-  SidebarSeparator,
-  SidebarGroup,
-  SidebarGroupLabel
-} from '@/components/ui/sidebar';
 import { useDebounce } from '@/hooks/use-debounce';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 
 
 export interface Note {
@@ -240,12 +227,17 @@ export function Notepad() {
         setView('category');
         setActiveCategory(category);
     }
+
+    const handleTabChange = (value: string) => {
+        setView(value as NoteView);
+        setActiveCategory(null);
+    }
     
     const { title: emptyTitle, message: emptyMessage } = getEmptyState();
 
     if (!isClient) {
         return (
-             <div className="w-full max-w-md mx-auto flex flex-col text-white p-4">
+             <div className="w-full max-w-md mx-auto flex flex-col p-4">
                 <header className="flex items-center justify-between">
                    <div className="w-10 h-10"></div>
                     <h1 className="text-xl font-bold">All notes</h1>
@@ -257,217 +249,202 @@ export function Notepad() {
     }
 
     return (
-        <SidebarProvider>
-            <Sidebar>
-                <SidebarContent>
-                    <SidebarHeader>
-                        <h2 className="text-xl font-bold">UniConvert Notes</h2>
-                    </SidebarHeader>
-                     <SidebarMenu>
-                         <SidebarMenuItem>
-                            <SidebarMenuButton asChild>
-                                <Link href="/">
-                                    <Home />
-                                    Dashboard
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    </SidebarMenu>
-                    <SidebarSeparator />
-                    <SidebarMenu>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton onClick={() => { setView('all'); setActiveCategory(null); }} isActive={view === 'all'}><StickyNote />All Notes</SidebarMenuButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton onClick={() => { setView('favorites'); setActiveCategory(null); }} isActive={view === 'favorites'}><Star />Favorites</SidebarMenuButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton onClick={() => { setView('trash'); setActiveCategory(null); }} isActive={view === 'trash'}><Trash2/>Recycle Bin</SidebarMenuButton>
-                        </SidebarMenuItem>
-                    </SidebarMenu>
-                    {categories.length > 0 && (
+        <div className="w-full max-w-md mx-auto flex flex-col h-screen">
+             <header className="flex items-center justify-between p-4 flex-shrink-0 sticky top-0 z-50 bg-background">
+                <Link href="/">
+                    <Button variant="ghost" size="icon"><Home/></Button>
+                </Link>
+                <div className='text-center'>
+                     {isSearchVisible ? (
+                        <div className="flex items-center gap-2">
+                            <Search className="text-muted-foreground" />
+                            <Input 
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search notes..."
+                                className="w-full bg-transparent border-none focus:ring-0"
+                                autoFocus
+                            />
+                            <Button variant="ghost" size="icon" onClick={() => {setIsSearchVisible(false); setSearchQuery('');}}><X/></Button>
+                        </div>
+                    ) : (
                         <>
-                            <SidebarSeparator />
-                            <SidebarGroup>
-                                <SidebarGroupLabel>Categories</SidebarGroupLabel>
-                                <SidebarMenu>
-                                    {categories.map(cat => (
-                                        <SidebarMenuItem key={cat}>
-                                            <SidebarMenuButton onClick={() => handleCategoryClick(cat)} isActive={view === 'category' && activeCategory === cat}>
-                                                <Tag /> {cat}
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    ))}
-                                </SidebarMenu>
-                            </SidebarGroup>
+                            <h1 className="text-2xl font-bold">{getHeading()}</h1>
+                            <p className="text-sm text-muted-foreground">{sortedNotes.length} notes</p>
                         </>
                     )}
-                </SidebarContent>
-            </Sidebar>
-
-            <SidebarInset className="flex flex-col h-screen">
-                <header className="flex items-center justify-between p-4 flex-shrink-0 sticky top-0 z-50 bg-background">
-                    <SidebarTrigger>
-                        <Menu/>
-                    </SidebarTrigger>
-                    <div className='text-center'>
-                         {isSearchVisible ? (
-                            <div className="flex items-center gap-2">
-                                <Search className="text-muted-foreground" />
-                                <Input 
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Search notes..."
-                                    className="w-full bg-transparent border-none focus:ring-0"
-                                    autoFocus
-                                />
-                                <Button variant="ghost" size="icon" onClick={() => {setIsSearchVisible(false); setSearchQuery('');}}><X/></Button>
-                            </div>
-                        ) : (
-                            <>
-                                <h1 className="text-2xl font-bold">{getHeading()}</h1>
-                                <p className="text-sm text-muted-foreground">{sortedNotes.length} notes</p>
-                            </>
-                        )}
-                    </div>
-                    <div className="flex items-center">
-                        {!isSearchVisible && (
-                            <Button variant="ghost" size="icon" onClick={() => setIsSearchVisible(true)}>
-                                <Search />
-                            </Button>
-                        )}
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <MoreVertical />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuLabel>View as</DropdownMenuLabel>
-                                <DropdownMenuRadioGroup value={layout} onValueChange={(v) => setLayout(v as LayoutView)}>
-                                <DropdownMenuRadioItem value="list"><List className="mr-2"/> List</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="card"><LayoutGrid className="mr-2"/> Card</DropdownMenuRadioItem>
-                                </DropdownMenuRadioGroup>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-                                <DropdownMenuRadioGroup value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
-                                <DropdownMenuRadioItem value="updatedAt">Date Modified</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="createdAt">Date Created</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="title">Title</DropdownMenuRadioItem>
-                                </DropdownMenuRadioGroup>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </header>
-                <div className="flex-grow overflow-y-auto px-4 pb-24">
-                     {view === 'trash' && sortedNotes.length > 0 && (
-                        <div className="flex justify-end gap-2 mb-4">
-                            <Button variant="outline" onClick={handleRestoreAll}>
-                                <RotateCcw className="mr-2 h-4 w-4" /> Restore All
-                            </Button>
-                            <Button variant="destructive" onClick={() => setShowEmptyTrashDialog(true)}>
-                                <ShieldX className="mr-2 h-4 w-4" /> Delete All
-                            </Button>
-                        </div>
+                </div>
+                <div className="flex items-center">
+                    {!isSearchVisible && (
+                        <Button variant="ghost" size="icon" onClick={() => setIsSearchVisible(true)}>
+                            <Search />
+                        </Button>
                     )}
-                    {sortedNotes.length > 0 ? (
-                        <ul className={layout === 'list' ? "bg-card rounded-lg p-2 space-y-2" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
-                            {sortedNotes.map(note => (
-                                <li key={note.id} className={layout === 'card' ? "bg-card p-4 rounded-lg cursor-pointer group" : "p-2 rounded-lg cursor-pointer group hover:bg-background"}>
-                                    <div onClick={() => router.push(`/notes/edit/${note.id}`)}>
-                                        <div className="flex items-center justify-between">
-                                            <h2 className="font-semibold truncate">{note.title || 'Untitled Note'}</h2>
-                                            {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <MoreVertical />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuLabel>View as</DropdownMenuLabel>
+                            <DropdownMenuRadioGroup value={layout} onValueChange={(v) => setLayout(v as LayoutView)}>
+                            <DropdownMenuRadioItem value="list"><List className="mr-2"/> List</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="card"><LayoutGrid className="mr-2"/> Card</DropdownMenuRadioItem>
+                            </DropdownMenuRadioGroup>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                            <DropdownMenuRadioGroup value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
+                            <DropdownMenuRadioItem value="updatedAt">Date Modified</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="createdAt">Date Created</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="title">Title</DropdownMenuRadioItem>
+                            </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </header>
+            
+            <div className="px-4 flex-shrink-0">
+                <Tabs value={view === 'category' ? 'all' : view} onValueChange={handleTabChange} className="w-full">
+                    <div className="flex justify-between items-center">
+                        <TabsList>
+                            <TabsTrigger value="all">All</TabsTrigger>
+                            <TabsTrigger value="favorites">Favorites</TabsTrigger>
+                            <TabsTrigger value="trash">Trash</TabsTrigger>
+                        </TabsList>
+
+                        {categories.length > 0 && (
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline">
+                                        Categories <ChevronDown className="ml-2 h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuLabel>Filter by Category</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {categories.map(cat => (
+                                        <DropdownMenuItem key={cat} onClick={() => handleCategoryClick(cat)}>
+                                            <Tag className="mr-2 h-4 w-4" />
+                                            {cat}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                    </div>
+                </Tabs>
+            </div>
+
+
+            <div className="flex-grow overflow-y-auto px-4 pb-24 mt-4">
+                 {view === 'trash' && sortedNotes.length > 0 && (
+                    <div className="flex justify-end gap-2 mb-4">
+                        <Button variant="outline" onClick={handleRestoreAll}>
+                            <RotateCcw className="mr-2 h-4 w-4" /> Restore All
+                        </Button>
+                        <Button variant="destructive" onClick={() => setShowEmptyTrashDialog(true)}>
+                            <ShieldX className="mr-2 h-4 w-4" /> Delete All
+                        </Button>
+                    </div>
+                )}
+                {sortedNotes.length > 0 ? (
+                    <ul className={layout === 'list' ? "bg-card rounded-lg p-2 space-y-2" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
+                        {sortedNotes.map(note => (
+                            <li key={note.id} className={layout === 'card' ? "bg-card p-4 rounded-lg cursor-pointer group" : "p-2 rounded-lg cursor-pointer group hover:bg-background"}>
+                                <div onClick={() => router.push(`/notes/edit/${note.id}`)}>
+                                    <div className="flex items-center justify-between">
+                                        <h2 className="font-semibold truncate">{note.title || 'Untitled Note'}</h2>
+                                        {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
+                                    </div>
+                                     {note.attachment && layout === 'card' && (
+                                        <div className="relative w-full h-32 my-2 rounded-md overflow-hidden">
+                                            <Image src={note.attachment} alt="Note attachment" layout="fill" objectFit="cover" />
                                         </div>
-                                         {note.attachment && layout === 'card' && (
-                                            <div className="relative w-full h-32 my-2 rounded-md overflow-hidden">
+                                    )}
+                                    <div className="flex gap-2">
+                                        {note.attachment && layout === 'list' && (
+                                            <div className="relative w-16 h-16 my-1 rounded-md overflow-hidden flex-shrink-0">
                                                 <Image src={note.attachment} alt="Note attachment" layout="fill" objectFit="cover" />
                                             </div>
                                         )}
-                                        <div className="flex gap-2">
-                                            {note.attachment && layout === 'list' && (
-                                                <div className="relative w-16 h-16 my-1 rounded-md overflow-hidden flex-shrink-0">
-                                                    <Image src={note.attachment} alt="Note attachment" layout="fill" objectFit="cover" />
-                                                </div>
-                                            )}
-                                            <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: note.content || 'No content' }} />
-                                        </div>
-                                        <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
-                                            <span>{format(new Date(note.updatedAt), "d MMM yyyy, h:mm a")}</span>
-                                            {note.category && <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full">{note.category}</span>}
-                                        </div>
-                                         {note.deletedAt && (
-                                            <p className="text-xs text-destructive mt-1">In bin for {formatDistanceToNow(new Date(note.deletedAt))}</p>
-                                         )}
+                                        <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: note.content || 'No content' }} />
                                     </div>
-                                    <div className="flex items-center justify-end gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        {view === 'trash' ? (
-                                            <>
-                                                <Button size="sm" variant="ghost" onClick={() => handleRestore(note.id)}><RotateCcw size={16} /> Restore</Button>
-                                                <Button size="sm" variant="destructive" onClick={() => setNoteToDelete(note.id)}><Trash2 size={16} /> Delete</Button>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Button size="sm" variant="ghost" onClick={() => router.push(`/notes/edit/${note.id}`)}><Edit size={16} /></Button>
-                                                <Button size="sm" variant="ghost" onClick={() => handleToggleFavorite(note.id)}>
-                                                    <Star size={16} className={note.isFavorite ? 'text-yellow-400 fill-yellow-400' : ''}/>
-                                                </Button>
-                                                <Button size="sm" variant="destructive" onClick={() => handleSoftDelete(note.id)}><Trash2 size={16} /></Button>
-                                            </>
-                                        )}
+                                    <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
+                                        <span>{format(new Date(note.updatedAt), "d MMM yyyy, h:mm a")}</span>
+                                        {note.category && <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full">{note.category}</span>}
                                     </div>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <div className="text-center p-8 text-muted-foreground flex flex-col items-center gap-4 mt-16">
-                            <h2 className="text-xl font-semibold">{emptyTitle}</h2>
-                            <p>{emptyMessage}</p>
-                        </div>
-                    )}
-                </div>
-                <Link href="/notes/edit/new" passHref>
-                    <Button className="fixed bottom-8 right-1/2 translate-x-1/2 sm:right-8 sm:translate-x-0 w-16 h-16 rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90">
-                        <Edit size={24} />
-                    </Button>
-                </Link>
-                <AlertDialog open={!!noteToDelete}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This will permanently delete the note. This action cannot be undone.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setNoteToDelete(null)}>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => {
-                                if(noteToDelete) handlePermanentDelete(noteToDelete);
-                                setNoteToDelete(null);
-                            }}>
-                                Delete Permanently
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-                <AlertDialog open={showEmptyTrashDialog}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure you want to empty the trash?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This will permanently delete all notes in the recycle bin. This action cannot be undone.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setShowEmptyTrashDialog(false)}>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleEmptyTrash}>
-                                Delete All
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            </SidebarInset>
-        </SidebarProvider>
+                                     {note.deletedAt && (
+                                        <p className="text-xs text-destructive mt-1">In bin for {formatDistanceToNow(new Date(note.deletedAt))}</p>
+                                     )}
+                                </div>
+                                <div className="flex items-center justify-end gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {view === 'trash' ? (
+                                        <>
+                                            <Button size="sm" variant="ghost" onClick={() => handleRestore(note.id)}><RotateCcw size={16} /> Restore</Button>
+                                            <Button size="sm" variant="destructive" onClick={() => setNoteToDelete(note.id)}><Trash2 size={16} /> Delete</Button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Button size="sm" variant="ghost" onClick={() => router.push(`/notes/edit/${note.id}`)}><Edit size={16} /></Button>
+                                            <Button size="sm" variant="ghost" onClick={() => handleToggleFavorite(note.id)}>
+                                                <Star size={16} className={note.isFavorite ? 'text-yellow-400 fill-yellow-400' : ''}/>
+                                            </Button>
+                                            <Button size="sm" variant="destructive" onClick={() => handleSoftDelete(note.id)}><Trash2 size={16} /></Button>
+                                        </>
+                                    )}
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <div className="text-center p-8 text-muted-foreground flex flex-col items-center gap-4 mt-16">
+                        <h2 className="text-xl font-semibold">{emptyTitle}</h2>
+                        <p>{emptyMessage}</p>
+                    </div>
+                )}
+            </div>
+            <Link href="/notes/edit/new" passHref>
+                <Button className="fixed bottom-8 right-1/2 translate-x-1/2 sm:right-8 sm:translate-x-0 w-16 h-16 rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90">
+                    <Edit size={24} />
+                </Button>
+            </Link>
+            <AlertDialog open={!!noteToDelete}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the note. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setNoteToDelete(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => {
+                            if(noteToDelete) handlePermanentDelete(noteToDelete);
+                            setNoteToDelete(null);
+                        }}>
+                            Delete Permanently
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog open={showEmptyTrashDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure you want to empty the trash?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete all notes in the recycle bin. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setShowEmptyTrashDialog(false)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleEmptyTrash}>
+                            Delete All
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </div>
     );
 }
