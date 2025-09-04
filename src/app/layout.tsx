@@ -15,18 +15,22 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     const [isMaintenance, setIsMaintenance] = useState(false);
 
     useEffect(() => {
-        // Listen for real-time changes to maintenance mode from Firestore
         const unsubscribe = listenToGlobalMaintenanceMode((enabled) => {
             setIsMaintenance(enabled);
+
+            const isAllowedPath = window.location.pathname === '/maintenance' || window.location.pathname.startsWith('/dev');
+
+            if (enabled && !isAllowedPath) {
+                router.replace('/maintenance');
+            }
         });
 
-        // Cleanup the listener when the component unmounts
         return () => unsubscribe();
-    }, []);
+    }, [router]); // Only depends on router
 
     useEffect(() => {
+        // This effect handles navigation events after the initial load.
         const isAllowedPath = pathname === '/maintenance' || pathname.startsWith('/dev');
-        
         if (isMaintenance && !isAllowedPath) {
             router.replace('/maintenance');
         }
@@ -65,3 +69,5 @@ export default function RootLayout({
     </ThemeProvider>
   );
 }
+
+    
