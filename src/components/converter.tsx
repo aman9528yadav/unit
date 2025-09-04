@@ -24,13 +24,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2, ChevronDown } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2, ChevronDown, Sparkles, LogIn } from "lucide-react";
 import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Calculator } from "./calculator";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { incrementTodaysCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
@@ -39,12 +39,15 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { cn } from "@/lib/utils";
 import { Notifications } from "./notifications";
 import { GlobalSearchDialog } from "./global-search-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 
 const regions: Region[] = ['International', 'India'];
 
 interface UserProfile {
     fullName: string;
+    profileImage?: string;
     [key:string]: any;
 }
 
@@ -92,6 +95,7 @@ type ChartDataItem = {
 export function Converter() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialTab = searchParams.get("tab") || "Unit";
   const [activeTab, setActiveTab] = React.useState(initialTab);
 
@@ -178,6 +182,8 @@ export function Converter() {
   const [isSearching, startSearchTransition] = React.useTransition();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [autoConvert, setAutoConvert] = useState(true);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+
 
   const imageExportRef = React.useRef<HTMLDivElement>(null);
   const searchTriggeredRef = useRef(false);
@@ -548,6 +554,15 @@ export function Converter() {
         toast({ title: t('converter.toast.exportFailed'), description: t('converter.toast.couldNotExportImage'), variant: "destructive" });
     }
   };
+  
+  const handleProfileClick = () => {
+    if (profile) {
+      router.push('/profile');
+    } else {
+      setShowLoginDialog(true);
+    }
+  };
+
 
 
   return (
@@ -558,13 +573,16 @@ export function Converter() {
           <p className="text-muted-foreground">{t('converter.welcome')}</p>
         </div>
         <div className="flex items-center gap-2">
-            <GlobalSearchDialog />
-            <Notifications />
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/profile">
-                <User />
-              </Link>
-            </Button>
+            {profile && <GlobalSearchDialog />}
+            {profile && <Notifications />}
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={handleProfileClick}>
+                <Avatar>
+                    <AvatarImage src={profile?.profileImage} alt={profile?.fullName} />
+                    <AvatarFallback>
+                        <User />
+                    </AvatarFallback>
+                </Avatar>
+              </Button>
         </div>
       </header>
 
@@ -797,6 +815,26 @@ export function Converter() {
         </TabsContent>
       </Tabs>
       
+       <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader className="items-center text-center">
+            <div className="p-3 bg-primary/10 rounded-full mb-4 w-fit">
+              <Sparkles className="w-8 h-8 text-primary" />
+            </div>
+            <AlertDialogTitle className="text-2xl">Unlock Your Profile</AlertDialogTitle>
+            <AlertDialogDescription className="max-w-xs">
+              Log in or create an account to personalize your experience, save preferences, and access your history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-col-reverse gap-2">
+            <AlertDialogCancel>Not Now</AlertDialogCancel>
+            <AlertDialogAction onClick={() => router.push('/welcome')} className="bg-primary hover:bg-primary/90">
+              <LogIn className="mr-2"/>
+              Continue to Login
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

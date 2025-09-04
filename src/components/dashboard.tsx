@@ -136,8 +136,8 @@ export function Dashboard() {
           <p className="text-muted-foreground">{t('dashboard.challenge')}</p>
         </div>
         <div className="flex items-center gap-2">
-            <GlobalSearchDialog />
-            <Notifications />
+            {profile && <GlobalSearchDialog />}
+            {profile && <Notifications />}
              <Button variant="ghost" size="icon" className="rounded-full" onClick={handleProfileClick}>
                 <Avatar>
                     <AvatarImage src={profile?.profileImage} alt={profile?.fullName} />
@@ -188,10 +188,12 @@ export function Dashboard() {
                      <div className="p-2 bg-green-500/10 rounded-full"><Hourglass className="text-green-500"/></div>
                      <p className="font-semibold text-sm">Time Tools</p>
                 </Link>
+                {profile && (
                  <Link href="/settings" className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
                      <div className="p-2 bg-gray-500/10 rounded-full"><Settings className="text-gray-500"/></div>
                      <p className="font-semibold text-sm">Settings</p>
-                </Link>
+                 </Link>
+                )}
               </div>
           </CardContent>
       </Card>
@@ -290,3 +292,5 @@ export function Dashboard() {
     </div>
   );
 }
+
+    
