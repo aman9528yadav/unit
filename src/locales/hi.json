@@ -110,7 +110,8 @@
         "volume": "आयतन",
         "pressure": "दबाव",
         "energy": "ऊर्जा",
-        "currency": "मुद्रा"
+        "currency": "मुद्रा",
+        "fuel economy": "ईंधन अर्थव्यवस्था"
     },
     "units": {
         "meters": "मीटर",
@@ -191,6 +192,9 @@
         "mexicanpesomxn": "मैक्सिकन पेसो (MXN)",
         "brazilianrealbrl": "ब्राज़ीलियाई रियल (BRL)",
         "russianrublerub": "रूसी रूबल (RUB)",
-        "southafricanrandzar": "दक्षिण अफ़्रीकी रैंड (ZAR)"
+        "southafricanrandzar": "दक्षिण अफ़्रीकी रैंड (ZAR)",
+        "litersper100km": "लीटर प्रति 100 किमी",
+        "milespergallon": "मील प्रति गैलन",
+        "kilometersperliter": "किलोमीटर प्रति लीटर"
     }
 }

@@ -1,6 +1,6 @@
 
 
-import { Ruler, Scale, Thermometer, Database, Clock, Zap, Square, Beaker, Hourglass, Gauge, Flame, DollarSign } from 'lucide-react';
+import { Ruler, Scale, Thermometer, Database, Clock, Zap, Square, Beaker, Hourglass, Gauge, Flame, DollarSign, Fuel } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export type Region = 'International' | 'India';
@@ -184,7 +184,7 @@ const timeFactors: LinearConversionFactors = { // to seconds
 };
 const timeCategory: ConversionCategory = {
     name: 'Time',
-    icon: Hourglass,
+    icon: Clock,
     units: timeUnits,
     factors: timeFactors,
     convert: function(value, from, to) {
@@ -416,5 +416,50 @@ const currencyCategory: ConversionCategory = {
     },
 };
 
+// --- FUEL ECONOMY ---
+const fuelEconomyUnits: Unit[] = [
+    { name: 'Liters per 100km', symbol: 'L/100km', info: 'Standard consumption unit' },
+    { name: 'Miles per gallon', symbol: 'MPG', info: 'US standard efficiency unit' },
+    { name: 'Kilometers per liter', symbol: 'km/L', info: 'Common efficiency unit' },
+];
+const fuelEconomyCategory: ConversionCategory = {
+    name: 'Fuel Economy',
+    icon: Fuel,
+    units: fuelEconomyUnits,
+    convert: (value, from, to) => {
+        if (from === to) return value;
+        if (value === 0) return 0;
 
-export const conversionCategories: ConversionCategory[] = [lengthCategory, weightCategory, temperatureCategory, dataCategory, timeCategory, speedCategory, areaCategory, volumeCategory, pressureCategory, energyCategory, currencyCategory];
+        let valueInLitersPer100Km: number;
+
+        // First, convert the input value to the base unit (L/100km)
+        switch (from) {
+            case 'L/100km':
+                valueInLitersPer100Km = value;
+                break;
+            case 'MPG': // US MPG
+                valueInLitersPer100Km = 235.214583 / value;
+                break;
+            case 'km/L':
+                valueInLitersPer100Km = 100 / value;
+                break;
+            default:
+                return NaN;
+        }
+
+        // Then, convert from the base unit to the target unit
+        switch (to) {
+            case 'L/100km':
+                return valueInLitersPer100Km;
+            case 'MPG': // US MPG
+                return 235.214583 / valueInLitersPer100Km;
+            case 'km/L':
+                return 100 / valueInLitersPer100Km;
+            default:
+                return NaN;
+        }
+    },
+};
+
+
+export const conversionCategories: ConversionCategory[] = [lengthCategory, weightCategory, temperatureCategory, dataCategory, timeCategory, speedCategory, areaCategory, volumeCategory, pressureCategory, energyCategory, currencyCategory, fuelEconomyCategory];

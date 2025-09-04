@@ -110,7 +110,8 @@
         "volume": "Volume",
         "pressure": "Pressure",
         "energy": "Energy",
-        "currency": "Currency"
+        "currency": "Currency",
+        "fuel economy": "Fuel Economy"
     },
     "units": {
         "meters": "Meters",
@@ -191,6 +192,9 @@
         "mexicanpesomxn": "Mexican Peso (MXN)",
         "brazilianrealbrl": "Brazilian Real (BRL)",
         "russianrublerub": "Russian Ruble (RUB)",
-        "southafricanrandzar": "South African Rand (ZAR)"
+        "southafricanrandzar": "South African Rand (ZAR)",
+        "litersper100km": "Liters per 100km",
+        "milespergallon": "Miles per gallon",
+        "kilometersperliter": "Kilometers per liter"
     }
 }
