@@ -317,10 +317,9 @@ function Stopwatch() {
     const [time, setTime] = React.useState(0);
     const [isRunning, setIsRunning] = React.useState(false);
     const [laps, setLaps] = React.useState<number[]>([]);
-    const workerRef = React.useRef<Worker | null>(null);
+    const timerRef = React.useRef<number | null>(null);
 
-     React.useEffect(() => {
-        // Restore state from localStorage
+    const loadState = () => {
         const savedState = localStorage.getItem('stopwatchState');
         if (savedState) {
             const { time: savedTime, isRunning: wasRunning, startTime: savedStartTime, laps: savedLaps } = JSON.parse(savedState);
@@ -334,48 +333,43 @@ function Stopwatch() {
                 setIsRunning(false);
             }
         }
-        
-        // Setup worker
-        if (!workerRef.current) {
-            const blob = new Blob([workerCode], { type: 'application/javascript' });
-            workerRef.current = new Worker(URL.createObjectURL(blob));
-        }
-        const worker = workerRef.current;
+    };
 
-        const handleTick = () => {
-             const state = localStorage.getItem('stopwatchState');
-             if (!state) return;
-             const { time, startTime, isRunning: running } = JSON.parse(state);
-             if (running) {
-                setTime(time + (Date.now() - startTime));
-             }
-        };
+    React.useEffect(() => {
+        loadState();
+    }, []);
 
-        if(isRunning) {
-            worker.onmessage = handleTick;
-            worker.postMessage({type: 'start', payload: { interval: 10 }});
+    React.useEffect(() => {
+        if (isRunning) {
+            const savedState = JSON.parse(localStorage.getItem('stopwatchState') || '{}');
+            const startTime = savedState.startTime || Date.now();
+            
+            const tick = () => {
+                const elapsed = Date.now() - startTime;
+                setTime(savedState.time + elapsed);
+                timerRef.current = requestAnimationFrame(tick);
+            };
+
+            tick();
         } else {
-            worker.postMessage({type: 'stop'});
+            if (timerRef.current) {
+                cancelAnimationFrame(timerRef.current);
+            }
         }
 
         return () => {
-            worker.postMessage({ type: 'stop' });
+            if (timerRef.current) {
+                cancelAnimationFrame(timerRef.current);
+            }
         };
     }, [isRunning]);
-
-     React.useEffect(() => {
-        return () => {
-            workerRef.current?.terminate();
-        }
-     }, []);
-
 
     const startStop = () => {
         const currentlyRunning = !isRunning;
         setIsRunning(currentlyRunning);
         if (currentlyRunning) {
             // Starting or resuming
-             localStorage.setItem('stopwatchState', JSON.stringify({
+            localStorage.setItem('stopwatchState', JSON.stringify({
                 time: time,
                 startTime: Date.now(),
                 isRunning: true,
