@@ -25,6 +25,7 @@ import {
 import { useRouter } from "next/navigation";
 import { Notifications } from "./notifications";
 import { GlobalSearchDialog } from "./global-search-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 
 // This should match the key in notepad.tsx
@@ -38,6 +39,7 @@ interface Note {
 interface UserProfile {
     fullName: string;
     email: string;
+    profileImage?: string;
     [key: string]: any;
 }
 
@@ -136,8 +138,13 @@ export function Dashboard() {
         <div className="flex items-center gap-2">
             <GlobalSearchDialog />
             <Notifications />
-             <Button variant="ghost" size="icon" onClick={handleProfileClick}>
-                <User />
+             <Button variant="ghost" size="icon" className="rounded-full" onClick={handleProfileClick}>
+                <Avatar>
+                    <AvatarImage src={profile?.profileImage} alt={profile?.fullName} />
+                    <AvatarFallback>
+                        <User />
+                    </AvatarFallback>
+                </Avatar>
               </Button>
         </div>
       </header>
@@ -287,6 +294,8 @@ export function Dashboard() {
     </div>
   );
 }
+
+    
 
     
 
