@@ -338,73 +338,75 @@ export function Notepad() {
             </div>
 
 
-            <div className="flex-grow overflow-y-auto px-4 pb-24 mt-4">
-                 {view === 'trash' && sortedNotes.length > 0 && (
-                    <div className="flex justify-end gap-2 mb-4">
-                        <Button variant="outline" onClick={handleRestoreAll}>
-                            <RotateCcw className="mr-2 h-4 w-4" /> Restore All
-                        </Button>
-                        <Button variant="destructive" onClick={() => setShowEmptyTrashDialog(true)}>
-                            <ShieldX className="mr-2 h-4 w-4" /> Delete All
-                        </Button>
-                    </div>
-                )}
-                {sortedNotes.length > 0 ? (
-                    <ul className={layout === 'list' ? "bg-card rounded-lg p-2 space-y-2" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
-                        {sortedNotes.map(note => (
-                            <li key={note.id} className={layout === 'card' ? "bg-card p-4 rounded-lg cursor-pointer group" : "p-2 rounded-lg cursor-pointer group hover:bg-background"}>
-                                <div onClick={() => router.push(`/notes/edit/${note.id}`)}>
-                                    <div className="flex items-center justify-between">
-                                        <h2 className="font-semibold truncate">{note.title || 'Untitled Note'}</h2>
-                                        {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
-                                    </div>
-                                     {note.attachment && layout === 'card' && (
-                                        <div className="relative w-full h-32 my-2 rounded-md overflow-hidden">
-                                            <Image src={note.attachment} alt="Note attachment" layout="fill" objectFit="cover" />
+            <main className="flex-grow overflow-y-auto px-4 pb-24 mt-4">
+                <div className="flex flex-col min-h-full">
+                    {view === 'trash' && sortedNotes.length > 0 && (
+                        <div className="flex justify-end gap-2 mb-4">
+                            <Button variant="outline" onClick={handleRestoreAll}>
+                                <RotateCcw className="mr-2 h-4 w-4" /> Restore All
+                            </Button>
+                            <Button variant="destructive" onClick={() => setShowEmptyTrashDialog(true)}>
+                                <ShieldX className="mr-2 h-4 w-4" /> Delete All
+                            </Button>
+                        </div>
+                    )}
+                    {sortedNotes.length > 0 ? (
+                        <ul className={layout === 'list' ? "space-y-2" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
+                            {sortedNotes.map(note => (
+                                <li key={note.id} className={layout === 'card' ? "bg-card p-4 rounded-lg cursor-pointer group" : "bg-card p-2 rounded-lg cursor-pointer group hover:bg-background"}>
+                                    <div onClick={() => router.push(`/notes/edit/${note.id}`)}>
+                                        <div className="flex items-center justify-between">
+                                            <h2 className="font-semibold truncate">{note.title || 'Untitled Note'}</h2>
+                                            {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
                                         </div>
-                                    )}
-                                    <div className="flex gap-2">
-                                        {note.attachment && layout === 'list' && (
-                                            <div className="relative w-16 h-16 my-1 rounded-md overflow-hidden flex-shrink-0">
+                                         {note.attachment && layout === 'card' && (
+                                            <div className="relative w-full h-32 my-2 rounded-md overflow-hidden">
                                                 <Image src={note.attachment} alt="Note attachment" layout="fill" objectFit="cover" />
                                             </div>
                                         )}
-                                        <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: note.content || 'No content' }} />
+                                        <div className="flex gap-2">
+                                            {note.attachment && layout === 'list' && (
+                                                <div className="relative w-16 h-16 my-1 rounded-md overflow-hidden flex-shrink-0">
+                                                    <Image src={note.attachment} alt="Note attachment" layout="fill" objectFit="cover" />
+                                                </div>
+                                            )}
+                                            <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: note.content || 'No content' }} />
+                                        </div>
+                                        <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
+                                            <span>{format(new Date(note.updatedAt), "d MMM yyyy, h:mm a")}</span>
+                                            {note.category && <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full">{note.category}</span>}
+                                        </div>
+                                         {note.deletedAt && (
+                                            <p className="text-xs text-destructive mt-1">In bin for {formatDistanceToNow(new Date(note.deletedAt))}</p>
+                                         )}
                                     </div>
-                                    <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
-                                        <span>{format(new Date(note.updatedAt), "d MMM yyyy, h:mm a")}</span>
-                                        {note.category && <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full">{note.category}</span>}
+                                    <div className="flex items-center justify-end gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {view === 'trash' ? (
+                                            <>
+                                                <Button size="sm" variant="ghost" onClick={() => handleRestore(note.id)}><RotateCcw size={16} /> Restore</Button>
+                                                <Button size="sm" variant="destructive" onClick={() => setNoteToDelete(note.id)}><Trash2 size={16} /> Delete</Button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Button size="sm" variant="ghost" onClick={() => router.push(`/notes/edit/${note.id}`)}><Edit size={16} /></Button>
+                                                <Button size="sm" variant="ghost" onClick={() => handleToggleFavorite(note.id)}>
+                                                    <Star size={16} className={note.isFavorite ? 'text-yellow-400 fill-yellow-400' : ''}/>
+                                                </Button>
+                                                <Button size="sm" variant="destructive" onClick={() => handleSoftDelete(note.id)}><Trash2 size={16} /></Button>
+                                            </>
+                                        )}
                                     </div>
-                                     {note.deletedAt && (
-                                        <p className="text-xs text-destructive mt-1">In bin for {formatDistanceToNow(new Date(note.deletedAt))}</p>
-                                     )}
-                                </div>
-                                <div className="flex items-center justify-end gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    {view === 'trash' ? (
-                                        <>
-                                            <Button size="sm" variant="ghost" onClick={() => handleRestore(note.id)}><RotateCcw size={16} /> Restore</Button>
-                                            <Button size="sm" variant="destructive" onClick={() => setNoteToDelete(note.id)}><Trash2 size={16} /> Delete</Button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Button size="sm" variant="ghost" onClick={() => router.push(`/notes/edit/${note.id}`)}><Edit size={16} /></Button>
-                                            <Button size="sm" variant="ghost" onClick={() => handleToggleFavorite(note.id)}>
-                                                <Star size={16} className={note.isFavorite ? 'text-yellow-400 fill-yellow-400' : ''}/>
-                                            </Button>
-                                            <Button size="sm" variant="destructive" onClick={() => handleSoftDelete(note.id)}><Trash2 size={16} /></Button>
-                                        </>
-                                    )}
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <div className="text-center p-8 text-muted-foreground flex flex-col items-center gap-4 mt-16">
-                        <h2 className="text-xl font-semibold">{emptyTitle}</h2>
-                        <p>{emptyMessage}</p>
-                    </div>
-                )}
-            </div>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <div className="text-center p-8 text-muted-foreground flex flex-col items-center gap-4 mt-16 flex-grow justify-center">
+                            <h2 className="text-xl font-semibold">{emptyTitle}</h2>
+                            <p>{emptyMessage}</p>
+                        </div>
+                    )}
+                </div>
+            </main>
             <Link href="/notes/edit/new" passHref>
                 <Button className="fixed bottom-8 right-1/2 translate-x-1/2 sm:right-8 sm:translate-x-0 w-16 h-16 rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90">
                     <Edit size={24} />
