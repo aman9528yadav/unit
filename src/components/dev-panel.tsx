@@ -16,7 +16,7 @@ import { sendGlobalNotification } from '@/services/firestore';
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
-const DEFAULT_DEV_PASSWORD = "121212";
+const DEFAULT_DEV_PASSWORD = "121312";
 const DEV_PASSWORD_STORAGE_KEY = "developer_password";
 const UPDATE_TIMER_STORAGE_KEY = "nextUpdateTime";
 const UPDATE_TEXT_STORAGE_KEY = "nextUpdateText";
