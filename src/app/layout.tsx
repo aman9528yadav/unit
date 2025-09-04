@@ -26,10 +26,9 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
         });
 
         return () => unsubscribe();
-    }, [router]); // Only depends on router
+    }, [router]);
 
     useEffect(() => {
-        // This effect handles navigation events after the initial load.
         const isAllowedPath = pathname === '/maintenance' || pathname.startsWith('/dev');
         if (isMaintenance && !isAllowedPath) {
             router.replace('/maintenance');
@@ -39,15 +38,26 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
 }
 
+function AppFooter() {
+    const pathname = usePathname();
+    const showFooter = pathname !== '/maintenance';
+
+    if (!showFooter) {
+        return null;
+    }
+
+    return (
+        <footer className="text-center p-4 bg-card text-muted-foreground text-sm border-t">
+            <p>&copy; {new Date().getFullYear()} Sutradhaar | Owned by Aman Yadav. All Rights Reserved.</p>
+        </footer>
+    );
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = usePathname();
-  const showFooter = pathname !== '/maintenance';
-
   return (
     <ThemeProvider>
       <LanguageProvider>
@@ -68,11 +78,7 @@ export default function RootLayout({
                         {children}
                     </MaintenanceRedirect>
                 </main>
-                {showFooter && (
-                    <footer className="text-center p-4 bg-card text-muted-foreground text-sm border-t">
-                        <p>&copy; {new Date().getFullYear()} Sutradhaar | Owned by Aman Yadav. All Rights Reserved.</p>
-                    </footer>
-                )}
+                <AppFooter />
             </div>
             <Toaster />
           </body>
@@ -81,5 +87,3 @@ export default function RootLayout({
     </ThemeProvider>
   );
 }
-
-    
