@@ -246,7 +246,7 @@ export function SignupForm() {
             </div>
         </div>
         <div className="flex justify-center gap-4">
-            <Button onClick={handleGoogleLogin} variant="outline" size="icon" className="rounded-full" disabled={isSubmitting}>
+            <Button onClick={handleGoogleSignup} variant="outline" size="icon" className="rounded-full" disabled={isSubmitting}>
                 <Image src="/google-logo.svg" alt="Google" width={20} height={20} />
             </Button>
         </div>
@@ -260,3 +260,5 @@ export function SignupForm() {
     </div>
   );
 }
+
+    
