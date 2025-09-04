@@ -292,7 +292,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
     return (
         <div className="w-full max-w-md mx-auto flex flex-col h-screen">
-            <header className="flex items-center justify-between p-4 flex-shrink-0">
+            <header className="flex items-center justify-between p-4 flex-shrink-0 sticky top-0 z-50 bg-background">
                 <Button variant="ghost" size="icon" onClick={() => router.back()}>
                     <ArrowLeft />
                 </Button>

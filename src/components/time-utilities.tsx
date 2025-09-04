@@ -628,7 +628,7 @@ export function TimeUtilities() {
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-4">
-        <header className="flex items-center justify-between">
+        <header className="flex items-center justify-between sticky top-0 z-50 bg-background py-4">
             <Button variant="ghost" size="icon" asChild>
               <Link href="/">
                   <Home />
@@ -657,5 +657,3 @@ export function TimeUtilities() {
     </div>
   );
 }
-
-    

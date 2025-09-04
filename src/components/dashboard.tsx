@@ -130,7 +130,7 @@ export function Dashboard() {
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-6">
-      <header className="flex justify-between items-center">
+      <header className="flex justify-between items-center sticky top-0 z-50 bg-background py-4">
         <div>
           <h1 className="text-2xl font-bold">{t('dashboard.greeting', { name: profile?.fullName || "Guest" })}</h1>
           <p className="text-muted-foreground">{t('dashboard.challenge')}</p>

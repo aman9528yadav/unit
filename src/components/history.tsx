@@ -96,7 +96,7 @@ export default function History() {
   return (
     <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-6">
       <div className="w-full max-w-md mx-auto flex flex-col gap-4">
-        <header className="flex items-center justify-between">
+        <header className="flex items-center justify-between sticky top-0 z-50 bg-background py-4">
             <Button variant="ghost" size="icon" asChild>
                 <Link href="/">
                     <Home />

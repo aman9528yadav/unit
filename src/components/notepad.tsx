@@ -306,7 +306,7 @@ export function Notepad() {
             </Sidebar>
 
             <SidebarInset className="flex flex-col h-screen">
-                <header className="flex items-center justify-between p-4 flex-shrink-0">
+                <header className="flex items-center justify-between p-4 flex-shrink-0 sticky top-0 z-50 bg-background">
                     <SidebarTrigger>
                         <Menu/>
                     </SidebarTrigger>
