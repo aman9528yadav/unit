@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
-import { ArrowRight, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, Home, StickyNote, CalculatorIcon, Clock, Hourglass, Sparkles, LogIn } from "lucide-react";
+import { ArrowRight, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, Home, StickyNote, CalculatorIcon, Clock, Hourglass, Sparkles, LogIn, Sigma } from "lucide-react";
 import { getTodaysCalculations, getWeeklyCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { recordVisit } from "@/lib/streak";
@@ -167,34 +167,30 @@ export function Dashboard() {
             <CardTitle>Quick Access</CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-             <div className="grid grid-cols-2 gap-4">
-                <Link href="/converter" className="flex items-center gap-3 p-4 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
-                    <div className="p-2 bg-primary/20 rounded-full"><CalculatorIcon className="text-primary"/></div>
-                    <div>
-                        <p className="font-semibold">{t('nav.converter')}</p>
-                        <p className="text-xs text-muted-foreground">Units & Calcs</p>
-                    </div>
+             <div className="grid grid-cols-3 gap-3 text-center">
+                <Link href="/converter" className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
+                    <div className="p-2 bg-primary/20 rounded-full"><Sigma className="text-primary"/></div>
+                    <p className="font-semibold text-sm">Converter</p>
                 </Link>
-                <Link href="/notes" className="flex items-center gap-3 p-4 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
+                 <Link href="/converter?tab=Calculator" className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
+                    <div className="p-2 bg-orange-500/10 rounded-full"><CalculatorIcon className="text-orange-500"/></div>
+                    <p className="font-semibold text-sm">Calculator</p>
+                </Link>
+                <Link href="/notes" className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
                     <div className="p-2 bg-accent/20 rounded-full"><StickyNote className="text-accent"/></div>
-                    <div>
-                        <p className="font-semibold">{t('nav.notes')}</p>
-                        <p className="text-xs text-muted-foreground">Create & Edit</p>
-                    </div>
+                    <p className="font-semibold text-sm">{t('nav.notes')}</p>
                 </Link>
-                <Link href="/history" className="flex items-center gap-3 p-4 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
+                <Link href="/history" className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
                     <div className="p-2 bg-blue-500/10 rounded-full"><Clock className="text-blue-500"/></div>
-                    <div>
-                        <p className="font-semibold">{t('nav.history')}</p>
-                        <p className="text-xs text-muted-foreground">Recent Activity</p>
-                    </div>
+                    <p className="font-semibold text-sm">{t('nav.history')}</p>
                 </Link>
-                <Link href="/time" className="flex items-center gap-3 p-4 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
+                <Link href="/time" className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
                      <div className="p-2 bg-green-500/10 rounded-full"><Hourglass className="text-green-500"/></div>
-                    <div>
-                        <p className="font-semibold">Time Tools</p>
-                        <p className="text-xs text-muted-foreground">Timers & More</p>
-                    </div>
+                     <p className="font-semibold text-sm">Time Tools</p>
+                </Link>
+                 <Link href="/settings" className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
+                     <div className="p-2 bg-gray-500/10 rounded-full"><Settings className="text-gray-500"/></div>
+                     <p className="font-semibold text-sm">Settings</p>
                 </Link>
               </div>
           </CardContent>
