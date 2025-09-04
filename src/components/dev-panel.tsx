@@ -12,7 +12,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
-import { sendGlobalNotification } from '@/services/firestore';
+import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode } from '@/services/firestore';
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -54,9 +54,13 @@ export function DevPanel() {
                 setIsAuthorized(true);
             }
         }
+        
+        // Listen to global maintenance mode state from Firestore
+        const unsubscribe = listenToGlobalMaintenanceMode((enabled) => {
+            setIsMaintenanceMode(enabled);
+        });
 
-        const maintenanceStatus = localStorage.getItem('maintenanceMode') === 'true';
-        setIsMaintenanceMode(maintenanceStatus);
+        return () => unsubscribe();
 
     }, []);
     
@@ -112,18 +116,16 @@ export function DevPanel() {
         toast({ title: 'Update Text Saved' });
     };
 
-    const handleMaintenanceModeToggle = (checked: boolean) => {
-        setIsMaintenanceMode(checked);
-        localStorage.setItem('maintenanceMode', String(checked));
-        // Dispatch a storage event so other open tabs can react.
-        window.dispatchEvent(new StorageEvent('storage', { 
-            key: 'maintenanceMode',
-            newValue: String(checked)
-        }));
-        toast({
-            title: `Maintenance Mode ${checked ? 'Enabled' : 'Disabled'}`,
-            description: `Users will now be ${checked ? 'redirected' : 'able to access the app'}.`,
-        });
+    const handleMaintenanceModeToggle = async (checked: boolean) => {
+        try {
+            await setGlobalMaintenanceMode(checked);
+            toast({
+                title: `Maintenance Mode ${checked ? 'Enabled' : 'Disabled'}`,
+                description: `Users will now be ${checked ? 'redirected' : 'able to access the app'}.`,
+            });
+        } catch (error) {
+            toast({ title: "Update Failed", description: "Could not update maintenance status.", variant: "destructive" });
+        }
     };
 
     const handleSendNotification = async () => {

@@ -7,45 +7,30 @@ import { LanguageProvider } from '@/context/language-context';
 import { ThemeProvider } from '@/context/theme-context';
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { listenToGlobalMaintenanceMode } from '@/services/firestore';
 
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
-    const [isClient, setIsClient] = useState(false);
+    const [isMaintenance, setIsMaintenance] = useState(false);
 
     useEffect(() => {
-        setIsClient(true);
+        // Listen for real-time changes to maintenance mode from Firestore
+        const unsubscribe = listenToGlobalMaintenanceMode((enabled) => {
+            setIsMaintenance(enabled);
+        });
+
+        // Cleanup the listener when the component unmounts
+        return () => unsubscribe();
     }, []);
 
     useEffect(() => {
-        if (!isClient) return;
-
-        const checkMaintenanceMode = () => {
-            const isMaintenanceMode = localStorage.getItem('maintenanceMode') === 'true';
-            const isAllowedPath = pathname === '/maintenance' || pathname.startsWith('/dev');
-            
-            if (isMaintenanceMode && !isAllowedPath) {
-                router.replace('/maintenance');
-            }
-        };
-
-        checkMaintenanceMode();
-
-        const handleStorageChange = (event: StorageEvent) => {
-            if (event.key === 'maintenanceMode') {
-                checkMaintenanceMode();
-            }
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-        };
-    }, [isClient, pathname, router]);
-
-    if (!isClient) {
-        return null;
-    }
+        const isAllowedPath = pathname === '/maintenance' || pathname.startsWith('/dev');
+        
+        if (isMaintenance && !isAllowedPath) {
+            router.replace('/maintenance');
+        }
+    }, [isMaintenance, pathname, router]);
 
     return <>{children}</>;
 }

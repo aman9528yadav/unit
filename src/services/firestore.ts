@@ -2,7 +2,7 @@
 "use client";
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, Timestamp, doc, setDoc } from 'firebase/firestore';
 import type { AppNotification } from '@/lib/notifications';
 
 /**
@@ -50,6 +50,44 @@ export function listenToGlobalNotifications(callback: (notifications: Omit<AppNo
         callback(notifications);
     }, (error) => {
         console.error("Error listening to notifications: ", error);
+    });
+
+    return unsubscribe;
+}
+
+
+/**
+ * Sets the global maintenance mode status in Firestore.
+ * @param enabled - Whether maintenance mode should be on or off.
+ */
+export async function setGlobalMaintenanceMode(enabled: boolean) {
+    try {
+        const statusRef = doc(db, 'app-status', 'maintenance');
+        await setDoc(statusRef, { enabled });
+    } catch (error) {
+        console.error("Error setting maintenance mode:", error);
+        throw error;
+    }
+}
+
+/**
+ * Listens for real-time changes to the global maintenance mode status.
+ * @param callback - Function to be called with the status (true/false) whenever it changes.
+ * @returns The unsubscribe function for the listener.
+ */
+export function listenToGlobalMaintenanceMode(callback: (enabled: boolean) => void) {
+    const statusRef = doc(db, 'app-status', 'maintenance');
+    const unsubscribe = onSnapshot(statusRef, (doc) => {
+        if (doc.exists()) {
+            callback(doc.data().enabled);
+        } else {
+            // If the document doesn't exist, assume maintenance is off.
+            callback(false);
+        }
+    }, (error) => {
+        console.error("Error listening to maintenance mode:", error);
+        // In case of error, assume not in maintenance to avoid locking out users.
+        callback(false);
     });
 
     return unsubscribe;
