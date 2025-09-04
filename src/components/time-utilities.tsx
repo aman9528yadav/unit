@@ -26,6 +26,88 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
+// --- Web Worker Code ---
+// This code will be run in a separate thread to ensure timers work in the background.
+const workerCode = `
+  let pomodoroTimer = null;
+  let pomodoroState = {
+    minutes: 25,
+    seconds: 0,
+    isActive: false,
+  };
+
+  let stopwatchTimer = null;
+  let stopwatchState = {
+    time: 0,
+    isRunning: false,
+    startTime: 0,
+  };
+
+  self.onmessage = function(e) {
+    const { type, payload } = e.data;
+
+    if (type === 'pomodoro') {
+      switch (payload.command) {
+        case 'start':
+          if (!pomodoroState.isActive) {
+            pomodoroState.isActive = true;
+            pomodoroTimer = setInterval(() => {
+              if (pomodoroState.seconds > 0) {
+                pomodoroState.seconds--;
+              } else if (pomodoroState.minutes > 0) {
+                pomodoroState.minutes--;
+                pomodoroState.seconds = 59;
+              } else {
+                // Timer ended
+                clearInterval(pomodoroTimer);
+                pomodoroState.isActive = false;
+                self.postMessage({ type: 'pomodoro', event: 'tick', state: pomodoroState });
+                self.postMessage({ type: 'pomodoro', event: 'done' });
+                return;
+              }
+              self.postMessage({ type: 'pomodoro', event: 'tick', state: pomodoroState });
+            }, 1000);
+          }
+          break;
+        case 'pause':
+          clearInterval(pomodoroTimer);
+          pomodoroState.isActive = false;
+          self.postMessage({ type: 'pomodoro', event: 'tick', state: pomodoroState });
+          break;
+        case 'reset':
+          clearInterval(pomodoroTimer);
+          pomodoroState = { ...pomodoroState, ...payload.newState, isActive: false };
+          self.postMessage({ type: 'pomodoro', event: 'tick', state: pomodoroState });
+          break;
+      }
+    } else if (type === 'stopwatch') {
+      switch (payload.command) {
+        case 'start':
+          if (!stopwatchState.isRunning) {
+            stopwatchState.isRunning = true;
+            stopwatchState.startTime = Date.now() - stopwatchState.time;
+            stopwatchTimer = setInterval(() => {
+              stopwatchState.time = Date.now() - stopwatchState.startTime;
+              self.postMessage({ type: 'stopwatch', event: 'tick', state: stopwatchState });
+            }, 10);
+          }
+          break;
+        case 'pause':
+          clearInterval(stopwatchTimer);
+          stopwatchState.isRunning = false;
+          self.postMessage({ type: 'stopwatch', event: 'tick', state: stopwatchState });
+          break;
+        case 'reset':
+          clearInterval(stopwatchTimer);
+          stopwatchState = { isRunning: false, time: 0, startTime: 0 };
+          self.postMessage({ type: 'stopwatch', event: 'tick', state: stopwatchState });
+          break;
+      }
+    }
+  };
+`;
+
+
 function PomodoroTimer() {
     const [minutes, setMinutes] = React.useState(25);
     const [seconds, setSeconds] = React.useState(0);
@@ -33,6 +115,7 @@ function PomodoroTimer() {
     const [mode, setMode] = React.useState<'work' | 'shortBreak' | 'longBreak'>('work');
     const [pomodoros, setPomodoros] = React.useState(0);
     const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+    const workerRef = React.useRef<Worker | null>(null);
 
     // Default settings
     const [settings, setSettings] = React.useState({
@@ -44,33 +127,23 @@ function PomodoroTimer() {
 
     const audioRef = React.useRef<HTMLAudioElement>(null);
 
-     React.useEffect(() => {
-        // Load settings from localStorage
-        const savedSettings = localStorage.getItem('pomodoroSettings');
-        if (savedSettings) {
-            setSettings(JSON.parse(savedSettings));
-        }
-    }, []);
-
     React.useEffect(() => {
-        // Initialize timer values from settings
-        reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [settings]);
+        // Create worker from blob
+        const blob = new Blob([workerCode], { type: 'application/javascript' });
+        const workerUrl = URL.createObjectURL(blob);
+        const worker = new Worker(workerUrl);
+        workerRef.current = worker;
 
-    React.useEffect(() => {
-        let interval: NodeJS.Timeout | null = null;
-        if (isActive) {
-            interval = setInterval(() => {
-                if (seconds > 0) {
-                    setSeconds(s => s - 1);
-                } else if (minutes > 0) {
-                    setMinutes(m => m - 1);
-                    setSeconds(59);
-                } else {
-                    // Timer ended
+        worker.onmessage = (e) => {
+            const { type, event, state } = e.data;
+            if (type === 'pomodoro') {
+                if (event === 'tick') {
+                    setMinutes(state.minutes);
+                    setSeconds(state.seconds);
+                    setIsActive(state.isActive);
+                } else if (event === 'done') {
                     if (audioRef.current) {
-                      audioRef.current.play().catch(e => console.error("Error playing sound:", e));
+                        audioRef.current.play().catch(e => console.error("Error playing sound:", e));
                     }
                     
                     let newMode: typeof mode;
@@ -83,49 +156,69 @@ function PomodoroTimer() {
                     }
                     switchMode(newMode);
                 }
-            }, 1000);
-        }
-        return () => { if (interval) clearInterval(interval); };
-    }, [isActive, seconds, minutes, mode, pomodoros, settings]);
+            }
+        };
 
-    const toggle = () => {
-        setIsActive(!isActive);
-    };
-
-    const reset = () => {
-        setIsActive(false);
-        switch (mode) {
-            case 'work':
-                setMinutes(settings.pomodoroLength);
-                break;
-            case 'shortBreak':
-                setMinutes(settings.shortBreakLength);
-                break;
-            case 'longBreak':
-                setMinutes(settings.longBreakLength);
-                break;
+        const savedSettings = localStorage.getItem('pomodoroSettings');
+        if (savedSettings) {
+            setSettings(JSON.parse(savedSettings));
         }
-        setSeconds(0);
-    };
 
-    const switchMode = (newMode: typeof mode, userInitiated = false) => {
-        setIsActive(false);
-        setMode(newMode);
-        if (userInitiated) {
-             setPomodoros(0); // Reset cycle count if mode is manually changed
-        }
-    };
+        return () => {
+            worker.terminate();
+            URL.revokeObjectURL(workerUrl);
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    React.useEffect(() => {
+        reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [settings]);
     
     React.useEffect(() => {
         reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode]);
 
+    const toggle = () => {
+        if (isActive) {
+            workerRef.current?.postMessage({ type: 'pomodoro', payload: { command: 'pause' } });
+        } else {
+            workerRef.current?.postMessage({ type: 'pomodoro', payload: { command: 'start' } });
+        }
+    };
+
+    const reset = () => {
+        let newMinutes: number;
+        switch (mode) {
+            case 'work':
+                newMinutes = settings.pomodoroLength;
+                break;
+            case 'shortBreak':
+                newMinutes = settings.shortBreakLength;
+                break;
+            case 'longBreak':
+                newMinutes = settings.longBreakLength;
+                break;
+        }
+        setMinutes(newMinutes);
+        setSeconds(0);
+        workerRef.current?.postMessage({ type: 'pomodoro', payload: { command: 'reset', newState: { minutes: newMinutes, seconds: 0 } } });
+    };
+
+    const switchMode = (newMode: typeof mode, userInitiated = false) => {
+        setMode(newMode);
+        if (userInitiated) {
+             setPomodoros(0); 
+        }
+    };
+    
     const handleSettingsSave = (newSettings: typeof settings) => {
         setSettings(newSettings);
         localStorage.setItem('pomodoroSettings', JSON.stringify(newSettings));
         setIsSettingsOpen(false);
-        switchMode(mode); // Reset timer with new settings
+        switchMode(mode); 
     }
 
 
@@ -220,24 +313,36 @@ function Stopwatch() {
     const [time, setTime] = React.useState(0);
     const [isRunning, setIsRunning] = React.useState(false);
     const [laps, setLaps] = React.useState<number[]>([]);
-    const timerRef = React.useRef<NodeJS.Timeout | null>(null);
+    const workerRef = React.useRef<Worker | null>(null);
+
+     React.useEffect(() => {
+        // Create worker from blob
+        const blob = new Blob([workerCode], { type: 'application/javascript' });
+        const workerUrl = URL.createObjectURL(blob);
+        const worker = new Worker(workerUrl);
+        workerRef.current = worker;
+
+        worker.onmessage = (e) => {
+            const { type, event, state } = e.data;
+            if (type === 'stopwatch' && event === 'tick') {
+                setTime(state.time);
+                setIsRunning(state.isRunning);
+            }
+        };
+        
+        return () => {
+            worker.terminate();
+            URL.revokeObjectURL(workerUrl);
+        };
+    }, []);
 
     const startStop = () => {
-        if (isRunning) {
-            if (timerRef.current) clearInterval(timerRef.current);
-        } else {
-            const startTime = Date.now() - time;
-            timerRef.current = setInterval(() => {
-                setTime(Date.now() - startTime);
-            }, 10);
-        }
-        setIsRunning(!isRunning);
+        const command = isRunning ? 'pause' : 'start';
+        workerRef.current?.postMessage({ type: 'stopwatch', payload: { command } });
     };
 
     const reset = () => {
-        if (timerRef.current) clearInterval(timerRef.current);
-        setIsRunning(false);
-        setTime(0);
+        workerRef.current?.postMessage({ type: 'stopwatch', payload: { command: 'reset' } });
         setLaps([]);
     };
 
@@ -657,3 +762,5 @@ export function TimeUtilities() {
     </div>
   );
 }
+
+    
