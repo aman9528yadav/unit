@@ -2,7 +2,7 @@
 "use client";
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, Timestamp } from 'firebase/firestore';
 import type { AppNotification } from '@/lib/notifications';
 
 /**
@@ -10,14 +10,18 @@ import type { AppNotification } from '@/lib/notifications';
  */
 export async function sendGlobalNotification(notification: { title: string, description: string, icon: AppNotification['icon'] }) {
     try {
-        await addDoc(collection(db, 'notifications'), {
-            ...notification,
+        const notificationData = {
+            title: notification.title,
+            description: notification.description,
+            icon: notification.icon,
             createdAt: serverTimestamp(), // Use server time for consistency
-        });
+        };
+        await addDoc(collection(db, 'notifications'), notificationData);
     } catch (error) {
         console.error("Error sending notification: ", error);
         // Depending on the app's needs, you might want to throw the error
         // or handle it gracefully (e.g., show an error toast to the admin).
+        throw error;
     }
 }
 
@@ -33,16 +37,19 @@ export function listenToGlobalNotifications(callback: (notifications: Omit<AppNo
         const notifications: Omit<AppNotification, 'read'>[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
+            const createdAtDate = (data.createdAt as Timestamp)?.toDate() || new Date();
+            
             notifications.push({
                 id: doc.id,
                 title: data.title,
                 description: data.description,
                 icon: data.icon,
-                // Firestore timestamp needs to be converted to ISO string for consistency
-                createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+                createdAt: createdAtDate.toISOString(),
             });
         });
         callback(notifications);
+    }, (error) => {
+        console.error("Error listening to notifications: ", error);
     });
 
     return unsubscribe;
