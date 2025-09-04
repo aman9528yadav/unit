@@ -320,9 +320,9 @@ function DateDifference() {
                 <CardTitle className="text-center">Time Between Dates</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-4">
                     <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-medium">Start Date</label>
+                        <label className="text-sm font-medium text-center md:text-left">Start Date</label>
                          <Popover>
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start text-left font-normal">
@@ -337,7 +337,7 @@ function DateDifference() {
                     </div>
                     <ArrowRight className="hidden md:block mx-auto text-muted-foreground" />
                     <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-medium">End Date</label>
+                        <label className="text-sm font-medium text-center md:text-left">End Date</label>
                          <Popover>
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start text-left font-normal">
