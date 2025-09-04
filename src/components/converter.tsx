@@ -180,6 +180,7 @@ export function Converter() {
   const [autoConvert, setAutoConvert] = useState(true);
 
   const imageExportRef = React.useRef<HTMLDivElement>(null);
+  const searchTriggeredRef = useRef(false);
 
   const currentUnits = React.useMemo(() => {
     return selectedCategory.units.filter(u => !u.region || u.region === region);
@@ -296,6 +297,10 @@ export function Converter() {
   
   // Perform conversion whenever inputs change if auto-convert is on
   useEffect(() => {
+    if (searchTriggeredRef.current) {
+        searchTriggeredRef.current = false;
+        return;
+    }
     if (autoConvert) {
       performConversion(inputValue, fromUnit, toUnit);
     }
@@ -353,11 +358,11 @@ export function Converter() {
                     const toUnitExists = categoryUnits.some(u => u.symbol === parsed.toUnit);
 
                     if (fromUnitExists && toUnitExists) {
+                        searchTriggeredRef.current = true;
                         setSelectedCategory(category);
                         setFromUnit(parsed.fromUnit);
                         setToUnit(parsed.toUnit);
                         setInputValue(String(parsed.value));
-                        // Perform conversion immediately after setting state from search
                         performConversion(parsed.value, parsed.fromUnit, parsed.toUnit);
                         setSearchQuery(""); // Clear search
                     } else {
@@ -913,5 +918,4 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
 );
 ConversionImage.displayName = 'ConversionImage';
 
-    
     
