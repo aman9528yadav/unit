@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dashboard } from "@/components/dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLanguage } from "@/context/language-context";
 
 export default function Home() {
   const router = useRouter();
@@ -30,17 +29,15 @@ export default function Home() {
               <Skeleton className="h-10 w-10 rounded-full" />
             </div>
           </header>
-          <div className="grid grid-cols-4 gap-4">
-            <Skeleton className="h-16 w-full rounded-lg" />
-            <Skeleton className="h-16 w-full rounded-lg" />
-            <Skeleton className="h-16 w-full rounded-lg" />
-            <Skeleton className="h-16 w-full rounded-lg" />
+          <div className="grid grid-cols-2 gap-4">
+            <Skeleton className="h-24 w-full rounded-2xl" />
+            <Skeleton className="h-24 w-full rounded-2xl" />
           </div>
            <div>
-            <Skeleton className="h-6 w-40 mb-2" />
-            <div className="grid grid-cols-2 gap-4">
-                <Skeleton className="h-40 w-full rounded-lg" />
-                <Skeleton className="h-40 w-full rounded-lg" />
+            <Skeleton className="h-8 w-40 mb-4 rounded-lg" />
+            <div className="grid grid-cols-1 gap-4">
+                <Skeleton className="h-28 w-full rounded-lg" />
+                <Skeleton className="h-28 w-full rounded-lg" />
             </div>
            </div>
         </div>
