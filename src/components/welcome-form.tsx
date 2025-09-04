@@ -41,11 +41,16 @@ export function WelcomeForm() {
          return;
       }
       
+      const storedProfile = localStorage.getItem("userProfile");
+      const existingProfile = storedProfile ? JSON.parse(storedProfile) : {};
+
       const profile = {
-        fullName: user.displayName || email.split('@')[0], // Fallback for email/pass users
+        fullName: user.displayName || email.split('@')[0],
         email: user.email,
         profileImage: user.photoURL || "https://picsum.photos/200",
+        dob: existingProfile.email === user.email ? existingProfile.dob : ''
       };
+
       localStorage.setItem("userProfile", JSON.stringify(profile));
       router.push("/profile/success");
 
@@ -63,10 +68,14 @@ export function WelcomeForm() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
+      const storedProfile = localStorage.getItem("userProfile");
+      const existingProfile = storedProfile ? JSON.parse(storedProfile) : {};
+
       const profile = {
         fullName: user.displayName || "New User",
         email: user.email,
         profileImage: user.photoURL || "https://picsum.photos/200",
+        dob: existingProfile.email === user.email ? existingProfile.dob : ''
       };
 
       localStorage.setItem("userProfile", JSON.stringify(profile));

@@ -126,10 +126,14 @@ export function SignupForm() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
+      const storedProfile = localStorage.getItem("userProfile");
+      const existingProfile = storedProfile ? JSON.parse(storedProfile) : {};
+
       const profile = {
         fullName: user.displayName || "New User",
-        email: user.email || "",
+        email: user.email,
         profileImage: user.photoURL || "https://picsum.photos/200",
+        dob: existingProfile.email === user.email ? existingProfile.dob : ''
       };
 
       localStorage.setItem("userProfile", JSON.stringify(profile));
@@ -260,5 +264,3 @@ export function SignupForm() {
     </div>
   );
 }
-
-    
