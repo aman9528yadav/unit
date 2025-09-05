@@ -320,32 +320,46 @@ export function Settings() {
                     control={<Switch checked={saveConversionHistory} onCheckedChange={setSaveConversionHistory} />}
                 />
             </Section>
-
-            <Section title="Calculator">
-                 <SettingRow
-                    label="Mode"
-                    description="Switch between calculator types"
-                    control={
-                        <Select value={calculatorMode} onValueChange={(v) => setCalculatorMode(v as CalculatorMode)}>
-                            <SelectTrigger className="w-32"><SelectValue/></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="basic">Basic</SelectItem>
-                                <SelectItem value="scientific">Scientific</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    }
-                />
-                  <SettingRow
-                    label="Save Calculation History"
-                    description="Keep a record of your calculations"
-                    control={<Switch checked={saveCalcHistory} onCheckedChange={setSaveCalcHistory} />}
-                />
-                 <SettingRow
-                    label="Keypress Sound"
-                    description="Play sound on button press"
-                    control={<Switch checked={calculatorSound} onCheckedChange={setCalculatorSound} />}
-                />
-            </Section>
+            <TooltipProvider>
+                <Section title="Calculator">
+                     <SettingRow
+                        label="Mode"
+                        description="Switch between calculator types"
+                        control={
+                            <Select value={calculatorMode} onValueChange={(v) => setCalculatorMode(v as CalculatorMode)} disabled={isPremiumFeatureLocked}>
+                                <SelectTrigger className="w-32">
+                                    {isPremiumFeatureLocked && <Lock className="w-4 h-4 text-amber-500 mr-2"/>}
+                                    <SelectValue/>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="basic">Basic</SelectItem>
+                                     <Tooltip delayDuration={100}>
+                                        <TooltipTrigger asChild>
+                                            <div>
+                                                <SelectItem value="scientific" disabled={isPremiumFeatureLocked}>
+                                                    {isPremiumFeatureLocked && <Lock className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2"/>}
+                                                    Scientific
+                                                </SelectItem>
+                                            </div>
+                                        </TooltipTrigger>
+                                        {isPremiumFeatureLocked && <TooltipContent>Unlock Premium to use the Scientific Calculator.</TooltipContent>}
+                                    </Tooltip>
+                                </SelectContent>
+                            </Select>
+                        }
+                    />
+                      <SettingRow
+                        label="Save Calculation History"
+                        description="Keep a record of your calculations"
+                        control={<Switch checked={saveCalcHistory} onCheckedChange={setSaveCalcHistory} />}
+                    />
+                     <SettingRow
+                        label="Keypress Sound"
+                        description="Play sound on button press"
+                        control={<Switch checked={calculatorSound} onCheckedChange={setCalculatorSound} />}
+                    />
+                </Section>
+            </TooltipProvider>
         </div>
         
         <footer className="flex justify-between items-center gap-4 mt-4">
@@ -375,5 +389,7 @@ export function Settings() {
     </div>
   );
 }
+
+    
 
     

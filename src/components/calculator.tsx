@@ -4,12 +4,16 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Clock, RefreshCw, Trash2, Delete, Divide, X, Minus, Plus, Equal, Sigma, RotateCcw, CalculatorIcon, Home, User } from 'lucide-react';
-import { incrementTodaysCalculations } from '@/lib/utils';
+import { Clock, RefreshCw, Trash2, Delete, Divide, X, Minus, Plus, Equal, Sigma, RotateCcw, CalculatorIcon, Home, User, Lock } from 'lucide-react';
+import { incrementTodaysCalculations, getAllTimeCalculations } from '@/lib/utils';
 import type { CalculatorMode } from './settings';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useRouter } from 'next/navigation';
 
+const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
+const PREMIUM_MEMBER_THRESHOLD = 8000;
+
+type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 const buttonClasses = {
   gray: "bg-muted hover:bg-muted/80 text-foreground",
@@ -56,7 +60,8 @@ export function Calculator() {
   const router = useRouter();
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
-  
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+
   
   // A simple and safe expression evaluator
   const evaluateExpression = (expr: string, currentAngleMode: 'deg' | 'rad'): number => {
@@ -99,14 +104,33 @@ export function Calculator() {
 
   useEffect(() => {
     setIsClient(true);
+    
+    const storedProfileData = localStorage.getItem("userProfile");
+     if (storedProfileData) {
+        const parsedProfile = JSON.parse(storedProfileData);
+        setProfile(parsedProfile);
+        const calculations = getAllTimeCalculations(parsedProfile.email);
+        if (parsedProfile.email === DEVELOPER_EMAIL) {
+            setUserRole('Owner');
+        } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
+            setUserRole('Premium Member');
+        } else {
+            setUserRole('Member');
+            setMode('basic'); // Force basic mode for members
+            localStorage.setItem('calculatorMode', 'basic');
+        }
+    } else {
+        setUserRole('Member');
+        setMode('basic');
+        localStorage.setItem('calculatorMode', 'basic');
+    }
+
     const savedMode = localStorage.getItem('calculatorMode') as CalculatorMode;
     const soundEnabled = localStorage.getItem('calculatorSoundEnabled');
     
-    if (savedMode) setMode(savedMode);
+    if (savedMode && userRole !== 'Member') setMode(savedMode);
     if (soundEnabled !== null) setIsSoundEnabled(JSON.parse(soundEnabled));
     
-    const storedProfileData = localStorage.getItem("userProfile");
-    if (storedProfileData) setProfile(JSON.parse(storedProfileData));
 
     const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'calculatorSoundEnabled') {
@@ -120,7 +144,7 @@ export function Calculator() {
         window.removeEventListener('storage', handleStorageChange);
     };
 
-  }, []);
+  }, [isClient, userRole]);
   
   const playSound = () => {
     if (isSoundEnabled && audioRef.current) {
@@ -310,7 +334,27 @@ const BasicLayout = () => (
 
             {/* Buttons */}
              <div className="min-h-[460px] md:min-h-[520px]">
-                {mode === 'scientific' ? <ScientificLayout /> : <BasicLayout />}
+                {mode === 'scientific' && userRole !== 'Member' ? (
+                  <ScientificLayout />
+                ) : (
+                  <>
+                    {userRole === 'Member' && mode === 'scientific' && (
+                       <div className="w-full h-full flex flex-col items-center justify-center text-center gap-4 bg-secondary p-8 rounded-2xl">
+                          <div className="p-4 bg-primary/10 rounded-full mb-4">
+                            <Lock className="w-10 h-10 text-primary" />
+                          </div>
+                          <h1 className="text-2xl font-bold">Scientific Mode Locked</h1>
+                          <p className="text-muted-foreground">
+                              This is a Premium feature. Complete 8,000 operations to unlock the scientific calculator!
+                          </p>
+                          <Button onClick={() => router.push('/userdata')} className="mt-4">
+                              Check Your Progress
+                          </Button>
+                      </div>
+                    )}
+                     <BasicLayout />
+                  </>
+                )}
             </div>
         </div>
          {history.length > 0 && (
@@ -335,5 +379,7 @@ const BasicLayout = () => (
     </div>
   );
 }
+
+    
 
     
