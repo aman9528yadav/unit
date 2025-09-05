@@ -36,18 +36,27 @@ const Section = ({ title, children, description }: { title: string, children: Re
     </Card>
 );
 
-const SettingRow = ({ label, description, control, isLink = false }: { label: string, description?: string, control: React.ReactNode, isLink?: boolean }) => (
-    <div className="flex justify-between items-center py-3">
-        <div className="flex-1 pr-4">
-            <p className="font-medium">{label}</p>
-            {description && <p className="text-sm text-muted-foreground">{description}</p>}
+const SettingRow = ({ label, description, control, isLink = false, href }: { label: string, description?: string, control: React.ReactNode, isLink?: boolean, href?: string }) => {
+    const content = (
+        <div className="flex justify-between items-center py-3">
+            <div className="flex-1 pr-4">
+                <p className="font-medium">{label}</p>
+                {description && <p className="text-sm text-muted-foreground">{description}</p>}
+            </div>
+            <div className="flex items-center gap-2">
+                {control}
+                {isLink && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+            </div>
         </div>
-        <div className="flex items-center gap-2">
-            {control}
-            {isLink && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-        </div>
-    </div>
-)
+    );
+    
+    if (isLink && href) {
+        return <Link href={href}>{content}</Link>
+    }
+    
+    return content;
+};
+
 
 export function Settings() {
   const [profile, setProfile] = useState<{ email: string } | null>(null);
@@ -141,22 +150,20 @@ export function Settings() {
 
         <div className="flex flex-col gap-6">
              <Section title="Account">
-                <Link href="/profile">
-                    <SettingRow
-                        isLink
-                        label="Edit Profile"
-                        description="Manage your personal information"
-                        control={<User />}
-                    />
-                </Link>
-                 <Link href="/auth-screens">
-                    <SettingRow
-                        isLink
-                        label="Manage Authentication Screens"
-                        description="View or edit login/signup pages"
-                        control={<KeyRound />}
-                    />
-                </Link>
+                <SettingRow
+                    isLink
+                    href="/profile"
+                    label="Edit Profile"
+                    description="Manage your personal information"
+                    control={<User />}
+                />
+                 <SettingRow
+                    isLink
+                    href="/auth-screens"
+                    label="Manage Authentication Screens"
+                    description="View or edit login/signup pages"
+                    control={<KeyRound />}
+                />
             </Section>
 
             <Section title="General">
@@ -178,14 +185,13 @@ export function Settings() {
                         </Select>
                     }
                 />
-                 <Link href="/settings/theme">
-                    <SettingRow
-                        isLink
-                        label="Theme"
-                        description="Customize the app's appearance"
-                        control={<Palette />}
-                    />
-                 </Link>
+                 <SettingRow
+                    isLink
+                    href="/settings/theme"
+                    label="Theme"
+                    description="Customize the app's appearance"
+                    control={<Palette />}
+                />
             </Section>
 
              <Section title="Unit Converter">
@@ -194,14 +200,13 @@ export function Settings() {
                     description="Automatically convert on value change"
                     control={<Switch checked={autoConvert} onCheckedChange={setAutoConvert} />}
                 />
-                 <Link href="/settings/custom-units">
-                    <SettingRow
-                        isLink
-                        label="Custom Units"
-                        description="Add or manage your own units"
-                        control={<LayoutGrid />}
-                    />
-                 </Link>
+                 <SettingRow
+                    isLink
+                    href="/settings/custom-units"
+                    label="Custom Units"
+                    description="Add or manage your own units"
+                    control={<LayoutGrid />}
+                />
                  <SettingRow
                     label="Save Conversion History"
                     description="Keep a record of your conversions"
@@ -238,3 +243,5 @@ export function Settings() {
     </div>
   );
 }
+
+    
