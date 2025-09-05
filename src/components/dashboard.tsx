@@ -239,6 +239,7 @@ const Header = ({ name, profile, onProfileClick }: { name: string, profile: User
             </div>
         </div>
         <div className="flex items-center gap-2">
+            <LanguageToggle />
             <Notifications />
             <Button variant="ghost" size="icon" className="rounded-full" onClick={onProfileClick}>
                 <Avatar className="h-10 w-10 border border-border bg-card text-foreground">
@@ -402,7 +403,7 @@ export function Dashboard() {
                 </Button>
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
-                {recentUpdates.slice(0, 2).map((update) => (
+                {recentUpdates.map((update) => (
                     <UpdateCard key={update.title} update={update} />
                 ))}
             </div>
@@ -449,5 +450,6 @@ export function Dashboard() {
     </div>
   );
 }
+
 
     
