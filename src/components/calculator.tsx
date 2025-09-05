@@ -2,10 +2,14 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Clock, RefreshCw, Trash2, Delete, Divide, X, Minus, Plus, Equal, Sigma, RotateCcw } from 'lucide-react';
+import { Clock, RefreshCw, Trash2, Delete, Divide, X, Minus, Plus, Equal, Sigma, RotateCcw, CalculatorIcon, Home, User } from 'lucide-react';
 import { incrementTodaysCalculations } from '@/lib/utils';
 import type { CalculatorMode } from './settings';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { useRouter } from 'next/navigation';
+
 
 const buttonClasses = {
   gray: "bg-muted hover:bg-muted/80 text-foreground",
@@ -33,6 +37,13 @@ const CalculatorButton = ({
   </Button>
 );
 
+interface UserProfile {
+    fullName: string;
+    email: string;
+    profileImage?: string;
+    [key:string]: any;
+}
+
 
 export function Calculator() {
   const [expression, setExpression] = useState('');
@@ -41,6 +52,8 @@ export function Calculator() {
   const [mode, setMode] = useState<CalculatorMode>('scientific');
   const [angleMode, setAngleMode] = useState<'deg' | 'rad'>('deg');
   const [isClient, setIsClient] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const router = useRouter();
   
   // A simple and safe expression evaluator
   const evaluateExpression = (expr: string, currentAngleMode: 'deg' | 'rad'): number => {
@@ -87,6 +100,9 @@ export function Calculator() {
     if (savedMode) {
       setMode(savedMode);
     }
+    const storedProfileData = localStorage.getItem("userProfile");
+    if (storedProfileData) setProfile(JSON.parse(storedProfileData));
+
   }, []);
 
   const handleButtonClick = (value: string) => {
@@ -233,6 +249,28 @@ const BasicLayout = () => (
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-4">
+       <header className="flex items-center justify-between sticky top-0 z-50 bg-background/80 backdrop-blur-sm py-4">
+        <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/">
+                  <Home />
+              </Link>
+            </Button>
+            <div className="p-2 bg-orange-500/10 text-orange-500 rounded-lg">
+              <CalculatorIcon />
+            </div>
+            <h1 className="text-xl font-bold">Calculator</h1>
+        </div>
+        <div className="flex items-center gap-2">
+            <Button variant="ghost" className="gap-2" onClick={() => router.push(profile ? '/profile' : '/welcome')}>
+                Hi, {profile?.fullName.split(' ')[0] || 'Guest'}
+                <Avatar className="h-8 w-8">
+                    <AvatarImage src={profile?.profileImage} alt={profile?.fullName}/>
+                    <AvatarFallback><User /></AvatarFallback>
+                </Avatar>
+            </Button>
+        </div>
+      </header>
         <div className="bg-card p-4 rounded-xl flex flex-col gap-4">
             {/* Display */}
             <div className="text-right h-28 flex flex-col justify-end p-4">

@@ -7,9 +7,13 @@ function CalculatorPageSkeleton() {
     return (
         <div className="w-full max-w-md mx-auto flex flex-col gap-4">
             <header className="flex items-center justify-between">
-                <Skeleton className="h-10 w-10" />
-                <Skeleton className="h-8 w-32" />
+                 <div className="flex items-center gap-2">
+                    <Skeleton className="h-10 w-10" />
+                    <Skeleton className="h-10 w-10" />
+                    <Skeleton className="h-8 w-24" />
+                </div>
                 <div className="flex items-center gap-2">
+                    <Skeleton className="h-10 w-24" />
                     <Skeleton className="h-10 w-10 rounded-full" />
                 </div>
             </header>
