@@ -799,45 +799,51 @@ export function Converter() {
                                   <Dialog>
                                     <UITooltip>
                                       <TooltipTrigger asChild>
-                                        <DialogTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            disabled={isPremiumFeatureLocked || !outputValue}
-                                          >
-                                            {isPremiumFeatureLocked ? (
-                                              <Lock size={16} />
-                                            ) : (
-                                              <Share2 size={16} />
-                                            )}
-                                          </Button>
-                                        </DialogTrigger>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          disabled={!outputValue}
+                                          onClick={(e) => {
+                                            if (isPremiumFeatureLocked) {
+                                              e.preventDefault();
+                                            }
+                                          }}
+                                        >
+                                          <Share2 size={16} />
+                                        </Button>
                                       </TooltipTrigger>
-                                      {isPremiumFeatureLocked && (
+                                      {isPremiumFeatureLocked ? (
                                         <TooltipContent>
                                           <p>Unlock Premium to share conversions.</p>
                                         </TooltipContent>
+                                      ) : (
+                                        <DialogTrigger asChild>
+                                          {/* This is a dummy trigger for tooltip to work with dialog */}
+                                          <span />
+                                        </DialogTrigger>
                                       )}
                                     </UITooltip>
-                                    <DialogContent>
-                                      <DialogHeader>
-                                        <DialogTitle>Share or Export Conversion</DialogTitle>
-                                      </DialogHeader>
-                                      <div className="flex flex-col gap-4">
-                                        <Button onClick={handleShare}>
-                                          <Share2 className="mr-2 h-4 w-4" /> Share via System
-                                          Dialog
-                                        </Button>
-                                        <Button onClick={handleExportAsTxt} variant="secondary">
-                                          <FileText className="mr-2 h-4 w-4" /> Export as
-                                          .txt
-                                        </Button>
-                                        <Button onClick={handleExportAsImage} variant="secondary">
-                                          <ImageIcon className="mr-2 h-4 w-4" /> Export as
-                                          .png
-                                        </Button>
-                                      </div>
-                                    </DialogContent>
+                                    {!isPremiumFeatureLocked && (
+                                       <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Share or Export Conversion</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="flex flex-col gap-4">
+                                            <Button onClick={handleShare}>
+                                            <Share2 className="mr-2 h-4 w-4" /> Share via System
+                                            Dialog
+                                            </Button>
+                                            <Button onClick={handleExportAsTxt} variant="secondary">
+                                            <FileText className="mr-2 h-4 w-4" /> Export as
+                                            .txt
+                                            </Button>
+                                            <Button onClick={handleExportAsImage} variant="secondary">
+                                            <ImageIcon className="mr-2 h-4 w-4" /> Export as
+                                            .png
+                                            </Button>
+                                        </div>
+                                        </DialogContent>
+                                    )}
                                   </Dialog>
                                 </TooltipProvider>
                              </div>
