@@ -34,7 +34,6 @@ const handleSuccessfulSignup = async (user: User) => {
     const profile = {
         fullName: user.displayName,
         email: user.email,
-        profileImage: user.photoURL || "https://picsum.photos/200",
         dob: '' // DOB is not available on signup
     };
     localStorage.setItem("userProfile", JSON.stringify(profile));

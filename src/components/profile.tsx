@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   ArrowLeft,
   ChevronRight,
@@ -30,7 +29,6 @@ const defaultProfile = {
     fullName: "Aman Yadav",
     email: "aman@example.com",
     birthday: "April 1st",
-    profileImage: "https://picsum.photos/200",
     dob: "1990-04-01"
 };
 
@@ -101,21 +99,14 @@ export function Profile() {
         </header>
 
         <div className="flex flex-col items-center text-center gap-2 mt-2">
-          <div className="relative w-28 h-28">
-            <Image
-              src={profile.profileImage || defaultProfile.profileImage}
-              alt={profile.fullName}
-              width={112}
-              height={112}
-              className="rounded-full border-4 border-white object-cover w-28 h-28"
-              data-ai-hint="profile picture"
-            />
-             <Button asChild size="icon" className="absolute bottom-0 right-0 rounded-full w-8 h-8">
-              <Link href="/profile/edit">
-                <Pencil />
-              </Link>
-            </Button>
-          </div>
+           <div className="relative w-28 h-28 flex items-center justify-center bg-secondary rounded-full border-4 border-white">
+                <User className="w-16 h-16 text-primary" />
+                <Button asChild size="icon" className="absolute bottom-0 right-0 rounded-full w-8 h-8">
+                    <Link href="/profile/edit">
+                        <Pencil />
+                    </Link>
+                </Button>
+            </div>
           <h2 className="text-2xl font-bold mt-2">{profile.fullName}</h2>
           <p className="text-sm">{profile.email}</p>
           <p className="text-sm">Birthday: {profile.birthday}</p>

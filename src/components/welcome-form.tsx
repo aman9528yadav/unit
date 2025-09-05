@@ -37,7 +37,6 @@ const handleSuccessfulLogin = async (user: User) => {
     const profile = {
         fullName: user.displayName || user.email?.split('@')[0] || "New User",
         email: user.email,
-        profileImage: user.photoURL || "https://picsum.photos/200",
         dob: existingProfile.email === user.email ? existingProfile.dob : ''
     };
 

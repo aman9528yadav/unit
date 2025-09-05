@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowLeft, Camera, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +17,7 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 
 export function ProfileEditForm() {
-  const [profile, setProfile] = useState({ fullName: '', email: '', profileImage: '', dob: '' });
+  const [profile, setProfile] = useState({ fullName: '', email: '', dob: '' });
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -27,7 +26,6 @@ export function ProfileEditForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
   const router = useRouter();
@@ -51,25 +49,6 @@ export function ProfileEditForm() {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfile(prev => ({ ...prev, profileImage: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-  
-  const handleRemoveImage = () => {
-    setProfile(prev => ({...prev, profileImage: ''}));
-    toast({
-        title: "Profile photo removed",
-        description: "Your profile photo will be removed when you save changes.",
-    })
-  }
-
   const handleSaveChanges = async () => {
     if (!profile.fullName) {
       toast({ title: "Full name is required", variant: "destructive" });
@@ -81,7 +60,6 @@ export function ProfileEditForm() {
       if (user) {
         await updateProfile(user, {
           displayName: profile.fullName,
-          photoURL: profile.profileImage,
         });
 
         // We also need to update the dob in our local storage profile
@@ -157,42 +135,6 @@ export function ProfileEditForm() {
         </Link>
         <h1 className="text-xl font-bold">Edit Profile</h1>
       </header>
-
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative">
-          <Image
-            src={profile.profileImage || "https://picsum.photos/200"}
-            alt="Profile"
-            width={128}
-            height={128}
-            className="rounded-full w-32 h-32 object-cover border-4 border-card"
-          />
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleImageChange}
-            accept="image/*"
-            className="hidden"
-          />
-          <Button
-            size="icon"
-            className="absolute bottom-1 right-1 rounded-full w-10 h-10"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Camera />
-          </Button>
-           {profile.profileImage && (
-             <Button
-                size="icon"
-                variant="destructive"
-                className="absolute bottom-1 left-1 rounded-full w-10 h-10"
-                onClick={handleRemoveImage}
-              >
-                <Trash2 />
-            </Button>
-           )}
-        </div>
-      </div>
 
       <Card>
         <CardHeader>
