@@ -125,7 +125,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 root.style.setProperty(cssVarName, hexToHsl(value));
             }
         });
-    } else {
+    } else if (themeToApply === 'light' || themeToApply === 'dark') {
         root.classList.add(themeToApply);
     }
   }, [lastNonCustomTheme]);
