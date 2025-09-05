@@ -55,6 +55,7 @@ const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 
 interface UserProfile {
     fullName: string;
     email: string;
+    profileImage?: string;
     [key:string]: any;
 }
 
@@ -603,7 +604,10 @@ export function Converter() {
         </div>
         <div className="flex items-center gap-2">
             <Button variant="ghost" className="rounded-full" onClick={handleProfileClick}>
-                <User />
+                <Avatar>
+                    <AvatarImage src={profile?.profileImage} alt={profile?.fullName}/>
+                    <AvatarFallback><User /></AvatarFallback>
+                </Avatar>
             </Button>
             <Button variant="secondary" onClick={handleShare} className="hidden sm:flex">
                 <Share2 className="mr-2" /> Share
@@ -765,8 +769,7 @@ function UnitSelectionDialog({ categories, onUnitSelect, selectedCategory, selec
         if (selectedCategory.name !== activeCategory.name) {
             setActiveCategory(selectedCategory);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedCategory]);
+    }, [selectedCategory, activeCategory.name]);
     
     const selectedUnitInfo = useMemo(() => activeCategory.units.find(u => u.symbol === selectedUnitSymbol), [activeCategory, selectedUnitSymbol]);
     
