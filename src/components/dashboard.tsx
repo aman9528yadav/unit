@@ -30,6 +30,7 @@ import {
   Gift,
   Zap,
   Palette,
+  Calendar,
 } from "lucide-react";
 import {
   Area,
@@ -276,7 +277,7 @@ export function Dashboard() {
       { label: t('dashboard.tools.calculator'), icon: Calculator, href: "/calculator", color: "text-orange-400" },
       { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
       { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
-      { label: t('dashboard.tools.time'), icon: Hourglass, href: "/time", color: "text-green-400" },
+      { label: "Date Calc", icon: Calendar, href: "/time", color: "text-green-400" },
       { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
     ];
 
@@ -342,7 +343,7 @@ export function Dashboard() {
   }
 
   return (
-    <div className="w-full max-w-lg mx-auto flex flex-col gap-8">
+    <div className="w-full max-w-lg mx-auto flex flex-col gap-8 py-8">
       <Header name={profile?.fullName || t('dashboard.guest')} profile={profile} onProfileClick={handleProfileClick} />
 
       <section className="grid grid-cols-2 gap-4">
@@ -456,4 +457,6 @@ export function Dashboard() {
 
 
     
+    
+
     
