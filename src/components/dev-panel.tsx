@@ -58,7 +58,11 @@ export function DevPanel() {
     
      useEffect(() => {
         if (!isAuthorized) return;
-        const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenanceMode);
+        
+        const unsubscribe = listenToGlobalMaintenanceMode((status) => {
+            setIsMaintenanceMode(status);
+        });
+
         return () => unsubscribe();
     }, [isAuthorized]);
     
@@ -136,8 +140,6 @@ export function DevPanel() {
     };
     
      const handleMaintenanceModeToggle = async (enabled: boolean) => {
-        // Optimistically update the UI
-        setIsMaintenanceMode(enabled);
         try {
             await setGlobalMaintenanceMode(enabled);
             toast({
@@ -145,8 +147,6 @@ export function DevPanel() {
                 description: enabled ? "App is now in maintenance mode." : "App is now live.",
             });
         } catch (error) {
-            // If the DB call fails, revert the UI and show an error
-            setIsMaintenanceMode(!enabled);
             console.error("Failed to toggle maintenance mode:", error);
             toast({ title: "Update Failed", description: "Could not change maintenance mode status.", variant: "destructive" });
         }
@@ -327,5 +327,7 @@ export function DevPanel() {
             <Button onClick={() => router.push('/')} variant="outline" className="mt-4">Back to App</Button>
         </div>
     );
+
+    
 
     
