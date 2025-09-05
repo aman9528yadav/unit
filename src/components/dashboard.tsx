@@ -25,6 +25,8 @@ import {
   Sigma,
   Hourglass,
   Flame,
+  Sparkles,
+  LogIn,
 } from "lucide-react";
 import {
   Area,
@@ -52,6 +54,7 @@ import { Notifications } from "./notifications";
 import { useLanguage } from "@/context/language-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { cn } from "@/lib/utils";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 
 
 interface Note {
@@ -174,7 +177,7 @@ interface UserProfile {
     [key: string]: any;
 }
 
-const Header = ({ name, profile }: { name: string, profile: UserProfile | null }) => {
+const Header = ({ name, profile, onProfileClick }: { name: string, profile: UserProfile | null, onProfileClick: () => void }) => {
   const router = useRouter();
   
   return (
@@ -189,7 +192,7 @@ const Header = ({ name, profile }: { name: string, profile: UserProfile | null }
         </div>
         <div className="flex items-center gap-2">
             <Notifications />
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={() => router.push(profile ? '/profile' : '/welcome')}>
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={onProfileClick}>
                 <Avatar className="h-10 w-10 border border-border bg-card text-foreground">
                 <AvatarImage src={profile?.profileImage} alt={profile?.fullName} />
                 <AvatarFallback><UserCircle2 className="size-6" /></AvatarFallback>
@@ -237,6 +240,9 @@ export function Dashboard() {
   const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string; value: number}[]>([]);
   const [savedNotesCount, setSavedNotesCount] = useState(0);
   const [streakData, setStreakData] = useState<StreakData>({ currentStreak: 0, bestStreak: 0, daysNotOpened: 0 });
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const router = useRouter();
+
 
   const updateStats = (email: string | null) => {
     setTodayCalculations(getTodaysCalculations(email));
@@ -269,6 +275,14 @@ export function Dashboard() {
       setTheme(isDark ? 'dark' : 'light');
   }
 
+  const handleProfileClick = () => {
+    if (profile) {
+      router.push('/profile');
+    } else {
+      setShowLoginDialog(true);
+    }
+  };
+
   if (!isClient) {
     return null;
   }
@@ -276,7 +290,7 @@ export function Dashboard() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="relative mx-auto max-w-lg px-4 sm:px-6 py-8">
-        <Header name={profile?.fullName || 'Guest'} profile={profile} />
+        <Header name={profile?.fullName || 'Guest'} profile={profile} onProfileClick={handleProfileClick} />
 
         <section className="grid grid-cols-2 gap-4 mt-8">
           <Stat icon={Calculator} label="Today's Ops" value={String(todayCalculations)} />
@@ -345,6 +359,27 @@ export function Dashboard() {
             ))}
           </div>
         </section>
+        
+      <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader className="items-center text-center">
+            <div className="p-3 bg-primary/10 rounded-full mb-4 w-fit">
+              <Sparkles className="w-8 h-8 text-primary" />
+            </div>
+            <AlertDialogTitle className="text-2xl">Unlock Your Profile</AlertDialogTitle>
+            <AlertDialogDescription className="max-w-xs">
+              Log in or create an account to personalize your experience, save preferences, and access your history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-col-reverse gap-2">
+            <AlertDialogCancel>Not Now</AlertDialogCancel>
+            <AlertDialogAction onClick={() => router.push('/welcome')} className="bg-primary hover:bg-primary/90">
+              <LogIn className="mr-2"/>
+              Continue to Login
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       </main>
     </div>
