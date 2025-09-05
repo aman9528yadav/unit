@@ -279,14 +279,18 @@ export function Dashboard() {
         </section>
 
         <section className="mt-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">Quick Access</h2>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {quickTools.map((t) => (
-              <ToolButton key={t.label} {...t} />
-            ))}
-          </div>
+          <Card className="bg-card border-border shadow-sm">
+            <CardHeader>
+              <CardTitle>Quick Access</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {quickTools.map((t) => (
+                  <ToolButton key={t.label} {...t} />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </section>
 
         <section className="mt-8">
@@ -342,3 +346,4 @@ export function Dashboard() {
     </div>
   );
 }
+
