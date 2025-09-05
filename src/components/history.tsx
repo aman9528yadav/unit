@@ -73,17 +73,29 @@ export function History() {
   const [activeTab, setActiveTab] = useState("history");
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+
 
   useEffect(() => {
     setIsClient(true);
+    
+    const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'conversionHistory') {
+            setHistory(JSON.parse(e.newValue || '[]'));
+        }
+         if (e.key === 'favoriteConversions') {
+            setFavorites(JSON.parse(e.newValue || '[]'));
+        }
+    };
+    
     const storedHistory = localStorage.getItem("conversionHistory");
     const storedFavorites = localStorage.getItem("favoriteConversions");
-    if (storedHistory) {
-      setHistory(JSON.parse(storedHistory));
-    }
-    if (storedFavorites) {
-      setFavorites(JSON.parse(storedFavorites));
-    }
+    if (storedHistory) setHistory(JSON.parse(storedHistory));
+    if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+
   }, []);
 
   const handleRestore = (item: string) => {
@@ -98,6 +110,20 @@ export function History() {
     }
     setFavorites([]);
     localStorage.removeItem("favoriteConversions");
+  };
+
+  const handleDeleteItem = (itemString: string) => {
+    // Remove from history
+    const newHistory = history.filter(h => h !== itemString);
+    setHistory(newHistory);
+    localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
+
+    // Also remove from favorites if it's there
+    const newFavorites = favorites.filter(fav => fav !== itemString);
+    setFavorites(newFavorites);
+    localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
+    
+    setItemToDelete(null);
   };
   
   const itemsToDisplay = activeTab === 'history' 
@@ -163,15 +189,15 @@ export function History() {
             </div>
 
             <div className="bg-card p-4 rounded-lg">
-                <div className="grid grid-cols-4 text-muted-foreground text-sm font-semibold mb-2 px-2">
+                <div className="grid grid-cols-[1fr,2fr,auto] text-muted-foreground text-sm font-semibold mb-2 px-2">
                     <span>When</span>
-                    <span className="col-span-2">Conversion</span>
-                    <span>Action</span>
+                    <span>Conversion</span>
+                    <span className="text-right">Action</span>
                 </div>
                 {filteredItems.length > 0 ? (
                   <div className="flex flex-col gap-2">
                     {filteredItems.map((item, index) => (
-                         <HistoryItem key={`${item.timestamp}-${index}`} item={item} onRestore={handleRestore}/>
+                         <HistoryItem key={`${item.timestamp}-${index}`} item={item} onRestore={handleRestore} onDelete={() => setItemToDelete(`${item.conversion}|${item.categoryName}|${item.timestamp}`)}/>
                     ))}
                   </div>
                 ) : (
@@ -182,13 +208,30 @@ export function History() {
             </div>
         </Tabs>
 
+        <AlertDialog open={!!itemToDelete}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete History Item?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete this history item.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setItemToDelete(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => handleDeleteItem(itemToDelete!)} className="bg-destructive hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
       </div>
     </main>
   );
 }
 
 
-function HistoryItem({ item, onRestore }: { item: HistoryItemData; onRestore: (item: string) => void }) {
+function HistoryItem({ item, onRestore, onDelete }: { item: HistoryItemData; onRestore: (item: string) => void; onDelete: () => void; }) {
     const fullHistoryString = `${item.conversion}|${item.categoryName}|${item.timestamp}`;
     const category = conversionCategories.find(c => c.name === item.categoryName);
     const Icon = category?.icon || Power;
@@ -208,12 +251,12 @@ function HistoryItem({ item, onRestore }: { item: HistoryItemData; onRestore: (i
     }
 
     return (
-        <div className="grid grid-cols-4 items-center p-2 rounded-lg hover:bg-secondary group">
+        <div className="grid grid-cols-[1fr,2fr,auto] items-center p-2 rounded-lg hover:bg-secondary group">
             <div className="flex flex-col">
-                <span className="font-semibold text-foreground">{formatDistanceToNow(parseISO(item.timestamp), { addSuffix: true })}</span>
+                <span className="font-semibold text-foreground text-sm">{formatDistanceToNow(parseISO(item.timestamp), { addSuffix: true })}</span>
                 <span className="text-xs">{formatWhen(item.timestamp)}</span>
             </div>
-            <div className="col-span-2 flex items-center gap-3">
+            <div className="flex items-center gap-3">
                  <div className="p-2 bg-primary/10 text-primary rounded-full">
                     <Icon/>
                 </div>
@@ -222,13 +265,15 @@ function HistoryItem({ item, onRestore }: { item: HistoryItemData; onRestore: (i
                     <p className="text-xs">From {item.fromName} to {item.toName}</p>
                 </div>
             </div>
-             <div className="flex justify-end">
-                 <Button variant="ghost" onClick={() => onRestore(fullHistoryString)}>
-                    <RotateCcw className="mr-2"/> Use
+             <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                 <Button size="sm" variant="ghost" onClick={() => onRestore(fullHistoryString)}>
+                    <RotateCcw className="mr-2 h-4 w-4"/> Use
+                </Button>
+                <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={onDelete}>
+                    <Trash2 className="h-4 w-4"/>
                 </Button>
             </div>
         </div>
     )
 }
-
     

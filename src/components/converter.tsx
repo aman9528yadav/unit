@@ -185,7 +185,8 @@ export function Converter() {
   const [region, setRegion] = React.useState<Region>('International');
   const { t } = useLanguage();
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
-  const [isGraphVisible, setIsGraphVisible] = useState(false);
+  const [isGraphVisible, setIsGraphVisible] = useState(isGraphVisible);
+  const [showRecentHistory, setShowRecentHistory] = useState(true);
 
 
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -242,6 +243,9 @@ export function Converter() {
         }
         if (e.key === getUserKey('autoConvert', userEmail)) {
             setAutoConvert(e.newValue === null ? true : JSON.parse(e.newValue));
+        }
+        if (e.key === 'conversionHistory') {
+            setHistory(JSON.parse(e.newValue || '[]'));
         }
     };
 
@@ -505,27 +509,6 @@ export function Converter() {
     } else {
         toast({ title: t('converter.toast.cannotRestore'), description: t('converter.toast.categoryError'), variant: "destructive"});
     }
-  };
-
-  const handleDeleteHistory = (index: number) => {
-    const itemToDelete = history[index];
-    const newHistory = history.filter((_, i) => i !== index);
-    setHistory(newHistory);
-    localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
-    
-    // Also remove from favorites if it's there
-    if (favorites.includes(itemToDelete)) {
-      const newFavorites = favorites.filter(fav => fav !== itemToDelete);
-      setFavorites(newFavorites);
-      localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
-    }
-  };
-  
-  const handleClearHistory = () => {
-    setHistory([]);
-    setFavorites([]);
-    localStorage.removeItem("conversionHistory");
-    localStorage.removeItem("favoriteConversions");
   };
 
   const handleShare = async () => {
@@ -812,12 +795,12 @@ export function Converter() {
             </CardContent>
         </Card>
 
-        {history.length > 0 && (
+        {history.length > 0 && showRecentHistory && (
           <Card className="w-full">
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle className="flex items-center gap-2"><Clock size={20} /> Recent Conversions</CardTitle>
-                    <Button variant="outline" onClick={handleClearHistory}><Trash2 className="mr-2 h-4 w-4"/> Clear</Button>
+                    <Button variant="outline" onClick={() => setShowRecentHistory(false)}><Trash2 className="mr-2 h-4 w-4"/> Clear</Button>
                 </div>
             </CardHeader>
             <CardContent>
