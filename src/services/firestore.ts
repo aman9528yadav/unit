@@ -4,6 +4,7 @@
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, Timestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 import type { AppNotification } from '@/lib/notifications';
+import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
 
 export interface UserEvent {
@@ -94,24 +95,40 @@ export async function setGlobalMaintenanceMode(isEnabled: boolean) {
 }
 
 /**
- * Sets up a real-time listener for the global maintenance mode status.
- * @param callback - Function to be called with the maintenance status (boolean) whenever it changes.
+ * Sets up a real-time listener for the global maintenance mode status and handles redirects.
+ * @param setIsMaintenanceMode - State setter to update the component's view of the maintenance status.
+ * @param pathname - The current URL pathname from Next.js router.
+ * @param router - The Next.js router instance.
  * @returns The unsubscribe function for the listener.
  */
-export function listenToGlobalMaintenanceMode(callback: (isEnabled: boolean) => void) {
+export function listenToGlobalMaintenanceMode(
+  setIsMaintenanceMode: (status: boolean) => void,
+  pathname: string,
+  router: AppRouterInstance
+) {
     const maintenanceRef = doc(db, 'settings', 'maintenance');
 
     const unsubscribe = onSnapshot(maintenanceRef, (docSnap) => {
-        if (docSnap.exists()) {
-            callback(docSnap.data().isEnabled || false);
-        } else {
-            // If the document doesn't exist, assume maintenance mode is off.
-            callback(false);
+        const isEnabled = docSnap.exists() ? docSnap.data().isEnabled || false : false;
+        setIsMaintenanceMode(isEnabled);
+        
+        // Centralize redirection logic here
+        const isDevRoute = pathname.startsWith('/dev');
+        if (isDevRoute) {
+            return; // Always allow access to dev routes
         }
+
+        const isMaintenancePage = pathname === '/maintenance';
+        
+        if (isEnabled && !isMaintenancePage) {
+            router.replace('/maintenance');
+        } else if (!isEnabled && isMaintenancePage) {
+            router.replace('/');
+        }
+
     }, (error) => {
         console.error("Error listening to maintenance mode:", error);
-        // In case of an error, default to not being in maintenance mode
-        callback(false);
+        setIsMaintenanceMode(false);
     });
 
     return unsubscribe;

@@ -31,29 +31,9 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
-        const unsubscribe = listenToGlobalMaintenanceMode((status) => {
-            setIsMaintenanceMode(status);
-        });
-
+        const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenanceMode, pathname, router);
         return () => unsubscribe();
-    }, []);
-
-    useEffect(() => {
-        if (isMaintenanceMode === null) return; // Wait until status is fetched
-
-        // Always allow access to developer routes
-        if (pathname.startsWith('/dev')) {
-            return;
-        }
-
-        const isMaintenancePage = pathname === '/maintenance';
-
-        if (isMaintenanceMode && !isMaintenancePage) {
-            router.replace('/maintenance');
-        } else if (!isMaintenanceMode && isMaintenancePage) {
-            router.replace('/');
-        }
-    }, [isMaintenanceMode, pathname, router]);
+    }, [pathname, router]);
 
     if (isMaintenanceMode === null) {
         return (
@@ -64,7 +44,7 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
         );
     }
     
-    // Always allow dev routes to render
+    // Allow dev routes to render regardless of maintenance mode
     if (pathname.startsWith('/dev')) {
         return <>{children}</>;
     }

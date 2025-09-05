@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dashboard } from "@/components/dashboard";
 import { Skeleton } from '@/components/ui/skeleton';
-import { listenToGlobalMaintenanceMode } from '@/services/firestore';
 
 function DashboardSkeleton() {
     return (
@@ -34,27 +33,8 @@ export default function Home() {
     const router = useRouter();
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean | null>(null);
 
     useEffect(() => {
-        const unsubscribe = listenToGlobalMaintenanceMode((status) => {
-            setIsMaintenanceMode(status);
-        });
-
-        return () => unsubscribe();
-    }, []);
-
-
-    useEffect(() => {
-        // If maintenance mode status is not yet determined, do nothing.
-        if (isMaintenanceMode === null) return;
-        
-        // If maintenance mode is on (globally or locally), redirect immediately.
-        if (isMaintenanceMode) {
-            router.replace('/maintenance');
-            return;
-        }
-
         const storedProfile = localStorage.getItem("userProfile");
         const hasSkippedLogin = sessionStorage.getItem("hasSkippedLogin");
 
@@ -65,9 +45,9 @@ export default function Home() {
             return; // Exit early to prevent flashing content
         }
         setIsCheckingAuth(false);
-    }, [isMaintenanceMode, router]);
+    }, [router]);
 
-    if (isCheckingAuth || isMaintenanceMode) {
+    if (isCheckingAuth) {
         return (
              <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-6">
                 <DashboardSkeleton />
