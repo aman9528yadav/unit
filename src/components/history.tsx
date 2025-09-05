@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Trash2, Clock, Star, RotateCcw, Home, Search, X, Filter, Power } from "lucide-react";
+import { ArrowLeft, Trash2, Clock, Star, RotateCcw, Home, Search, X, Filter, Power, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -17,6 +17,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "./ui/input";
 import { conversionCategories } from "@/lib/conversions";
@@ -74,6 +84,7 @@ export function History() {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string>("All");
 
 
   useEffect(() => {
@@ -119,7 +130,7 @@ export function History() {
     localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
 
     // Also remove from favorites if it's there
-    const newFavorites = favorites.filter(fav => fav !== itemString);
+    const newFavorites = favorites.filter(fav => !fav.startsWith(itemString.split('|')[0]));
     setFavorites(newFavorites);
     localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
     
@@ -135,12 +146,18 @@ export function History() {
     
   const filteredItems = itemsToDisplay.filter(item => {
     const parsed = parseHistoryString(item);
-    if (!debouncedSearch) return true;
-    return parsed.conversion.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    const searchMatch = !debouncedSearch || 
+           parsed.conversion.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
            parsed.categoryName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
            parsed.fromName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
            parsed.toName.toLowerCase().includes(debouncedSearch.toLowerCase());
+    
+    const categoryMatch = categoryFilter === "All" || parsed.categoryName === categoryFilter;
+
+    return searchMatch && categoryMatch;
   }).map(parseHistoryString);
+
+  const availableCategories = ['All', ...new Set(history.map(item => parseHistoryString(item).categoryName).filter(Boolean))];
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-6">
@@ -188,7 +205,18 @@ export function History() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input placeholder="Search conversions" className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
-              <Button variant="outline"><Filter className="mr-2"/> Category: All</Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline"><Filter className="mr-2"/> {categoryFilter} <ChevronDown className="ml-2 h-4 w-4" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuRadioGroup value={categoryFilter} onValueChange={setCategoryFilter}>
+                        {availableCategories.map(cat => (
+                            <DropdownMenuRadioItem key={cat} value={cat}>{cat}</DropdownMenuRadioItem>
+                        ))}
+                    </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             <div className="bg-card p-4 rounded-lg">
