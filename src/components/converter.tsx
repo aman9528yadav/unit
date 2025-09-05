@@ -40,12 +40,19 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { incrementTodaysCalculations, getAllTimeCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { CustomUnit, CustomCategory } from "./custom-unit-manager";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { cn } from "@/lib/utils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
-import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 const PREMIUM_MEMBER_THRESHOLD = 8000;
@@ -53,6 +60,8 @@ type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 
 const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
+
+const PREMIUM_CATEGORIES = ['Pressure', 'Energy', 'Currency', 'Fuel Economy'];
 
 interface UserProfile {
     fullName: string;
@@ -701,22 +710,50 @@ export function Converter() {
             <CardContent className="flex flex-col gap-4">
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="flex-1">
-                        <Label>{t('converter.category')}</Label>
-                        <Select value={selectedCategory.name} onValueChange={handleCategoryChange}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {conversionCategories.map(cat => (
-                                    <SelectItem key={cat.name} value={cat.name}>
-                                        <span className="flex items-center gap-2">
-                                            <cat.icon />
-                                            {t(`categories.${cat.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat.name })}
-                                        </span>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                       <Label>{t('converter.category')}</Label>
+                       <TooltipProvider>
+                           <DropdownMenu>
+                               <DropdownMenuTrigger asChild>
+                                   <Button variant="outline" className="w-full justify-start">
+                                       <selectedCategory.icon className="mr-2 h-4 w-4" />
+                                       {t(`categories.${selectedCategory.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: selectedCategory.name })}
+                                   </Button>
+                               </DropdownMenuTrigger>
+                               <DropdownMenuContent className="w-[300px] sm:w-[450px]">
+                                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 p-2">
+                                       {conversionCategories.map(cat => {
+                                           const isLocked = isPremiumFeatureLocked && PREMIUM_CATEGORIES.includes(cat.name);
+                                           const categoryItem = (
+                                               <DropdownMenuItem
+                                                   key={cat.name}
+                                                   disabled={isLocked}
+                                                   onSelect={() => handleCategoryChange(cat.name)}
+                                                   className="flex flex-col items-center justify-center h-20 gap-1"
+                                               >
+                                                   <cat.icon className="w-6 h-6" />
+                                                   <span className="text-xs text-center">{t(`categories.${cat.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat.name })}</span>
+                                                   {isLocked && <Lock className="absolute w-3 h-3 top-2 right-2 text-muted-foreground" />}
+                                               </DropdownMenuItem>
+                                           );
+
+                                           if (isLocked) {
+                                               return (
+                                                   <Tooltip key={cat.name}>
+                                                       <TooltipTrigger asChild>
+                                                           <div>{categoryItem}</div>
+                                                       </TooltipTrigger>
+                                                       <TooltipContent>
+                                                           <p>Unlock Premium to use this category.</p>
+                                                       </TooltipContent>
+                                                   </Tooltip>
+                                               );
+                                           }
+                                           return categoryItem;
+                                       })}
+                                   </div>
+                               </DropdownMenuContent>
+                           </DropdownMenu>
+                       </TooltipProvider>
                     </div>
                     <div className="flex-1">
                         <Label>{t('converter.region')}</Label>
@@ -797,7 +834,7 @@ export function Converter() {
                                 </Button>
                                 <TooltipProvider>
                                   <Dialog>
-                                    <UITooltip>
+                                    <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button
                                           variant="ghost"
@@ -822,7 +859,7 @@ export function Converter() {
                                           <span />
                                         </DialogTrigger>
                                       )}
-                                    </UITooltip>
+                                    </Tooltip>
                                     {!isPremiumFeatureLocked && (
                                        <DialogContent>
                                         <DialogHeader>
@@ -857,7 +894,7 @@ export function Converter() {
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => value.toLocaleString()} />
-                                <UITooltip
+                                <RechartsTooltip
                                     contentStyle={{
                                         backgroundColor: 'hsl(var(--background))',
                                         borderColor: 'hsl(var(--border))',
@@ -993,5 +1030,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
