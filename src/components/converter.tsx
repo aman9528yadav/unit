@@ -796,32 +796,49 @@ export function Converter() {
                                     <BarChart2 size={16} />
                                 </Button>
                                 <TooltipProvider>
-                                <Dialog>
+                                  <Dialog>
                                     <UITooltip>
-                                        <TooltipTrigger asChild>
-                                             <DialogTrigger asChild disabled={isPremiumFeatureLocked}>
-                                                <Button variant="ghost" size="icon" disabled={!outputValue}>
-                                                    {isPremiumFeatureLocked ? <Lock size={16} /> : <Share2 size={16}/>}
-                                                </Button>
-                                            </DialogTrigger>
-                                        </TooltipTrigger>
-                                        {isPremiumFeatureLocked && (
-                                            <TooltipContent>
-                                                <p>Unlock Premium to share conversions.</p>
-                                            </TooltipContent>
-                                        )}
+                                      <TooltipTrigger asChild>
+                                        <DialogTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            disabled={isPremiumFeatureLocked || !outputValue}
+                                          >
+                                            {isPremiumFeatureLocked ? (
+                                              <Lock size={16} />
+                                            ) : (
+                                              <Share2 size={16} />
+                                            )}
+                                          </Button>
+                                        </DialogTrigger>
+                                      </TooltipTrigger>
+                                      {isPremiumFeatureLocked && (
+                                        <TooltipContent>
+                                          <p>Unlock Premium to share conversions.</p>
+                                        </TooltipContent>
+                                      )}
                                     </UITooltip>
                                     <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Share or Export Conversion</DialogTitle>
-                                        </DialogHeader>
-                                         <div className="flex flex-col gap-4">
-                                            <Button onClick={handleShare}><Share2 className="mr-2 h-4 w-4"/> Share via System Dialog</Button>
-                                            <Button onClick={handleExportAsTxt} variant="secondary"><FileText className="mr-2 h-4 w-4"/> Export as .txt</Button>
-                                            <Button onClick={handleExportAsImage} variant="secondary"><ImageIcon className="mr-2 h-4 w-4"/> Export as .png</Button>
-                                         </div>
+                                      <DialogHeader>
+                                        <DialogTitle>Share or Export Conversion</DialogTitle>
+                                      </DialogHeader>
+                                      <div className="flex flex-col gap-4">
+                                        <Button onClick={handleShare}>
+                                          <Share2 className="mr-2 h-4 w-4" /> Share via System
+                                          Dialog
+                                        </Button>
+                                        <Button onClick={handleExportAsTxt} variant="secondary">
+                                          <FileText className="mr-2 h-4 w-4" /> Export as
+                                          .txt
+                                        </Button>
+                                        <Button onClick={handleExportAsImage} variant="secondary">
+                                          <ImageIcon className="mr-2 h-4 w-4" /> Export as
+                                          .png
+                                        </Button>
+                                      </div>
                                     </DialogContent>
-                                </Dialog>
+                                  </Dialog>
                                 </TooltipProvider>
                              </div>
                         </CardContent>
@@ -834,7 +851,7 @@ export function Converter() {
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => value.toLocaleString()} />
-                                <Tooltip
+                                <UITooltip
                                     contentStyle={{
                                         backgroundColor: 'hsl(var(--background))',
                                         borderColor: 'hsl(var(--border))',
