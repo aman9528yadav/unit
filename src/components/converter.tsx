@@ -45,7 +45,6 @@ import { cn } from "@/lib/utils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
-import { useDebounce } from "@/hooks/use-debounce";
 
 
 const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
@@ -670,54 +669,55 @@ export function Converter() {
                 </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
-                    <div>
-                         <Label className="text-muted-foreground">From unit</Label>
-                        <UnitSelectionDialog
-                            trigger={
-                                <Button variant="outline" className="w-full justify-between mt-1">
-                                    <span className="flex items-center gap-2">
-                                        <selectedCategory.icon className="text-muted-foreground" />
-                                        {fromUnitInfo?.name} ({fromUnitInfo?.symbol})
-                                    </span>
-                                    <ChevronDown className="ml-1 h-4 w-4" />
-                                </Button>
-                            }
-                            selectedCategory={selectedCategory}
-                            onSelectUnit={(unit) => {
-                              const category = conversionCategories.find(c => c.units.some(u => u.symbol === unit.symbol));
-                              if (category) {
-                                setSelectedCategory(category);
-                                setFromUnit(unit.symbol);
-                              }
-                            }}
-                            conversionCategories={conversionCategories}
-                            t={t}
-                        />
+               <div className="flex flex-col gap-4">
+                    <div className="flex-1">
+                        <Label>{t('converter.category')}</Label>
+                        <Select value={selectedCategory.name} onValueChange={handleCategoryChange}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {conversionCategories.map(cat => (
+                                    <SelectItem key={cat.name} value={cat.name}>
+                                        <span className="flex items-center gap-2">
+                                            <cat.icon />
+                                            {t(`categories.${cat.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat.name })}
+                                        </span>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
-                    
-                    <Button variant="outline" size="icon" className="rounded-full md:mt-6 w-full md:w-auto" onClick={handleSwapUnits}>
+
+                    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
+                      <div className="flex-1">
+                          <Label>{t('converter.from')}</Label>
+                          <Select value={fromUnit} onValueChange={setFromUnit}>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="From" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  {currentUnits.map(unit => <SelectItem key={unit.symbol} value={unit.symbol}>{unit.name} ({unit.symbol})</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                      </div>
+
+                      <Button variant="outline" size="icon" className="self-end rounded-full" onClick={handleSwapUnits}>
                         <ArrowRightLeft className="w-5 h-5" />
-                    </Button>
-                    
-                     <div>
-                        <Label className="text-muted-foreground">To unit</Label>
-                         <UnitSelectionDialog
-                            trigger={
-                                 <Button variant="outline" className="w-full justify-between mt-1">
-                                    <span className="flex items-center gap-2">
-                                        <selectedCategory.icon className="text-muted-foreground" />
-                                        {toUnitInfo?.name} ({toUnitInfo?.symbol})
-                                    </span>
-                                    <ChevronDown className="ml-1 h-4 w-4" />
-                                </Button>
-                            }
-                            selectedCategory={selectedCategory}
-                            onSelectUnit={(unit) => setToUnit(unit.symbol)}
-                            conversionCategories={conversionCategories}
-                            t={t}
-                        />
-                     </div>
+                      </Button>
+
+                      <div className="flex-1">
+                          <Label>To</Label>
+                          <Select value={toUnit} onValueChange={setToUnit}>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="To" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  {currentUnits.map(unit => <SelectItem key={unit.symbol} value={unit.symbol}>{unit.name} ({unit.symbol})</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -853,97 +853,6 @@ export function Converter() {
   );
 }
 
-interface UnitSelectionDialogProps {
-  trigger: React.ReactNode;
-  selectedCategory: ConversionCategory;
-  onSelectUnit: (unit: Unit) => void;
-  conversionCategories: ConversionCategory[];
-  t: (key: string, params?: any) => string;
-}
-
-function UnitSelectionDialog({ trigger, selectedCategory, onSelectUnit, conversionCategories, t }: UnitSelectionDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<ConversionCategory>(selectedCategory);
-  const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 300);
-
-  useEffect(() => {
-    if (isOpen) {
-      setActiveCategory(selectedCategory);
-      setSearch(''); // Reset search on open
-    }
-  }, [selectedCategory, isOpen]);
-  
-  const filteredUnits = useMemo(() => {
-    const allUnits = conversionCategories.flatMap(cat => 
-        cat.units.map(unit => ({ ...unit, categoryName: cat.name, categoryIcon: cat.icon }))
-    );
-
-    if (debouncedSearch.trim()) {
-        return allUnits.filter(unit => 
-            unit.name.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
-            unit.symbol.toLowerCase().includes(debouncedSearch.toLowerCase())
-        );
-    }
-    return activeCategory.units.map(unit => ({...unit, categoryName: activeCategory.name, categoryIcon: activeCategory.icon}));
-  }, [activeCategory, debouncedSearch, conversionCategories]);
-
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-4xl w-full h-[80vh] flex flex-col p-0">
-        <DialogHeader className="p-4 border-b">
-          <DialogTitle>Select a Unit</DialogTitle>
-          <Input 
-            placeholder="Search units..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="mt-2"
-          />
-        </DialogHeader>
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] overflow-hidden flex-1">
-          <ScrollArea className="border-r">
-            <div className="flex flex-col p-2">
-              {conversionCategories.map(cat => (
-                <Button 
-                  key={cat.name} 
-                  variant={activeCategory.name === cat.name && !debouncedSearch.trim() ? "secondary" : "ghost"}
-                  onClick={() => {
-                    setSearch('');
-                    setActiveCategory(cat);
-                  }}
-                  className="justify-start gap-2"
-                >
-                  <cat.icon size={16} />
-                  {t(`categories.${cat.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat.name })}
-                </Button>
-              ))}
-            </div>
-          </ScrollArea>
-          <ScrollArea>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-4">
-              {filteredUnits.map(unit => (
-                 <DialogClose key={unit.symbol} asChild>
-                    <Button variant="outline" className="h-auto py-2 flex flex-col items-start" onClick={() => onSelectUnit(unit)}>
-                      <span className="font-bold">{unit.name}</span>
-                      <span className="text-muted-foreground">{unit.symbol}</span>
-                    </Button>
-                 </DialogClose>
-              ))}
-            </div>
-             {filteredUnits.length === 0 && (
-                <div className="text-center p-8 text-muted-foreground">
-                    <p>No units found for "{debouncedSearch}".</p>
-                </div>
-             )}
-          </ScrollArea>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-
 interface ConversionImageProps {
     category: ConversionCategory;
     fromUnit: string;
@@ -991,3 +900,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
