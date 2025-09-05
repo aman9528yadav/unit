@@ -110,38 +110,36 @@ export function UserData() {
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <aside className="col-span-1 flex flex-col items-center text-center md:border-r md:pr-8">
-                     <div className="relative">
-                        <Avatar className="w-28 h-28 mb-4">
-                            <AvatarImage src={profile.profileImage} alt={profile.fullName} data-ai-hint="man portrait"/>
-                            <AvatarFallback>{profile.fullName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                        </Avatar>
-                        <Button asChild size="icon" className="absolute bottom-4 right-0 rounded-full">
-                            <Link href="/profile/edit">
-                                <Pencil className="h-4 w-4" />
-                            </Link>
-                        </Button>
-                    </div>
-                    <h2 className="text-xl font-bold">{profile.fullName}</h2>
-                    <p className="text-muted-foreground text-sm truncate w-full">{profile.email}</p>
-                </aside>
-
-                <main className="col-span-2 space-y-2">
-                    <Section title="Account">
-                        <DetailRow label="Name" value={profile.fullName}/>
-                        <DetailRow label="Email" value={profile.email}/>
-                        <DetailRow label="Status" value="Verified" valueClassName="text-green-500"/>
-                    </Section>
-
-                    <Section title="Preferences">
-                        <DetailRow label="Default Region" value={settings?.defaultRegion || '...'}/>
-                        <DetailRow label="Theme" value={settings?.theme || '...'}/>
-                        <DetailRow label="Save History" value={settings?.saveHistory ? "Enabled" : "Disabled"}/>
-                         <DetailRow label="Auto-Convert" value={settings?.autoConvert ? "Enabled" : "Disabled"}/>
-                    </Section>
-                </main>
+             <div className="flex flex-col items-center text-center">
+                 <div className="relative">
+                    <Avatar className="w-28 h-28 mb-4">
+                        <AvatarImage src={profile.profileImage} alt={profile.fullName} data-ai-hint="man portrait"/>
+                        <AvatarFallback>{profile.fullName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                    <Button asChild size="icon" className="absolute bottom-4 right-0 rounded-full">
+                        <Link href="/profile/edit">
+                            <Pencil className="h-4 w-4" />
+                        </Link>
+                    </Button>
+                </div>
+                <h2 className="text-2xl font-bold">{profile.fullName}</h2>
+                <p className="text-muted-foreground text-sm">{profile.email}</p>
             </div>
+
+            <main className="w-full mt-8">
+                <Section title="Account">
+                    <DetailRow label="Name" value={profile.fullName}/>
+                    <DetailRow label="Email" value={profile.email}/>
+                    <DetailRow label="Status" value="Verified" valueClassName="text-green-500"/>
+                </Section>
+
+                <Section title="Preferences">
+                    <DetailRow label="Default Region" value={settings?.defaultRegion || '...'}/>
+                    <DetailRow label="Theme" value={settings?.theme || '...'}/>
+                    <DetailRow label="Save History" value={settings?.saveHistory ? "Enabled" : "Disabled"}/>
+                        <DetailRow label="Auto-Convert" value={settings?.autoConvert ? "Enabled" : "Disabled"}/>
+                </Section>
+            </main>
 
             <footer className="mt-8 pt-6 border-t flex justify-end items-center gap-4">
                 <Button variant="outline" onClick={handleLogout}><LogOut className="mr-2 h-4 w-4"/> Log out</Button>
