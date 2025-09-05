@@ -2,7 +2,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,23 +10,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Info, ArrowRight, Play } from "lucide-react";
 import { logUserEvent } from "@/services/firestore";
-
-const GoogleIcon = () => (
-    <svg viewBox="0 0 48 48" className="w-5 h-5">
-      <title>Google Logo</title>
-      <clipPath id="g">
-        <path d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/>
-      </clipPath>
-      <g clipPath="url(#g)">
-        <path fill="#FBBC05" d="M0 37V11l17 13z"/>
-        <path fill="#EA4335" d="M0 11l17 13 7-6.1L48 14V0H0z"/>
-        <path fill="#34A853" d="M0 37l30-23 7.9 1L48 0v48H0z"/>
-        <path fill="#4285F4" d="M48 48L17 24l-4-3 35-10z"/>
-      </g>
-    </svg>
-);
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const handleSuccessfulLogin = async (user: User) => {
@@ -90,24 +75,6 @@ export function WelcomeForm() {
         setIsSubmitting(false);
     }
   };
-
-  const handleGoogleLogin = async () => {
-     const provider = new GoogleAuthProvider();
-     setIsSubmitting(true);
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      
-      await handleSuccessfulLogin(user);
-      router.push("/profile/success");
-
-    } catch (error: any) {
-      console.error("Error during Google sign-in:", error);
-      toast({ title: "Sign-in Failed", description: "Could not sign in with Google. Please try again.", variant: "destructive" });
-    } finally {
-        setIsSubmitting(false);
-    }
-  }
   
   const handleSkip = () => {
     sessionStorage.setItem("hasSkippedLogin", "true");
@@ -116,76 +83,77 @@ export function WelcomeForm() {
 
   return (
     <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-background text-foreground p-6">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-primary">Log In</h1>
-      </div>
-
-      <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold">Welcome</h2>
-          <p className="text-muted-foreground mt-2 text-sm">
-            Your all-in-one solution for seamless unit conversions, calculations, and note-taking. Log in to sync your data across devices.
-          </p>
-      </div>
-      
-      <div className="bg-card p-8 rounded-2xl">
-          <div className="space-y-6">
-            <div>
-                <Label htmlFor="email">Username or email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-secondary mt-2" placeholder="example@example.com" />
-            </div>
-            <div className="relative">
-                <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password" 
-                  type={showPassword ? "text" : "password"} 
-                  value={password} 
-                  onChange={(e) => setPassword(e.target.value)} 
-                  className="bg-secondary mt-2 pr-10" 
-                  placeholder="**********" 
-                />
-                <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-9 text-muted-foreground"
-                >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-                 <div className="text-right mt-2">
-                    <Link href="/forgot-password" className="text-xs text-primary hover:underline">Forgot Password?</Link>
+        <header className="flex justify-between items-center py-4 mb-8">
+             <h1 className="text-xl font-bold flex items-center gap-2">
+                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                    <ArrowRight className="rotate-[-45deg]"/>
                 </div>
-            </div>
-          </div>
-      </div>
-      
-      <div className="mt-8 space-y-4">
-        <Button onClick={handleLogin} className="w-full h-12 bg-primary hover:bg-primary/90 rounded-full text-lg text-primary-foreground" disabled={isSubmitting}>
-           {isSubmitting ? 'Logging In...' : 'Log In'}
-        </Button>
-        <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border"></span>
-            </div>
-            <div className="relative flex justify-center text-sm">
-                <span className="bg-background px-2 text-muted-foreground">or log in with</span>
-            </div>
-        </div>
-        <div className="flex justify-center gap-4">
-            <Button onClick={handleGoogleLogin} variant="outline" size="icon" className="rounded-full" disabled={isSubmitting}>
-                <GoogleIcon />
+                Sutradhaar
+            </h1>
+            <Button variant="outline" onClick={handleSkip}>
+                <Play className="mr-2 h-4 w-4 rotate-180"/> Skip
             </Button>
-        </div>
+        </header>
 
-         <div className="text-center">
-             <Button variant="link" onClick={handleSkip} className="text-muted-foreground">Skip for now</Button>
-        </div>
+      <Tabs defaultValue="login" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="login">Login</TabsTrigger>
+            <TabsTrigger value="signup" onClick={() => router.push('/signup')}>Sign Up</TabsTrigger>
+        </TabsList>
+        <TabsContent value="login">
+            <div className="bg-card p-6 rounded-2xl border-2 border-primary/20 mt-4">
+                 <div className="text-left mb-6">
+                    <h2 className="text-2xl font-bold">Login to Sutradhaar</h2>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                       Access your unit converter dashboard
+                    </p>
+                </div>
 
-        <p className="text-center text-sm text-muted-foreground mt-8">
-            Don't have an account?{" "}
-            <Link href="/signup" className="font-semibold text-primary hover:underline">
-             Sign Up
-            </Link>
-        </p>
-      </div>
+                <div className="bg-primary/10 text-primary-foreground p-3 rounded-lg mb-6 flex items-center gap-3 text-sm">
+                    <Info className="text-primary"/>
+                    <span className="text-primary font-medium">Use your email or username to sign in.</span>
+                </div>
+
+                <div className="space-y-4">
+                    <div>
+                        <Label htmlFor="email">Email or Username</Label>
+                        <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-background mt-1" placeholder="name@example.com" />
+                    </div>
+                    <div className="relative">
+                        <Label htmlFor="password">Password</Label>
+                        <Input 
+                        id="password" 
+                        type={showPassword ? "text" : "password"} 
+                        value={password} 
+                        onChange={(e) => setPassword(e.target.value)} 
+                        className="bg-background mt-1 pr-10" 
+                        placeholder="**********" 
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-8 text-muted-foreground"
+                        >
+                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex justify-between items-center mt-6">
+                    <Link href="/forgot-password" className="text-sm text-primary hover:underline">Forgot Password?</Link>
+                     <Button onClick={handleLogin} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
+                        {isSubmitting ? 'Logging In...' : 'Login'} <ArrowRight className="ml-2 h-4 w-4"/>
+                    </Button>
+                </div>
+                 <p className="text-center text-sm text-muted-foreground mt-8">
+                    Don't have an account?{" "}
+                    <Link href="/signup" className="font-semibold text-primary hover:underline">
+                    Sign Up
+                    </Link>
+                </p>
+            </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

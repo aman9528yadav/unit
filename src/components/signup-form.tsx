@@ -11,23 +11,10 @@ import { auth } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, sendEmailVerification, updateProfile, User } from "firebase/auth";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Play, ArrowRight } from "lucide-react";
 import { logUserEvent } from "@/services/firestore";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const GoogleIcon = () => (
-    <svg viewBox="0 0 48 48" className="w-5 h-5">
-      <title>Google Logo</title>
-      <clipPath id="g">
-        <path d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/>
-      </clipPath>
-      <g clipPath="url(#g)">
-        <path fill="#FBBC05" d="M0 37V11l17 13z"/>
-        <path fill="#EA4335" d="M0 11l17 13 7-6.1L48 14V0H0z"/>
-        <path fill="#34A853" d="M0 37l30-23 7.9 1L48 0v48H0z"/>
-        <path fill="#4285F4" d="M48 48L17 24l-4-3 35-10z"/>
-      </g>
-    </svg>
-);
 
 const handleSuccessfulSignup = async (user: User) => {
     // This function will handle both setting local storage and logging the event
@@ -154,21 +141,11 @@ export function SignupForm() {
     }
   };
 
-  const handleGoogleSignup = async () => {
-    const provider = new GoogleAuthProvider();
-    setIsSubmitting(true);
-    try {
-      const result = await signInWithPopup(auth, provider);
-      await handleSuccessfulSignup(result.user);
-      router.push("/profile/success");
-
-    } catch (error: any) {
-      console.error("Error during Google sign-up:", error);
-      toast({ title: "Sign-up Failed", description: "Could not sign up with Google. Please try again.", variant: "destructive" });
-    } finally {
-        setIsSubmitting(false);
-    }
+  const handleSkip = () => {
+    sessionStorage.setItem("hasSkippedLogin", "true");
+    router.push("/");
   };
+
 
   if (emailSent) {
     return (
@@ -193,97 +170,93 @@ export function SignupForm() {
 
   return (
     <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-background text-foreground p-6">
-       
-      <header className="flex items-center gap-4 mb-8">
-        <Link href="/welcome">
-            <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10">
-                <ArrowLeft />
+      <header className="flex justify-between items-center py-4 mb-8">
+             <h1 className="text-xl font-bold flex items-center gap-2">
+                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                    <ArrowRight className="rotate-[-45deg]"/>
+                </div>
+                Sutradhaar
+            </h1>
+            <Button variant="outline" onClick={handleSkip}>
+                <Play className="mr-2 h-4 w-4 rotate-180"/> Skip
             </Button>
-        </Link>
-        <h1 className="text-2xl font-bold text-primary">Create Account</h1>
-      </header>
+        </header>
 
-       <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold">Let's Start!</h2>
-      </div>
-      
-       <div className="bg-card p-8 rounded-2xl">
-            <div className="space-y-4">
-                 <div>
-                    <Label htmlFor="fullName">Full name</Label>
-                    <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Aman Yadav" className="bg-secondary mt-2"/>
+      <Tabs defaultValue="signup" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="login" onClick={() => router.push('/welcome')}>Login</TabsTrigger>
+            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+        </TabsList>
+        <TabsContent value="signup">
+            <div className="bg-card p-6 rounded-2xl border-2 border-primary/20 mt-4">
+                 <div className="text-left mb-6">
+                    <h2 className="text-2xl font-bold">Create an Account</h2>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                       Join us and unlock all features.
+                    </p>
                 </div>
-                <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@example.com" className="bg-secondary mt-2"/>
+                <div className="space-y-4">
+                    <div>
+                        <Label htmlFor="fullName">Full name</Label>
+                        <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Aman Yadav" className="bg-background mt-1"/>
+                    </div>
+                    <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@example.com" className="bg-background mt-1"/>
+                    </div>
+                    <div className="relative">
+                        <Label htmlFor="password">Password</Label>
+                        <Input 
+                        id="password" 
+                        type={showPassword ? "text" : "password"} 
+                        value={password} 
+                        onChange={(e) => setPassword(e.target.value)} 
+                        placeholder="**********" 
+                        className="bg-background mt-1 pr-10"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-8 text-muted-foreground"
+                        >
+                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                    </div>
+                    <div className="relative">
+                        <Label htmlFor="confirmPassword">Confirm Password</Label>
+                        <Input 
+                        id="confirmPassword" 
+                        type={showConfirmPassword ? "text" : "password"} 
+                        value={confirmPassword} 
+                        onChange={(e) => setConfirmPassword(e.target.value)} 
+                        placeholder="**********" 
+                        className="bg-background mt-1 pr-10"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-8 text-muted-foreground"
+                        >
+                            {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                    </div>
                 </div>
-                <div className="relative">
-                    <Label htmlFor="password">Password</Label>
-                    <Input 
-                      id="password" 
-                      type={showPassword ? "text" : "password"} 
-                      value={password} 
-                      onChange={(e) => setPassword(e.target.value)} 
-                      placeholder="**********" 
-                      className="bg-secondary mt-2 pr-10"
-                    />
-                     <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-9 text-muted-foreground"
-                    >
-                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                </div>
-                 <div className="relative">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input 
-                      id="confirmPassword" 
-                      type={showConfirmPassword ? "text" : "password"} 
-                      value={confirmPassword} 
-                      onChange={(e) => setConfirmPassword(e.target.value)} 
-                      placeholder="**********" 
-                      className="bg-secondary mt-2 pr-10"
-                    />
-                    <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-9 text-muted-foreground"
-                    >
-                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                </div>
-            </div>
-      </div>
-      
-      <p className="text-center text-xs text-muted-foreground my-6">
-          By continuing, you agree to <Link href="#" className="text-primary">Terms of Use</Link> and <Link href="#" className="text-primary">Privacy Policy</Link>.
-      </p>
 
-      <div className="mt-4 space-y-4">
-        <Button onClick={handleEmailSignup} className="w-full h-12 bg-primary hover:bg-primary/90 rounded-full text-lg text-primary-foreground" disabled={isSubmitting}>
-            {isSubmitting ? 'Signing Up...' : 'Sign Up'}
-        </Button>
-        <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border"></span>
+                <div className="mt-6">
+                    <Button onClick={handleEmailSignup} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
+                        {isSubmitting ? 'Signing Up...' : 'Create Account'}
+                    </Button>
+                </div>
+                 <p className="text-center text-sm text-muted-foreground mt-6">
+                    Already have an account?{" "}
+                    <Link href="/welcome" className="font-semibold text-primary hover:underline">
+                    Log in
+                    </Link>
+                </p>
             </div>
-            <div className="relative flex justify-center text-sm">
-                <span className="bg-background px-2 text-muted-foreground">or sign up with</span>
-            </div>
-        </div>
-        <div className="flex justify-center gap-4">
-            <Button onClick={handleGoogleSignup} variant="outline" size="icon" className="rounded-full" disabled={isSubmitting}>
-                <GoogleIcon />
-            </Button>
-        </div>
-        <p className="text-center text-sm text-muted-foreground mt-8">
-            Already have an account?{" "}
-            <Link href="/welcome" className="font-semibold text-primary hover:underline">
-             Log in
-            </Link>
-        </p>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
+
