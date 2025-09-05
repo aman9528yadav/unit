@@ -26,6 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +49,7 @@ import { GlobalSearchDialog } from "./global-search-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { formatDistanceToNow } from "date-fns";
+import { useDebounce } from "@/hooks/use-debounce";
 
 
 const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
@@ -196,8 +198,8 @@ export function Converter() {
   const allUnits = React.useMemo(() => conversionCategories.flatMap(c => c.units), [conversionCategories]);
 
 
-  const fromUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === fromUnit)?.info, [currentUnits, fromUnit]);
-  const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit)?.info, [currentUnits, toUnit]);
+  const fromUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === fromUnit), [currentUnits, fromUnit]);
+  const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit), [currentUnits, toUnit]);
 
 
   React.useEffect(() => {
@@ -632,89 +634,75 @@ export function Converter() {
                 </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-2">
-                    <Label htmlFor="category">{t('converter.category')}</Label>
-                    <Select value={selectedCategory.name} onValueChange={handleCategoryChange}>
-                        <SelectTrigger className="bg-background">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {conversionCategories.map(cat => (
-                                <SelectItem key={cat.name} value={cat.name}>
-                                    <div className="flex items-center gap-2">
-                                        <cat.icon size={16} />
-                                        {t(`categories.${cat.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat.name })}
-                                    </div>
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="space-y-2">
-                    <Label>{outputValue ? getCurrentConversionString(parseFloat(inputValue), fromUnit, toUnit, parseFloat(outputValue.replace(/,/g, ''))) : ' '}</Label>
-                    <div className="flex items-center gap-2">
-                         <Button variant="outline" size="icon" onClick={handleToggleFavorite}>
-                            <Star className={cn("w-5 h-5", isFavorite && "fill-yellow-400 text-yellow-400")} />
-                        </Button>
-                        <Button variant="outline" size="icon" onClick={() => {
-                            if (!outputValue) return;
-                            navigator.clipboard.writeText(outputValue);
-                            toast({ title: t('converter.toast.copied') });
-                        }}>
-                            <Copy className="w-5 h-5" />
-                        </Button>
-                    </div>
-                </div>
-            </div>
-
             <div className="space-y-2">
-                <Label>{t('converter.enterValue')}</Label>
-                <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-                    <div className="relative">
-                        <Input
-                            type="number"
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            className="text-lg bg-background"
-                            placeholder="0"
-                        />
-                        {fromUnitInfo && <InfoBox text={fromUnitInfo}/>}
-                    </div>
-                    
-                    <Button variant="outline" size="icon" className="rounded-full" onClick={handleSwapUnits}>
-                        <ArrowRightLeft className="w-5 h-5" />
+                <Label>{outputValue ? getCurrentConversionString(parseFloat(inputValue), fromUnit, toUnit, parseFloat(outputValue.replace(/,/g, ''))) : ' '}</Label>
+                <div className="flex items-center gap-2">
+                     <Button variant="outline" size="icon" onClick={handleToggleFavorite}>
+                        <Star className={cn("w-5 h-5", isFavorite && "fill-yellow-400 text-yellow-400")} />
                     </Button>
-                    
-                     <div className="relative">
-                        <Input
-                            readOnly
-                            value={outputValue}
-                            className="text-lg bg-background font-bold text-primary"
-                            placeholder={t('converter.resultPlaceholder')}
-                        />
-                         {toUnitInfo && <InfoBox text={toUnitInfo}/>}
-                    </div>
+                    <Button variant="outline" size="icon" onClick={() => {
+                        if (!outputValue) return;
+                        navigator.clipboard.writeText(outputValue);
+                        toast({ title: t('converter.toast.copied') });
+                    }}>
+                        <Copy className="w-5 h-5" />
+                    </Button>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
+                <div className="relative">
+                    <Input
+                        type="number"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        className="text-lg bg-background"
+                        placeholder="0"
+                    />
+                    <UnitSelectionDialog
+                        trigger={
+                            <Button variant="ghost" className="absolute bottom-0 right-0 h-full">
+                                {fromUnitInfo?.symbol} <ChevronDown className="ml-1 h-4 w-4" />
+                            </Button>
+                        }
+                        selectedCategory={selectedCategory}
+                        onSelectUnit={(unit) => {
+                          const category = conversionCategories.find(c => c.units.some(u => u.symbol === unit.symbol));
+                          if (category) {
+                            setSelectedCategory(category);
+                            setFromUnit(unit.symbol);
+                          }
+                        }}
+                        conversionCategories={conversionCategories}
+                        t={t}
+                    />
+                </div>
+                
+                <Button variant="outline" size="icon" className="rounded-full" onClick={handleSwapUnits}>
+                    <ArrowRightLeft className="w-5 h-5" />
+                </Button>
+                
+                 <div className="relative">
+                    <Input
+                        readOnly
+                        value={outputValue}
+                        className="text-lg bg-background font-bold text-primary"
+                        placeholder={t('converter.resultPlaceholder')}
+                    />
+                    <UnitSelectionDialog
+                        trigger={
+                             <Button variant="ghost" className="absolute bottom-0 right-0 h-full">
+                                {toUnitInfo?.symbol} <ChevronDown className="ml-1 h-4 w-4" />
+                            </Button>
+                        }
+                        selectedCategory={selectedCategory}
+                        onSelectUnit={(unit) => setToUnit(unit.symbol)}
+                        conversionCategories={conversionCategories}
+                        t={t}
+                    />
                 </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-                 <UnitSelect
-                    units={currentUnits}
-                    value={fromUnit}
-                    onValueChange={setFromUnit}
-                    t={t}
-                />
-                 <UnitSelect
-                    units={currentUnits}
-                    value={toUnit}
-                    onValueChange={setToUnit}
-                    t={t}
-                />
-            </div>
-            
-
             {!autoConvert && (
                 <Button onClick={handleConvertClick} className="w-full h-12 text-lg">
                     {t('converter.convertButton')}
@@ -815,31 +803,83 @@ export function Converter() {
   );
 }
 
-function UnitSelect({ units, value, onValueChange, t }: { units: Unit[], value: string, onValueChange: (value: string) => void, t: (key: string, params?: any) => string }) {
+interface UnitSelectionDialogProps {
+  trigger: React.ReactNode;
+  selectedCategory: ConversionCategory;
+  onSelectUnit: (unit: Unit) => void;
+  conversionCategories: ConversionCategory[];
+  t: (key: string, params?: any) => string;
+}
+
+function UnitSelectionDialog({ trigger, selectedCategory, onSelectUnit, conversionCategories, t }: UnitSelectionDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<ConversionCategory>(selectedCategory);
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
+
+  useEffect(() => {
+    setActiveCategory(selectedCategory);
+  }, [selectedCategory, isOpen]);
+  
+  const filteredUnits = useMemo(() => {
+    return activeCategory.units.filter(unit => 
+        unit.name.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
+        unit.symbol.toLowerCase().includes(debouncedSearch.toLowerCase())
+    );
+  }, [activeCategory, debouncedSearch]);
+
   return (
-    <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className="bg-background h-12 text-base">
-        <SelectValue placeholder="Unit" />
-      </SelectTrigger>
-      <SelectContent>
-        {units.map(unit => (
-          <SelectItem key={unit.symbol} value={unit.symbol}>
-            {t(`units.${unit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: unit.name })}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="max-w-4xl w-full h-[80vh] flex flex-col p-0">
+        <DialogHeader className="p-4 border-b">
+          <DialogTitle>Select a Unit</DialogTitle>
+          <Input 
+            placeholder="Search units..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="mt-2"
+          />
+        </DialogHeader>
+        <div className="grid grid-cols-[1fr_2fr] overflow-hidden flex-1">
+          <ScrollArea className="border-r">
+            <div className="flex flex-col p-2">
+              {conversionCategories.map(cat => (
+                <Button 
+                  key={cat.name} 
+                  variant={activeCategory.name === cat.name ? "secondary" : "ghost"}
+                  onClick={() => setActiveCategory(cat)}
+                  className="justify-start gap-2"
+                >
+                  <cat.icon size={16} />
+                  {t(`categories.${cat.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat.name })}
+                </Button>
+              ))}
+            </div>
+          </ScrollArea>
+          <ScrollArea>
+            <div className="grid grid-cols-2 gap-2 p-4">
+              {filteredUnits.map(unit => (
+                 <DialogClose key={unit.symbol} asChild>
+                    <Button variant="outline" className="h-auto py-2 flex flex-col items-start" onClick={() => onSelectUnit(unit)}>
+                      <span className="font-bold">{unit.name}</span>
+                      <span className="text-muted-foreground">{unit.symbol}</span>
+                    </Button>
+                 </DialogClose>
+              ))}
+            </div>
+             {filteredUnits.length === 0 && (
+                <div className="text-center p-8 text-muted-foreground">
+                    <p>No units found for "{debouncedSearch}".</p>
+                </div>
+             )}
+          </ScrollArea>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-function InfoBox({ text }: { text: string }) {
-    return (
-        <div className="bg-background/50 rounded-lg p-2 flex items-center gap-2">
-            <Info size={16} className="text-accent" />
-            <span className="text-muted-foreground">{text}</span>
-        </div>
-    )
-}
 
 interface ConversionImageProps {
     category: ConversionCategory;
