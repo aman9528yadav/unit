@@ -1,24 +1,32 @@
-
 {
-  "name": "Sutradhaar",
-  "short_name": "Sutradhaar",
-  "description": "A smart all-in-one Unit Converter + Calculator + Notes app.",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#222a44",
-  "theme_color": "#3b82f6",
-  "icons": [
-    {
-      "src": "/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
+    "theme_color": "#2563eb",
+    "background_color": "#111827",
+    "display": "standalone",
+    "scope": "/",
+    "start_url": "/",
+    "name": "UniConvert",
+    "short_name": "UniConvert",
+    "description": "An all-in-one Unit Converter, Calculator, and Notes app.",
+    "icons": [
+        {
+            "src": "/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icon-256x256.png",
+            "sizes": "256x256",
+            "type": "image/png"
+        },
+        {
+            "src": "/icon-384x384.png",
+            "sizes": "384x384",
+            "type": "image/png"
+        },
+        {
+            "src": "/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
 }
-
-    

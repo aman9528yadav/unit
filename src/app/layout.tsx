@@ -50,7 +50,7 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
         } else if (!isMaintenanceMode && pathname === '/maintenance') {
             router.replace('/');
         }
-    }, [isMaintenanceMode, pathname, router, allowedPaths]);
+    }, [isMaintenanceMode, pathname, router]);
 
     if (isMaintenanceMode === null) {
         return (
@@ -105,3 +105,4 @@ export default function RootLayout({
     </ThemeProvider>
   );
 }
+

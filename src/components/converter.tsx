@@ -183,6 +183,7 @@ export function Converter() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [autoConvert, setAutoConvert] = useState(true);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
 
   const imageExportRef = React.useRef<HTMLDivElement>(null);
@@ -228,11 +229,19 @@ export function Converter() {
             setCustomCategories(JSON.parse(e.newValue || '[]'));
         }
     };
+
+    const goOnline = () => setIsOffline(false);
+    const goOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
     window.addEventListener('storage', handleStorageChange);
 
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -619,14 +628,14 @@ export function Converter() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              disabled={isSearching}
+              disabled={isSearching || isOffline}
               className="bg-card h-12 text-base pl-4 pr-12"
             />
              <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleSearch}
-                disabled={isSearching}
+                disabled={isSearching || isOffline}
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 text-muted-foreground hover:bg-accent/20"
               >
                 {isSearching ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
