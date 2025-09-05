@@ -239,6 +239,9 @@ export function Converter() {
         if (e.key === 'customCategories') {
             setCustomCategories(JSON.parse(e.newValue || '[]'));
         }
+        if (e.key === getUserKey('autoConvert', userEmail)) {
+            setAutoConvert(e.newValue === null ? true : JSON.parse(e.newValue));
+        }
     };
 
     const goOnline = () => setIsOffline(false);
@@ -254,7 +257,6 @@ export function Converter() {
       window.removeEventListener('online', goOnline);
       window.removeEventListener('offline', goOffline);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   const getCurrentConversionString = (value: number, from: string, to: string, result: number) => {
@@ -343,13 +345,6 @@ export function Converter() {
 }, [region, conversionCategories]);
 
   
-  // Perform conversion whenever inputs change if auto-convert is on
-  useEffect(() => {
-    if (autoConvert) {
-      performConversion(inputValue, fromUnit, toUnit);
-    }
-  }, [inputValue, fromUnit, toUnit, autoConvert, performConversion]);
-  
   const handleSaveToHistory = React.useCallback(() => {
     const saveConversionHistory = JSON.parse(localStorage.getItem('saveConversionHistory') || 'true');
     if (!saveConversionHistory) return;
@@ -361,15 +356,32 @@ export function Converter() {
     const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
     localStorage.setItem('lastConversion', conversionString);
     
-    const currentHistory = JSON.parse(localStorage.getItem("conversionHistory") || "[]");
-    if (!currentHistory.some((h: string) => h.startsWith(conversionString.split('|')[0]))) {
-      incrementTodaysCalculations();
-      const newHistory = [conversionString, ...currentHistory];
-      setHistory(newHistory);
-      localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
-    }
+    setHistory(prevHistory => {
+        // Prevent duplicates
+        if (prevHistory.some((h: string) => h.startsWith(conversionString.split('|')[0]))) {
+            return prevHistory;
+        }
+        incrementTodaysCalculations();
+        const newHistory = [conversionString, ...prevHistory];
+        localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
+        return newHistory;
+    });
   }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name]);
 
+
+  // Effect to save history automatically when outputValue changes, as a result of a conversion
+  React.useEffect(() => {
+    if (outputValue) {
+        handleSaveToHistory();
+    }
+  }, [outputValue, handleSaveToHistory]);
+  
+  // Perform conversion whenever inputs change if auto-convert is on
+  useEffect(() => {
+    if (autoConvert) {
+      performConversion(inputValue, fromUnit, toUnit);
+    }
+  }, [inputValue, fromUnit, toUnit, autoConvert, performConversion]);
 
   // Update favorite status whenever output or favorites list change
   React.useEffect(() => {
@@ -445,7 +457,6 @@ export function Converter() {
 
   const handleConvertClick = () => {
     performConversion(inputValue, fromUnit, toUnit);
-    handleSaveToHistory();
   };
   
   const handleToggleFavorite = () => {
@@ -593,9 +604,7 @@ export function Converter() {
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
-    if (isToday(date)) return 'Today';
-    if (isYesterday(date)) return 'Yesterday';
-    return format(date, 'MMM d');
+    return formatDistanceToNow(date, { addSuffix: true });
   }
 
   const handleCopy = () => {
@@ -819,9 +828,11 @@ export function Converter() {
                        return (
                          <div key={item} onClick={() => handleRestoreHistory(item)} className="bg-secondary p-3 rounded-lg cursor-pointer hover:bg-secondary/80">
                            <p className="font-semibold">{conversion}</p>
-                           <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                                <span className="flex items-center gap-1.5"><Icon size={14}/> {categoryName}</span>
-                                <span>{formatTimestamp(timestamp)}</span>
+                           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                               <Icon size={14}/> 
+                               <span>{categoryName}</span>
+                               <span>•</span>
+                               <span>{formatTimestamp(timestamp)}</span>
                            </div>
                          </div>
                        );
