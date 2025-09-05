@@ -38,10 +38,11 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
         return () => unsubscribe();
     }, []);
 
+    const allowedPaths = ['/maintenance'];
+
     useEffect(() => {
         if (isMaintenanceMode === null) return; // Wait until status is fetched
 
-        const allowedPaths = ['/maintenance'];
         const isAllowed = allowedPaths.includes(pathname) || pathname.startsWith('/dev');
 
         if (isMaintenanceMode && !isAllowed) {
@@ -49,7 +50,7 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
         } else if (!isMaintenanceMode && pathname === '/maintenance') {
             router.replace('/');
         }
-    }, [isMaintenanceMode, pathname, router]);
+    }, [isMaintenanceMode, pathname, router, allowedPaths]);
 
     if (isMaintenanceMode === null) {
         return (
