@@ -243,5 +243,3 @@ export function Settings() {
     </div>
   );
 }
-
-    
