@@ -1,50 +1,9 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Dashboard } from "@/components/dashboard";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Home() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // We no longer redirect to /welcome. 
-    // The Dashboard component will handle the guest vs. logged-in state.
-    setLoading(false);
-  }, []);
-
-  if (loading) {
-    return (
-      <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-6">
-        <div className="w-full max-w-md mx-auto flex flex-col gap-6">
-           <header className="flex justify-between items-center">
-            <div>
-              <Skeleton className="h-8 w-32 mb-2" />
-              <Skeleton className="h-4 w-48" />
-            </div>
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-10 w-10 rounded-full" />
-            </div>
-          </header>
-          <div className="grid grid-cols-2 gap-4">
-            <Skeleton className="h-24 w-full rounded-2xl" />
-            <Skeleton className="h-24 w-full rounded-2xl" />
-          </div>
-           <div>
-            <Skeleton className="h-8 w-40 mb-4 rounded-lg" />
-            <div className="grid grid-cols-1 gap-4">
-                <Skeleton className="h-28 w-full rounded-lg" />
-                <Skeleton className="h-28 w-full rounded-lg" />
-            </div>
-           </div>
-        </div>
-      </main>
-    );
-  }
-
   return (
     <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-6">
       <Dashboard />
