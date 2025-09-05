@@ -890,11 +890,18 @@ function UnitSelectionDialog({ trigger, selectedCategory, onSelectUnit, conversi
   }, [selectedCategory, isOpen]);
   
   const filteredUnits = useMemo(() => {
-    return activeCategory.units.filter(unit => 
-        unit.name.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
-        unit.symbol.toLowerCase().includes(debouncedSearch.toLowerCase())
+    const allUnits = conversionCategories.flatMap(cat => 
+        cat.units.map(unit => ({ ...unit, categoryName: cat.name, categoryIcon: cat.icon }))
     );
-  }, [activeCategory, debouncedSearch]);
+
+    if (debouncedSearch.trim()) {
+        return allUnits.filter(unit => 
+            unit.name.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
+            unit.symbol.toLowerCase().includes(debouncedSearch.toLowerCase())
+        );
+    }
+    return activeCategory.units.map(unit => ({...unit, categoryName: activeCategory.name, categoryIcon: activeCategory.icon}));
+  }, [activeCategory, debouncedSearch, conversionCategories]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -915,8 +922,11 @@ function UnitSelectionDialog({ trigger, selectedCategory, onSelectUnit, conversi
               {conversionCategories.map(cat => (
                 <Button 
                   key={cat.name} 
-                  variant={activeCategory.name === cat.name ? "secondary" : "ghost"}
-                  onClick={() => setActiveCategory(cat)}
+                  variant={activeCategory.name === cat.name && !debouncedSearch.trim() ? "secondary" : "ghost"}
+                  onClick={() => {
+                    setSearch('');
+                    setActiveCategory(cat);
+                  }}
                   className="justify-start gap-2"
                 >
                   <cat.icon size={16} />
@@ -938,7 +948,7 @@ function UnitSelectionDialog({ trigger, selectedCategory, onSelectUnit, conversi
             </div>
              {filteredUnits.length === 0 && (
                 <div className="text-center p-8 text-muted-foreground">
-                    <p>No units found for "{debouncedSearch}" in {activeCategory.name}.</p>
+                    <p>No units found for "{debouncedSearch}".</p>
                 </div>
              )}
           </ScrollArea>
@@ -996,3 +1006,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
