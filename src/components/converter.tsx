@@ -652,7 +652,7 @@ export function Converter() {
                     <CardTitle className="flex items-center gap-2"><Scale/> Quick Convert</CardTitle>
                     <div className="flex items-center gap-2">
                         <Select value={region} onValueChange={handleRegionChange}>
-                            <SelectTrigger className="w-[150px]">
+                            <SelectTrigger className="w-auto md:w-[150px]">
                                 <Globe size={16} className="mr-2"/>
                                 <SelectValue placeholder="Select Region"/>
                             </SelectTrigger>
@@ -665,7 +665,7 @@ export function Converter() {
                 </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-                <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
                     <div>
                          <Label className="text-muted-foreground">From unit</Label>
                         <UnitSelectionDialog
@@ -691,7 +691,7 @@ export function Converter() {
                         />
                     </div>
                     
-                    <Button variant="outline" size="icon" className="rounded-full mt-6" onClick={handleSwapUnits}>
+                    <Button variant="outline" size="icon" className="rounded-full md:mt-6 w-full md:w-auto" onClick={handleSwapUnits}>
                         <ArrowRightLeft className="w-5 h-5" />
                     </Button>
                     
@@ -715,7 +715,7 @@ export function Converter() {
                      </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card className="bg-secondary/50">
                         <CardHeader>
                             <Label htmlFor="value" className="text-muted-foreground">Value</Label>
@@ -774,19 +774,19 @@ export function Converter() {
                     </div>
                 )}
                 
-                <div className="flex justify-between items-center mt-2">
+                <div className="flex flex-col md:flex-row justify-between items-center mt-2 gap-4">
                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Info size={16}/>
                         <p>Tip: Use the swap button to reverse units</p>
                    </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full md:w-auto">
                          {!autoConvert && (
-                            <Button onClick={handleConvertClick}>
+                            <Button onClick={handleConvertClick} className="w-full">
                                 <Zap className="mr-2 h-4 w-4"/>
                                 {t('converter.convertButton')}
                             </Button>
                         )}
-                        <Button variant="outline" onClick={() => router.push('/history')}>View History</Button>
+                        <Button variant="outline" onClick={() => router.push('/history')} className="w-full">View History</Button>
                     </div>
                 </div>
             </CardContent>
@@ -896,7 +896,7 @@ function UnitSelectionDialog({ trigger, selectedCategory, onSelectUnit, conversi
             className="mt-2"
           />
         </DialogHeader>
-        <div className="grid grid-cols-[1fr_2fr] overflow-hidden flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] overflow-hidden flex-1">
           <ScrollArea className="border-r">
             <div className="flex flex-col p-2">
               {conversionCategories.map(cat => (
@@ -916,7 +916,7 @@ function UnitSelectionDialog({ trigger, selectedCategory, onSelectUnit, conversi
             </div>
           </ScrollArea>
           <ScrollArea>
-            <div className="grid grid-cols-2 gap-2 p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-4">
               {filteredUnits.map(unit => (
                  <DialogClose key={unit.symbol} asChild>
                     <Button variant="outline" className="h-auto py-2 flex flex-col items-start" onClick={() => onSelectUnit(unit)}>
@@ -986,3 +986,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
