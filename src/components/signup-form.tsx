@@ -11,7 +11,7 @@ import { auth } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, sendEmailVerification, updateProfile, User } from "firebase/auth";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { ArrowLeft, Eye, EyeOff, Play, ArrowRight } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Play, ArrowRight, User as UserIcon } from "lucide-react";
 import { logUserEvent } from "@/services/firestore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -40,6 +40,7 @@ export function SignupForm() {
   const { toast } = useToast();
   const router = useRouter();
   const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -110,16 +111,21 @@ export function SignupForm() {
 
   const handleEmailSignup = async () => {
     if (!email || !password || !fullName || !confirmPassword) {
-      toast({ title: "Please fill all fields", variant: "destructive" });
+      toast({ title: "Please fill all required fields", variant: "destructive" });
       return;
     }
     if (password !== confirmPassword) {
       toast({ title: "Passwords do not match", variant: "destructive" });
       return;
     }
+    if (password.length < 8) {
+      toast({ title: "Password too short", description: "Password must be at least 8 characters.", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
+      // It's better to update the profile before sending the verification email
       await updateProfile(result.user, { displayName: fullName });
       
       await sendEmailVerification(result.user);
@@ -133,7 +139,7 @@ export function SignupForm() {
       if (error.code === 'auth/email-already-in-use') {
         description = "This email address is already in use. Please log in or use a different email.";
       } else if (error.code === 'auth/weak-password') {
-        description = "The password is too weak. Please choose a stronger password (at least 6 characters).";
+        description = "The password is too weak. Please choose a stronger password (at least 8 characters).";
       }
       toast({ title: "Sign-up Failed", description, variant: "destructive" });
     } finally {
@@ -169,40 +175,32 @@ export function SignupForm() {
   }
 
   return (
-    <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-background text-foreground p-6">
-      <header className="flex justify-between items-center py-4 mb-8">
-             <h1 className="text-xl font-bold flex items-center gap-2">
-                <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                    <ArrowRight className="rotate-[-45deg]"/>
-                </div>
-                Sutradhaar
-            </h1>
-            <Button variant="outline" onClick={handleSkip}>
-                <Play className="mr-2 h-4 w-4 rotate-180"/> Skip
-            </Button>
-        </header>
-
-      <Tabs defaultValue="signup" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login" onClick={() => router.push('/welcome')}>Login</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-        </TabsList>
-        <TabsContent value="signup">
-            <div className="bg-card p-6 rounded-2xl border-2 border-primary/20 mt-4">
-                 <div className="text-left mb-6">
-                    <h2 className="text-2xl font-bold">Create an Account</h2>
+    <div className="w-full max-w-lg mx-auto flex flex-col justify-center min-h-screen bg-background text-foreground p-6">
+      <div className="bg-card p-8 rounded-2xl shadow-lg border border-border/50">
+        <Tabs defaultValue="signup" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login" onClick={() => router.push('/welcome')}>Login</TabsTrigger>
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+            <TabsContent value="signup">
+                <div className="text-center my-6">
+                    <h2 className="text-2xl font-bold">Create your Sutradhaar Account</h2>
                     <p className="text-muted-foreground mt-1 text-sm">
-                       Join us and unlock all features.
+                       Start converting with a personalized workspace
                     </p>
                 </div>
                 <div className="space-y-4">
                     <div>
-                        <Label htmlFor="fullName">Full name</Label>
-                        <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Aman Yadav" className="bg-background mt-1"/>
+                        <Label htmlFor="fullName">Full Name</Label>
+                        <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Aman Yadav" className="bg-secondary mt-1"/>
+                    </div>
+                    <div>
+                        <Label htmlFor="username">Username</Label>
+                        <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. aman_y" className="bg-secondary mt-1"/>
                     </div>
                     <div>
                         <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@example.com" className="bg-background mt-1"/>
+                        <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@domain.com" className="bg-secondary mt-1"/>
                     </div>
                     <div className="relative">
                         <Label htmlFor="password">Password</Label>
@@ -211,8 +209,8 @@ export function SignupForm() {
                         type={showPassword ? "text" : "password"} 
                         value={password} 
                         onChange={(e) => setPassword(e.target.value)} 
-                        placeholder="**********" 
-                        className="bg-background mt-1 pr-10"
+                        placeholder="Create a strong password" 
+                        className="bg-secondary mt-1 pr-10"
                         />
                         <button
                             type="button"
@@ -229,8 +227,8 @@ export function SignupForm() {
                         type={showConfirmPassword ? "text" : "password"} 
                         value={confirmPassword} 
                         onChange={(e) => setConfirmPassword(e.target.value)} 
-                        placeholder="**********" 
-                        className="bg-background mt-1 pr-10"
+                        placeholder="Re-enter your password" 
+                        className="bg-secondary mt-1 pr-10"
                         />
                         <button
                             type="button"
@@ -242,21 +240,25 @@ export function SignupForm() {
                     </div>
                 </div>
 
-                <div className="mt-6">
-                    <Button onClick={handleEmailSignup} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
-                        {isSubmitting ? 'Signing Up...' : 'Create Account'}
-                    </Button>
+                <div className="flex justify-between items-center mt-6">
+                     <Button variant="ghost" onClick={handleSkip}>Skip for now</Button>
+                     <div className="flex items-center gap-2">
+                        <Button variant="outline" onClick={() => router.push('/welcome')}><UserIcon className="mr-2 h-4 w-4"/> Login</Button>
+                        <Button onClick={handleEmailSignup} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
+                           <UserIcon className="mr-2 h-4 w-4"/> {isSubmitting ? 'Signing Up...' : 'Sign Up'}
+                        </Button>
+                     </div>
                 </div>
-                 <p className="text-center text-sm text-muted-foreground mt-6">
-                    Already have an account?{" "}
-                    <Link href="/welcome" className="font-semibold text-primary hover:underline">
-                    Log in
-                    </Link>
-                </p>
-            </div>
-        </TabsContent>
-      </Tabs>
+
+            </TabsContent>
+        </Tabs>
+        <p className="text-center text-sm text-muted-foreground mt-6">
+            Already have an account?{" "}
+            <Link href="/welcome" className="font-semibold text-primary hover:underline">
+            Login
+            </Link>
+        </p>
+      </div>
     </div>
   );
 }
-
