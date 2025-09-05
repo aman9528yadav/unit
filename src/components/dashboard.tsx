@@ -24,6 +24,7 @@ import {
   Languages,
   Sigma,
   Hourglass,
+  Flame,
 } from "lucide-react";
 import {
   Area,
@@ -45,6 +46,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/context/theme-context";
 import { getTodaysCalculations, getWeeklyCalculations, getAllTimeCalculations } from "@/lib/utils";
+import { getStreakData, type StreakData } from "@/lib/streak";
 import { GlobalSearchDialog } from "./global-search-dialog";
 import { Notifications } from "./notifications";
 import { useLanguage } from "@/context/language-context";
@@ -234,12 +236,14 @@ export function Dashboard() {
   const [allTimeCalculations, setAllTimeCalculations] = useState(0);
   const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string; value: number}[]>([]);
   const [savedNotesCount, setSavedNotesCount] = useState(0);
+  const [streakData, setStreakData] = useState<StreakData>({ currentStreak: 0, bestStreak: 0, daysNotOpened: 0 });
 
   const updateStats = (email: string | null) => {
     setTodayCalculations(getTodaysCalculations(email));
     setWeeklyCalculations(getWeeklyCalculations(email));
     setSavedNotesCount(getSavedNotesCount(email));
     setAllTimeCalculations(getAllTimeCalculations(email));
+    setStreakData(getStreakData(email));
   }
 
   useEffect(() => {
@@ -251,7 +255,7 @@ export function Dashboard() {
 
     const handleStorageChange = (e: StorageEvent) => {
         // If calculation history or notes change, update stats
-        if (e.key?.includes('dailyCalculations') || e.key?.includes('userNotesV2')) {
+        if (e.key?.includes('dailyCalculations') || e.key?.includes('userNotesV2') || e.key?.includes('userVisitHistory')) {
             updateStats(userEmail);
         }
     };
@@ -276,9 +280,9 @@ export function Dashboard() {
 
         <section className="grid grid-cols-2 gap-4 mt-8">
           <Stat icon={Calculator} label="Today's Ops" value={String(todayCalculations)} />
-          <Stat icon={History} label="All Time Ops" value={String(allTimeCalculations)} />
+          <Stat icon={Flame} label="Current Streak" value={`${streakData.currentStreak} days`} />
           <Stat icon={NotebookPen} label="Saved Notes" value={String(savedNotesCount)} />
-          <Stat icon={History} label="Last 7 Days" value={String(weeklyCalculations.reduce((acc, curr) => acc + curr.value, 0))} />
+          <Stat icon={History} label="All Time Ops" value={String(allTimeCalculations)} />
         </section>
 
         <section className="mt-8">
