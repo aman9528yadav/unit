@@ -844,23 +844,22 @@ export function Converter() {
                                 </Button>
                                 <TooltipProvider>
                                   <Dialog>
-                                      <Tooltip>
-                                          <TooltipTrigger asChild>
-                                               <Button variant="ghost" size="icon" disabled={!outputValue} onClick={handleShare}>
-                                                    <Share2 size={16} />
-                                               </Button>
-                                          </TooltipTrigger>
-                                           {isPremiumFeatureLocked && (
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div onClick={(e) => { if (isPremiumFeatureLocked) e.preventDefault(); }}>
+                                                <DialogTrigger asChild>
+                                                    <Button variant="ghost" size="icon" onClick={isPremiumFeatureLocked ? handleShare : undefined}>
+                                                        <Share2 size={16} />
+                                                    </Button>
+                                                </DialogTrigger>
+                                            </div>
+                                        </TooltipTrigger>
+                                        {isPremiumFeatureLocked && (
                                             <TooltipContent>
                                                 <p>{t('converter.toast.premiumShare')}</p>
                                             </TooltipContent>
-                                          )}
-                                      </Tooltip>
-                                    {!isPremiumFeatureLocked && (
-                                        <DialogTrigger asChild>
-                                             <span onClick={(e) => e.stopPropagation()} />
-                                        </DialogTrigger>
-                                    )}
+                                        )}
+                                    </Tooltip>
                                     <DialogContent>
                                       <DialogHeader>
                                           <DialogTitle>{t('converter.export.title')}</DialogTitle>
