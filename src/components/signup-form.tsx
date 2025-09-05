@@ -177,81 +177,76 @@ export function SignupForm() {
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col justify-center min-h-screen bg-background text-foreground p-6">
       <div className="bg-card p-8 rounded-2xl shadow-lg border border-border/50">
-        <Tabs defaultValue="signup" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login" onClick={() => router.push('/welcome')}>Login</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-            <TabsContent value="signup">
-                <div className="text-center my-6">
-                    <h2 className="text-2xl font-bold">Create your Sutradhaar Account</h2>
-                    <p className="text-muted-foreground mt-1 text-sm">
-                       Start converting with a personalized workspace
-                    </p>
-                </div>
-                <div className="space-y-4">
-                    <div>
-                        <Label htmlFor="fullName">Full Name</Label>
-                        <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Aman Yadav" className="bg-secondary mt-1"/>
-                    </div>
-                    <div>
-                        <Label htmlFor="username">Username</Label>
-                        <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. aman_y" className="bg-secondary mt-1"/>
-                    </div>
-                    <div>
-                        <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@domain.com" className="bg-secondary mt-1"/>
-                    </div>
-                    <div className="relative">
-                        <Label htmlFor="password">Password</Label>
-                        <Input 
-                        id="password" 
-                        type={showPassword ? "text" : "password"} 
-                        value={password} 
-                        onChange={(e) => setPassword(e.target.value)} 
-                        placeholder="Create a strong password" 
-                        className="bg-secondary mt-1 pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-8 text-muted-foreground"
-                        >
-                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                        </button>
-                    </div>
-                    <div className="relative">
-                        <Label htmlFor="confirmPassword">Confirm Password</Label>
-                        <Input 
-                        id="confirmPassword" 
-                        type={showConfirmPassword ? "text" : "password"} 
-                        value={confirmPassword} 
-                        onChange={(e) => setConfirmPassword(e.target.value)} 
-                        placeholder="Re-enter your password" 
-                        className="bg-secondary mt-1 pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-3 top-8 text-muted-foreground"
-                        >
-                            {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                        </button>
-                    </div>
-                </div>
+          <div className="grid grid-cols-2 bg-muted p-1 rounded-lg mb-6">
+              <Button variant="ghost" className="data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:shadow-sm" onClick={() => router.push('/welcome')}>Login</Button>
+              <Button variant="ghost" className="data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:shadow-sm" data-active="true">Sign Up</Button>
+          </div>
+          <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold">Create your Sutradhaar Account</h2>
+              <p className="text-muted-foreground mt-1 text-sm">
+                 Start converting with a personalized workspace
+              </p>
+          </div>
+          <div className="space-y-4">
+              <div>
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Aman Yadav" className="bg-secondary mt-1"/>
+              </div>
+              <div>
+                  <Label htmlFor="username">Username</Label>
+                  <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. aman_y" className="bg-secondary mt-1"/>
+              </div>
+              <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@domain.com" className="bg-secondary mt-1"/>
+              </div>
+              <div className="relative">
+                  <Label htmlFor="password">Password</Label>
+                  <Input 
+                  id="password" 
+                  type={showPassword ? "text" : "password"} 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  placeholder="Create a strong password" 
+                  className="bg-secondary mt-1 pr-10"
+                  />
+                  <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-8 text-muted-foreground"
+                  >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+              </div>
+              <div className="relative">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input 
+                  id="confirmPassword" 
+                  type={showConfirmPassword ? "text" : "password"} 
+                  value={confirmPassword} 
+                  onChange={(e) => setConfirmPassword(e.target.value)} 
+                  placeholder="Re-enter your password" 
+                  className="bg-secondary mt-1 pr-10"
+                  />
+                  <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-8 text-muted-foreground"
+                  >
+                      {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+              </div>
+          </div>
 
-                <div className="flex justify-between items-center mt-6">
-                     <Button variant="ghost" onClick={handleSkip}>Skip for now</Button>
-                     <div className="flex items-center gap-2">
-                        <Button variant="outline" onClick={() => router.push('/welcome')}><UserIcon className="mr-2 h-4 w-4"/> Login</Button>
-                        <Button onClick={handleEmailSignup} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
-                           <UserIcon className="mr-2 h-4 w-4"/> {isSubmitting ? 'Signing Up...' : 'Sign Up'}
-                        </Button>
-                     </div>
-                </div>
-
-            </TabsContent>
-        </Tabs>
+          <div className="flex justify-between items-center mt-6">
+               <Button variant="ghost" onClick={handleSkip}>Skip for now</Button>
+               <div className="flex items-center gap-2">
+                  <Button variant="outline" onClick={() => router.push('/welcome')}><UserIcon className="mr-2 h-4 w-4"/> Login</Button>
+                  <Button onClick={handleEmailSignup} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
+                     <UserIcon className="mr-2 h-4 w-4"/> {isSubmitting ? 'Signing Up...' : 'Sign Up'}
+                  </Button>
+               </div>
+          </div>
         <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{" "}
             <Link href="/welcome" className="font-semibold text-primary hover:underline">

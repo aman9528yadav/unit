@@ -95,65 +95,61 @@ export function WelcomeForm() {
             </Button>
         </header>
 
-      <Tabs defaultValue="login" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="signup" onClick={() => router.push('/signup')}>Sign Up</TabsTrigger>
-        </TabsList>
-        <TabsContent value="login">
-            <div className="bg-card p-6 rounded-2xl border-2 border-primary/20 mt-4">
-                 <div className="text-left mb-6">
-                    <h2 className="text-2xl font-bold">Login to Sutradhaar</h2>
-                    <p className="text-muted-foreground mt-1 text-sm">
-                       Access your unit converter dashboard
-                    </p>
-                </div>
-
-                <div className="bg-primary/10 text-primary-foreground p-3 rounded-lg mb-6 flex items-center gap-3 text-sm">
-                    <Info className="text-primary"/>
-                    <span className="text-primary font-medium">Use your email or username to sign in.</span>
-                </div>
-
-                <div className="space-y-4">
-                    <div>
-                        <Label htmlFor="email">Email or Username</Label>
-                        <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-background mt-1" placeholder="name@example.com" />
-                    </div>
-                    <div className="relative">
-                        <Label htmlFor="password">Password</Label>
-                        <Input 
-                        id="password" 
-                        type={showPassword ? "text" : "password"} 
-                        value={password} 
-                        onChange={(e) => setPassword(e.target.value)} 
-                        className="bg-background mt-1 pr-10" 
-                        placeholder="**********" 
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-8 text-muted-foreground"
-                        >
-                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                        </button>
-                    </div>
-                </div>
-
-                <div className="flex justify-between items-center mt-6">
-                    <Link href="/forgot-password" className="text-sm text-primary hover:underline">Forgot Password?</Link>
-                     <Button onClick={handleLogin} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
-                        {isSubmitting ? 'Logging In...' : 'Login'} <ArrowRight className="ml-2 h-4 w-4"/>
-                    </Button>
-                </div>
-                 <p className="text-center text-sm text-muted-foreground mt-8">
-                    Don't have an account?{" "}
-                    <Link href="/signup" className="font-semibold text-primary hover:underline">
-                    Sign Up
-                    </Link>
+        <div className="bg-card p-6 rounded-2xl border-2 border-primary/20 mt-4">
+              <div className="grid grid-cols-2 bg-muted p-1 rounded-lg mb-6">
+                <Button variant="ghost" className="data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:shadow-sm" data-active="true">Login</Button>
+                <Button variant="ghost" className="data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:shadow-sm" onClick={() => router.push('/signup')}>Sign Up</Button>
+            </div>
+             <div className="text-left mb-6">
+                <h2 className="text-2xl font-bold">Login to Sutradhaar</h2>
+                <p className="text-muted-foreground mt-1 text-sm">
+                   Access your unit converter dashboard
                 </p>
             </div>
-        </TabsContent>
-      </Tabs>
+
+            <div className="bg-primary/10 text-primary-foreground p-3 rounded-lg mb-6 flex items-center gap-3 text-sm">
+                <Info className="text-primary"/>
+                <span className="text-primary font-medium">Use your email or username to sign in.</span>
+            </div>
+
+            <div className="space-y-4">
+                <div>
+                    <Label htmlFor="email">Email or Username</Label>
+                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-background mt-1" placeholder="name@example.com" />
+                </div>
+                <div className="relative">
+                    <Label htmlFor="password">Password</Label>
+                    <Input 
+                    id="password" 
+                    type={showPassword ? "text" : "password"} 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    className="bg-background mt-1 pr-10" 
+                    placeholder="**********" 
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-8 text-muted-foreground"
+                    >
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex justify-between items-center mt-6">
+                <Link href="/forgot-password" className="text-sm text-primary hover:underline">Forgot Password?</Link>
+                 <Button onClick={handleLogin} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
+                    {isSubmitting ? 'Logging In...' : 'Login'} <ArrowRight className="ml-2 h-4 w-4"/>
+                </Button>
+            </div>
+             <p className="text-center text-sm text-muted-foreground mt-8">
+                Don't have an account?{" "}
+                <Link href="/signup" className="font-semibold text-primary hover:underline">
+                Sign Up
+                </Link>
+            </p>
+        </div>
     </div>
   );
 }
