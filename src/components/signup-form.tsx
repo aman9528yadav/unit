@@ -241,7 +241,6 @@ export function SignupForm() {
           <div className="flex justify-between items-center mt-6">
                <Button variant="ghost" onClick={handleSkip}>Skip for now</Button>
                <div className="flex items-center gap-2">
-                  <Button variant="outline" onClick={() => router.push('/welcome')}><UserIcon className="mr-2 h-4 w-4"/> Login</Button>
                   <Button onClick={handleEmailSignup} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
                      <UserIcon className="mr-2 h-4 w-4"/> {isSubmitting ? 'Signing Up...' : 'Sign Up'}
                   </Button>
