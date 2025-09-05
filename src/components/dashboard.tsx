@@ -29,6 +29,7 @@ import {
   LogIn,
   Gift,
   Zap,
+  Palette,
 } from "lucide-react";
 import {
   Area,
@@ -120,6 +121,14 @@ const recommendations = [
 ];
 
 const recentUpdates = [
+  {
+    icon: Palette,
+    title: "Appearance Settings",
+    description: "Customize your theme with light, dark, and custom color options.",
+    href: "/updates",
+    color: "text-pink-400",
+    bgColor: "bg-pink-500/10"
+  },
   {
     icon: Zap,
     title: "Time Utilities",
@@ -339,22 +348,6 @@ export function Dashboard() {
         </section>
 
         <section className="mt-8">
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-foreground">What's New</h2>
-                <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
-                    <Link href="/updates">
-                        See All <ArrowRight className="size-4" />
-                    </Link>
-                </Button>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4">
-                {recentUpdates.map((update) => (
-                    <UpdateCard key={update.title} update={update} />
-                ))}
-            </div>
-        </section>
-
-        <section className="mt-8">
           <Card className="bg-card border-border shadow-sm">
             <CardHeader>
               <CardTitle>Quick Access</CardTitle>
@@ -400,6 +393,22 @@ export function Dashboard() {
         </section>
 
         <section className="mt-8">
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-foreground">What's New</h2>
+                <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
+                    <Link href="/updates">
+                        See All <ArrowRight className="size-4" />
+                    </Link>
+                </Button>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+                {recentUpdates.slice(0, 2).map((update) => (
+                    <UpdateCard key={update.title} update={update} />
+                ))}
+            </div>
+        </section>
+
+        <section className="mt-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">Recommendations</h2>
              <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
@@ -441,3 +450,4 @@ export function Dashboard() {
   );
 }
 
+    
