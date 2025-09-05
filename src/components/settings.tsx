@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, History, CalculatorIcon, Info, LogOut, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, History, CalculatorIcon, Info, LogOut, Trash2, KeyRound } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { useTheme } from "@/context/theme-context";
 import {
@@ -22,7 +22,7 @@ import { auth } from "@/lib/firebase";
 
 export type CalculatorMode = 'basic' | 'scientific';
 
-const getUserKey = (key: string, email: string) => `${email}_${key}`;
+const getUserKey = (key: string, email: string | null) => `${email || 'guest'}_${key}`;
 
 const Section = ({ title, children, description }: { title: string, children: React.ReactNode, description?: string }) => (
     <Card>
@@ -30,20 +30,21 @@ const Section = ({ title, children, description }: { title: string, children: Re
             <CardTitle>{title}</CardTitle>
             {description && <CardDescription>{description}</CardDescription>}
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="divide-y divide-border">
             {children}
         </CardContent>
     </Card>
 );
 
-const SettingRow = ({ label, description, control }: { label: string, description?: string, control: React.ReactNode }) => (
-    <div className="flex justify-between items-center">
-        <div>
+const SettingRow = ({ label, description, control, isLink = false }: { label: string, description?: string, control: React.ReactNode, isLink?: boolean }) => (
+    <div className="flex justify-between items-center py-3">
+        <div className="flex-1 pr-4">
             <p className="font-medium">{label}</p>
             {description && <p className="text-sm text-muted-foreground">{description}</p>}
         </div>
-        <div>
+        <div className="flex items-center gap-2">
             {control}
+            {isLink && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
         </div>
     </div>
 )
@@ -55,14 +56,16 @@ export function Settings() {
   const router = useRouter();
 
   // Settings states
-  const [theme, setTheme] = useState('system');
-  const [accent, setAccent] = useState('blue');
-  const [unitSystem, setUnitSystem] = useState('si');
-  const [frequentLength, setFrequentLength] = useState('m-ft');
-  const [frequentTemp, setFrequentTemp] = useState('c-f');
-  const [saveHistory, setSaveHistory] = useState(true);
-  const [autoClear, setAutoClear] = useState('30');
+  const { language, setLanguage } = useLanguage();
+  const { theme, setTheme } = useTheme();
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  
+  const [autoConvert, setAutoConvert] = useState(true);
+  const [saveConversionHistory, setSaveConversionHistory] = useState(true);
 
+  const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>('scientific');
+  const [saveCalcHistory, setSaveCalcHistory] = useState(true);
+  
 
   useEffect(() => {
     setIsClient(true);
@@ -70,13 +73,45 @@ export function Settings() {
     if (storedProfile) {
       const parsedProfile = JSON.parse(storedProfile);
       setProfile(parsedProfile);
+      loadSettings(parsedProfile.email);
     } else {
-        // Redirect or handle guest user
+      loadSettings(null);
     }
   }, []);
+
+  const loadSettings = (email: string | null) => {
+    const notifications = localStorage.getItem(getUserKey('notificationsEnabled', email));
+    setNotificationsEnabled(notifications === null ? true : JSON.parse(notifications));
+
+    const auto = localStorage.getItem(getUserKey('autoConvert', email));
+    setAutoConvert(auto === null ? true : JSON.parse(auto));
+
+    const saveConv = localStorage.getItem(getUserKey('saveConversionHistory', email));
+    setSaveConversionHistory(saveConv === null ? true : JSON.parse(saveConv));
+
+    const calcMode = localStorage.getItem('calculatorMode') as CalculatorMode;
+    if (calcMode) setCalculatorMode(calcMode);
+
+    const saveCalc = localStorage.getItem('saveCalcHistory');
+    setSaveCalcHistory(saveCalc === null ? true : JSON.parse(saveCalc));
+  };
   
   const handleSaveChanges = () => {
-    // Here you would save all the state values to localStorage or a backend
+    const userKey = profile?.email || null;
+    localStorage.setItem(getUserKey('notificationsEnabled', userKey), JSON.stringify(notificationsEnabled));
+    localStorage.setItem(getUserKey('autoConvert', userKey), JSON.stringify(autoConvert));
+    localStorage.setItem(getUserKey('saveConversionHistory', userKey), JSON.stringify(saveConversionHistory));
+    localStorage.setItem('calculatorMode', calculatorMode);
+    localStorage.setItem('saveCalcHistory', JSON.stringify(saveCalcHistory));
+    
+    // Dispatch storage events to notify other components/tabs
+    window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('notificationsEnabled', userKey), newValue: JSON.stringify(notificationsEnabled) }));
+    window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('autoConvert', userKey), newValue: JSON.stringify(autoConvert) }));
+    window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('saveConversionHistory', userKey), newValue: JSON.stringify(saveConversionHistory) }));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'calculatorMode', newValue: calculatorMode }));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'saveCalcHistory', newValue: JSON.stringify(saveCalcHistory) }));
+
+
     toast({ title: "Settings Saved", description: "Your preferences have been updated."});
   };
 
@@ -94,126 +129,110 @@ export function Settings() {
   if (!isClient) return null;
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 p-4 sm:p-6">
-        <header className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Settings</h1>
-            <div className="flex items-center gap-4">
-                <p className="text-sm text-muted-foreground">Signed in</p>
-                <Button variant="ghost" onClick={handleLogout}><LogOut className="mr-2"/> Log out</Button>
-            </div>
+    <div className="w-full max-w-lg mx-auto flex flex-col gap-6 p-4 sm:p-6">
+        <header className="flex items-center gap-4">
+          <Link href="/">
+              <Button variant="ghost" size="icon">
+                  <ArrowLeft />
+              </Button>
+          </Link>
+          <h1 className="text-xl font-bold">Settings</h1>
         </header>
 
-         <div className="bg-blue-500/10 text-blue-800 dark:text-blue-200 p-4 rounded-lg flex items-center gap-3">
-            <Info className="flex-shrink-0" />
-            <p className="text-sm">Adjust how Sutradhaar looks and behaves. Changes are saved when you click Save Changes.</p>
-        </div>
-
         <div className="flex flex-col gap-6">
-            <Section title="Appearance">
-                <SettingRow
-                    label="Theme"
-                    description="Choose between System, Light, or Dark."
-                    control={
-                        <Select value={theme} onValueChange={setTheme}>
-                            <SelectTrigger className="w-40"><SelectValue/></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="system">System</SelectItem>
-                                <SelectItem value="light">Light</SelectItem>
-                                <SelectItem value="dark">Dark</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    }
-                />
-                 <SettingRow
-                    label="Accent"
-                    description="Affects buttons and highlights."
-                    control={
-                        <Select value={accent} onValueChange={setAccent}>
-                            <SelectTrigger className="w-40"><SelectValue/></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="blue">Blue</SelectItem>
-                                <SelectItem value="green">Green</SelectItem>
-                                <SelectItem value="red">Red</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    }
-                />
+             <Section title="Account">
+                <Link href="/profile">
+                    <SettingRow
+                        isLink
+                        label="Edit Profile"
+                        description="Manage your personal information"
+                        control={<User />}
+                    />
+                </Link>
+                 <Link href="/auth-screens">
+                    <SettingRow
+                        isLink
+                        label="Manage Authentication Screens"
+                        description="View or edit login/signup pages"
+                        control={<KeyRound />}
+                    />
+                </Link>
             </Section>
 
-             <Section title="Default Units">
-                <SettingRow
-                    label="Unit System"
+            <Section title="General">
+                 <SettingRow
+                    label="Notifications"
+                    description={notificationsEnabled ? "Enabled" : "Disabled"}
+                    control={<Switch checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />}
+                />
+                 <SettingRow
+                    label="Language"
+                    description="Set your preferred language"
                     control={
-                        <Select value={unitSystem} onValueChange={setUnitSystem}>
-                            <SelectTrigger className="w-40"><SelectValue/></SelectTrigger>
+                         <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'hi')}>
+                            <SelectTrigger className="w-32"><SelectValue/></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="si">SI (Metric)</SelectItem>
-                                <SelectItem value="imperial">Imperial</SelectItem>
+                                <SelectItem value="en">English</SelectItem>
+                                <SelectItem value="hi">हिन्दी</SelectItem>
                             </SelectContent>
                         </Select>
                     }
                 />
-                 <SettingRow
-                    label="Frequent Conversions"
-                    control={
-                        <div className="flex gap-2">
-                             <Select value={frequentLength} onValueChange={setFrequentLength}>
-                                <SelectTrigger className="w-auto"><SelectValue/></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="m-ft">Length • m ↔ ft</SelectItem>
-                                    <SelectItem value="km-mi">Length • km ↔ mi</SelectItem>
-                                </SelectContent>
-                            </Select>
-                             <Select value={frequentTemp} onValueChange={setFrequentTemp}>
-                                <SelectTrigger className="w-auto"><SelectValue/></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="c-f">Temperature • °C ↔ °F</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    }
-                />
+                 <Link href="/settings/theme">
+                    <SettingRow
+                        isLink
+                        label="Theme"
+                        description="Customize the app's appearance"
+                        control={<Palette />}
+                    />
+                 </Link>
             </Section>
-            
-            <Section title="Privacy & History">
-                <SettingRow
+
+             <Section title="Unit Converter">
+                 <SettingRow
+                    label="Auto Convert"
+                    description="Automatically convert on value change"
+                    control={<Switch checked={autoConvert} onCheckedChange={setAutoConvert} />}
+                />
+                 <Link href="/settings/custom-units">
+                    <SettingRow
+                        isLink
+                        label="Custom Units"
+                        description="Add or manage your own units"
+                        control={<LayoutGrid />}
+                    />
+                 </Link>
+                 <SettingRow
                     label="Save Conversion History"
-                    description="Disable to stop storing past conversions."
-                    control={<Switch checked={saveHistory} onCheckedChange={setSaveHistory} />}
-                />
-                 <SettingRow
-                    label="Auto-clear after"
-                    control={
-                        <div className="flex items-center gap-2">
-                            <Select value={autoClear} onValueChange={setAutoClear}>
-                                <SelectTrigger className="w-32"><SelectValue/></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="30">30 days</SelectItem>
-                                    <SelectItem value="60">60 days</SelectItem>
-                                    <SelectItem value="90">90 days</SelectItem>
-                                    <SelectItem value="never">Never</SelectItem>
-                                </SelectContent>
-                            </Select>
-                             <Button variant="outline"><Trash2 className="mr-2 h-4 w-4"/> Clear Now</Button>
-                        </div>
-                    }
+                    description="Keep a record of your conversions"
+                    control={<Switch checked={saveConversionHistory} onCheckedChange={setSaveConversionHistory} />}
                 />
             </Section>
 
-            <Section title="About">
-                <SettingRow label="App" control={<p className="font-mono">Sutradhaar • Unit Converter v1.0.0</p>} />
-                <SettingRow label="Developer" control={<p>Aman Yadav</p>} />
-                <SettingRow label="Support" control={
-                    <div className="flex gap-4">
-                        <Button variant="link" asChild><a href="mailto:support@sutradhaar.app">Email</a></Button>
-                        <Button variant="link" asChild><a href="#">Website</a></Button>
-                    </div>
-                }/>
+            <Section title="Calculator">
+                 <SettingRow
+                    label="Mode"
+                    description="Switch between calculator types"
+                    control={
+                        <Select value={calculatorMode} onValueChange={(v) => setCalculatorMode(v as CalculatorMode)}>
+                            <SelectTrigger className="w-32"><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="basic">Basic</SelectItem>
+                                <SelectItem value="scientific">Scientific</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    }
+                />
+                  <SettingRow
+                    label="Save Calculation History"
+                    description="Keep a record of your calculations"
+                    control={<Switch checked={saveCalcHistory} onCheckedChange={setSaveCalcHistory} />}
+                />
             </Section>
         </div>
         
         <footer className="flex justify-end gap-4 mt-4">
-            <Button variant="outline" asChild><Link href="/">Back</Link></Button>
+            <Button variant="outline" onClick={handleLogout}><LogOut className="mr-2"/> Log out</Button>
             <Button onClick={handleSaveChanges}>Save Changes</Button>
         </footer>
     </div>
