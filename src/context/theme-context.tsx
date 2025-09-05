@@ -120,7 +120,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         root.classList.add(lastNonCustomTheme); // Apply base theme for properties not in custom
         
         Object.entries(customThemeToApply.colors).forEach(([key, value]) => {
-            if (value) {
+            if (value && /^#[0-9A-F]{6}$/i.test(value)) {
                 const cssVarName = `--${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
                 root.style.setProperty(cssVarName, hexToHsl(value));
             }
