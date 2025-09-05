@@ -31,6 +31,9 @@ import {
   Zap,
   Palette,
   Calendar,
+  Star,
+  Timer,
+  ChevronDown,
 } from "lucide-react";
 import {
   Area,
@@ -230,6 +233,7 @@ export function Dashboard() {
   const [savedNotesCount, setSavedNotesCount] = useState(0);
   const [streakData, setStreakData] = useState<StreakData>({ currentStreak: 0, bestStreak: 0, daysNotOpened: 0 });
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showMoreTools, setShowMoreTools] = useState(false);
   const router = useRouter();
 
 
@@ -280,6 +284,14 @@ export function Dashboard() {
       { label: "Date Calc", icon: Calendar, href: "/time", color: "text-green-400" },
       { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
     ];
+    
+    const moreTools = [
+        { label: 'Favorites', icon: Star, href: '/history', color: 'text-yellow-500' },
+        { label: 'Timer', icon: Timer, href: '/time', color: 'text-red-500' },
+        { label: 'Stopwatch', icon: Hourglass, href: '/time', color: 'text-indigo-500' },
+    ];
+
+    const toolsToShow = showMoreTools ? [...quickTools, ...moreTools] : quickTools;
 
     const recommendations = [
       {
@@ -360,10 +372,18 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-3">
-              {quickTools.map((t) => (
+              {toolsToShow.map((t) => (
                 <ToolButton key={t.label} {...t} />
               ))}
             </div>
+             <Button 
+                variant="outline" 
+                className="w-full mt-4"
+                onClick={() => setShowMoreTools(!showMoreTools)}
+            >
+                {showMoreTools ? 'Show Less' : 'Show More'}
+                <ChevronDown className={cn("ml-2 h-4 w-4 transition-transform", showMoreTools && "rotate-180")} />
+            </Button>
           </CardContent>
         </Card>
       </section>
@@ -454,9 +474,3 @@ export function Dashboard() {
     </div>
   );
 }
-
-
-    
-    
-
-    
