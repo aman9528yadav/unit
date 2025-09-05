@@ -3,7 +3,7 @@
     "nav": {
         "dashboard": "डैशबोर्ड",
         "notes": "नोट्स",
-        "converter": "कनवर्टर",
+        "converter": "कन्वर्टर",
         "history": "इतिहास",
         "settings": "सेटिंग"
     },
@@ -22,13 +22,13 @@
         "savedNotes": "सहेजे गए नोट्स"
     },
     "converter": {
-        "welcome": "कनवर्टर में आपका स्वागत है",
+        "welcome": "कन्वर्टर में आपका स्वागत है",
         "tabs": {
-            "converter": "कनवर्टर",
+            "converter": "कन्वर्टर",
             "calculator": "कैलकुलेटर"
         },
         "searchPlaceholder": "खोजें उदा., '10 किमी से मी'",
-        "quickConvert": "त्वरित कनवर्ट",
+        "quickConvert": "त्वरित कन्वर्ट",
         "region": "क्षेत्र",
         "category": "श्रेणी",
         "from": "से",
@@ -111,7 +111,7 @@
         "pressure": "दबाव",
         "energy": "ऊर्जा",
         "currency": "मुद्रा",
-        "fuel economy": "ईंधन अर्थव्यवस्था"
+        "fueleconomy": "ईंधन अर्थव्यवस्था"
     },
     "units": {
         "meters": "मीटर",
@@ -176,23 +176,15 @@
         "calorie": "कैलोरी",
         "kilocalorie": "किलोकैलोरी",
         "kilowatt-hour": "किलोवाट-घंटा",
-        "unitedstatesdollarusd": "संयुक्त राज्य डॉलर (USD)",
-        "euroeur": "यूरो (EUR)",
-        "japaneseyenjpy": "जापानी येन (JPY)",
-        "britishpoundgbp": "ब्रिटिश पाउंड (GBP)",
-        "indianrupeeinr": "भारतीय रुपया (INR)",
-        "australiandollaraud": "ऑस्ट्रेलियाई डॉलर (AUD)",
-        "canadiandollarcad": "कनाडाई डॉलर (CAD)",
-        "swissfrancchf": "स्विस फ्रैंक (CHF)",
-        "chineseyuancny": "चीनी युआन (CNY)",
-        "hongkongdollarhkd": "हांगकांग डॉलर (HKD)",
-        "newzealanddollarnzd": "न्यूजीलैंड डॉलर (NZD)",
-        "southkoreanwonkrw": "दक्षिण कोरियाई वॉन (KRW)",
-        "singaporedollarsgd": "सिंगापुर डॉलर (SGD)",
-        "mexicanpesomxn": "मैक्सिकन पेसो (MXN)",
-        "brazilianrealbrl": "ब्राज़ीलियाई रियल (BRL)",
-        "russianrublerub": "रूसी रूबल (RUB)",
-        "southafricanrandzar": "दक्षिण अफ़्रीकी रैंड (ZAR)",
+        "unitedstatesdollar": "संयुक्त राज्य डॉलर",
+        "euro": "यूरो",
+        "japaneseyen": "जापानी येन",
+        "britishpound": "ब्रिटिश पाउंड",
+        "indianrupee": "भारतीय रुपया",
+        "australiandollar": "ऑस्ट्रेलियाई डॉलर",
+        "canadiandollar": "कनाडाई डॉलर",
+        "swissfranc": "स्विस फ्रैंक",
+        "chineseyuan": "चीनी युआन",
         "litersper100km": "लीटर प्रति 100 किमी",
         "milespergallon": "मील प्रति गैलन",
         "kilometersperliter": "किलोमीटर प्रति लीटर"
