@@ -765,13 +765,7 @@ function UnitSelectionDialog({ categories, onUnitSelect, selectedCategory, selec
     const [search, setSearch] = useState("");
     const [activeCategory, setActiveCategory] = useState<ConversionCategory>(selectedCategory);
     
-    useEffect(() => {
-        if (selectedCategory.name !== activeCategory.name) {
-            setActiveCategory(selectedCategory);
-        }
-    }, [selectedCategory, activeCategory.name]);
-    
-    const selectedUnitInfo = useMemo(() => activeCategory.units.find(u => u.symbol === selectedUnitSymbol), [activeCategory, selectedUnitSymbol]);
+    const selectedUnitInfo = useMemo(() => selectedCategory.units.find(u => u.symbol === selectedUnitSymbol), [selectedCategory, selectedUnitSymbol]);
     
     const filteredUnits = useMemo(() => activeCategory.units.filter(unit => 
         unit.name.toLowerCase().includes(search.toLowerCase()) || 
