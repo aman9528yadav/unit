@@ -300,7 +300,12 @@ export function Settings() {
                     href="/settings/custom-units"
                     label="Custom Units"
                     description="Add or manage your own units"
-                    control={<LayoutGrid />}
+                    control={
+                        <div className="flex items-center gap-2">
+                            {isPremiumFeatureLocked && <Lock className="w-4 h-4 text-amber-500" />}
+                            <LayoutGrid />
+                        </div>
+                    }
                 />
                  <SettingRow
                     label="Save Conversion History"
