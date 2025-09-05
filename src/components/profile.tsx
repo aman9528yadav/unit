@@ -14,7 +14,8 @@ import {
   LogOut,
   Code,
   Gift,
-  Pencil
+  Pencil,
+  Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -91,6 +92,7 @@ export function Profile() {
     { icon: Lock, text: "Privacy Policy", href: "/privacy-policy" },
     { icon: Settings, text: "Settings", href: "/settings" },
     { icon: HelpCircle, text: "Help", href: "/help" },
+    { icon: Info, text: "About", href: "/about" },
   ];
 
   if (isClient && profile.email === DEVELOPER_EMAIL) {

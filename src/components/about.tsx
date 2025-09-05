@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 const appInfo = {
     version: "1.4.2",
     build: "2025.09.01",
-    releaseChannel: "Stable",
+    releaseChannel: "Beta 1",
     license: "MIT",
 };
 
