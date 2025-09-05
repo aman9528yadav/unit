@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Camera, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
@@ -15,6 +15,8 @@ import { updateProfile, reauthenticateWithCredential, EmailAuthProvider, updateP
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 export function ProfileEditForm() {
   const [profile, setProfile] = useState({ fullName: '', email: '', dob: '' });
@@ -62,7 +64,6 @@ export function ProfileEditForm() {
           displayName: profile.fullName,
         });
 
-        // We also need to update the dob in our local storage profile
         const storedProfile = localStorage.getItem("userProfile");
         const existingProfile = storedProfile ? JSON.parse(storedProfile) : {};
         const updatedProfile = { ...existingProfile, ...profile };
@@ -122,7 +123,7 @@ export function ProfileEditForm() {
 
 
   if (!isClient) {
-    return null; // or a loading skeleton
+    return null; 
   }
 
   return (
@@ -136,73 +137,83 @@ export function ProfileEditForm() {
         <h1 className="text-xl font-bold">Edit Profile</h1>
       </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><User /> Personal Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="fullName">Full Name</Label>
-            <Input id="fullName" name="fullName" value={profile.fullName} onChange={handleInputChange} />
-          </div>
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={profile.email} disabled />
-          </div>
-          <div>
-            <Label htmlFor="dob">Date of Birth</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant={"outline"} className="w-full justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {profile.dob ? format(new Date(profile.dob), "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={profile.dob ? new Date(profile.dob) : undefined}
-                  onSelect={handleDateChange}
-                  captionLayout="dropdown-buttons"
-                  fromYear={1920}
-                  toYear={new Date().getFullYear()}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-           <Button onClick={handleSaveChanges} className="w-full" disabled={isSubmitting}>
-             {isSubmitting ? "Saving..." : "Save Personal Info"}
-           </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Lock /> Change Password</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="relative">
-            <Label htmlFor="currentPassword">Current Password</Label>
-            <Input id="currentPassword" type={showCurrentPassword ? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-            <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowCurrentPassword(!showCurrentPassword)}><IconEye show={showCurrentPassword} /></Button>
-          </div>
-          <div className="relative">
-            <Label htmlFor="newPassword">New Password</Label>
-            <Input id="newPassword" type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-             <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowNewPassword(!showNewPassword)}><IconEye show={showNewPassword} /></Button>
-          </div>
-          <div className="relative">
-            <Label htmlFor="confirmPassword">Confirm New Password</Label>
-            <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-             <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowConfirmPassword(!showConfirmPassword)}><IconEye show={showConfirmPassword} /></Button>
-          </div>
-           <Button onClick={handleChangePassword} variant="secondary" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Updating..." : "Update Password"}
-          </Button>
-        </CardContent>
-      </Card>
-      
+      <Tabs defaultValue="account" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="account">Account</TabsTrigger>
+          <TabsTrigger value="security">Security</TabsTrigger>
+        </TabsList>
+        <TabsContent value="account">
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Information</CardTitle>
+              <CardDescription>Make changes to your personal details here. Click save when you're done.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input id="fullName" name="fullName" value={profile.fullName} onChange={handleInputChange} />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" value={profile.email} disabled />
+              </div>
+              <div>
+                <Label htmlFor="dob">Date of Birth</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant={"outline"} className="w-full justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {profile.dob ? format(new Date(profile.dob), "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={profile.dob ? new Date(profile.dob) : undefined}
+                      onSelect={handleDateChange}
+                      captionLayout="dropdown-buttons"
+                      fromYear={1920}
+                      toYear={new Date().getFullYear()}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+               <Button onClick={handleSaveChanges} className="w-full" disabled={isSubmitting}>
+                 {isSubmitting ? "Saving..." : "Save Changes"}
+               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="security">
+           <Card>
+            <CardHeader>
+              <CardTitle>Password</CardTitle>
+              <CardDescription>Change your password here. After saving, you'll be logged out.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="relative">
+                <Label htmlFor="currentPassword">Current Password</Label>
+                <Input id="currentPassword" type={showCurrentPassword ? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowCurrentPassword(!showCurrentPassword)}><IconEye show={showCurrentPassword} /></Button>
+              </div>
+              <div className="relative">
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input id="newPassword" type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                 <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowNewPassword(!showNewPassword)}><IconEye show={showNewPassword} /></Button>
+              </div>
+              <div className="relative">
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                 <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowConfirmPassword(!showConfirmPassword)}><IconEye show={showConfirmPassword} /></Button>
+              </div>
+               <Button onClick={handleChangePassword} variant="secondary" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Updating..." : "Update Password"}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
