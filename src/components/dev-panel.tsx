@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send } from 'lucide-react';
+import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send, Wrench } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
@@ -35,6 +35,7 @@ export function DevPanel() {
     const [notificationTitle, setNotificationTitle] = useState('');
     const [notificationDescription, setNotificationDescription] = useState('');
     const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+    const [homeIsMaintenance, setHomeIsMaintenance] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -45,6 +46,11 @@ export function DevPanel() {
         const storedUpdateText = localStorage.getItem("nextUpdateText");
         if (storedUpdateText) {
             setUpdateText(storedUpdateText);
+        }
+
+        const devHomeMaint = localStorage.getItem("devHomeIsMaintenance");
+        if (devHomeMaint) {
+            setHomeIsMaintenance(JSON.parse(devHomeMaint));
         }
         
         if (storedProfile) {
@@ -57,14 +63,14 @@ export function DevPanel() {
     }, []);
     
      useEffect(() => {
-        if (!isAuthorized) return;
+        if (!isAuthorized || !isAuthenticated) return;
         
         const unsubscribe = listenToGlobalMaintenanceMode((status) => {
             setIsMaintenanceMode(status);
         });
 
         return () => unsubscribe();
-    }, [isAuthorized]);
+    }, [isAuthorized, isAuthenticated]);
     
     const handlePasswordSubmit = () => {
         if (password === DEFAULT_DEV_PASSWORD) {
@@ -150,6 +156,12 @@ export function DevPanel() {
             console.error("Failed to toggle maintenance mode:", error);
             toast({ title: "Update Failed", description: "Could not change maintenance mode status.", variant: "destructive" });
         }
+    };
+    
+    const handleHomeRedirectToggle = (enabled: boolean) => {
+        setHomeIsMaintenance(enabled);
+        localStorage.setItem('devHomeIsMaintenance', JSON.stringify(enabled));
+        toast({ title: `Local Home Page is now ${enabled ? 'Maintenance' : 'Dashboard'}` });
     };
 
 
@@ -311,12 +323,26 @@ export function DevPanel() {
                             <CardTitle className="flex items-center gap-2"><ServerCog /> General Controls</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                <Label htmlFor="maintenance-mode">Maintenance Mode</Label>
+                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <div>
+                                    <Label htmlFor="maintenance-mode">Global Maintenance Mode</Label>
+                                    <p className='text-xs text-muted-foreground'>Redirects all users to /maintenance.</p>
+                                </div>
                                 <Switch
                                     id="maintenance-mode"
                                     checked={isMaintenanceMode}
                                     onCheckedChange={handleMaintenanceModeToggle}
+                                />
+                            </div>
+                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <div>
+                                    <Label htmlFor="dev-maintenance-mode">Set Home to Maintenance</Label>
+                                    <p className='text-xs text-muted-foreground'>Locally redirects / to /maintenance.</p>
+                                </div>
+                                <Switch
+                                    id="dev-maintenance-mode"
+                                    checked={homeIsMaintenance}
+                                    onCheckedChange={handleHomeRedirectToggle}
                                 />
                             </div>
                         </CardContent>
@@ -327,7 +353,4 @@ export function DevPanel() {
             <Button onClick={() => router.push('/')} variant="outline" className="mt-4">Back to App</Button>
         </div>
     );
-
-    
-
-    
+}

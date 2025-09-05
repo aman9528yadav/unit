@@ -35,6 +35,13 @@ export default function Home() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
+        // Dev setting to redirect home to maintenance page
+        const devHomeIsMaintenance = localStorage.getItem("devHomeIsMaintenance");
+        if (devHomeIsMaintenance && JSON.parse(devHomeIsMaintenance)) {
+            router.replace('/maintenance');
+            return;
+        }
+
         const storedProfile = localStorage.getItem("userProfile");
         const hasSkippedLogin = sessionStorage.getItem("hasSkippedLogin");
 
