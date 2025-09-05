@@ -80,7 +80,9 @@ export function UserData() {
 
             <footer className="mt-8 pt-6 border-t flex justify-end items-center gap-4">
                 <Button variant="outline"><LogOut className="mr-2 h-4 w-4"/> Log out</Button>
-                <Button><Settings className="mr-2 h-4 w-4"/> Manage Settings</Button>
+                <Link href="/profile/edit">
+                    <Button><Settings className="mr-2 h-4 w-4"/> Manage Settings</Button>
+                </Link>
             </footer>
         </div>
     );
