@@ -10,8 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
 import { Eye, EyeOff } from "lucide-react";
+import { logUserEvent } from "@/services/firestore";
 
 const GoogleIcon = () => (
     <svg viewBox="0 0 48 48" className="w-5 h-5">
@@ -27,6 +28,29 @@ const GoogleIcon = () => (
       </g>
     </svg>
 );
+
+
+const handleSuccessfulLogin = async (user: User) => {
+    const storedProfile = localStorage.getItem("userProfile");
+    const existingProfile = storedProfile ? JSON.parse(storedProfile) : {};
+
+    const profile = {
+        fullName: user.displayName || user.email?.split('@')[0] || "New User",
+        email: user.email,
+        profileImage: user.photoURL || "https://picsum.photos/200",
+        dob: existingProfile.email === user.email ? existingProfile.dob : ''
+    };
+
+    localStorage.setItem("userProfile", JSON.stringify(profile));
+
+    if (user.email && user.displayName) {
+        await logUserEvent({
+            email: user.email,
+            name: user.displayName,
+            type: 'login'
+        });
+    }
+}
 
 
 export function WelcomeForm() {
@@ -57,17 +81,7 @@ export function WelcomeForm() {
          return;
       }
       
-      const storedProfile = localStorage.getItem("userProfile");
-      const existingProfile = storedProfile ? JSON.parse(storedProfile) : {};
-
-      const profile = {
-        fullName: user.displayName || email.split('@')[0],
-        email: user.email,
-        profileImage: user.photoURL || "https://picsum.photos/200",
-        dob: existingProfile.email === user.email ? existingProfile.dob : ''
-      };
-
-      localStorage.setItem("userProfile", JSON.stringify(profile));
+      await handleSuccessfulLogin(user);
       router.push("/profile/success");
 
     } catch (error: any) {
@@ -84,17 +98,7 @@ export function WelcomeForm() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
-      const storedProfile = localStorage.getItem("userProfile");
-      const existingProfile = storedProfile ? JSON.parse(storedProfile) : {};
-
-      const profile = {
-        fullName: user.displayName || "New User",
-        email: user.email,
-        profileImage: user.photoURL || "https://picsum.photos/200",
-        dob: existingProfile.email === user.email ? existingProfile.dob : ''
-      };
-
-      localStorage.setItem("userProfile", JSON.stringify(profile));
+      await handleSuccessfulLogin(user);
       router.push("/profile/success");
 
     } catch (error: any) {

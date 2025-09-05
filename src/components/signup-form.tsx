@@ -12,6 +12,7 @@ import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, se
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { logUserEvent } from "@/services/firestore";
 
 const GoogleIcon = () => (
     <svg viewBox="0 0 48 48" className="w-5 h-5">
@@ -27,6 +28,26 @@ const GoogleIcon = () => (
       </g>
     </svg>
 );
+
+const handleSuccessfulSignup = async (user: User) => {
+    // This function will handle both setting local storage and logging the event
+    const profile = {
+        fullName: user.displayName,
+        email: user.email,
+        profileImage: user.photoURL || "https://picsum.photos/200",
+        dob: '' // DOB is not available on signup
+    };
+    localStorage.setItem("userProfile", JSON.stringify(profile));
+
+    if (user.email && user.displayName) {
+         await logUserEvent({
+            email: user.email,
+            name: user.displayName,
+            type: 'signup'
+        });
+    }
+}
+
 
 export function SignupForm() {
   const { toast } = useToast();
@@ -60,19 +81,19 @@ export function SignupForm() {
     if (!emailSent || !auth.currentUser) return;
 
     const verificationInterval = setInterval(async () => {
-        // The user object needs to be reloaded to get the latest emailVerified status.
         await auth.currentUser?.reload();
         if (auth.currentUser?.emailVerified) {
             clearInterval(verificationInterval);
+            await handleSuccessfulSignup(auth.currentUser);
             toast({
                 title: "Email Verified!",
                 description: "Your account is active. You will be redirected.",
             });
             router.push('/profile/success');
         }
-    }, 3000); // Check every 3 seconds
+    }, 3000);
 
-    return () => clearInterval(verificationInterval); // Cleanup on component unmount
+    return () => clearInterval(verificationInterval);
   }, [emailSent, router, toast]);
 
 
@@ -112,7 +133,6 @@ export function SignupForm() {
     setIsSubmitting(true);
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
-      // Save the user's full name to their profile
       await updateProfile(result.user, { displayName: fullName });
       
       await sendEmailVerification(result.user);
@@ -139,19 +159,7 @@ export function SignupForm() {
     setIsSubmitting(true);
     try {
       const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      
-      const storedProfile = localStorage.getItem("userProfile");
-      const existingProfile = storedProfile ? JSON.parse(storedProfile) : {};
-
-      const profile = {
-        fullName: user.displayName || "New User",
-        email: user.email,
-        profileImage: user.photoURL || "https://picsum.photos/200",
-        dob: existingProfile.email === user.email ? existingProfile.dob : ''
-      };
-
-      localStorage.setItem("userProfile", JSON.stringify(profile));
+      await handleSuccessfulSignup(result.user);
       router.push("/profile/success");
 
     } catch (error: any) {

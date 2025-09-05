@@ -5,6 +5,30 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, Timestamp, doc, setDoc } from 'firebase/firestore';
 import type { AppNotification } from '@/lib/notifications';
 
+
+export interface UserEvent {
+    email: string;
+    name: string;
+    type: 'login' | 'signup';
+}
+
+/**
+ * Logs a user event (login or signup) to Firestore.
+ * @param event - The event data to log.
+ */
+export async function logUserEvent(event: UserEvent) {
+    try {
+        await addDoc(collection(db, 'user_events'), {
+            ...event,
+            timestamp: serverTimestamp(),
+        });
+    } catch (error) {
+        console.error("Error logging user event:", error);
+        // Silently fail to not disrupt user experience
+    }
+}
+
+
 /**
  * Adds a new notification to the global 'notifications' collection in Firestore.
  */
