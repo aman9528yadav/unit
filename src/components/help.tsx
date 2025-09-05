@@ -92,7 +92,7 @@ export function Help() {
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6">
       <header className="flex items-center gap-4">
-        <Link href={profile ? "/profile" : "/"}>
+        <Link href={profile ? "/settings" : "/"}>
           <Button variant="ghost" size="icon">
             <ArrowLeft />
           </Button>

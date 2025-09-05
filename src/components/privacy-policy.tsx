@@ -9,7 +9,7 @@ export function PrivacyPolicy() {
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6">
       <header className="flex items-center gap-4">
-        <Link href="/profile">
+        <Link href="/settings">
           <Button variant="ghost" size="icon">
             <ArrowLeft />
           </Button>

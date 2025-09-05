@@ -11,7 +11,7 @@ export default function ProfileSuccessPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push("/profile");
+      router.push("/userdata");
     }, 2500); // Increased duration for animation
 
     return () => clearTimeout(timer);
