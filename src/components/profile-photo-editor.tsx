@@ -9,6 +9,7 @@ import { Slider } from "./ui/slider";
 import { Upload, Camera, Trash2, RotateCcw, X, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertTitle, AlertDescription } from "./ui/alert";
+import { Label } from "./ui/label";
 
 
 const defaultAvatars = [
