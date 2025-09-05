@@ -12,7 +12,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
-import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode } from '@/services/firestore';
+import { sendGlobalNotification } from '@/services/firestore';
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -32,7 +32,6 @@ export function DevPanel() {
     const [showAuthPassword, setShowAuthPassword] = useState(false);
     const [duration, setDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const [updateText, setUpdateText] = useState('');
-    const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
     const [notificationTitle, setNotificationTitle] = useState('');
     const [notificationDescription, setNotificationDescription] = useState('');
     const router = useRouter();
@@ -54,14 +53,6 @@ export function DevPanel() {
                 setIsAuthorized(true);
             }
         }
-        
-        // Listen to global maintenance mode state from Firestore
-        const unsubscribe = listenToGlobalMaintenanceMode((enabled) => {
-            setIsMaintenanceMode(enabled);
-        });
-
-        return () => unsubscribe();
-
     }, []);
     
     const handlePasswordSubmit = () => {
@@ -114,18 +105,6 @@ export function DevPanel() {
         localStorage.setItem("nextUpdateText", updateText);
          window.dispatchEvent(new StorageEvent('storage', { key: "nextUpdateText", newValue: updateText }));
         toast({ title: 'Update Text Saved' });
-    };
-
-    const handleMaintenanceModeToggle = async (checked: boolean) => {
-        try {
-            await setGlobalMaintenanceMode(checked);
-            toast({
-                title: `Maintenance Mode ${checked ? 'Enabled' : 'Disabled'}`,
-                description: `Users will now be ${checked ? 'redirected' : 'able to access the app'}.`,
-            });
-        } catch (error) {
-            toast({ title: "Update Failed", description: "Could not update maintenance status.", variant: "destructive" });
-        }
     };
 
     const handleSendNotification = async () => {
@@ -219,17 +198,6 @@ export function DevPanel() {
                             <CardTitle className="flex items-center gap-2"><Timer /> Update Management</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                <Label htmlFor="maintenance-mode" className="flex items-center gap-2 cursor-pointer">
-                                    <ServerCog />
-                                    Maintenance Mode
-                                </Label>
-                                <Switch
-                                    id="maintenance-mode"
-                                    checked={isMaintenanceMode}
-                                    onCheckedChange={handleMaintenanceModeToggle}
-                                />
-                            </div>
                             <Label>Set Countdown Duration</Label>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>

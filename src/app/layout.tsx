@@ -5,38 +5,12 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { LanguageProvider } from '@/context/language-context';
 import { ThemeProvider } from '@/context/theme-context';
-import React, { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { listenToGlobalMaintenanceMode } from '@/services/firestore';
-
-function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
-    const router = useRouter();
-    const pathname = usePathname();
-    const [isMaintenance, setIsMaintenance] = useState(false);
-
-    useEffect(() => {
-        const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenance);
-        return () => unsubscribe();
-    }, []);
-
-    useEffect(() => {
-        const isAllowedPath = pathname === '/maintenance' || pathname.startsWith('/dev');
-        if (isMaintenance && !isAllowedPath) {
-            router.replace('/maintenance');
-        }
-    }, [isMaintenance, pathname, router]);
-
-    const isAllowedPath = pathname === '/maintenance' || pathname.startsWith('/dev');
-    if (isMaintenance && !isAllowedPath) {
-        return null; // Render nothing while redirecting
-    }
-
-    return <>{children}</>;
-}
+import React from 'react';
+import { usePathname } from 'next/navigation';
 
 function AppFooter() {
     const pathname = usePathname();
-    const showFooter = pathname !== '/maintenance';
+    const showFooter = !pathname.startsWith('/dev'); // Simplified logic
 
     if (!showFooter) {
         return null;
@@ -70,9 +44,7 @@ export default function RootLayout({
           <body className="font-body antialiased">
             <div className="flex flex-col min-h-screen">
                 <main className="flex-grow">
-                    <MaintenanceRedirect>
-                        {children}
-                    </MaintenanceRedirect>
+                    {children}
                 </main>
                 <AppFooter />
             </div>
