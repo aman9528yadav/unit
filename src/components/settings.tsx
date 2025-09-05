@@ -36,7 +36,7 @@ const Section = ({ title, children, description }: { title: string, children: Re
     </Card>
 );
 
-const SettingRow = ({ label, description, control, isLink = false, href }: { label: string, description?: string, control: React.ReactNode, isLink?: boolean, href?: string }) => {
+const SettingRow = ({ label, description, control, isLink = false, href, children }: { label: string, description?: string, control?: React.ReactNode, isLink?: boolean, href?: string, children?: React.ReactNode }) => {
     const content = (
         <div className="flex justify-between items-center py-3">
             <div className="flex-1 pr-4">
@@ -45,16 +45,17 @@ const SettingRow = ({ label, description, control, isLink = false, href }: { lab
             </div>
             <div className="flex items-center gap-2">
                 {control}
-                {isLink && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                {isLink && href && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
             </div>
         </div>
     );
     
-    if (isLink && href) {
-        return <Link href={href}>{content}</Link>
-    }
-    
-    return content;
+    return (
+        <div>
+            {isLink && href ? <Link href={href}>{content}</Link> : content}
+            {children && <div className="pt-3">{children}</div>}
+        </div>
+    );
 };
 
 
@@ -194,7 +195,41 @@ export function Settings() {
                 />
             </Section>
 
-             <Section title="Unit Converter">
+             <Section title="Unit Converter" description="Configure default units and conversion behavior.">
+                 <SettingRow
+                    label="Unit System"
+                    control={
+                        <Select defaultValue="metric">
+                            <SelectTrigger className="w-48">
+                                <SelectValue placeholder="Select a system" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="metric">SI (Metric)</SelectItem>
+                                <SelectItem value="imperial">Imperial</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    }
+                 />
+                 <SettingRow
+                    label="Frequent Conversions"
+                 >
+                     <div className="flex flex-col gap-2">
+                        <Select>
+                            <SelectTrigger><SelectValue placeholder="Length • m ↔ ft" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="m-ft">Length • m ↔ ft</SelectItem>
+                                <SelectItem value="km-mi">Length • km ↔ mi</SelectItem>
+                            </SelectContent>
+                        </Select>
+                         <Select>
+                            <SelectTrigger><SelectValue placeholder="Temperature • °C ↔ °F" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="c-f">Temperature • °C ↔ °F</SelectItem>
+                                <SelectItem value="c-k">Temperature • °C ↔ K</SelectItem>
+                            </SelectContent>
+                        </Select>
+                     </div>
+                 </SettingRow>
                  <SettingRow
                     label="Auto Convert"
                     description="Automatically convert on value change"
