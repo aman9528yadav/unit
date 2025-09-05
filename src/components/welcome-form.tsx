@@ -82,7 +82,7 @@ export function WelcomeForm() {
   };
 
   return (
-    <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-background text-foreground p-6">
+    <div className="w-full max-w-lg mx-auto flex flex-col justify-center min-h-screen bg-background text-foreground p-6">
         <header className="flex justify-between items-center py-4 mb-8">
              <h1 className="text-xl font-bold flex items-center gap-2">
                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
