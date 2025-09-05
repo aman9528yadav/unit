@@ -146,6 +146,7 @@ export function DevPanel() {
     };
     
      const handleMaintenanceModeToggle = async (enabled: boolean) => {
+        setIsMaintenanceMode(enabled); // Optimistic UI update
         try {
             await setGlobalMaintenanceMode(enabled);
             toast({
@@ -153,6 +154,7 @@ export function DevPanel() {
                 description: enabled ? "App is now in maintenance mode." : "App is now live.",
             });
         } catch (error) {
+            setIsMaintenanceMode(!enabled); // Revert on error
             console.error("Failed to toggle maintenance mode:", error);
             toast({ title: "Update Failed", description: "Could not change maintenance mode status.", variant: "destructive" });
         }
@@ -224,10 +226,10 @@ export function DevPanel() {
 
             <Tabs defaultValue="updates" className="w-full">
                 <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="updates">Updates</TabsTrigger>
-                    <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
-                    <TabsTrigger value="data">Data</TabsTrigger>
-                    <TabsTrigger value="general">General</TabsTrigger>
+                    <TabsTrigger value="updates"><Timer /></TabsTrigger>
+                    <TabsTrigger value="broadcast"><Send /></TabsTrigger>
+                    <TabsTrigger value="data"><Trash2 /></TabsTrigger>
+                    <TabsTrigger value="general"><Wrench /></TabsTrigger>
                 </TabsList>
                 <TabsContent value="updates" className="mt-4">
                     <Card>
@@ -320,7 +322,7 @@ export function DevPanel() {
                  <TabsContent value="general" className="mt-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><ServerCog /> General Controls</CardTitle>
+                            <CardTitle className="flex items-center gap-2"><Wrench /> General Controls</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                              <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
