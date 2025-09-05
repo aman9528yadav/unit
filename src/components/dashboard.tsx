@@ -137,16 +137,16 @@ const ToolButton = ({ icon: Icon, label, href }: any) => (
     href={href}
     whileHover={{ y: -2, scale: 1.02 }}
     whileTap={{ scale: 0.98 }}
-    className="group rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex items-center gap-3 shadow-lg"
+    className="group rounded-xl border border-border bg-card hover:bg-secondary transition-all p-3 flex items-center gap-3 shadow-lg"
   >
-    <div className="size-10 grid place-items-center rounded-lg bg-secondary text-accent">
-      <Icon className="size-5" />
+    <div className="size-8 grid place-items-center rounded-lg bg-secondary text-accent">
+      <Icon className="size-4" />
     </div>
     <div className="flex-1">
-      <p className="font-medium text-foreground">{label}</p>
+      <p className="font-medium text-foreground text-sm">{label}</p>
       <p className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">Open {label}</p>
     </div>
-    <ArrowRight className="size-5 text-muted-foreground opacity-60 group-hover:opacity-100" />
+    <ArrowRight className="size-4 text-muted-foreground opacity-60 group-hover:opacity-100" />
   </motion.a>
 );
 
