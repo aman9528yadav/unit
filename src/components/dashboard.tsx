@@ -265,9 +265,9 @@ export function Dashboard() {
 
   const handleProfileClick = () => {
     if (profile) {
-      router.push('/profile');
+      router.push('/userdata');
     } else {
-      setShowLoginDialog(true);
+      router.push('/welcome');
     }
   };
   

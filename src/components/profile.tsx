@@ -84,7 +84,6 @@ export function Profile() {
   };
 
   const menuItems = [
-    { icon: User, text: "User Data", href: "/userdata" },
     { icon: Star, text: "Favorite", href: "/history" },
     { icon: Gift, text: "What's New", href: "/updates" },
     { icon: Lock, text: "Privacy Policy", href: "/privacy-policy" },
@@ -93,6 +92,10 @@ export function Profile() {
     { icon: Info, text: "About", href: "/about" },
     { icon: LogOut, text: "Logout", onClick: handleLogout }
   ];
+
+  if (profile.email === DEVELOPER_EMAIL) {
+    menuItems.splice(5, 0, { icon: Code, text: "Developer", href: "/dev" });
+  }
 
 
   if (!isClient) {
