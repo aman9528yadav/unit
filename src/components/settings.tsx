@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -169,13 +168,6 @@ export function Settings() {
                     description="Manage your personal information"
                     control={<User />}
                 />
-                 <SettingRow
-                    isLink
-                    href="/auth-screens"
-                    label="Manage Authentication Screens"
-                    description="View or edit login/signup pages"
-                    control={<KeyRound />}
-                />
             </Section>
 
             <Section title="General">
@@ -222,26 +214,6 @@ export function Settings() {
                         </Select>
                     }
                  />
-                 <SettingRow
-                    label="Frequent Conversions"
-                 >
-                     <div className="flex flex-col gap-2">
-                        <Select>
-                            <SelectTrigger><SelectValue placeholder="Length • m ↔ ft" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="m-ft">Length • m ↔ ft</SelectItem>
-                                <SelectItem value="km-mi">Length • km ↔ mi</SelectItem>
-                            </SelectContent>
-                        </Select>
-                         <Select>
-                            <SelectTrigger><SelectValue placeholder="Temperature • °C ↔ °F" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="c-f">Temperature • °C ↔ °F</SelectItem>
-                                <SelectItem value="c-k">Temperature • °C ↔ K</SelectItem>
-                            </SelectContent>
-                        </Select>
-                     </div>
-                 </SettingRow>
                  <SettingRow
                     label="Auto Convert"
                     description="Automatically convert on value change"
