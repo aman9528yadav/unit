@@ -181,27 +181,28 @@ const Header = ({ name, profile }: { name: string, profile: UserProfile | null }
   const router = useRouter();
   
   return (
-    <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <CheckCircle2 className="size-4 text-accent" />
-          Welcome back
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <CheckCircle2 className="size-4 text-accent" />
+            Welcome back
+            </div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Hi, {name}</h1>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-2 text-foreground">Hi, {name}</h1>
-        <p className="text-muted-foreground mt-1">Ready to boost your productivity today?</p>
+        <div className="flex items-center gap-2">
+            <Notifications />
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={() => router.push(profile ? '/profile' : '/welcome')}>
+                <Avatar className="h-11 w-11 border border-border bg-card text-foreground">
+                <AvatarImage src={profile?.profileImage} alt={profile?.fullName} />
+                <AvatarFallback><UserCircle2 className="size-6" /></AvatarFallback>
+                </Avatar>
+            </Button>
+        </div>
       </div>
-      <div className="flex items-center gap-3 w-full sm:w-auto">
-        <div className="flex-1 sm:w-80">
+       <div>
            <GlobalSearchDialog />
         </div>
-        <Notifications />
-        <Button variant="ghost" size="icon" className="rounded-full" onClick={() => router.push(profile ? '/profile' : '/welcome')}>
-            <Avatar className="h-11 w-11 border border-border bg-card text-foreground">
-              <AvatarImage src={profile?.profileImage} alt={profile?.fullName} />
-              <AvatarFallback><UserCircle2 className="size-6" /></AvatarFallback>
-            </Avatar>
-        </Button>
-      </div>
     </div>
   );
 };
