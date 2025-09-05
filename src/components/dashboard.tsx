@@ -278,7 +278,7 @@ export function Dashboard() {
 
         <Header name={profile?.fullName || 'Guest'} profile={profile} />
 
-        <section className="grid gap-4 sm:gap-6 mt-8 grid-cols-1 md:grid-cols-3">
+        <section className="grid gap-4 mt-8">
           <Stat icon={Calculator} label="Today Calculations" value={String(todayCalculations)} />
           <Stat icon={NotebookPen} label="Saved Notes" value={String(savedNotesCount)} />
           <Stat icon={History} label="Last 7 Days" value={String(weeklyCalculations.reduce((acc, curr) => acc + curr.value, 0))} />
