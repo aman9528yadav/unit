@@ -52,7 +52,7 @@ import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/context/theme-context";
 import { getTodaysCalculations, getWeeklyCalculations, getAllTimeCalculations } from "@/lib/utils";
 import { getStreakData, type StreakData } from "@/lib/streak";
-import { GlobalSearchDialog } from "./global-search-dialog";
+import { GlobalSearch } from "./global-search";
 import { Notifications } from "./notifications";
 import { useLanguage } from "@/context/language-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
@@ -249,7 +249,7 @@ const Header = ({ name, profile, onProfileClick }: { name: string, profile: User
         </div>
       </div>
        <div>
-           <GlobalSearchDialog />
+           <GlobalSearch />
         </div>
     </div>
   );
