@@ -158,11 +158,6 @@ export function Settings() {
               icon={Palette} 
               text="Edit Custom Theme"
               href="/settings/theme"
-            />
-             <SettingsItem 
-              icon={Info} 
-              text="About"
-              href="/about"
               isLast={true}
             />
           </div>
