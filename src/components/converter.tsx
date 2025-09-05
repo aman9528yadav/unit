@@ -185,7 +185,7 @@ export function Converter() {
   const [region, setRegion] = React.useState<Region>('International');
   const { t } = useLanguage();
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
-  const [isGraphVisible, setIsGraphVisible] = useState(isGraphVisible);
+  const [isGraphVisible, setIsGraphVisible] = useState(false);
   const [showRecentHistory, setShowRecentHistory] = useState(true);
 
 
@@ -990,4 +990,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
 );
 ConversionImage.displayName = 'ConversionImage';
 
+    
     
