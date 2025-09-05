@@ -56,8 +56,8 @@ export function ProfileEditForm() {
     }
   };
 
-  const handlePhotoSave = (newImage: string) => {
-    setProfile(prev => ({ ...prev, profileImage: newImage }));
+  const handlePhotoSave = (newImage: string | null) => {
+    setProfile(prev => ({ ...prev, profileImage: newImage || '' }));
     setIsPhotoEditorOpen(false);
     toast({ title: "Image ready", description: "Click 'Save Changes' to apply." });
   };

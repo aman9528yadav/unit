@@ -23,7 +23,7 @@ const defaultAvatars = [
 
 interface ProfilePhotoEditorProps {
     currentImage: string;
-    onSave: (newImage: string) => void;
+    onSave: (newImage: string | null) => void;
     onClose: () => void;
 }
 
@@ -89,11 +89,7 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
     };
 
     const handleSave = () => {
-        if(image) {
-            onSave(image);
-        } else {
-             toast({ title: "No Image", description: "Please select an image before saving.", variant: "destructive" });
-        }
+        onSave(image);
     };
 
     return (
