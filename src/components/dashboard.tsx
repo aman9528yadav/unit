@@ -267,7 +267,7 @@ export function Dashboard() {
     if (profile) {
       router.push('/userdata');
     } else {
-      router.push('/welcome');
+      setShowLoginDialog(true);
     }
   };
   
@@ -457,4 +457,5 @@ export function Dashboard() {
 }
 
 
+    
     
