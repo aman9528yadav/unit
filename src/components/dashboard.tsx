@@ -342,116 +342,114 @@ export function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <main className="relative mx-auto max-w-lg px-4 sm:px-6 py-8">
-        <Header name={profile?.fullName || t('dashboard.guest')} profile={profile} onProfileClick={handleProfileClick} />
+    <div className="w-full max-w-lg mx-auto flex flex-col gap-8">
+      <Header name={profile?.fullName || t('dashboard.guest')} profile={profile} onProfileClick={handleProfileClick} />
 
-        <section className="grid grid-cols-2 gap-4 mt-8">
-          <Stat icon={Calculator} label={t('dashboard.todayOps')} value={String(todayCalculations)} />
-          <Stat icon={Flame} label={t('dashboard.currentStreak')} value={`${streakData.currentStreak} ${t('dashboard.days')}`} />
-          <Stat icon={NotebookPen} label={t('dashboard.savedNotes')} value={String(savedNotesCount)} />
-          <Stat icon={History} label={t('dashboard.allTimeOps')} value={String(allTimeCalculations)} />
-        </section>
+      <section className="grid grid-cols-2 gap-4">
+        <Stat icon={Calculator} label={t('dashboard.todayOps')} value={String(todayCalculations)} />
+        <Stat icon={Flame} label={t('dashboard.currentStreak')} value={`${streakData.currentStreak} ${t('dashboard.days')}`} />
+        <Stat icon={NotebookPen} label={t('dashboard.savedNotes')} value={String(savedNotesCount)} />
+        <Stat icon={History} label={t('dashboard.allTimeOps')} value={String(allTimeCalculations)} />
+      </section>
 
-        <section className="mt-8">
-          <Card className="bg-card border-border shadow-sm">
-            <CardHeader>
-              <CardTitle>{t('dashboard.quickAccess')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-3">
-                {quickTools.map((t) => (
-                  <ToolButton key={t.label} {...t} />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section className="mt-8">
-          <Card className="overflow-hidden rounded-xl bg-card border-border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-0">
-              <div>
-                <CardTitle className="text-base text-foreground">{t('dashboard.calculationStats')}</CardTitle>
-                <p className="text-xs text-muted-foreground">{t('dashboard.last7Days')}</p>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="h-48 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={weeklyCalculations} margin={{ left: 0, right: 0, top: 10, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid vertical={false} strokeOpacity={0.1} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                    <YAxis allowDecimals={false} width={28} tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                    <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))" }} />
-                    <Area type="monotone" dataKey="value" strokeWidth={2} stroke="hsl(var(--primary))" fill="url(#fill)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section className="mt-8">
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-foreground">{t('dashboard.whatsNew')}</h2>
-                <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
-                    <Link href="/updates">
-                        {t('dashboard.seeAll')} <ArrowRight className="size-4" />
-                    </Link>
-                </Button>
+      <section>
+        <Card className="bg-card border-border shadow-sm">
+          <CardHeader>
+            <CardTitle>{t('dashboard.quickAccess')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-3">
+              {quickTools.map((t) => (
+                <ToolButton key={t.label} {...t} />
+              ))}
             </div>
-            <div className="flex flex-col sm:flex-row gap-4">
-                {recentUpdates.map((update) => (
-                    <UpdateCard key={update.title} update={update} />
-                ))}
-            </div>
-        </section>
+          </CardContent>
+        </Card>
+      </section>
 
-        <section className="mt-8">
+      <section>
+        <Card className="overflow-hidden rounded-xl bg-card border-border shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-0">
+            <div>
+              <CardTitle className="text-base text-foreground">{t('dashboard.calculationStats')}</CardTitle>
+              <p className="text-xs text-muted-foreground">{t('dashboard.last7Days')}</p>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={weeklyCalculations} margin={{ left: 0, right: 0, top: 10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} strokeOpacity={0.1} stroke="hsl(var(--border))" />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                  <YAxis allowDecimals={false} width={28} tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))" }} />
+                  <Area type="monotone" dataKey="value" strokeWidth={2} stroke="hsl(var(--primary))" fill="url(#fill)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">{t('dashboard.recommendations.title')}</h2>
-             <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
-                <Link href="/help">
-                    {t('dashboard.seeAll')} <ArrowRight className="size-4" />
-                </Link>
-            </Button>
+              <h2 className="text-lg font-semibold text-foreground">{t('dashboard.whatsNew')}</h2>
+              <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
+                  <Link href="/updates">
+                      {t('dashboard.seeAll')} <ArrowRight className="size-4" />
+                  </Link>
+              </Button>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4">
-            {recommendations.map((r) => (
-              <RecommendationCard key={r.id} item={r} />
-            ))}
+          <div className="flex flex-col sm:flex-row gap-4">
+              {recentUpdates.map((update) => (
+                  <UpdateCard key={update.title} update={update} />
+              ))}
           </div>
-        </section>
-        
-      <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader className="items-center text-center">
-            <div className="p-3 bg-primary/10 rounded-full mb-4 w-fit">
-              <Sparkles className="w-8 h-8 text-primary" />
-            </div>
-            <AlertDialogTitle className="text-2xl">{t('dashboard.unlockProfile.title')}</AlertDialogTitle>
-            <AlertDialogDescription className="max-w-xs">
-              {t('dashboard.unlockProfile.description')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col-reverse sm:flex-col-reverse gap-2">
-            <AlertDialogCancel>{t('dashboard.unlockProfile.cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={() => router.push('/welcome')} className="bg-primary hover:bg-primary/90">
-              <LogIn className="mr-2"/>
-              {t('dashboard.unlockProfile.confirm')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      </section>
 
-      </main>
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-foreground">{t('dashboard.recommendations.title')}</h2>
+           <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
+              <Link href="/help">
+                  {t('dashboard.seeAll')} <ArrowRight className="size-4" />
+              </Link>
+          </Button>
+        </div>
+        <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4">
+          {recommendations.map((r) => (
+            <RecommendationCard key={r.id} item={r} />
+          ))}
+        </div>
+      </section>
+      
+    <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader className="items-center text-center">
+          <div className="p-3 bg-primary/10 rounded-full mb-4 w-fit">
+            <Sparkles className="w-8 h-8 text-primary" />
+          </div>
+          <AlertDialogTitle className="text-2xl">{t('dashboard.unlockProfile.title')}</AlertDialogTitle>
+          <AlertDialogDescription className="max-w-xs">
+            {t('dashboard.unlockProfile.description')}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex-col-reverse sm:flex-col-reverse gap-2">
+          <AlertDialogCancel>{t('dashboard.unlockProfile.cancel')}</AlertDialogCancel>
+          <AlertDialogAction onClick={() => router.push('/welcome')} className="bg-primary hover:bg-primary/90">
+            <LogIn className="mr-2"/>
+            {t('dashboard.unlockProfile.confirm')}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
     </div>
   );
 }
