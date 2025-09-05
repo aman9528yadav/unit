@@ -15,18 +15,9 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     const [isMaintenance, setIsMaintenance] = useState(false);
 
     useEffect(() => {
-        const unsubscribe = listenToGlobalMaintenanceMode((enabled) => {
-            setIsMaintenance(enabled);
-
-            const isAllowedPath = window.location.pathname === '/maintenance' || window.location.pathname.startsWith('/dev');
-
-            if (enabled && !isAllowedPath) {
-                router.replace('/maintenance');
-            }
-        });
-
+        const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenance);
         return () => unsubscribe();
-    }, [router]);
+    }, []);
 
     useEffect(() => {
         const isAllowedPath = pathname === '/maintenance' || pathname.startsWith('/dev');
@@ -34,6 +25,11 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
             router.replace('/maintenance');
         }
     }, [isMaintenance, pathname, router]);
+
+    const isAllowedPath = pathname === '/maintenance' || pathname.startsWith('/dev');
+    if (isMaintenance && !isAllowedPath) {
+        return null; // Render nothing while redirecting
+    }
 
     return <>{children}</>;
 }
@@ -87,5 +83,3 @@ export default function RootLayout({
     </ThemeProvider>
   );
 }
-
-    
