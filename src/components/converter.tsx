@@ -364,27 +364,25 @@ export function Converter() {
     
     if (!history.includes(conversionString)) {
       incrementTodaysCalculations();
-      const newHistory = [conversionString, ...history.filter(item => item !== conversionString)];
+      const newHistory = [conversionString, ...history];
       setHistory(newHistory);
       localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputValue, fromUnit, toUnit, outputValue, history, selectedCategory.name]);
 
-  // Update favorite status & save history whenever output or favorites list change
+
+  // Update favorite status whenever output or favorites list change
   React.useEffect(() => {
     const numValue = parseFloat(inputValue);
-     if (isNaN(numValue) || !outputValue) {
+    if (isNaN(numValue) || !outputValue) {
       setIsFavorite(false);
       return
     };
 
-    handleSaveToHistory();
-
     const result = parseFloat(outputValue.replace(/,/g, ''));
     const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
     setIsFavorite(favorites.includes(conversionString));
-  }, [inputValue, fromUnit, toUnit, outputValue, favorites, handleSaveToHistory, selectedCategory.name]);
+  }, [inputValue, fromUnit, toUnit, outputValue, favorites, selectedCategory.name]);
 
  const handleSearch = () => {
     if (searchQuery.trim() === "" || isSearching) {
@@ -448,6 +446,7 @@ export function Converter() {
 
   const handleConvertClick = () => {
     performConversion(inputValue, fromUnit, toUnit);
+    handleSaveToHistory();
   };
   
   const handleToggleFavorite = () => {
@@ -777,12 +776,19 @@ function UnitSelectionDialog({ categories, onUnitSelect, selectedCategory, selec
         setIsOpen(false);
     };
 
+    useEffect(() => {
+        if (selectedCategory.name !== activeCategory.name) {
+            setActiveCategory(selectedCategory);
+        }
+    }, [selectedCategory, activeCategory.name]);
+
+
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                  <Button variant="outline" className="w-full justify-between h-12 text-base">
                     <div className="flex items-center gap-2">
-                         <selectedCategory.icon className="w-5 h-5 text-accent" />
+                         {selectedUnitInfo ? <selectedCategory.icon className="w-5 h-5 text-accent" /> : <Power className="w-5 h-5 text-accent" />}
                          <span>{selectedUnitInfo?.name} ({selectedUnitSymbol})</span>
                     </div>
                     <ChevronDown className="w-4 h-4 opacity-50" />
@@ -910,3 +916,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
