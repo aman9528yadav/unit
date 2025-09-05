@@ -3,21 +3,26 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // Allow public read access to settings like maintenance mode
+    match /settings/maintenance {
+      allow read: if true;
+      allow write: if request.auth != null; // Only allow logged-in users to write (should be restricted further in production)
+    }
 
-    // Allow public read access to notifications, but only authenticated users can create them.
+    // Allow public read access to global notifications
     match /notifications/{notificationId} {
       allow read: if true;
+      allow write: if request.auth != null; // Only allow logged-in users to write (should be restricted further in production)
+    }
+
+    // Allow logged-in users to write their own events
+    match /user_events/{eventId} {
       allow create: if request.auth != null;
-      allow update, delete: if false; // Nobody can change/delete from client
+      allow read, update, delete: if false; // Don't allow reading/modifying events
     }
 
-    // Allow public read for app status, but only authenticated users can change it.
-    match /app-status/maintenance {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-
-    // Default deny for all other documents
+    // Deny all other access by default
     match /{document=**} {
       allow read, write: if false;
     }
