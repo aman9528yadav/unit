@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Upload, LogOut, Settings, HelpCircle, X, Pencil, TrendingUp } from "lucide-react";
+import { User, Upload, LogOut, Settings, HelpCircle, X, Pencil, TrendingUp, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
@@ -160,6 +160,12 @@ export function UserData() {
                         <span className="text-sm font-bold text-primary">{Math.floor(progress)}%</span>
                     </div>
                     <Progress value={progress} />
+                    <Button asChild variant="link" size="sm" className="p-0 h-auto mt-2 text-primary">
+                        <Link href="/updates">
+                            <Info className="mr-1 h-3 w-3"/>
+                            Learn more about Premium benefits
+                        </Link>
+                    </Button>
                 </div>
             )}
 
