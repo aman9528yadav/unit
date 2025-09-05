@@ -45,8 +45,11 @@ export function UserData() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [settings, setSettings] = useState<UserSettings | null>(null);
     const [isClient, setIsClient] = useState(false);
+    const [userRole, setUserRole] = useState<'Member' | 'Owner'>('Member');
     const router = useRouter();
     const { toast } = useToast();
+
+    const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 
     useEffect(() => {
         setIsClient(true);
@@ -55,6 +58,11 @@ export function UserData() {
             const parsedProfile = JSON.parse(userProfileData);
             setProfile(parsedProfile);
             loadSettings(parsedProfile.email);
+             if (parsedProfile.email === DEVELOPER_EMAIL) {
+                setUserRole('Owner');
+            } else {
+                setUserRole('Member');
+            }
         } else {
             router.push('/welcome');
         }
@@ -122,7 +130,10 @@ export function UserData() {
                         </Link>
                     </Button>
                 </div>
-                <h2 className="text-2xl font-bold">{profile.fullName}</h2>
+                <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-bold">{profile.fullName}</h2>
+                    <Badge variant={userRole === 'Owner' ? 'default' : 'secondary'}>{userRole}</Badge>
+                </div>
                 <p className="text-muted-foreground text-sm">{profile.email}</p>
             </div>
 
