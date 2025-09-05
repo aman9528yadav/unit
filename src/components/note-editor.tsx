@@ -97,21 +97,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         }
     }, [content]);
 
-    const handleAutoSave = () => {
-        handleSave(true);
-    };
-
-    useEffect(() => {
-        // This effect only runs on mount and unmount
-        // The cleanup function will be called when the component unmounts
-        return () => {
-            if (isDirty) {
-                handleAutoSave();
-            }
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isDirty]); // Dependency on isDirty ensures the latest state is captured
-
     const applyStyle = (style: string, value: string) => {
         editorRef.current?.focus();
         const selection = window.getSelection();
@@ -424,3 +409,5 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
+
+    
