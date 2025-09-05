@@ -35,7 +35,6 @@ export function DevPanel() {
     const [notificationTitle, setNotificationTitle] = useState('');
     const [notificationDescription, setNotificationDescription] = useState('');
     const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
-    const [localMaintenance, setLocalMaintenance] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -48,9 +47,6 @@ export function DevPanel() {
             setUpdateText(storedUpdateText);
         }
 
-        const isLocalMaintenance = localStorage.getItem("setHomeAsMaintenance") === 'true';
-        setLocalMaintenance(isLocalMaintenance);
-        
         if (storedProfile) {
             const parsedProfile = JSON.parse(storedProfile);
             setProfile(parsedProfile);
@@ -145,32 +141,18 @@ export function DevPanel() {
     
      const handleMaintenanceModeToggle = async (enabled: boolean) => {
         try {
+            setIsMaintenanceMode(enabled); // Optimistic update
             await setGlobalMaintenanceMode(enabled);
-            // The UI will update via the Firestore listener.
             toast({
-                title: `Global Maintenance Mode ${enabled ? 'Enabled' : 'Disabled'}`,
+                title: `Maintenance Mode ${enabled ? 'Enabled' : 'Disabled'}`,
                 description: enabled ? "App is now in maintenance mode for all users." : "App is now live for all users.",
             });
         } catch (error) {
             console.error("Failed to toggle maintenance mode:", error);
             toast({ title: "Update Failed", description: "Could not change maintenance mode status.", variant: "destructive" });
+            setIsMaintenanceMode(!enabled); // Revert on failure
         }
     };
-
-    const handleLocalMaintenanceToggle = (enabled: boolean) => {
-        setLocalMaintenance(enabled);
-        localStorage.setItem("setHomeAsMaintenance", String(enabled));
-        toast({
-            title: `Local Maintenance View ${enabled ? 'Enabled' : 'Disabled'}`,
-            description: enabled ? "Home page will redirect to /maintenance locally." : "Local redirect disabled.",
-        });
-         if (enabled) {
-            router.push('/maintenance');
-        } else {
-            router.push('/');
-        }
-    };
-
 
     if (!isClient) {
         return null;
@@ -332,24 +314,13 @@ export function DevPanel() {
                         <CardContent className="space-y-4">
                              <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
                                 <div>
-                                    <Label htmlFor="maintenance-mode">Enable Global Maintenance Mode</Label>
+                                    <Label htmlFor="maintenance-mode">Enable Maintenance Mode</Label>
                                     <p className='text-xs text-muted-foreground'>Redirects all users to /maintenance.</p>
                                 </div>
                                 <Switch
                                     id="maintenance-mode"
                                     checked={isMaintenanceMode}
                                     onCheckedChange={handleMaintenanceModeToggle}
-                                />
-                            </div>
-                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                <div>
-                                    <Label htmlFor="local-maintenance-mode">Set Home to Maintenance (Local)</Label>
-                                    <p className='text-xs text-muted-foreground'>Redirects / to /maintenance locally.</p>
-                                </div>
-                                <Switch
-                                    id="local-maintenance-mode"
-                                    checked={localMaintenance}
-                                    onCheckedChange={handleLocalMaintenanceToggle}
                                 />
                             </div>
                         </CardContent>

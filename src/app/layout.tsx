@@ -51,7 +51,6 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
         if (isMaintenanceMode && !isMaintenancePage) {
             router.replace('/maintenance');
         } else if (!isMaintenanceMode && isMaintenancePage) {
-            // Redirect away from maintenance only if global is off.
             router.replace('/');
         }
     }, [isMaintenanceMode, pathname, router]);

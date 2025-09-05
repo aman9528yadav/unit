@@ -49,10 +49,8 @@ export default function Home() {
         // If maintenance mode status is not yet determined, do nothing.
         if (isMaintenanceMode === null) return;
         
-        const isLocalMaintenance = localStorage.getItem("setHomeAsMaintenance") === 'true';
-
         // If maintenance mode is on (globally or locally), redirect immediately.
-        if (isMaintenanceMode || isLocalMaintenance) {
+        if (isMaintenanceMode) {
             router.replace('/maintenance');
             return;
         }
