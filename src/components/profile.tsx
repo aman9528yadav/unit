@@ -45,7 +45,6 @@ const defaultProfile: UserProfile = {
 
 export function Profile() {
   const [profile, setProfile] = useState(defaultProfile);
-  const [streakData, setStreakData] = useState<StreakData>({ bestStreak: 0, currentStreak: 0, daysNotOpened: 0 });
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -59,7 +58,6 @@ export function Profile() {
         parsed.birthday = format(new Date(parsed.dob), "MMMM do");
       }
       setProfile(parsed);
-      setStreakData(getStreakData(parsed.email));
     } else {
         router.replace('/welcome');
     }
@@ -122,7 +120,7 @@ export function Profile() {
         <div className="flex flex-col items-center text-center gap-2 mt-2">
            <div className="relative w-28 h-28">
                 <Avatar className="w-28 h-28 text-6xl border-4 border-background">
-                    <AvatarImage src={profile.profileImage || undefined} alt={profile.fullName} />
+                    <AvatarImage src={profile.profileImage} alt={profile.fullName} />
                     <AvatarFallback>
                         <User />
                     </AvatarFallback>
