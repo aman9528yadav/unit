@@ -31,13 +31,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2, ChevronDown, Sparkles, LogIn, Scale, Power, Gauge, Flame, DollarSign, Fuel, Edit } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2, ChevronDown, Sparkles, LogIn, Scale, Power, Gauge, Flame, DollarSign, Fuel, Edit, Lock } from "lucide-react";
 import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow.ts";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useSearchParams, useRouter } from "next/navigation";
-import { incrementTodaysCalculations } from "@/lib/utils";
+import { incrementTodaysCalculations, getAllTimeCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { CustomUnit, CustomCategory } from "./custom-unit-manager";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -45,6 +45,11 @@ import { cn } from "@/lib/utils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+
+const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
+const PREMIUM_MEMBER_THRESHOLD = 8000;
+type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 
 const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
@@ -188,6 +193,7 @@ export function Converter() {
   const [autoConvert, setAutoConvert] = useState(true);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+  const [userRole, setUserRole] = useState<UserRole>('Member');
 
 
   const imageExportRef = React.useRef<HTMLDivElement>(null);
@@ -216,7 +222,20 @@ export function Converter() {
 
     if (storedHistory) setHistory(JSON.parse(storedHistory));
     if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
-    if (storedProfileData) setProfile(JSON.parse(storedProfileData));
+    if (storedProfileData) {
+        const parsedProfile = JSON.parse(storedProfileData);
+        setProfile(parsedProfile);
+        const calculations = getAllTimeCalculations(parsedProfile.email);
+        if (parsedProfile.email === DEVELOPER_EMAIL) {
+            setUserRole('Owner');
+        } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
+            setUserRole('Premium Member');
+        } else {
+            setUserRole('Member');
+        }
+    } else {
+        setUserRole('Member');
+    }
     if (savedAutoConvert !== null) setAutoConvert(JSON.parse(savedAutoConvert));
     if (savedCustomUnits) setCustomUnits(JSON.parse(savedCustomUnits));
     if (savedCustomCategories) setCustomCategories(JSON.parse(savedCustomCategories));
@@ -629,6 +648,8 @@ export function Converter() {
         toast({ title: "Result Copied!", description: `Copied "${outputValue}" to your clipboard.`});
     }
   };
+  
+  const isPremiumFeatureLocked = userRole === 'Member';
 
 
   return (
@@ -774,10 +795,22 @@ export function Converter() {
                                 <Button variant="ghost" size="icon" onClick={() => setIsGraphVisible(v => !v)} disabled={!outputValue || selectedCategory.name === 'Temperature'}>
                                     <BarChart2 size={16} />
                                 </Button>
+                                <TooltipProvider>
                                 <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" disabled={!outputValue}><Share2 size={16}/></Button>
-                                    </DialogTrigger>
+                                    <UITooltip>
+                                        <TooltipTrigger asChild>
+                                             <DialogTrigger asChild disabled={isPremiumFeatureLocked}>
+                                                <Button variant="ghost" size="icon" disabled={!outputValue}>
+                                                    {isPremiumFeatureLocked ? <Lock size={16} /> : <Share2 size={16}/>}
+                                                </Button>
+                                            </DialogTrigger>
+                                        </TooltipTrigger>
+                                        {isPremiumFeatureLocked && (
+                                            <TooltipContent>
+                                                <p>Unlock Premium to share conversions.</p>
+                                            </TooltipContent>
+                                        )}
+                                    </UITooltip>
                                     <DialogContent>
                                         <DialogHeader>
                                             <DialogTitle>Share or Export Conversion</DialogTitle>
@@ -789,6 +822,7 @@ export function Converter() {
                                          </div>
                                     </DialogContent>
                                 </Dialog>
+                                </TooltipProvider>
                              </div>
                         </CardContent>
                     </Card>
