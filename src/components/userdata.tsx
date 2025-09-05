@@ -26,7 +26,7 @@ const Section = ({ title, children }: { title: string, children: React.ReactNode
 
 export function UserData() {
     return (
-        <div className="w-full max-w-4xl mx-auto bg-card rounded-2xl shadow-lg border p-6">
+        <div className="w-full max-w-lg mx-auto bg-card rounded-2xl shadow-lg border p-6">
             <header className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-2">
                     <User className="text-primary"/>
