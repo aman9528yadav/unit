@@ -76,7 +76,7 @@ export function GlobalSearchDialog() {
         .filter(h => h.toLowerCase().includes(lowerQuery))
         .forEach(h => allResults.push({
           type: 'History',
-          title: h,
+          title: h.split('|')[0],
           id: h,
           href: `/converter`, // Restore action will be handled on page load
         }));
@@ -142,9 +142,15 @@ export function GlobalSearchDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Search />
-        </Button>
+        <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input 
+                placeholder="Search tools, history, notes..." 
+                className="pl-10 h-11 rounded-lg bg-secondary border-border text-foreground placeholder-muted-foreground w-full" 
+                onFocus={() => setIsOpen(true)}
+            />
+             <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground p-1.5 border border-border rounded-md">⌘K</div>
+        </div>
       </DialogTrigger>
       <DialogContent className="p-0 gap-0">
         <DialogHeader className="p-4 border-b">

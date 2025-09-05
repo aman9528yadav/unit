@@ -1,59 +1,66 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from 'next/link';
-import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
-import { ArrowRight, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, Home, StickyNote, CalculatorIcon, Clock, Hourglass, Sparkles, LogIn, Sigma } from "lucide-react";
-import { getTodaysCalculations, getWeeklyCalculations, getAllTimeCalculations } from "@/lib/utils";
-import { useLanguage } from "@/context/language-context";
-import { recordVisit } from "@/lib/streak";
-import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Calculator,
+  Clock3,
+  History,
+  NotebookPen,
+  Wand2,
+  LayoutGrid,
+  Search,
+  ArrowRight,
+  PlayCircle,
+  BarChart3,
+  TrendingUp,
+  CheckCircle2,
+  Moon,
+  Sun,
+  UserCircle2,
+  Settings,
+} from "lucide-react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { useRouter } from "next/navigation";
-import { Notifications } from "./notifications";
+import Image from "next/image";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { useTheme } from "@/context/theme-context";
+import { getTodaysCalculations, getWeeklyCalculations, getAllTimeCalculations } from "@/lib/utils";
 import { GlobalSearchDialog } from "./global-search-dialog";
-import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
+import { Notifications } from "./notifications";
 
-
-// This should match the key in notepad.tsx
-const NOTES_STORAGE_KEY_BASE = 'userNotesV2';
 
 interface Note {
     id: string;
     deletedAt?: string | null;
 }
 
-interface UserProfile {
-    fullName: string;
-    email: string;
-    profileImage?: string;
-    [key: string]: any;
-}
-
-const getUserNotesKey = (email: string) => `${email}_${NOTES_STORAGE_KEY_BASE}`;
+const NOTES_STORAGE_KEY_BASE = 'userNotesV2';
+const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : 'guest_userNotesV2';
 
 const getSavedNotesCount = (email: string | null) => {
     if (typeof window === 'undefined') return 0;
-    // For guests, use a generic key
-    const storageKey = email ? getUserNotesKey(email) : 'guest_userNotesV2';
+    const storageKey = getUserNotesKey(email);
     const savedNotes = localStorage.getItem(storageKey);
     if (savedNotes) {
         try {
             const notes: Note[] = JSON.parse(savedNotes);
-            // Count only notes that are not in the recycle bin
             return notes.filter(note => !note.deletedAt).length;
         } catch (e) {
             console.error("Failed to parse notes from storage", e);
@@ -63,23 +70,158 @@ const getSavedNotesCount = (email: string | null) => {
     return 0;
 };
 
+const quickTools = [
+  { label: "Converter", icon: Wand2, href: "/converter" },
+  { label: "Calculator", icon: Calculator, href: "/calculator" },
+  { label: "Notes", icon: NotebookPen, href: "/notes" },
+  { label: "History", icon: History, href: "/history" },
+  { label: "Time Tools", icon: Clock3, href: "/time" },
+  { label: "Settings", icon: Settings, href: "/settings" },
+];
+
+const recommendations = [
+  {
+    id: 1,
+    title: "Smart Search Bar",
+    minutes: 5,
+    by: "Aman",
+    img: "https://picsum.photos/seed/tech1/400/200",
+    dataAiHint: "digital analytics"
+  },
+  {
+    id: 2,
+    title: "How to use Smart Calc",
+    minutes: 15,
+    by: "Aman",
+    img: "https://picsum.photos/seed/tech2/400/200",
+    dataAiHint: "financial calculator"
+  },
+  {
+    id: 3,
+    title: "Unit Converter Pro Tips",
+    minutes: 8,
+    by: "Aman",
+    img: "https://picsum.photos/seed/tech3/400/200",
+    dataAiHint: "team working"
+  },
+];
+
+const Stat = ({ icon: Icon, label, value, trend }: any) => (
+  <Card className="bg-card border-border shadow-lg">
+    <CardContent className="p-5">
+      <div className="flex items-center gap-4">
+        <div className="size-11 grid place-items-center rounded-2xl bg-secondary text-accent">
+          <Icon className="size-5" />
+        </div>
+        <div className="flex-1">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-2xl font-semibold text-foreground">{value}</p>
+            {trend && (
+              <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
+                <TrendingUp className="mr-1 size-3" /> {trend}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const ToolButton = ({ icon: Icon, label, href }: any) => (
+  <motion.a
+    href={href}
+    whileHover={{ y: -2, scale: 1.02 }}
+    whileTap={{ scale: 0.98 }}
+    className="group rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex items-center gap-3 shadow-lg"
+  >
+    <div className="size-10 grid place-items-center rounded-lg bg-secondary text-accent">
+      <Icon className="size-5" />
+    </div>
+    <div className="flex-1">
+      <p className="font-medium text-foreground">{label}</p>
+      <p className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">Open {label}</p>
+    </div>
+    <ArrowRight className="size-5 text-muted-foreground opacity-60 group-hover:opacity-100" />
+  </motion.a>
+);
+
+const RecommendationCard = ({ item }: any) => (
+  <motion.div whileHover={{ y: -2 }} className="min-w-[300px] max-w-[340px] rounded-xl overflow-hidden border border-border bg-card">
+    <div className="relative h-40">
+      <Image src={item.img} alt={item.title} layout="fill" objectFit="cover" data-ai-hint={item.dataAiHint} />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+      <Button asChild size="icon" className="absolute bottom-3 left-3 rounded-full shadow-xl bg-accent hover:bg-accent/90">
+         <Link href="/help">
+            <PlayCircle className="size-5 text-accent-foreground" />
+         </Link>
+      </Button>
+    </div>
+    <div className="p-4">
+      <p className="font-medium leading-tight text-foreground">{item.title}</p>
+      <p className="text-xs text-muted-foreground mt-1">
+        {item.minutes} Minutes • {item.by}
+      </p>
+    </div>
+  </motion.div>
+);
+
+interface UserProfile {
+    fullName: string;
+    email: string;
+    profileImage?: string;
+    [key: string]: any;
+}
+
+const Header = ({ name, profile }: { name: string, profile: UserProfile | null }) => {
+  const router = useRouter();
+  
+  return (
+    <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <CheckCircle2 className="size-4 text-accent" />
+          Welcome back
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-2 text-foreground">Hi, {name}</h1>
+        <p className="text-muted-foreground mt-1">Ready to boost your productivity today?</p>
+      </div>
+      <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex-1 sm:w-80">
+           <GlobalSearchDialog />
+        </div>
+        <Notifications />
+        <Button variant="ghost" size="icon" className="rounded-full" onClick={() => router.push(profile ? '/profile' : '/welcome')}>
+            <Avatar className="h-11 w-11 border border-border bg-card text-foreground">
+              <AvatarImage src={profile?.profileImage} alt={profile?.fullName} />
+              <AvatarFallback><UserCircle2 className="size-6" /></AvatarFallback>
+            </Avatar>
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const ThemeToggle = ({ isDark, onChange }: { isDark: boolean; onChange: (isDark: boolean) => void }) => (
+  <div className="flex items-center gap-3 p-2 rounded-lg border border-border bg-card">
+    <Sun className="size-4 text-yellow-400" />
+    <Switch checked={isDark} onCheckedChange={onChange} />
+    <Moon className="size-4 text-cyan-400" />
+  </div>
+);
 
 export function Dashboard() {
+  const { theme, setTheme } = useTheme();
   const [isClient, setIsClient] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [todayCalculations, setTodayCalculations] = useState(0);
-  const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string, value: number}[]>([]);
-  const [allTimeCalculations, setAllTimeCalculations] = useState(0);
+  const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string; value: number}[]>([]);
   const [savedNotesCount, setSavedNotesCount] = useState(0);
-  const { t } = useLanguage();
-  const [showLoginDialog, setShowLoginDialog] = useState(false);
-  const router = useRouter();
-
 
   const updateStats = (email: string | null) => {
     setTodayCalculations(getTodaysCalculations(email));
     setWeeklyCalculations(getWeeklyCalculations(email));
-    setAllTimeCalculations(getAllTimeCalculations(email));
     setSavedNotesCount(getSavedNotesCount(email));
   }
 
@@ -89,213 +231,104 @@ export function Dashboard() {
     if (storedProfile) {
         const parsedProfile = JSON.parse(storedProfile);
         setProfile(parsedProfile);
-        recordVisit(parsedProfile.email); // Record the visit for streak tracking
         updateStats(parsedProfile.email);
     } else {
-        updateStats(null); // For guest users
+        updateStats(null);
     }
   }, []);
-
-  // Effect to listen for storage changes from other tabs/windows
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-        if (profile?.email && (e.key === `${profile.email}_dailyCalculations` || e.key === getUserNotesKey(profile.email))) {
-            updateStats(profile.email);
-        }
-        if (e.key === 'userProfile') {
-            if (e.newValue) {
-                const newProfile = JSON.parse(e.newValue);
-                setProfile(newProfile);
-                updateStats(newProfile.email);
-            } else {
-                setProfile(null);
-                updateStats(null);
-            }
-        }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [profile]);
   
-  const handleProfileClick = () => {
-    if (profile) {
-      router.push('/profile');
-    } else {
-      setShowLoginDialog(true);
-    }
-  };
-  
-  const weeklyTotal = useMemo(() => {
-      return weeklyCalculations.reduce((acc, curr) => acc + curr.value, 0);
-  }, [weeklyCalculations]);
-
+  const handleThemeChange = (isDark: boolean) => {
+      setTheme(isDark ? 'dark' : 'light');
+  }
 
   if (!isClient) {
-    return null; // Or a loading skeleton
+    return null;
   }
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col gap-6">
-      <header className="flex justify-between items-center sticky top-0 z-50 bg-background py-4">
-        <div>
-          <h1 className="text-2xl font-bold">{t('dashboard.greeting', { name: profile?.fullName || "Guest" })}</h1>
-          <p className="text-muted-foreground">{t('dashboard.challenge')}</p>
+    <div className="min-h-screen bg-background text-foreground">
+      <main className="relative mx-auto max-w-6xl px-4 sm:px-6 py-10">
+        <div className="flex items-center justify-between mb-8">
+          <Badge className="bg-primary/20 text-primary border-primary/30">UniConvert • Dashboard</Badge>
+          <ThemeToggle isDark={theme === 'dark'} onChange={handleThemeChange} />
         </div>
-        <div className="flex items-center gap-2">
-            {profile && <GlobalSearchDialog />}
-            {profile && <Notifications />}
-             <Button variant="ghost" size="icon" className="rounded-full" onClick={handleProfileClick}>
-                <Avatar>
-                    <AvatarImage src={profile?.profileImage} alt={profile?.fullName}/>
-                    <AvatarFallback><User /></AvatarFallback>
-                </Avatar>
-              </Button>
-        </div>
-      </header>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="bg-card p-4 rounded-2xl col-span-1 flex flex-col items-center justify-center text-center">
-             <CalculatorIcon className="w-8 h-8 text-accent mb-2"/>
-             <p className="text-3xl font-bold">{String(todayCalculations).padStart(2, '0')}</p>
-             <p className="text-sm text-muted-foreground mt-1">{t('dashboard.todayCalculation')}</p>
-        </Card>
-         <Card className="bg-card p-4 rounded-2xl col-span-1 flex flex-col items-center justify-center text-center">
-            <StickyNote className="w-8 h-8 text-primary mb-2"/>
-            <p className="text-3xl font-bold">{String(savedNotesCount).padStart(2, '0')}</p>
-            <p className="text-sm text-muted-foreground mt-1">{t('dashboard.savedNotes')}</p>
-        </Card>
-      </div>
 
-      <Card className="bg-card p-0 rounded-2xl">
-          <CardHeader>
-            <CardTitle>Quick Access</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-             <div className="grid grid-cols-3 gap-3 text-center">
-                <Link href="/converter" className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
-                    <div className="p-2 bg-primary/20 rounded-full"><Sigma className="text-primary"/></div>
-                    <p className="font-semibold text-sm">Converter</p>
-                </Link>
-                 <Link href="/calculator" className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
-                    <div className="p-2 bg-orange-500/10 rounded-full"><CalculatorIcon className="text-orange-500"/></div>
-                    <p className="font-semibold text-sm">Calculator</p>
-                </Link>
-                <Link href="/notes" className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
-                    <div className="p-2 bg-accent/20 rounded-full"><StickyNote className="text-accent"/></div>
-                    <p className="font-semibold text-sm">{t('nav.notes')}</p>
-                </Link>
-                <Link href="/history" className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
-                    <div className="p-2 bg-blue-500/10 rounded-full"><Clock className="text-blue-500"/></div>
-                    <p className="font-semibold text-sm">{t('nav.history')}</p>
-                </Link>
-                <Link href="/time" className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
-                     <div className="p-2 bg-green-500/10 rounded-full"><Hourglass className="text-green-500"/></div>
-                     <p className="font-semibold text-sm">Time Tools</p>
-                </Link>
-                {profile && (
-                 <Link href="/settings" className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
-                     <div className="p-2 bg-gray-500/10 rounded-full"><Settings className="text-gray-500"/></div>
-                     <p className="font-semibold text-sm">Settings</p>
-                 </Link>
-                )}
+        <Header name={profile?.fullName || 'Guest'} profile={profile} />
+
+        <section className="grid gap-4 sm:gap-6 mt-8 grid-cols-1 md:grid-cols-3">
+          <Stat icon={Calculator} label="Today Calculations" value={String(todayCalculations)} />
+          <Stat icon={NotebookPen} label="Saved Notes" value={String(savedNotesCount)} />
+          <Stat icon={History} label="Last 7 Days" value={String(weeklyCalculations.reduce((acc, curr) => acc + curr.value, 0))} />
+        </section>
+
+        <section className="mt-10">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-foreground">Quick Access</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {quickTools.map((t) => (
+              <ToolButton key={t.label} {...t} />
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-10">
+          <Card className="overflow-hidden rounded-xl bg-card border-border shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between pb-0">
+              <div>
+                <CardTitle className="text-base text-foreground">Calculations</CardTitle>
+                <p className="text-xs text-muted-foreground">Last 7 days</p>
               </div>
-          </CardContent>
-      </Card>
-
-        
-        <Card className="bg-card p-4 rounded-2xl">
-            <h3 className="font-semibold mb-2 text-center">{t('dashboard.calculation')}</h3>
-             <div className="h-40">
+              <Button variant="ghost" className="gap-2 text-accent hover:text-accent/90"><BarChart3 className="size-4" /> Export</Button>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={weeklyCalculations} margin={{ top: 5, right: 0, left: -30, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                        <Tooltip
-                            contentStyle={{
-                                backgroundColor: 'hsl(var(--background))',
-                                borderColor: 'hsl(var(--border))',
-                                color: 'hsl(var(--foreground))',
-                                borderRadius: 'var(--radius)',
-                            }}
-                            cursor={{ fill: 'hsla(var(--muted), 0.5)' }}
-                        />
-                        <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    </BarChart>
+                  <AreaChart data={weeklyCalculations} margin={{ left: 0, right: 0, top: 10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} strokeOpacity={0.1} stroke="hsl(var(--border))" />
+                    <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis allowDecimals={false} width={28} tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" />
+                    <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))" }} />
+                    <Area type="monotone" dataKey="value" strokeWidth={2} stroke="hsl(var(--primary))" fill="url(#fill)" />
+                  </AreaChart>
                 </ResponsiveContainer>
-            </div>
-             <div className="text-center text-sm text-muted-foreground mt-2">
-                Total calculations: <strong>{allTimeCalculations}</strong>
-            </div>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
 
-      <div>
-        <div className="flex justify-between items-center mb-2">
-            <h2 className="font-bold text-lg">{t('dashboard.recommendations')}</h2>
-            <Link href="/help" className="text-sm text-accent flex items-center gap-1">
-                {t('dashboard.seeAll')} <ArrowRight size={16} />
-            </Link>
-        </div>
-        <div className="grid grid-cols-1 gap-4">
-            <Link href="/help">
-                <Card className="bg-card border-none overflow-hidden h-full flex items-center">
-                    <div className="relative w-1/3">
-                        <Image src="https://picsum.photos/200/200" alt="Smart Search" width={200} height={200} className="w-full h-28 object-cover" data-ai-hint="digital analytics" />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                            <PlayCircle size={32} className="text-white/80" />
-                        </div>
-                    </div>
-                    <CardContent className="p-3 w-2/3">
-                        <h3 className="font-bold text-sm">{t('dashboard.smartSearch')}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">Learn how to use the AI-powered search for instant conversions.</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                            <span className="flex items-center gap-1"><ClockIcon size={14} /> 05 {t('dashboard.minutes')}</span>
-                            <span className="flex items-center gap-1"><User size={14} /> Aman</span>
-                        </div>
-                    </CardContent>
-                </Card>
-            </Link>
-            <Link href="/help">
-                <Card className="bg-card border-none overflow-hidden h-full flex items-center">
-                     <div className="relative w-1/3">
-                        <Image src="https://picsum.photos/201/200" alt="How to use Smart Calc" width={201} height={200} className="w-full h-28 object-cover" data-ai-hint="financial calculator" />
-                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                            <PlayCircle size={32} className="text-white/80" />
-                        </div>
-                    </div>
-                    <CardContent className="p-3 w-2/3">
-                        <h3 className="font-bold text-sm">{t('dashboard.howToUseCalc')}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">Discover the advanced functions of the scientific calculator.</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                            <span className="flex items-center gap-1"><ClockIcon size={14} /> 15 {t('dashboard.minutes')}</span>
-                            <span className="flex items-center gap-1"><User size={14} /> Aman</span>
-                        </div>
-                    </CardContent>
-                </Card>
-            </Link>
-        </div>
-      </div>
-      
-       <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader className="items-center text-center">
-            <div className="p-3 bg-primary/10 rounded-full mb-4 w-fit">
-              <Sparkles className="w-8 h-8 text-primary" />
-            </div>
-            <AlertDialogTitle className="text-2xl">Unlock Your Profile</AlertDialogTitle>
-            <AlertDialogDescription className="max-w-xs">
-              Log in or create an account to personalize your experience, save preferences, and access your history.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col-reverse sm:flex-col-reverse gap-2">
-            <AlertDialogCancel>Not Now</AlertDialogCancel>
-            <AlertDialogAction onClick={() => router.push('/welcome')} className="bg-primary hover:bg-primary/90">
-              <LogIn className="mr-2"/>
-              Continue to Login
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        <section className="mt-10">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-foreground">Recommendations</h2>
+            <Button asChild variant="link" className="gap-1 text-accent hover:text-accent/90">
+                <Link href="/help">
+                    See All <ArrowRight className="size-4" />
+                </Link>
+            </Button>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4">
+            {recommendations.map((r) => (
+              <RecommendationCard key={r.id} item={r} />
+            ))}
+          </div>
+        </section>
+
+        <footer className="mt-14 py-10 text-sm text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© {new Date().getFullYear()} UniConvert • Owned by Aman Yadav. All rights reserved.</p>
+          <div className="flex items-center gap-4">
+            <Link href="/privacy-policy" className="hover:underline">Privacy</Link>
+            <a href="#" className="hover:underline">Terms</a>
+            <a href="#" className="hover:underline">Contact</a>
+          </div>
+        </footer>
+      </main>
     </div>
   );
 }
+
