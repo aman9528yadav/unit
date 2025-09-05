@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, History, CalculatorIcon } from "lucide-react";
+import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, History, CalculatorIcon, Info } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { useTheme } from "@/context/theme-context";
 import {
@@ -158,6 +158,11 @@ export function Settings() {
               icon={Palette} 
               text="Edit Custom Theme"
               href="/settings/theme"
+            />
+             <SettingsItem 
+              icon={Info} 
+              text="About"
+              href="/about"
               isLast={true}
             />
           </div>
