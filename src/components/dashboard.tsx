@@ -22,6 +22,8 @@ import {
   UserCircle2,
   Settings,
   Languages,
+  Sigma,
+  Hourglass,
 } from "lucide-react";
 import {
   Area,
@@ -47,6 +49,7 @@ import { GlobalSearchDialog } from "./global-search-dialog";
 import { Notifications } from "./notifications";
 import { useLanguage } from "@/context/language-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { cn } from "@/lib/utils";
 
 
 interface Note {
@@ -74,12 +77,12 @@ const getSavedNotesCount = (email: string | null) => {
 };
 
 const quickTools = [
-  { label: "Converter", icon: Wand2, href: "/converter" },
-  { label: "Calculator", icon: Calculator, href: "/calculator" },
-  { label: "Notes", icon: NotebookPen, href: "/notes" },
-  { label: "History", icon: History, href: "/history" },
-  { label: "Time Tools", icon: Clock3, href: "/time" },
-  { label: "Settings", icon: Settings, href: "/settings" },
+  { label: "Converter", icon: Sigma, href: "/converter", color: "text-blue-400" },
+  { label: "Calculator", icon: Calculator, href: "/calculator", color: "text-orange-400" },
+  { label: "Notes", icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
+  { label: "History", icon: History, href: "/history", color: "text-blue-400" },
+  { label: "Time Tools", icon: Hourglass, href: "/time", color: "text-green-400" },
+  { label: "Settings", icon: Settings, href: "/settings", color: "text-gray-400" },
 ];
 
 const recommendations = [
@@ -132,22 +135,15 @@ const Stat = ({ icon: Icon, label, value, trend }: any) => (
   </Card>
 );
 
-const ToolButton = ({ icon: Icon, label, href }: any) => (
-  <motion.a
-    href={href}
-    whileHover={{ y: -2, scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-    className="group rounded-lg border border-border bg-card hover:bg-secondary transition-all p-2 flex items-center gap-2 shadow-sm"
-  >
-    <div className="size-8 grid place-items-center rounded-md bg-secondary text-primary">
-      <Icon className="size-4" />
-    </div>
-    <div className="flex-1">
-      <p className="font-medium text-foreground text-xs">{label}</p>
-    </div>
-    <ArrowRight className="size-4 text-muted-foreground opacity-60 group-hover:opacity-100" />
-  </motion.a>
+const ToolButton = ({ icon: Icon, label, href, color }: any) => (
+    <Link href={href} className="group rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex flex-col items-center justify-center gap-2 shadow-sm text-center">
+        <div className={cn("size-12 grid place-items-center rounded-full bg-secondary", color)}>
+            <Icon className="size-6" />
+        </div>
+        <p className="font-semibold text-foreground text-sm">{label}</p>
+    </Link>
 );
+
 
 const RecommendationCard = ({ item }: any) => (
   <motion.div whileHover={{ y: -2 }} className="min-w-[280px] max-w-[300px] rounded-xl overflow-hidden border border-border bg-card">
@@ -284,7 +280,7 @@ export function Dashboard() {
               <CardTitle>Quick Access</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 {quickTools.map((t) => (
                   <ToolButton key={t.label} {...t} />
                 ))}
