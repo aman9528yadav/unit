@@ -350,13 +350,14 @@ export function Converter() {
     const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
     localStorage.setItem('lastConversion', conversionString);
     
-    if (!history.some(h => h.startsWith(conversionString.split('|')[0]))) {
+    const currentHistory = JSON.parse(localStorage.getItem("conversionHistory") || "[]");
+    if (!currentHistory.some((h: string) => h.startsWith(conversionString.split('|')[0]))) {
       incrementTodaysCalculations();
-      const newHistory = [conversionString, ...history];
+      const newHistory = [conversionString, ...currentHistory];
       setHistory(newHistory);
       localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
     }
-  }, [inputValue, fromUnit, toUnit, outputValue, history, selectedCategory.name]);
+  }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name]);
 
 
   // Update favorite status whenever output or favorites list change
@@ -752,9 +753,9 @@ function UnitSelectionDialog({ categories, onUnitSelect, selectedCategory, selec
     const [activeCategory, setActiveCategory] = useState<ConversionCategory>(selectedCategory);
     
     const selectedUnitInfo = useMemo(() => {
-        const category = categories.find(c => c.name === selectedCategory.name);
+        const category = categories.find(c => c.units.some(u => u.symbol === selectedUnitSymbol));
         return category?.units.find(u => u.symbol === selectedUnitSymbol);
-    }, [categories, selectedCategory, selectedUnitSymbol]);
+    }, [categories, selectedUnitSymbol]);
     
     const filteredUnits = useMemo(() => activeCategory.units.filter(unit => 
         unit.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -767,10 +768,6 @@ function UnitSelectionDialog({ categories, onUnitSelect, selectedCategory, selec
     };
 
     useEffect(() => {
-        // This hook ensures that if the parent's selectedCategory changes,
-        // the dialog's active category is updated to match.
-        // It prevents a mismatch where the dialog shows a different category
-        // than the one currently active in the main converter view.
         if (selectedCategory.name !== activeCategory.name) {
             setActiveCategory(selectedCategory);
         }
