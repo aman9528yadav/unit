@@ -110,16 +110,16 @@ const recommendations = [
 ];
 
 const Stat = ({ icon: Icon, label, value, trend }: any) => (
-  <Card className="bg-card border-border shadow-lg">
-    <CardContent className="p-5">
-      <div className="flex items-center gap-4">
-        <div className="size-11 grid place-items-center rounded-2xl bg-secondary text-accent">
+  <Card className="bg-card border-border shadow-sm">
+    <CardContent className="p-4">
+      <div className="flex items-center gap-3">
+        <div className="size-10 grid place-items-center rounded-lg bg-secondary text-primary">
           <Icon className="size-5" />
         </div>
         <div className="flex-1">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
           <div className="flex items-center gap-2">
-            <p className="text-2xl font-semibold text-foreground">{value}</p>
+            <p className="text-xl font-semibold text-foreground">{value}</p>
             {trend && (
               <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
                 <TrendingUp className="mr-1 size-3" /> {trend}
@@ -137,9 +137,9 @@ const ToolButton = ({ icon: Icon, label, href }: any) => (
     href={href}
     whileHover={{ y: -2, scale: 1.02 }}
     whileTap={{ scale: 0.98 }}
-    className="group rounded-lg border border-border bg-card hover:bg-secondary transition-all p-2 flex items-center gap-2 shadow-lg"
+    className="group rounded-lg border border-border bg-card hover:bg-secondary transition-all p-2 flex items-center gap-2 shadow-sm"
   >
-    <div className="size-8 grid place-items-center rounded-md bg-secondary text-accent">
+    <div className="size-8 grid place-items-center rounded-md bg-secondary text-primary">
       <Icon className="size-4" />
     </div>
     <div className="flex-1">
@@ -150,13 +150,13 @@ const ToolButton = ({ icon: Icon, label, href }: any) => (
 );
 
 const RecommendationCard = ({ item }: any) => (
-  <motion.div whileHover={{ y: -2 }} className="min-w-[300px] max-w-[340px] rounded-xl overflow-hidden border border-border bg-card">
-    <div className="relative h-40">
+  <motion.div whileHover={{ y: -2 }} className="min-w-[280px] max-w-[300px] rounded-xl overflow-hidden border border-border bg-card">
+    <div className="relative h-36">
       <Image src={item.img} alt={item.title} layout="fill" objectFit="cover" data-ai-hint={item.dataAiHint} />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-      <Button asChild size="icon" className="absolute bottom-3 left-3 rounded-full shadow-xl bg-accent hover:bg-accent/90">
+      <Button asChild size="icon" className="absolute bottom-3 left-3 rounded-full shadow-xl bg-primary hover:bg-primary/90">
          <Link href="/help">
-            <PlayCircle className="size-5 text-accent-foreground" />
+            <PlayCircle className="size-5 text-primary-foreground" />
          </Link>
       </Button>
     </div>
@@ -183,16 +183,16 @@ const Header = ({ name, profile }: { name: string, profile: UserProfile | null }
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <CheckCircle2 className="size-4 text-accent" />
-            Welcome back
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Hi, {name}</h1>
+             <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CheckCircle2 className="size-4 text-green-500" />
+                Welcome back
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Hi, {name}</h1>
         </div>
         <div className="flex items-center gap-2">
             <Notifications />
             <Button variant="ghost" size="icon" className="rounded-full" onClick={() => router.push(profile ? '/profile' : '/welcome')}>
-                <Avatar className="h-11 w-11 border border-border bg-card text-foreground">
+                <Avatar className="h-10 w-10 border border-border bg-card text-foreground">
                 <AvatarImage src={profile?.profileImage} alt={profile?.fullName} />
                 <AvatarFallback><UserCircle2 className="size-6" /></AvatarFallback>
                 </Avatar>
@@ -267,26 +267,18 @@ export function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <main className="relative mx-auto max-w-lg px-4 sm:px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
-          <Badge className="bg-primary/20 text-primary border-primary/30">UniConvert • Dashboard</Badge>
-          <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <ThemeToggle isDark={theme === 'dark'} onChange={handleThemeChange} />
-          </div>
-        </div>
-
+    <div className="min-h-screen bg-[#F8F9FD] text-[#1a202c]">
+      <main className="relative mx-auto max-w-lg px-4 sm:px-6 py-8">
         <Header name={profile?.fullName || 'Guest'} profile={profile} />
 
         <section className="grid grid-cols-2 gap-4 mt-8">
-          <Stat icon={Calculator} label="Today Calculations" value={String(todayCalculations)} />
+          <Stat icon={Calculator} label="Today's Ops" value={String(todayCalculations)} />
+          <Stat icon={History} label="All Time Ops" value={String(allTimeCalculations)} />
           <Stat icon={NotebookPen} label="Saved Notes" value={String(savedNotesCount)} />
           <Stat icon={History} label="Last 7 Days" value={String(weeklyCalculations.reduce((acc, curr) => acc + curr.value, 0))} />
-          <Stat icon={History} label="All Time" value={String(allTimeCalculations)} />
         </section>
 
-        <section className="mt-10">
+        <section className="mt-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">Quick Access</h2>
           </div>
@@ -297,17 +289,16 @@ export function Dashboard() {
           </div>
         </section>
 
-        <section className="mt-10">
-          <Card className="overflow-hidden rounded-xl bg-card border-border shadow-lg">
+        <section className="mt-8">
+          <Card className="overflow-hidden rounded-xl bg-card border-border shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-0">
               <div>
-                <CardTitle className="text-base text-foreground">Calculations</CardTitle>
+                <CardTitle className="text-base text-foreground">Calculation Stats</CardTitle>
                 <p className="text-xs text-muted-foreground">Last 7 days</p>
               </div>
-              <Button variant="ghost" className="gap-2 text-accent hover:text-accent/90"><BarChart3 className="size-4" /> Export</Button>
             </CardHeader>
             <CardContent className="pt-6">
-              <div className="h-64 w-full">
+              <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={weeklyCalculations} margin={{ left: 0, right: 0, top: 10, bottom: 0 }}>
                     <defs>
@@ -317,8 +308,8 @@ export function Dashboard() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid vertical={false} strokeOpacity={0.1} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" />
-                    <YAxis allowDecimals={false} width={28} tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" />
+                    <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                    <YAxis allowDecimals={false} width={28} tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={10} />
                     <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))" }} />
                     <Area type="monotone" dataKey="value" strokeWidth={2} stroke="hsl(var(--primary))" fill="url(#fill)" />
                   </AreaChart>
@@ -328,10 +319,10 @@ export function Dashboard() {
           </Card>
         </section>
 
-        <section className="mt-10">
+        <section className="mt-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">Recommendations</h2>
-            <Button asChild variant="link" className="gap-1 text-accent hover:text-accent/90">
+             <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
                 <Link href="/help">
                     See All <ArrowRight className="size-4" />
                 </Link>
@@ -344,17 +335,10 @@ export function Dashboard() {
           </div>
         </section>
 
-        <footer className="mt-14 py-10 text-sm text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© {new Date().getFullYear()} UniConvert • Owned by Aman Yadav. All rights reserved.</p>
-          <div className="flex items-center gap-4">
-            <Link href="/privacy-policy" className="hover:underline">Privacy</Link>
-            <a href="#" className="hover:underline">Terms</a>
-            <a href="#" className="hover:underline">Contact</a>
-          </div>
+        <footer className="mt-14 py-8 text-sm text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© {new Date().getFullYear()} Sutradhaar • All rights reserved.</p>
         </footer>
       </main>
     </div>
   );
 }
-
-    
