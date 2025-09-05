@@ -51,14 +51,16 @@ export function Profile() {
       }
       setProfile(parsed);
       setStreakData(getStreakData(parsed.email));
+    } else {
+        router.replace('/welcome');
     }
-  }, []);
+  }, [router]);
 
   const handleLogout = () => {
     auth.signOut().then(() => {
         localStorage.removeItem("userProfile");
         toast({ title: "Logged Out", description: "You have been successfully logged out." });
-        router.push("/welcome");
+        router.push("/logout");
     }).catch((error) => {
         console.error("Logout Error:", error);
         toast({ title: "Logout Failed", description: "An error occurred while logging out.", variant: "destructive" });
