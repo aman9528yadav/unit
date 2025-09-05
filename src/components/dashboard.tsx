@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -122,6 +122,10 @@ export function Dashboard() {
       setShowLoginDialog(true);
     }
   };
+  
+  const weeklyTotal = useMemo(() => {
+      return weeklyCalculations.reduce((acc, curr) => acc + curr.value, 0);
+  }, [weeklyCalculations]);
 
 
   if (!isClient) {
@@ -219,6 +223,9 @@ export function Dashboard() {
                         <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
+            </div>
+             <div className="text-center text-sm text-muted-foreground mt-2">
+                Total this week: <strong>{weeklyTotal}</strong> calculations
             </div>
         </Card>
 

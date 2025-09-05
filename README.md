@@ -1,7 +1,15 @@
+📱 Sutradhaar
+A smart all‑in‑one Unit Converter + Calculator + Notes app Built with ❤️ by Aman — a student passionate about making productivity tools simple, fast, and beautiful.
+check out app from - [my app](https://sutradhaar.netlify.app/)
+✨ Features
+🔄 Unit Converter – Convert between multiple units (length, weight, temperature, currency, and more).
 
+➗ Calculator – Perform quick calculations without switching apps.
 
-To get started, take a look at src/app/page.tsx.
-### About Sutradhaar
+📝 Notes – Save important notes alongside your conversions and calculations.
 
-Sutradhaar is a NextJS app created by Aman Yadav, a 12th-grade student.
-ok love from aman ok 
+📜 History – View your past conversions, calculations, and notes.
+
+⭐ Favorites – Mark frequently used conversions for quick access.
+
+🔐 Authentication – Secure login & signup to keep your data safe.
