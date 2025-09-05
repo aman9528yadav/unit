@@ -17,6 +17,8 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
+import { ProfilePhotoEditor } from "./profile-photo-editor";
 
 
 export function ProfileEditForm() {
@@ -29,7 +31,7 @@ export function ProfileEditForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
 
 
   const { toast } = useToast();
@@ -54,17 +56,12 @@ export function ProfileEditForm() {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfile(prev => ({...prev, profileImage: reader.result as string }));
-        toast({ title: "Image ready", description: "Click 'Save Changes' to apply." });
-      };
-      reader.readAsDataURL(file);
-    }
+  const handlePhotoSave = (newImage: string) => {
+    setProfile(prev => ({ ...prev, profileImage: newImage }));
+    setIsPhotoEditorOpen(false);
+    toast({ title: "Image ready", description: "Click 'Save Changes' to apply." });
   };
+
 
   const handleSaveChanges = async () => {
     if (!profile.fullName) {
@@ -154,106 +151,107 @@ export function ProfileEditForm() {
         <h1 className="text-xl font-bold">Edit Profile</h1>
       </header>
 
-      <Tabs defaultValue="account" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="account">Account</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-        </TabsList>
-        <TabsContent value="account">
-          <Card>
-            <CardHeader className="items-center">
-                <div className="relative group">
-                    <Avatar className="w-32 h-32 text-6xl">
-                        <AvatarImage src={profile.profileImage} alt={profile.fullName} />
-                        <AvatarFallback>
-                            <User/>
-                        </AvatarFallback>
-                    </Avatar>
-                    <Button 
-                        size="icon" 
-                        variant="secondary"
-                        className="absolute bottom-2 right-2 rounded-full group-hover:bg-primary group-hover:text-primary-foreground"
-                        onClick={() => fileInputRef.current?.click()}
-                    >
-                        <Camera />
-                    </Button>
-                    <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        className="hidden"
-                        accept="image/*" 
-                        onChange={handleImageChange}
-                    />
+      <Dialog open={isPhotoEditorOpen} onOpenChange={setIsPhotoEditorOpen}>
+        <Tabs defaultValue="account" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="account">Account</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
+          </TabsList>
+          <TabsContent value="account">
+            <Card>
+              <CardHeader className="items-center">
+                  <DialogTrigger asChild>
+                    <div className="relative group cursor-pointer">
+                        <Avatar className="w-32 h-32 text-6xl">
+                            <AvatarImage src={profile.profileImage} alt={profile.fullName} />
+                            <AvatarFallback>
+                                <User/>
+                            </AvatarFallback>
+                        </Avatar>
+                        <div 
+                            className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                            <Camera className="text-white w-8 h-8"/>
+                        </div>
+                    </div>
+                  </DialogTrigger>
+                <CardTitle>Account Information</CardTitle>
+                <CardDescription>Make changes to your personal details here. Click save when you're done.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input id="fullName" name="fullName" value={profile.fullName} onChange={handleInputChange} />
                 </div>
-              <CardTitle>Account Information</CardTitle>
-              <CardDescription>Make changes to your personal details here. Click save when you're done.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input id="fullName" name="fullName" value={profile.fullName} onChange={handleInputChange} />
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={profile.email} disabled />
-              </div>
-              <div>
-                <Label htmlFor="dob">Date of Birth</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant={"outline"} className="w-full justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {profile.dob ? format(new Date(profile.dob), "PPP") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={profile.dob ? new Date(profile.dob) : undefined}
-                      onSelect={handleDateChange}
-                      captionLayout="dropdown-buttons"
-                      fromYear={1920}
-                      toYear={new Date().getFullYear()}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-               <Button onClick={handleSaveChanges} className="w-full" disabled={isSubmitting}>
-                 {isSubmitting ? "Saving..." : "Save Changes"}
-               </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="security">
-           <Card>
-            <CardHeader>
-              <CardTitle>Password</CardTitle>
-              <CardDescription>Change your password here. After saving, you'll be logged out.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="relative">
-                <Label htmlFor="currentPassword">Current Password</Label>
-                <Input id="currentPassword" type={showCurrentPassword ? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-                <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowCurrentPassword(!showCurrentPassword)}><IconEye show={showCurrentPassword} /></Button>
-              </div>
-              <div className="relative">
-                <Label htmlFor="newPassword">New Password</Label>
-                <Input id="newPassword" type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-                 <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowNewPassword(!showNewPassword)}><IconEye show={showNewPassword} /></Button>
-              </div>
-              <div className="relative">
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-                 <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowConfirmPassword(!showConfirmPassword)}><IconEye show={showConfirmPassword} /></Button>
-              </div>
-               <Button onClick={handleChangePassword} variant="secondary" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Updating..." : "Update Password"}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" value={profile.email} disabled />
+                </div>
+                <div>
+                  <Label htmlFor="dob">Date of Birth</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant={"outline"} className="w-full justify-start text-left font-normal">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {profile.dob ? format(new Date(profile.dob), "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={profile.dob ? new Date(profile.dob) : undefined}
+                        onSelect={handleDateChange}
+                        captionLayout="dropdown-buttons"
+                        fromYear={1920}
+                        toYear={new Date().getFullYear()}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <Button onClick={handleSaveChanges} className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Saving..." : "Save Changes"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="security">
+            <Card>
+              <CardHeader>
+                <CardTitle>Password</CardTitle>
+                <CardDescription>Change your password here. After saving, you'll be logged out.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="relative">
+                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <Input id="currentPassword" type={showCurrentPassword ? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                  <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowCurrentPassword(!showCurrentPassword)}><IconEye show={showCurrentPassword} /></Button>
+                </div>
+                <div className="relative">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <Input id="newPassword" type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                  <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowNewPassword(!showNewPassword)}><IconEye show={showNewPassword} /></Button>
+                </div>
+                <div className="relative">
+                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                  <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowConfirmPassword(!showConfirmPassword)}><IconEye show={showConfirmPassword} /></Button>
+                </div>
+                <Button onClick={handleChangePassword} variant="secondary" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Updating..." : "Update Password"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+        <DialogContent className="max-w-2xl">
+          <ProfilePhotoEditor
+            currentImage={profile.profileImage}
+            onSave={handlePhotoSave}
+            onClose={() => setIsPhotoEditorOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -262,5 +260,3 @@ export function ProfileEditForm() {
 function IconEye({ show }: {show: boolean}) {
   return show ? <EyeOff /> : <Eye />;
 }
-
-    
