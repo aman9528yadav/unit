@@ -84,69 +84,6 @@ const getSavedNotesCount = (email: string | null) => {
     return 0;
 };
 
-const quickTools = [
-  { label: "Converter", icon: Sigma, href: "/converter", color: "text-blue-400" },
-  { label: "Calculator", icon: Calculator, href: "/calculator", color: "text-orange-400" },
-  { label: "Notes", icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
-  { label: "History", icon: History, href: "/history", color: "text-blue-400" },
-  { label: "Time Tools", icon: Hourglass, href: "/time", color: "text-green-400" },
-  { label: "Settings", icon: Settings, href: "/settings", color: "text-gray-400" },
-];
-
-const recommendations = [
-  {
-    id: 1,
-    title: "Smart Search Bar",
-    minutes: 5,
-    by: "Aman",
-    img: "https://picsum.photos/seed/tech1/400/200",
-    dataAiHint: "digital analytics"
-  },
-  {
-    id: 2,
-    title: "How to use Smart Calc",
-    minutes: 15,
-    by: "Aman",
-    img: "https://picsum.photos/seed/tech2/400/200",
-    dataAiHint: "financial calculator"
-  },
-  {
-    id: 3,
-    title: "Unit Converter Pro Tips",
-    minutes: 8,
-    by: "Aman",
-    img: "https://picsum.photos/seed/tech3/400/200",
-    dataAiHint: "team working"
-  },
-];
-
-const recentUpdates = [
-  {
-    icon: Palette,
-    title: "Appearance Settings",
-    description: "Customize your theme with light, dark, and custom color options.",
-    href: "/updates",
-    color: "text-pink-400",
-    bgColor: "bg-pink-500/10"
-  },
-  {
-    icon: Zap,
-    title: "Time Utilities",
-    description: "Pomodoro timer, stopwatch, and date calculators.",
-    href: "/updates",
-    color: "text-green-400",
-    bgColor: "bg-green-500/10"
-  },
-  {
-    icon: Gift,
-    title: "Custom Units",
-    description: "Create your own units and conversion categories.",
-    href: "/updates",
-    color: "text-blue-400",
-    bgColor: "bg-blue-500/10"
-  },
-];
-
 const Stat = ({ icon: Icon, label, value, trend }: any) => (
   <Card className="bg-card border-border shadow-sm">
     <CardContent className="p-4">
@@ -212,7 +149,7 @@ const RecommendationCard = ({ item }: any) => (
     <div className="p-4">
       <p className="font-medium leading-tight text-foreground">{item.title}</p>
       <p className="text-xs text-muted-foreground mt-1">
-        {item.minutes} Minutes • {item.by}
+        {item.minutes} {item.minutesLabel} • {item.by}
       </p>
     </div>
   </motion.div>
@@ -227,15 +164,16 @@ interface UserProfile {
 
 const Header = ({ name, profile, onProfileClick }: { name: string, profile: UserProfile | null, onProfileClick: () => void }) => {
   const router = useRouter();
+  const { t } = useLanguage();
   
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Hi, {name}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">{t('dashboard.greeting', { name: name })}</h1>
              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <CheckCircle2 className="size-4 text-green-500" />
-                Welcome back
+                {t('dashboard.welcome')}
             </div>
         </div>
         <div className="flex items-center gap-2">
@@ -282,6 +220,7 @@ const ThemeToggle = ({ isDark, onChange }: { isDark: boolean; onChange: (isDark:
 
 export function Dashboard() {
   const { theme, setTheme } = useTheme();
+  const { t } = useLanguage();
   const [isClient, setIsClient] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [todayCalculations, setTodayCalculations] = useState(0);
@@ -331,6 +270,72 @@ export function Dashboard() {
       setShowLoginDialog(true);
     }
   };
+  
+    const quickTools = [
+      { label: t('dashboard.tools.converter'), icon: Sigma, href: "/converter", color: "text-blue-400" },
+      { label: t('dashboard.tools.calculator'), icon: Calculator, href: "/calculator", color: "text-orange-400" },
+      { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
+      { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
+      { label: t('dashboard.tools.time'), icon: Hourglass, href: "/time", color: "text-green-400" },
+      { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
+    ];
+
+    const recommendations = [
+      {
+        id: 1,
+        title: t('dashboard.recommendations.smartSearch.title'),
+        minutes: 5,
+        minutesLabel: t('dashboard.minutes'),
+        by: "Aman",
+        img: "https://picsum.photos/seed/tech1/400/200",
+        dataAiHint: "digital analytics"
+      },
+      {
+        id: 2,
+        title: t('dashboard.recommendations.smartCalc.title'),
+        minutes: 15,
+        minutesLabel: t('dashboard.minutes'),
+        by: "Aman",
+        img: "https://picsum.photos/seed/tech2/400/200",
+        dataAiHint: "financial calculator"
+      },
+      {
+        id: 3,
+        title: t('dashboard.recommendations.proTips.title'),
+        minutes: 8,
+        minutesLabel: t('dashboard.minutes'),
+        by: "Aman",
+        img: "https://picsum.photos/seed/tech3/400/200",
+        dataAiHint: "team working"
+      },
+    ];
+
+    const recentUpdates = [
+      {
+        icon: Palette,
+        title: t('dashboard.updates.appearance.title'),
+        description: t('dashboard.updates.appearance.description'),
+        href: "/updates",
+        color: "text-pink-400",
+        bgColor: "bg-pink-500/10"
+      },
+      {
+        icon: Zap,
+        title: t('dashboard.updates.time.title'),
+        description: t('dashboard.updates.time.description'),
+        href: "/updates",
+        color: "text-green-400",
+        bgColor: "bg-green-500/10"
+      },
+      {
+        icon: Gift,
+        title: t('dashboard.updates.customUnits.title'),
+        description: t('dashboard.updates.customUnits.description'),
+        href: "/updates",
+        color: "text-blue-400",
+        bgColor: "bg-blue-500/10"
+      },
+    ];
 
   if (!isClient) {
     return null;
@@ -339,19 +344,19 @@ export function Dashboard() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="relative mx-auto max-w-lg px-4 sm:px-6 py-8">
-        <Header name={profile?.fullName || 'Guest'} profile={profile} onProfileClick={handleProfileClick} />
+        <Header name={profile?.fullName || t('dashboard.guest')} profile={profile} onProfileClick={handleProfileClick} />
 
         <section className="grid grid-cols-2 gap-4 mt-8">
-          <Stat icon={Calculator} label="Today's Ops" value={String(todayCalculations)} />
-          <Stat icon={Flame} label="Current Streak" value={`${streakData.currentStreak} days`} />
-          <Stat icon={NotebookPen} label="Saved Notes" value={String(savedNotesCount)} />
-          <Stat icon={History} label="All Time Ops" value={String(allTimeCalculations)} />
+          <Stat icon={Calculator} label={t('dashboard.todayOps')} value={String(todayCalculations)} />
+          <Stat icon={Flame} label={t('dashboard.currentStreak')} value={`${streakData.currentStreak} ${t('dashboard.days')}`} />
+          <Stat icon={NotebookPen} label={t('dashboard.savedNotes')} value={String(savedNotesCount)} />
+          <Stat icon={History} label={t('dashboard.allTimeOps')} value={String(allTimeCalculations)} />
         </section>
 
         <section className="mt-8">
           <Card className="bg-card border-border shadow-sm">
             <CardHeader>
-              <CardTitle>Quick Access</CardTitle>
+              <CardTitle>{t('dashboard.quickAccess')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-3">
@@ -367,8 +372,8 @@ export function Dashboard() {
           <Card className="overflow-hidden rounded-xl bg-card border-border shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-0">
               <div>
-                <CardTitle className="text-base text-foreground">Calculation Stats</CardTitle>
-                <p className="text-xs text-muted-foreground">Last 7 days</p>
+                <CardTitle className="text-base text-foreground">{t('dashboard.calculationStats')}</CardTitle>
+                <p className="text-xs text-muted-foreground">{t('dashboard.last7Days')}</p>
               </div>
             </CardHeader>
             <CardContent className="pt-6">
@@ -395,10 +400,10 @@ export function Dashboard() {
 
         <section className="mt-8">
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-foreground">What's New</h2>
+                <h2 className="text-lg font-semibold text-foreground">{t('dashboard.whatsNew')}</h2>
                 <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
                     <Link href="/updates">
-                        See All <ArrowRight className="size-4" />
+                        {t('dashboard.seeAll')} <ArrowRight className="size-4" />
                     </Link>
                 </Button>
             </div>
@@ -411,10 +416,10 @@ export function Dashboard() {
 
         <section className="mt-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">Recommendations</h2>
+            <h2 className="text-lg font-semibold text-foreground">{t('dashboard.recommendations.title')}</h2>
              <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
                 <Link href="/help">
-                    See All <ArrowRight className="size-4" />
+                    {t('dashboard.seeAll')} <ArrowRight className="size-4" />
                 </Link>
             </Button>
           </div>
@@ -431,16 +436,16 @@ export function Dashboard() {
             <div className="p-3 bg-primary/10 rounded-full mb-4 w-fit">
               <Sparkles className="w-8 h-8 text-primary" />
             </div>
-            <AlertDialogTitle className="text-2xl">Unlock Your Profile</AlertDialogTitle>
+            <AlertDialogTitle className="text-2xl">{t('dashboard.unlockProfile.title')}</AlertDialogTitle>
             <AlertDialogDescription className="max-w-xs">
-              Log in or create an account to personalize your experience, save preferences, and access your history.
+              {t('dashboard.unlockProfile.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col-reverse sm:flex-col-reverse gap-2">
-            <AlertDialogCancel>Not Now</AlertDialogCancel>
+            <AlertDialogCancel>{t('dashboard.unlockProfile.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={() => router.push('/welcome')} className="bg-primary hover:bg-primary/90">
               <LogIn className="mr-2"/>
-              Continue to Login
+              {t('dashboard.unlockProfile.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

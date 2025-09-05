@@ -9,17 +9,59 @@
     },
     "dashboard": {
         "greeting": "Hi, {{name}}",
-        "challenge": "It's time to challenge your limits.",
-        "recommendations": "Recommendations",
+        "welcome": "Welcome back",
+        "guest": "Guest",
+        "todayOps": "Today's Ops",
+        "currentStreak": "Current Streak",
+        "days": "days",
+        "savedNotes": "Saved Notes",
+        "allTimeOps": "All Time Ops",
+        "quickAccess": "Quick Access",
+        "tools": {
+            "converter": "Converter",
+            "calculator": "Calculator",
+            "notes": "Notes",
+            "history": "History",
+            "time": "Time Tools",
+            "settings": "Settings"
+        },
+        "calculationStats": "Calculation Stats",
+        "last7Days": "Last 7 days",
+        "whatsNew": "What's New",
         "seeAll": "See All",
-        "smartSearch": "Smart Search Bar",
+        "updates": {
+            "appearance": {
+                "title": "Appearance Settings",
+                "description": "Customize your theme with light, dark, and custom color options."
+            },
+            "time": {
+                "title": "Time Utilities",
+                "description": "Pomodoro timer, stopwatch, and date calculators."
+            },
+            "customUnits": {
+                "title": "Custom Units",
+                "description": "Create your own units and conversion categories."
+            }
+        },
+        "recommendations": {
+            "title": "Recommendations",
+            "smartSearch": {
+                "title": "Smart Search Bar"
+            },
+            "smartCalc": {
+                "title": "How to use Smart Calc"
+            },
+            "proTips": {
+                "title": "Unit Converter Pro Tips"
+            }
+        },
         "minutes": "Minutes",
-        "howToUseCalc": "How to use Smart Calc",
-        "feature1": "Easy to use and fast in",
-        "feature2": "Made by Indian 🇮🇳",
-        "calculation": "Calculation",
-        "todayCalculation": "Today Calculation",
-        "savedNotes": "No. Save Notes"
+        "unlockProfile": {
+            "title": "Unlock Your Profile",
+            "description": "Log in or create an account to personalize your experience, save preferences, and access your history.",
+            "cancel": "Not Now",
+            "confirm": "Continue to Login"
+        }
     },
     "converter": {
         "welcome": "Welcome to the Converter",
