@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -11,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -601,7 +603,6 @@ export function Converter() {
         </div>
         <div className="flex items-center gap-2">
             <Button variant="ghost" className="rounded-full" onClick={handleProfileClick}>
-                <span className="mr-2 hidden sm:inline">Hi, {profile?.fullName || "Guest"}</span>
                 <User />
             </Button>
             <Button variant="secondary" onClick={handleShare} className="hidden sm:flex">
