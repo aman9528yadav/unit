@@ -654,22 +654,11 @@ export function Converter() {
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle className="flex items-center gap-2"><Scale/> Quick Convert</CardTitle>
-                    <div className="flex items-center gap-2">
-                        <Select value={region} onValueChange={handleRegionChange}>
-                            <SelectTrigger className="w-auto md:w-[150px]">
-                                <Globe size={16} className="mr-2"/>
-                                <SelectValue placeholder="Select Region"/>
-                            </SelectTrigger>
-                            <SelectContent>
-                                {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                        <Badge variant="outline" className="text-amber-600 border-amber-500">Fast & Accurate</Badge>
-                    </div>
+                    <Badge variant="outline" className="text-amber-600 border-amber-500">Fast & Accurate</Badge>
                 </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-               <div className="flex flex-col gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
                     <div className="flex-1">
                         <Label>{t('converter.category')}</Label>
                         <Select value={selectedCategory.name} onValueChange={handleCategoryChange}>
@@ -688,35 +677,47 @@ export function Converter() {
                             </SelectContent>
                         </Select>
                     </div>
+                    <div className="flex-1">
+                        <Label>{t('converter.region')}</Label>
+                        <Select value={region} onValueChange={handleRegionChange}>
+                            <SelectTrigger>
+                                <Globe size={16} className="mr-2"/>
+                                <SelectValue placeholder="Select Region"/>
+                            </SelectTrigger>
+                            <SelectContent>
+                                {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
-                      <div className="flex-1">
-                          <Label>{t('converter.from')}</Label>
-                          <Select value={fromUnit} onValueChange={setFromUnit}>
-                              <SelectTrigger>
-                                  <SelectValue placeholder="From" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                  {currentUnits.map(unit => <SelectItem key={unit.symbol} value={unit.symbol}>{unit.name} ({unit.symbol})</SelectItem>)}
-                              </SelectContent>
-                          </Select>
-                      </div>
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
+                    <div className="flex-1">
+                        <Label>{t('converter.from')}</Label>
+                        <Select value={fromUnit} onValueChange={setFromUnit}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="From" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {currentUnits.map(unit => <SelectItem key={unit.symbol} value={unit.symbol}>{unit.name} ({unit.symbol})</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                      <Button variant="outline" size="icon" className="self-end rounded-full" onClick={handleSwapUnits}>
-                        <ArrowRightLeft className="w-5 h-5" />
-                      </Button>
+                    <Button variant="outline" size="icon" className="self-end rounded-full" onClick={handleSwapUnits}>
+                    <ArrowRightLeft className="w-5 h-5" />
+                    </Button>
 
-                      <div className="flex-1">
-                          <Label>To</Label>
-                          <Select value={toUnit} onValueChange={setToUnit}>
-                              <SelectTrigger>
-                                  <SelectValue placeholder="To" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                  {currentUnits.map(unit => <SelectItem key={unit.symbol} value={unit.symbol}>{unit.name} ({unit.symbol})</SelectItem>)}
-                              </SelectContent>
-                          </Select>
-                      </div>
+                    <div className="flex-1">
+                        <Label>To</Label>
+                        <Select value={toUnit} onValueChange={setToUnit}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="To" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {currentUnits.map(unit => <SelectItem key={unit.symbol} value={unit.symbol}>{unit.name} ({unit.symbol})</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 
