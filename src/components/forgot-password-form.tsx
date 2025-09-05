@@ -71,11 +71,9 @@ export function ForgotPasswordForm() {
   return (
     <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-background text-foreground p-6">
       <header className="flex items-center gap-4 mb-8">
-        <Link href="/welcome">
-            <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10">
-                <ArrowLeft />
-            </Button>
-        </Link>
+        <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10" onClick={() => router.back()}>
+            <ArrowLeft />
+        </Button>
         <h1 className="text-2xl font-bold text-primary">Forgot Password</h1>
       </header>
 

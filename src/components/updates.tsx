@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Gift, Zap, Rocket, Timer } from "lucide-react";
 import { format, intervalToDuration, differenceInDays } from "date-fns";
+import { useRouter } from 'next/navigation';
 
 const updates = [
   {
@@ -46,6 +47,7 @@ export function Updates() {
   const [timeLeft, setTimeLeft] = useState<Duration & { totalDays?: number } | null>(null);
   const [updateText, setUpdateText] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setIsClient(true);
@@ -117,11 +119,9 @@ export function Updates() {
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6">
       <header className="flex items-center gap-4">
-        <Link href="/profile">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft />
-          </Button>
-        </Link>
+        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+          <ArrowLeft />
+        </Button>
         <h1 className="text-xl font-bold">What's New</h1>
       </header>
 
@@ -180,5 +180,3 @@ export function Updates() {
     </div>
   );
 }
-
-    

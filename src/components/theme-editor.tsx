@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useTheme, type CustomTheme } from '@/context/theme-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 const themeProperties: { id: keyof CustomTheme['colors'], name: string }[] = [
     { id: 'background', name: 'Background' },
@@ -30,6 +31,7 @@ export function ThemeEditor() {
     const { customTheme, setCustomTheme, resetCustomTheme, theme, setTheme } = useTheme();
     const [localTheme, setLocalTheme] = useState<CustomTheme['colors']>({});
     const { toast } = useToast();
+    const router = useRouter();
 
     useEffect(() => {
         setLocalTheme(customTheme?.colors || {});
@@ -50,11 +52,9 @@ export function ThemeEditor() {
         <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6 h-screen">
             <header className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Link href="/settings">
-                        <Button variant="ghost" size="icon">
-                            <ArrowLeft />
-                        </Button>
-                    </Link>
+                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                        <ArrowLeft />
+                    </Button>
                     <h1 className="text-xl font-bold">Theme Editor</h1>
                 </div>
                 <Button variant="ghost" size="icon" onClick={handleReset}>

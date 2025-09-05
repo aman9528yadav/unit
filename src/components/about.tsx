@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Book, MessageSquare, Code, FileText, Shield, Info, Users, GitBranch, ChevronsRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 
 
 const appInfo = {
@@ -62,15 +63,14 @@ const Section = ({ title, description, children, icon: Icon }: { title: string, 
 )
 
 export function About() {
+    const router = useRouter();
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 p-4 sm:p-6">
       <header className="flex items-center justify-between">
          <div className="flex items-center gap-4">
-            <Link href="/settings">
-                <Button variant="ghost" size="icon">
-                    <ArrowLeft />
-                </Button>
-            </Link>
+            <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                <ArrowLeft />
+            </Button>
             <h1 className="text-xl font-bold">About Sutradhaar</h1>
         </div>
         <p className="text-sm text-muted-foreground">Settings / About</p>

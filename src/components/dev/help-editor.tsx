@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { FAQ, FAQ_STORAGE_KEY, defaultFaqs } from '../help';
+import { useRouter } from 'next/navigation';
 
 
 export function HelpEditor() {
@@ -31,6 +32,7 @@ export function HelpEditor() {
     const [question, setQuestion] = useState('');
     const [answer, setAnswer] = useState('');
     const { toast } = useToast();
+    const router = useRouter();
     
     useEffect(() => {
         setIsClient(true);
@@ -102,11 +104,9 @@ export function HelpEditor() {
         <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6 h-screen">
             <header className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Link href="/dev">
-                        <Button variant="ghost" size="icon">
-                            <ArrowLeft />
-                        </Button>
-                    </Link>
+                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                        <ArrowLeft />
+                    </Button>
                     <h1 className="text-xl font-bold">Manage Help Content</h1>
                 </div>
                  <Button size="icon" onClick={() => handleOpenDialog()}>

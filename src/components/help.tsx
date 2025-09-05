@@ -12,6 +12,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { v4 as uuidv4 } from 'uuid';
+import { useRouter } from 'next/navigation';
 
 export interface FAQ {
     id: string;
@@ -59,6 +60,7 @@ export function Help() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [isClient, setIsClient] = useState(false);
   const [profile, setProfile] = useState(null);
+  const router = useRouter();
   
   useEffect(() => {
     setIsClient(true);
@@ -92,11 +94,9 @@ export function Help() {
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6">
       <header className="flex items-center gap-4">
-        <Link href={profile ? "/settings" : "/"}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft />
-          </Button>
-        </Link>
+        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+          <ArrowLeft />
+        </Button>
         <h1 className="text-xl font-bold">Help & Support</h1>
       </header>
       <div className="bg-card p-6 rounded-xl space-y-2 text-muted-foreground">

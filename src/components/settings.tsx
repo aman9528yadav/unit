@@ -162,11 +162,9 @@ export function Settings() {
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-6 p-4 sm:p-6">
         <header className="flex items-center gap-4">
-          <Link href="/">
-              <Button variant="ghost" size="icon">
-                  <ArrowLeft />
-              </Button>
-          </Link>
+            <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                <ArrowLeft />
+            </Button>
           <h1 className="text-xl font-bold">Settings</h1>
         </header>
 

@@ -26,6 +26,7 @@ import {
 import { conversionCategories as baseConversionCategories } from '@/lib/conversions';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
+import { useRouter } from 'next/navigation';
 
 const getUserKey = (baseKey: string, email: string | null) => `${email || 'guest'}_${baseKey}`;
 
@@ -66,6 +67,7 @@ export function CustomUnitManager() {
     const [newCategory, setNewCategory] = useState({ name: '', baseUnitName: '', baseUnitSymbol: '' });
     const [editingUnit, setEditingUnit] = useState<CustomUnit | null>(null);
     const { toast } = useToast();
+    const router = useRouter();
 
     useEffect(() => {
         setIsClient(true);
@@ -218,11 +220,9 @@ export function CustomUnitManager() {
         <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6 h-screen">
             <header className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Link href="/settings">
-                        <Button variant="ghost" size="icon">
-                            <ArrowLeft />
-                        </Button>
-                    </Link>
+                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                        <ArrowLeft />
+                    </Button>
                     <h1 className="text-xl font-bold">Manage Custom Data</h1>
                 </div>
                 <div className='flex gap-2'>
@@ -409,5 +409,3 @@ export function CustomUnitManager() {
         </div>
     );
 }
-
-    

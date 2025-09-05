@@ -4,16 +4,16 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function PrivacyPolicy() {
+  const router = useRouter();
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6">
       <header className="flex items-center gap-4">
-        <Link href="/settings">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft />
-          </Button>
-        </Link>
+        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+          <ArrowLeft />
+        </Button>
         <h1 className="text-xl font-bold">Privacy Policy</h1>
       </header>
       <div className="bg-card p-6 rounded-xl space-y-4 text-muted-foreground">
