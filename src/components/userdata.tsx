@@ -6,10 +6,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Upload, LogOut, Settings, HelpCircle, X, Pencil } from "lucide-react";
+import { User, Upload, LogOut, Settings, HelpCircle, X, Pencil, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { getAllTimeCalculations } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
 
 
 interface UserProfile {
@@ -24,6 +26,8 @@ interface UserSettings {
     saveHistory: boolean;
     autoConvert: boolean;
 }
+
+const PREMIUM_MEMBER_THRESHOLD = 8000;
 
 const DetailRow = ({ label, value, valueClassName }: { label: string, value: React.ReactNode, valueClassName?: string }) => (
     <div className="flex justify-between items-center py-3">
@@ -45,7 +49,9 @@ export function UserData() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [settings, setSettings] = useState<UserSettings | null>(null);
     const [isClient, setIsClient] = useState(false);
-    const [userRole, setUserRole] = useState<'Member' | 'Owner'>('Member');
+    const [userRole, setUserRole] = useState<'Member' | 'Premium Member' | 'Owner'>('Member');
+    const [totalCalculations, setTotalCalculations] = useState(0);
+    const [progress, setProgress] = useState(0);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -58,8 +64,15 @@ export function UserData() {
             const parsedProfile = JSON.parse(userProfileData);
             setProfile(parsedProfile);
             loadSettings(parsedProfile.email);
-             if (parsedProfile.email === DEVELOPER_EMAIL) {
+            
+            const calculations = getAllTimeCalculations(parsedProfile.email);
+            setTotalCalculations(calculations);
+            setProgress((calculations / PREMIUM_MEMBER_THRESHOLD) * 100);
+
+            if (parsedProfile.email === DEVELOPER_EMAIL) {
                 setUserRole('Owner');
+            } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
+                setUserRole('Premium Member');
             } else {
                 setUserRole('Member');
             }
@@ -132,12 +145,26 @@ export function UserData() {
                 </div>
                 <div className="flex items-center gap-2">
                     <h2 className="text-2xl font-bold">{profile.fullName}</h2>
-                    <Badge variant={userRole === 'Owner' ? 'default' : 'secondary'}>{userRole}</Badge>
+                    <Badge variant={userRole === 'Owner' ? 'default' : userRole === 'Premium Member' ? 'secondary' : 'outline'}>{userRole}</Badge>
                 </div>
                 <p className="text-muted-foreground text-sm">{profile.email}</p>
             </div>
+            
+            {userRole !== 'Owner' && userRole !== 'Premium Member' && (
+                <div className="mt-6">
+                    <div className="flex justify-between items-end mb-2">
+                         <div className="text-sm">
+                            <p className="font-semibold text-foreground">Premium Progress</p>
+                            <p className="text-xs text-muted-foreground">{totalCalculations.toLocaleString()} / {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} ops</p>
+                        </div>
+                        <span className="text-sm font-bold text-primary">{Math.floor(progress)}%</span>
+                    </div>
+                    <Progress value={progress} />
+                </div>
+            )}
 
-            <main className="w-full mt-8">
+
+            <main className="w-full mt-2">
                 <Section title="Account">
                     <DetailRow label="Name" value={profile.fullName}/>
                     <DetailRow label="Email" value={profile.email}/>
@@ -148,7 +175,7 @@ export function UserData() {
                     <DetailRow label="Default Region" value={settings?.defaultRegion || '...'}/>
                     <DetailRow label="Theme" value={settings?.theme || '...'}/>
                     <DetailRow label="Save History" value={settings?.saveHistory ? "Enabled" : "Disabled"}/>
-                        <DetailRow label="Auto-Convert" value={settings?.autoConvert ? "Enabled" : "Disabled"}/>
+                    <DetailRow label="Auto-Convert" value={settings?.autoConvert ? "Enabled" : "Disabled"}/>
                 </Section>
             </main>
 
