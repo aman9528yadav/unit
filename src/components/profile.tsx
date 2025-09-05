@@ -139,23 +139,6 @@ export function Profile() {
         </div>
       </div>
 
-      <div className="bg-card text-card-foreground p-4 rounded-xl -mt-6 mx-4 shadow-lg flex justify-around text-center">
-        <div>
-          <p className="text-lg font-bold">{streakData.bestStreak} Days</p>
-          <p className="text-xs text-muted-foreground">Best Streak</p>
-        </div>
-        <div className="border-l border-border"></div>
-        <div>
-          <p className="text-lg font-bold">{streakData.currentStreak} Days</p>
-          <p className="text-xs text-muted-foreground">Current Streak</p>
-        </div>
-        <div className="border-l border-border"></div>
-        <div>
-          <p className="text-lg font-bold">{streakData.daysNotOpened} Days</p>
-          <p className="text-xs text-muted-foreground">Not Open</p>
-        </div>
-      </div>
-
       <nav className="mt-6 px-4 flex-grow">
         <ul className="space-y-2">
           {menuItems.map((item, index) => {
