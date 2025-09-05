@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -18,7 +19,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
-import { Region, conversionCategories } from "@/lib/conversions";
+import { Region } from "@/lib/conversions";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
+
 
 export type CalculatorMode = 'basic' | 'scientific';
 
@@ -146,6 +149,15 @@ export function Settings() {
     });
   };
 
+  const handleClearData = () => {
+    localStorage.clear();
+    toast({ title: "Data Cleared", description: "All app data has been wiped. You will be logged out." });
+    setTimeout(() => {
+      router.push('/welcome');
+    }, 1500);
+  };
+
+
   if (!isClient) return null;
 
   return (
@@ -163,7 +175,7 @@ export function Settings() {
              <Section title="Account">
                 <SettingRow
                     isLink
-                    href="/profile"
+                    href="/profile/edit"
                     label="Edit Profile"
                     description="Manage your personal information"
                     control={<User />}
@@ -255,9 +267,30 @@ export function Settings() {
             </Section>
         </div>
         
-        <footer className="flex justify-end gap-4 mt-4">
-            <Button variant="outline" onClick={handleLogout}><LogOut className="mr-2"/> Log out</Button>
-            <Button onClick={handleSaveChanges}>Save Changes</Button>
+        <footer className="flex justify-between items-center gap-4 mt-4">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive"><Trash2 className="mr-2 h-4 w-4"/> Clear Data</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete all app data, including your settings, history, and notes, and log you out.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearData} className="bg-destructive hover:bg-destructive/90">
+                    Yes, Clear Everything
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <div className="flex gap-2">
+                <Button variant="outline" onClick={handleLogout}><LogOut className="mr-2"/> Log out</Button>
+                <Button onClick={handleSaveChanges}>Save Changes</Button>
+            </div>
         </footer>
     </div>
   );
