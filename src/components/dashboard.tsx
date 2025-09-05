@@ -176,7 +176,7 @@ export function Dashboard() {
                     <div className="p-2 bg-primary/20 rounded-full"><Sigma className="text-primary"/></div>
                     <p className="font-semibold text-sm">Converter</p>
                 </Link>
-                 <Link href="/converter?tab=Calculator" className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
+                 <Link href="/calculator" className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
                     <div className="p-2 bg-orange-500/10 rounded-full"><CalculatorIcon className="text-orange-500"/></div>
                     <p className="font-semibold text-sm">Calculator</p>
                 </Link>

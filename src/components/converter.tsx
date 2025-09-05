@@ -36,16 +36,12 @@ import { conversionCategories as baseConversionCategories, ConversionCategory, U
 import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow.ts";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Calculator } from "./calculator";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { incrementTodaysCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { CustomUnit, CustomCategory } from "./custom-unit-manager";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { cn } from "@/lib/utils";
-import { Notifications } from "./notifications";
-import { GlobalSearchDialog } from "./global-search-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
@@ -113,8 +109,6 @@ export function Converter() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const initialTab = searchParams.get("tab") || "Unit";
-  const [activeTab, setActiveTab] = React.useState(initialTab);
 
   const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
   const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
@@ -399,8 +393,9 @@ export function Converter() {
 
     const result = parseFloat(outputValue.replace(/,/g, ''));
     const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
-    setIsFavorite(favorites.includes(conversionString));
+    setIsFavorite(favorites.some(fav => fav.startsWith(conversionString.split('|')[0])));
   }, [inputValue, fromUnit, toUnit, outputValue, favorites, selectedCategory.name]);
+
 
  const handleSearch = () => {
     if (searchQuery.trim() === "" || isSearching) {
@@ -469,20 +464,22 @@ export function Converter() {
     const numValue = parseFloat(inputValue);
     if (isNaN(numValue) || !outputValue) return;
 
-    const result = parseFloat(outputValue.replace(/,/g, ''));
-    const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
+    const conversionStringPart = getCurrentConversionString(numValue, fromUnit, toUnit, parseFloat(outputValue.replace(/,/g, '')));
+    const fullHistoryString = getFullHistoryString(numValue, fromUnit, toUnit, parseFloat(outputValue.replace(/,/g, '')), selectedCategory.name);
 
     let newFavorites: string[];
-    if (favorites.includes(conversionString)) {
-      newFavorites = favorites.filter(fav => fav !== conversionString);
+    const isAlreadyFavorite = favorites.some(fav => fav.startsWith(conversionStringPart));
+
+    if (isAlreadyFavorite) {
+      newFavorites = favorites.filter(fav => !fav.startsWith(conversionStringPart));
       toast({ title: t('converter.toast.favRemoved') });
     } else {
-      newFavorites = [conversionString, ...favorites];
+      newFavorites = [fullHistoryString, ...favorites];
       toast({ title: t('converter.toast.favAdded') });
     }
+    
     setFavorites(newFavorites);
     localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
-    setIsFavorite(newFavorites.includes(conversionString));
   };
 
 
@@ -800,7 +797,7 @@ export function Converter() {
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle className="flex items-center gap-2"><Clock size={20} /> Recent Conversions</CardTitle>
-                    <Button variant="outline" onClick={() => setShowRecentHistory(false)}><Trash2 className="mr-2 h-4 w-4"/> Clear</Button>
+                    <Button variant="ghost" onClick={() => setShowRecentHistory(false)}><Trash2 className="mr-2 h-4 w-4"/> Clear</Button>
                 </div>
             </CardHeader>
             <CardContent>
@@ -989,6 +986,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
-    
