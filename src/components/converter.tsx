@@ -45,13 +45,13 @@ import { cn } from "@/lib/utils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -571,6 +571,14 @@ export function Converter() {
   };
 
   const handleShare = async () => {
+    if (isPremiumFeatureLocked) {
+      toast({
+        title: t('converter.toast.premiumFeatureLocked'),
+        description: t('converter.toast.premiumShare'),
+      });
+      return;
+    }
+    
     const numValue = parseFloat(inputValue);
     if (isNaN(numValue) || !outputValue) {
       toast({ title: t('converter.toast.nothingToShare'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
@@ -779,7 +787,7 @@ export function Converter() {
                                 <SelectValue placeholder="From" />
                             </SelectTrigger>
                             <SelectContent>
-                                {currentUnits.map(unit => <SelectItem key={unit.symbol} value={unit.symbol}>{unit.name} ({unit.symbol})</SelectItem>)}
+                                {currentUnits.map(unit => <SelectItem key={unit.symbol} value={unit.symbol}>{t(`units.${unit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: unit.name })} ({unit.symbol})</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -795,7 +803,7 @@ export function Converter() {
                                 <SelectValue placeholder="To" />
                             </SelectTrigger>
                             <SelectContent>
-                                {currentUnits.map(unit => <SelectItem key={unit.symbol} value={unit.symbol}>{unit.name} ({unit.symbol})</SelectItem>)}
+                                {currentUnits.map(unit => <SelectItem key={unit.symbol} value={unit.symbol}>{t(`units.${unit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: unit.name })} ({unit.symbol})</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -836,28 +844,22 @@ export function Converter() {
                                 </Button>
                                 <TooltipProvider>
                                   <Dialog>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                          <Button variant="ghost" size="icon" disabled={!outputValue} onClick={(e) => {
-                                            if (isPremiumFeatureLocked) {
-                                                e.preventDefault();
-                                                toast({
-                                                    title: t('converter.toast.premiumFeatureLocked'),
-                                                    description: t('converter.toast.premiumShare'),
-                                                });
-                                            }
-                                          }}>
-                                            <Share2 size={16} />
-                                          </Button>
-                                      </TooltipTrigger>
-                                      {isPremiumFeatureLocked && (
-                                        <TooltipContent>
-                                          <p>{t('converter.toast.premiumShare')}</p>
-                                        </TooltipContent>
-                                      )}
-                                    </Tooltip>
+                                      <Tooltip>
+                                          <TooltipTrigger asChild>
+                                               <Button variant="ghost" size="icon" disabled={!outputValue} onClick={handleShare}>
+                                                    <Share2 size={16} />
+                                               </Button>
+                                          </TooltipTrigger>
+                                           {isPremiumFeatureLocked && (
+                                            <TooltipContent>
+                                                <p>{t('converter.toast.premiumShare')}</p>
+                                            </TooltipContent>
+                                          )}
+                                      </Tooltip>
                                     {!isPremiumFeatureLocked && (
-                                      <DialogTrigger asChild><span/></DialogTrigger>
+                                        <DialogTrigger asChild>
+                                             <span onClick={(e) => e.stopPropagation()} />
+                                        </DialogTrigger>
                                     )}
                                     <DialogContent>
                                       <DialogHeader>
@@ -941,7 +943,7 @@ export function Converter() {
                            <p className="font-semibold">{conversion}</p>
                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                                <Icon size={14}/> 
-                               <span>{categoryName}</span>
+                               <span>{t(`categories.${categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: categoryName })}</span>
                                <span>•</span>
                                <span>{formatTimestamp(timestamp)}</span>
                            </div>
@@ -1001,10 +1003,10 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
           <div className="p-2 bg-primary/10 rounded-full">
             <Icon className="w-6 h-6 text-primary" />
           </div>
-          <h2 className="text-2xl font-bold">{t(`categories.${category.name.toLowerCase()}`)} {t('converter.image.conversion')}</h2>
+          <h2 className="text-2xl font-bold">{t(`categories.${category.name.toLowerCase().replace(/[\s().-]/g, '')}`)} {t('converter.image.conversion')}</h2>
         </div>
         <div className="flex flex-col gap-2 text-center">
-            <p className="text-xl text-muted-foreground">{fromUnitInfo ? t(`units.${fromUnitInfo.name.toLowerCase().replace(/[\s().-]/g, '')}`) : ''}</p>
+            <p className="text-xl text-muted-foreground">{fromUnitInfo ? t(`units.${fromUnitInfo.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: fromUnitInfo.name }) : ''}</p>
             <p className="text-5xl font-bold">{inputValue}</p>
             <p className="text-lg text-muted-foreground">{fromUnitInfo?.symbol}</p>
         </div>
@@ -1012,7 +1014,7 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
             <ArrowRightLeft className="w-8 h-8 text-accent" />
         </div>
          <div className="flex flex-col gap-2 text-center">
-            <p className="text-xl text-muted-foreground">{toUnitInfo ? t(`units.${toUnitInfo.name.toLowerCase().replace(/[\s().-]/g, '')}`) : ''}</p>
+            <p className="text-xl text-muted-foreground">{toUnitInfo ? t(`units.${toUnitInfo.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: toUnitInfo.name }) : ''}</p>
             <p className="text-5xl font-bold text-primary">{outputValue}</p>
             <p className="text-lg text-muted-foreground">{toUnitInfo?.symbol}</p>
         </div>
@@ -1024,3 +1026,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    

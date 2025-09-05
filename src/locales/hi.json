@@ -120,7 +120,7 @@
             "couldNotShare": "रूपांतरण साझा नहीं किया जा सका।",
             "notSupported": "समर्थित नहीं है",
             "webShareApi": "आपके ब्राउज़र में वेब शेयर एपीआई समर्थित नहीं है।",
-            "nothingToExport": "निर्यात करने के लिए कुछ بھی نہیں ਹੈ",
+            "nothingToExport": "निर्यात करने के लिए कुछ भी नहीं है",
             "exportedAsTxt": "TXT के रूप में निर्यात किया गया!",
             "exportedAsImage": "छवि के रूप में निर्यात किया गया!",
             "exportFailed": "निर्यात विफल रहा",
@@ -240,7 +240,7 @@
         "yards": "गज",
         "feet": "फीट",
         "inches": "इंच",
-        "nauticalmiles": "नॉटिकल मील",
+        "nauticalmiles": "समुद्री मील",
         "gaj": "गज",
         "kilograms": "किलोग्राम",
         "grams": "ग्राम",
@@ -265,9 +265,9 @@
         "hours": "घंटे",
         "days": "दिन",
         "weeks": "सप्ताह",
-        "meters/second": "मीटर/सेकंड",
-        "kilometers/hour": "किलोमीटर/घंटा",
-        "miles/hour": "मील/घंटा",
+        "meterspersecond": "मीटर/सेकंड",
+        "kilometersperhour": "किलोमीटर/घंटा",
+        "milesperhour": "मील/घंटा",
         "knots": " समुद्री मील",
         "squaremeters": "वर्ग मीटर",
         "squarekilometers": "वर्ग किलोमीटर",
@@ -288,12 +288,12 @@
         "kilopascal": "किलोपास्कल",
         "bar": "बार",
         "standardatmosphere": "मानक वायुमंडल",
-        "poundsperquareinch": "पाउंड प्रति वर्ग इंच",
+        "poundspersquareinch": "पाउंड प्रति वर्ग इंच",
         "joule": "जूल",
         "kilojoule": "किलोजूल",
         "calorie": "कैलोरी",
         "kilocalorie": "किलोकैलोरी",
-        "kilowatt-hour": "किलोवाट-घंटा",
+        "kilowatthour": "किलोवाट-घंटा",
         "unitedstatesdollar": "संयुक्त राज्य डॉलर",
         "euro": "यूरो",
         "japaneseyen": "जापानी येन",
@@ -373,7 +373,9 @@
             "countdownTitle": "उल्टी गिनती टाइमर",
             "pickTargetDate": "एक लक्ष्य तिथि चुनें",
             "timeRemaining": "शेष समय",
-            "countdownMessage": "उल्टी गिनती शुरू करने کے लिए कृपया भविष्य کی تاریخ منتخب کریں۔"
+            "countdownMessage": "उल्टी गिनती शुरू करने के लिए कृपया भविष्य की तारीख चुनें।"
         }
     }
 }
+
+    

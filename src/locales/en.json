@@ -265,9 +265,9 @@
         "hours": "Hours",
         "days": "Days",
         "weeks": "Weeks",
-        "meters/second": "Meters/second",
-        "kilometers/hour": "Kilometers/hour",
-        "miles/hour": "Miles/hour",
+        "meterspersecond": "Meters/second",
+        "kilometersperhour": "Kilometers/hour",
+        "milesperhour": "Miles/hour",
         "knots": "Knots",
         "squaremeters": "Square Meters",
         "squarekilometers": "Square Kilometers",
@@ -288,12 +288,12 @@
         "kilopascal": "Kilopascal",
         "bar": "Bar",
         "standardatmosphere": "Standard atmosphere",
-        "poundsperquareinch": "Pounds per square inch",
+        "poundspersquareinch": "Pounds per square inch",
         "joule": "Joule",
         "kilojoule": "Kilojoule",
         "calorie": "Calorie",
         "kilocalorie": "Kilocalorie",
-        "kilowatt-hour": "Kilowatt-hour",
+        "kilowatthour": "Kilowatt-hour",
         "unitedstatesdollar": "United States Dollar",
         "euro": "Euro",
         "japaneseyen": "Japanese Yen",
@@ -377,3 +377,5 @@
         }
     }
 }
+
+    

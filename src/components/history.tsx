@@ -32,6 +32,7 @@ import { Input } from "./ui/input";
 import { conversionCategories } from "@/lib/conversions";
 import { format, formatDistanceToNow, parseISO, isToday, isYesterday, isThisWeek } from 'date-fns';
 import { useDebounce } from "@/hooks/use-debounce";
+import { useLanguage } from "@/context/language-context";
 
 
 interface HistoryItemData {
@@ -46,35 +47,6 @@ interface HistoryItemData {
   toName: string;
 }
 
-const parseHistoryString = (item: string): HistoryItemData => {
-  const parts = item.split('|');
-  const conversion = parts[0] || '';
-  const categoryName = parts[1] || '';
-  const timestamp = parts[2] || new Date().toISOString();
-
-  const convParts = conversion.split(' ');
-  const value = convParts[0];
-  const fromSymbol = convParts[1];
-  const result = convParts[3];
-  const toSymbol = convParts[4];
-  
-  const category = conversionCategories.find(c => c.name === categoryName);
-  const fromUnit = category?.units.find(u => u.symbol === fromSymbol);
-  const toUnit = category?.units.find(u => u.symbol === toSymbol);
-
-  return {
-    conversion,
-    categoryName,
-    timestamp,
-    value,
-    from: fromSymbol,
-    fromName: fromUnit?.name || fromSymbol,
-    result,
-    to: toSymbol,
-    toName: toUnit?.name || toSymbol,
-  };
-};
-
 export function History() {
   const [history, setHistory] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -85,7 +57,37 @@ export function History() {
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
+  const { t } = useLanguage();
 
+
+  const parseHistoryString = (item: string): HistoryItemData => {
+    const parts = item.split('|');
+    const conversion = parts[0] || '';
+    const categoryName = parts[1] || '';
+    const timestamp = parts[2] || new Date().toISOString();
+  
+    const convParts = conversion.split(' ');
+    const value = convParts[0];
+    const fromSymbol = convParts[1];
+    const result = convParts[3];
+    const toSymbol = convParts[4];
+    
+    const category = conversionCategories.find(c => c.name === categoryName);
+    const fromUnit = category?.units.find(u => u.symbol === fromSymbol);
+    const toUnit = category?.units.find(u => u.symbol === toSymbol);
+  
+    return {
+      conversion,
+      categoryName,
+      timestamp,
+      value,
+      from: fromSymbol,
+      fromName: fromUnit ? t(`units.${fromUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: fromUnit.name }) : fromSymbol,
+      result,
+      to: toSymbol,
+      toName: toUnit ? t(`units.${toUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: toUnit.name }) : toSymbol,
+    };
+  };
 
   useEffect(() => {
     setIsClient(true);
@@ -144,8 +146,7 @@ export function History() {
         return favorites.some(fav => fav.startsWith(conversionPart));
       });
     
-  const filteredItems = itemsToDisplay.filter(item => {
-    const parsed = parseHistoryString(item);
+  const filteredItems = itemsToDisplay.map(parseHistoryString).filter(parsed => {
     const searchMatch = !debouncedSearch || 
            parsed.conversion.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
            parsed.categoryName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
@@ -155,7 +156,7 @@ export function History() {
     const categoryMatch = categoryFilter === "All" || parsed.categoryName === categoryFilter;
 
     return searchMatch && categoryMatch;
-  }).map(parseHistoryString);
+  });
 
   const availableCategories = ['All', ...new Set(history.map(item => parseHistoryString(item).categoryName).filter(Boolean))];
 
@@ -206,12 +207,12 @@ export function History() {
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline"><Filter className="mr-2"/> {categoryFilter} <ChevronDown className="ml-2 h-4 w-4" /></Button>
+                  <Button variant="outline"><Filter className="mr-2"/> {categoryFilter === 'All' ? 'All' : t(`categories.${categoryFilter.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: categoryFilter })} <ChevronDown className="ml-2 h-4 w-4" /></Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                     <DropdownMenuRadioGroup value={categoryFilter} onValueChange={setCategoryFilter}>
                         {availableCategories.map(cat => (
-                            <DropdownMenuRadioItem key={cat} value={cat}>{cat}</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem key={cat} value={cat}>{cat === 'All' ? 'All' : t(`categories.${cat.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat })}</DropdownMenuRadioItem>
                         ))}
                     </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
@@ -227,7 +228,7 @@ export function History() {
                 {filteredItems.length > 0 ? (
                   <div className="flex flex-col gap-2">
                     {filteredItems.map((item, index) => (
-                         <HistoryItem key={`${item.timestamp}-${index}`} item={item} onRestore={handleRestore} onDelete={() => setItemToDelete(`${item.conversion}|${item.categoryName}|${item.timestamp}`)}/>
+                         <HistoryItem key={`${item.timestamp}-${index}`} item={item} onRestore={handleRestore} onDelete={() => setItemToDelete(`${item.conversion}|${item.categoryName}|${item.timestamp}`)} t={t}/>
                     ))}
                   </div>
                 ) : (
@@ -260,7 +261,7 @@ export function History() {
 }
 
 
-function HistoryItem({ item, onRestore, onDelete }: { item: HistoryItemData; onRestore: (item: string) => void; onDelete: () => void; }) {
+function HistoryItem({ item, onRestore, onDelete, t }: { item: HistoryItemData; onRestore: (item: string) => void; onDelete: () => void; t: (key: string, params?: any) => string; }) {
     const fullHistoryString = `${item.conversion}|${item.categoryName}|${item.timestamp}`;
     const category = conversionCategories.find(c => c.name === item.categoryName);
     const Icon = category?.icon || Power;
@@ -305,4 +306,6 @@ function HistoryItem({ item, onRestore, onDelete }: { item: HistoryItemData; onR
         </div>
     )
 }
+    
+
     
