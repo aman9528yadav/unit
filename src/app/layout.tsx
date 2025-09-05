@@ -43,10 +43,14 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (isMaintenanceMode === null) return; // Wait until status is fetched
 
-        const isAllowed = allowedPaths.includes(pathname) || pathname.startsWith('/dev');
+        // Always allow access to developer routes
+        if (pathname.startsWith('/dev')) {
+            return;
+        }
+
         const devHomeIsMaintenance = localStorage.getItem("devHomeIsMaintenance");
         const isDevViewingMaintenance = devHomeIsMaintenance && JSON.parse(devHomeIsMaintenance);
-
+        const isAllowed = allowedPaths.includes(pathname);
 
         if (isMaintenanceMode && !isAllowed) {
             router.replace('/maintenance');
@@ -66,7 +70,11 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     }
     
     // Render children if not in maintenance or on an allowed path
-    const isAllowed = allowedPaths.includes(pathname) || pathname.startsWith('/dev');
+    if (pathname.startsWith('/dev')) {
+        return <>{children}</>;
+    }
+
+    const isAllowed = allowedPaths.includes(pathname);
     if (isMaintenanceMode && !isAllowed) {
         return null; // Redirecting, so don't render children yet
     }
@@ -87,6 +95,7 @@ export default function RootLayout({
           <head>
             <title>UniConvert</title>
             <meta name="description" content="A straightforward unit converter app for various measurements." />
+            <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
             <meta name="manifest" content="/manifest.json" />
             <link rel="preconnect" href="https://fonts.googleapis.com" />
             <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
