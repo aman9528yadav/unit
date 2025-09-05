@@ -267,7 +267,7 @@ export function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FD] text-[#1a202c]">
+    <div className="min-h-screen bg-background text-foreground">
       <main className="relative mx-auto max-w-lg px-4 sm:px-6 py-8">
         <Header name={profile?.fullName || 'Guest'} profile={profile} />
 
