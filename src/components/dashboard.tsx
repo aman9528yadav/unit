@@ -267,7 +267,7 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="relative mx-auto max-w-6xl px-4 sm:px-6 py-10">
+      <main className="relative mx-auto max-w-lg px-4 sm:px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <Badge className="bg-primary/20 text-primary border-primary/30">UniConvert • Dashboard</Badge>
           <div className="flex items-center gap-2">
