@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, History, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock } from "lucide-react";
+import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, History, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { useTheme } from "@/context/theme-context";
 import {
@@ -88,6 +88,7 @@ export function Settings() {
 
   const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>('scientific');
   const [saveCalcHistory, setSaveCalcHistory] = useState(true);
+  const [calculatorSound, setCalculatorSound] = useState(true);
   
   // Local state for theme selector
   const [selectedTheme, setSelectedTheme] = useState(theme);
@@ -138,6 +139,9 @@ export function Settings() {
 
     const saveCalc = localStorage.getItem('saveCalcHistory');
     setSaveCalcHistory(saveCalc === null ? true : JSON.parse(saveCalc));
+
+    const calcSound = localStorage.getItem('calculatorSoundEnabled');
+    setCalculatorSound(calcSound === null ? true : JSON.parse(calcSound));
   };
   
   const handleSaveChanges = () => {
@@ -148,6 +152,8 @@ export function Settings() {
     localStorage.setItem(getUserKey('defaultRegion', userKey), defaultRegion);
     localStorage.setItem('calculatorMode', calculatorMode);
     localStorage.setItem('saveCalcHistory', JSON.stringify(saveCalcHistory));
+    localStorage.setItem('calculatorSoundEnabled', JSON.stringify(calculatorSound));
+
     
     if (userRole === 'Member' && selectedTheme === 'custom') {
         toast({ title: "Premium Feature", description: "Unlock Premium to apply custom themes.", variant: "destructive" });
@@ -163,6 +169,7 @@ export function Settings() {
     window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('defaultRegion', userKey), newValue: defaultRegion }));
     window.dispatchEvent(new StorageEvent('storage', { key: 'calculatorMode', newValue: calculatorMode }));
     window.dispatchEvent(new StorageEvent('storage', { key: 'saveCalcHistory', newValue: JSON.stringify(saveCalcHistory) }));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'calculatorSoundEnabled', newValue: JSON.stringify(calculatorSound) }));
     window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: selectedTheme }));
 
 
@@ -333,6 +340,11 @@ export function Settings() {
                     description="Keep a record of your calculations"
                     control={<Switch checked={saveCalcHistory} onCheckedChange={setSaveCalcHistory} />}
                 />
+                 <SettingRow
+                    label="Keypress Sound"
+                    description="Play sound on button press"
+                    control={<Switch checked={calculatorSound} onCheckedChange={setCalculatorSound} />}
+                />
             </Section>
         </div>
         
@@ -363,3 +375,5 @@ export function Settings() {
     </div>
   );
 }
+
+    

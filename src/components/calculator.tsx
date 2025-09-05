@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Clock, RefreshCw, Trash2, Delete, Divide, X, Minus, Plus, Equal, Sigma, RotateCcw, CalculatorIcon, Home, User } from 'lucide-react';
@@ -54,6 +54,9 @@ export function Calculator() {
   const [isClient, setIsClient] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const router = useRouter();
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  
   
   // A simple and safe expression evaluator
   const evaluateExpression = (expr: string, currentAngleMode: 'deg' | 'rad'): number => {
@@ -97,15 +100,37 @@ export function Calculator() {
   useEffect(() => {
     setIsClient(true);
     const savedMode = localStorage.getItem('calculatorMode') as CalculatorMode;
-    if (savedMode) {
-      setMode(savedMode);
-    }
+    const soundEnabled = localStorage.getItem('calculatorSoundEnabled');
+    
+    if (savedMode) setMode(savedMode);
+    if (soundEnabled !== null) setIsSoundEnabled(JSON.parse(soundEnabled));
+    
     const storedProfileData = localStorage.getItem("userProfile");
     if (storedProfileData) setProfile(JSON.parse(storedProfileData));
 
+    const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'calculatorSoundEnabled') {
+            setIsSoundEnabled(e.newValue === null ? true : JSON.parse(e.newValue));
+        }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
+
   }, []);
+  
+  const playSound = () => {
+    if (isSoundEnabled && audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(e => console.error("Error playing sound:", e));
+    }
+  }
 
   const handleButtonClick = (value: string) => {
+    playSound();
     if (result && !['+', '-', '*', '/', '^'].includes(value)) {
         setExpression(value);
         setResult('');
@@ -118,15 +143,18 @@ export function Calculator() {
   };
   
   const handleFunctionClick = (func: string) => {
+    playSound();
     setExpression(prev => prev + `${func}(`);
   }
 
   const handleClear = () => {
+    playSound();
     setExpression('');
     setResult('');
   };
 
   const handleBackspace = () => {
+    playSound();
     if (result) {
         setExpression('');
         setResult('');
@@ -136,6 +164,7 @@ export function Calculator() {
   };
 
   const handleCalculate = () => {
+    playSound();
     try {
       if (!expression || /[+\-*/.^]$/.test(expression)) return;
       
@@ -179,7 +208,7 @@ const ScientificLayout = () => (
         <CalculatorButton onClick={handleBackspace} label={<Delete />} className={buttonClasses.gray} />
         <CalculatorButton onClick={() => handleButtonClick('(')} label="(" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleButtonClick(')')} label=")" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => setAngleMode(a => a === 'deg' ? 'rad' : 'deg')} label={angleMode.toUpperCase()} className={buttonClasses.accent} />
+        <CalculatorButton onClick={() => { playSound(); setAngleMode(a => a === 'deg' ? 'rad' : 'deg')}} label={angleMode.toUpperCase()} className={buttonClasses.accent} />
 
         {/* Row 2 */}
         <CalculatorButton onClick={() => handleFunctionClick('sin')} label="sin" className={buttonClasses.dark} />
@@ -249,6 +278,7 @@ const BasicLayout = () => (
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-4">
+       <audio ref={audioRef} src="/alarm.mp3" preload="auto"></audio>
        <header className="flex items-center justify-between sticky top-0 z-50 bg-background/80 backdrop-blur-sm py-4">
         <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" asChild>
@@ -305,3 +335,5 @@ const BasicLayout = () => (
     </div>
   );
 }
+
+    
