@@ -592,7 +592,7 @@ export function Converter() {
             <h1 className="text-xl font-bold">Unit Converter</h1>
         </div>
         <div className="flex items-center gap-2">
-            <Button variant="ghost" className="rounded-full" onClick={handleProfileClick}>
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={handleProfileClick}>
                 <Avatar>
                     <AvatarImage src={profile?.profileImage} alt={profile?.fullName}/>
                     <AvatarFallback><User /></AvatarFallback>
@@ -899,11 +899,11 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
     return (
       <div
         ref={ref}
-        className="w-[350px] bg-[#0A102A] border border-indigo-400/50 text-white font-sans p-6 flex flex-col gap-4 rounded-xl"
+        className="w-[350px] bg-card text-foreground font-sans p-6 flex flex-col gap-4 rounded-xl border"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-500/20 rounded-full">
-            <Icon className="w-6 h-6 text-indigo-400" />
+          <div className="p-2 bg-primary/10 rounded-full">
+            <Icon className="w-6 h-6 text-primary" />
           </div>
           <h2 className="text-2xl font-bold">{t(`categories.${category.name.toLowerCase()}`)} {t('converter.image.conversion')}</h2>
         </div>
@@ -917,7 +917,7 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
         </div>
          <div className="flex flex-col gap-2 text-center">
             <p className="text-xl text-muted-foreground">{toUnitInfo ? t(`units.${toUnitInfo.name.toLowerCase().replace(/[\s().-]/g, '')}`) : ''}</p>
-            <p className="text-5xl font-bold">{outputValue}</p>
+            <p className="text-5xl font-bold text-primary">{outputValue}</p>
             <p className="text-lg text-muted-foreground">{toUnitInfo?.symbol}</p>
         </div>
         <p className="text-center text-sm text-muted-foreground mt-4">
