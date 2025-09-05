@@ -618,21 +618,6 @@ export function Converter() {
                     <AvatarFallback><User /></AvatarFallback>
                 </Avatar>
             </Button>
-            <Dialog>
-                <DialogTrigger asChild>
-                    <Button variant="outline"><Share2 className="mr-2 h-4 w-4" /> Share & Export</Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Share or Export Conversion</DialogTitle>
-                    </DialogHeader>
-                     <div className="flex flex-col gap-4">
-                        <Button onClick={handleShare}><Share2 className="mr-2 h-4 w-4"/> Share via System Dialog</Button>
-                        <Button onClick={handleExportAsTxt} variant="secondary"><FileText className="mr-2 h-4 w-4"/> Export as .txt</Button>
-                        <Button onClick={handleExportAsImage} variant="secondary"><ImageIcon className="mr-2 h-4 w-4"/> Export as .png</Button>
-                     </div>
-                </DialogContent>
-            </Dialog>
         </div>
       </header>
       
@@ -754,6 +739,21 @@ export function Converter() {
                                 <Button variant="ghost" size="icon" onClick={() => setIsGraphVisible(v => !v)} disabled={!outputValue || selectedCategory.name === 'Temperature'}>
                                     <BarChart2 size={16} />
                                 </Button>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" disabled={!outputValue}><Share2 size={16}/></Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Share or Export Conversion</DialogTitle>
+                                        </DialogHeader>
+                                         <div className="flex flex-col gap-4">
+                                            <Button onClick={handleShare}><Share2 className="mr-2 h-4 w-4"/> Share via System Dialog</Button>
+                                            <Button onClick={handleExportAsTxt} variant="secondary"><FileText className="mr-2 h-4 w-4"/> Export as .txt</Button>
+                                            <Button onClick={handleExportAsImage} variant="secondary"><ImageIcon className="mr-2 h-4 w-4"/> Export as .png</Button>
+                                         </div>
+                                    </DialogContent>
+                                </Dialog>
                              </div>
                         </CardContent>
                     </Card>
@@ -901,5 +901,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
