@@ -224,10 +224,18 @@ export function Converter() {
       setRegion(savedDefaultRegion as Region);
     }
     
+    // This logic handles restoring state from global search or history page
     const itemToRestore = localStorage.getItem("restoreConversion");
     if (itemToRestore) {
-      handleRestoreHistory(itemToRestore);
-      localStorage.removeItem("restoreConversion");
+        // First, try parsing as a direct query (e.g., from global search)
+        const parsedQuery = offlineParseConversionQuery(itemToRestore, allUnits, conversionCategories);
+        if (parsedQuery) {
+            restoreFromParsedQuery(parsedQuery);
+        } else {
+            // If that fails, assume it's a history item
+            handleRestoreHistory(itemToRestore);
+        }
+        localStorage.removeItem("restoreConversion");
     }
     
     const handleStorageChange = (e: StorageEvent) => {
@@ -262,7 +270,7 @@ export function Converter() {
       window.removeEventListener('online', goOnline);
       window.removeEventListener('offline', goOffline);
     };
-  }, [profile?.email]);
+  }, [profile?.email, allUnits, conversionCategories]);
   
   const getCurrentConversionString = (value: number, from: string, to: string, result: number) => {
     const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
@@ -489,10 +497,30 @@ export function Converter() {
   };
 
 
+  const restoreFromParsedQuery = (parsedQuery: ParseConversionQueryOutput) => {
+    const category = conversionCategories.find(c => c.name === parsedQuery.category);
+    if (category) {
+        const categoryUnits = category.units.filter(u => !u.region || u.region === region);
+        const fromUnitExists = categoryUnits.some(u => u.symbol === parsedQuery.fromUnit);
+        const toUnitExists = categoryUnits.some(u => u.symbol === parsedQuery.toUnit);
+
+        if (fromUnitExists && toUnitExists) {
+            setSelectedCategory(category);
+            setFromUnit(parsedQuery.fromUnit);
+            setToUnit(parsedQuery.toUnit);
+            setInputValue(String(parsedQuery.value));
+            performConversion(parsedQuery.value, parsedQuery.fromUnit, parsedQuery.toUnit);
+        } else {
+            toast({ title: t('converter.toast.cannotRestore'), description: t('converter.toast.regionError', { region }), variant: "destructive" });
+        }
+    } else {
+        toast({ title: t('converter.toast.cannotRestore'), description: t('converter.toast.categoryError'), variant: "destructive" });
+    }
+  };
+
   const handleRestoreHistory = (item: string) => {
     const { value, from, to, result, categoryName } = parseHistoryString(item);
   
-    // Find category that has both units
     const category = conversionCategories.find(c => c.name === categoryName);
   
     if (category) {
@@ -908,3 +936,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
