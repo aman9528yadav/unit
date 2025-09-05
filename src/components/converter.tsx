@@ -938,7 +938,7 @@ function UnitSelectionDialog({ trigger, selectedCategory, onSelectUnit, conversi
             </div>
              {filteredUnits.length === 0 && (
                 <div className="text-center p-8 text-muted-foreground">
-                    <p>No units found for "{debouncedSearch}".</p>
+                    <p>No units found for "{debouncedSearch}" in {activeCategory.name}.</p>
                 </div>
              )}
           </ScrollArea>
@@ -996,5 +996,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
