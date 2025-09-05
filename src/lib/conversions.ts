@@ -38,7 +38,6 @@ const lengthUnits: Unit[] = [
   { name: 'Inches', symbol: 'in', info: '1in = 0.0254 m' },
   { name: 'Nautical Miles', symbol: 'nmi', info: '1nmi = 1852 m' },
   { name: 'Gaj', symbol: 'gaj', info: '1 gaj = 0.9144 m', region: 'India' },
-  { name: 'Li', symbol: 'li', info: '1 li = 500 m', region: 'China' },
 ];
 const lengthFactors: LinearConversionFactors = { // to meter
   'm': 1,
@@ -51,7 +50,6 @@ const lengthFactors: LinearConversionFactors = { // to meter
   'in': 0.0254,
   'nmi': 1852,
   'gaj': 0.9144,
-  'li': 500,
 };
 const lengthCategory: ConversionCategory = {
   name: 'Length',
@@ -235,9 +233,6 @@ const areaUnits: Unit[] = [
     { name: 'Hectares', symbol: 'ha', info: '1ha = 10,000 m²' },
     { name: 'Acres', symbol: 'acre', info: '1 acre ≈ 4046.86 m²' },
     { name: 'Bigha', symbol: 'bigha', info: 'Varies by region', region: 'India' },
-    { name: 'Tsubo', symbol: 'tsubo', info: '1 tsubo ≈ 3.306 m²', region: 'Japan' },
-    { name: 'Pyeong', symbol: 'pyeong', info: '1 pyeong ≈ 3.306 m²', region: 'Korea' },
-    { name: 'Dunam', symbol: 'dunam', info: '1 dunam = 1000 m²', region: 'Middle East' },
 ];
 const areaFactors: LinearConversionFactors = { // to m²
   'm²': 1,
@@ -248,9 +243,6 @@ const areaFactors: LinearConversionFactors = { // to m²
   'ha': 10000,
   'acre': 4046.86,
   'bigha': 2508.38, // Note: This is an approximation for some regions.
-  'tsubo': 3.305785,
-  'pyeong': 3.305785,
-  'dunam': 1000,
 };
 const areaCategory: ConversionCategory = {
     name: 'Area',
@@ -368,23 +360,15 @@ const energyCategory: ConversionCategory = {
 
 // --- CURRENCY ---
 const currencyUnits: Unit[] = [
-    { name: 'United States Dollar (USD)', symbol: 'USD', info: 'Base currency' },
-    { name: 'Euro (EUR)', symbol: 'EUR', info: '1 EUR ≈ 1.08 USD' },
-    { name: 'Japanese Yen (JPY)', symbol: 'JPY', info: '1 JPY ≈ 0.0064 USD' },
-    { name: 'British Pound (GBP)', symbol: 'GBP', info: '1 GBP ≈ 1.27 USD' },
-    { name: 'Indian Rupee (INR)', symbol: 'INR', info: '1 INR ≈ 0.012 USD' },
-    { name: 'Australian Dollar (AUD)', symbol: 'AUD', info: '1 AUD ≈ 0.66 USD' },
-    { name: 'Canadian Dollar (CAD)', symbol: 'CAD', info: '1 CAD ≈ 0.73 USD' },
-    { name: 'Swiss Franc (CHF)', symbol: 'CHF', info: '1 CHF ≈ 1.11 USD' },
-    { name: 'Chinese Yuan (CNY)', symbol: 'CNY', info: '1 CNY ≈ 0.14 USD' },
-    { name: 'Hong Kong Dollar (HKD)', symbol: 'HKD', info: '1 HKD ≈ 0.13 USD' },
-    { name: 'New Zealand Dollar (NZD)', symbol: 'NZD', info: '1 NZD ≈ 0.61 USD' },
-    { name: 'South Korean Won (KRW)', symbol: 'KRW', info: '1 KRW ≈ 0.00072 USD' },
-    { name: 'Singapore Dollar (SGD)', symbol: 'SGD', info: '1 SGD ≈ 0.74 USD' },
-    { name: 'Mexican Peso (MXN)', symbol: 'MXN', info: '1 MXN ≈ 0.059 USD' },
-    { name: 'Brazilian Real (BRL)', symbol: 'BRL', info: '1 BRL ≈ 0.18 USD' },
-    { name: 'Russian Ruble (RUB)', symbol: 'RUB', info: '1 RUB ≈ 0.011 USD' },
-    { name: 'South African Rand (ZAR)', symbol: 'ZAR', info: '1 ZAR ≈ 0.054 USD' },
+    { name: 'United States Dollar', symbol: 'USD', info: 'Base currency' },
+    { name: 'Euro', symbol: 'EUR', info: '1 EUR ≈ 1.08 USD' },
+    { name: 'Japanese Yen', symbol: 'JPY', info: '1 JPY ≈ 0.0064 USD' },
+    { name: 'British Pound', symbol: 'GBP', info: '1 GBP ≈ 1.27 USD' },
+    { name: 'Indian Rupee', symbol: 'INR', info: '1 INR ≈ 0.012 USD' },
+    { name: 'Australian Dollar', symbol: 'AUD', info: '1 AUD ≈ 0.66 USD' },
+    { name: 'Canadian Dollar', symbol: 'CAD', info: '1 CAD ≈ 0.73 USD' },
+    { name: 'Swiss Franc', symbol: 'CHF', info: '1 CHF ≈ 1.11 USD' },
+    { name: 'Chinese Yuan', symbol: 'CNY', info: '1 CNY ≈ 0.14 USD' },
 ];
 const currencyFactors: LinearConversionFactors = {
     'USD': 1,
@@ -396,14 +380,6 @@ const currencyFactors: LinearConversionFactors = {
     'CAD': 0.73,
     'CHF': 1.11,
     'CNY': 0.14,
-    'HKD': 0.13,
-    'NZD': 0.61,
-    'KRW': 0.00072,
-    'SGD': 0.74,
-    'MXN': 0.059,
-    'BRL': 0.18,
-    'RUB': 0.011,
-    'ZAR': 0.054,
 };
 const currencyCategory: ConversionCategory = {
     name: 'Currency',
@@ -470,5 +446,17 @@ const fuelEconomyCategory: ConversionCategory = {
 };
 
 
-export const conversionCategories: ConversionCategory[] = [lengthCategory, weightCategory, temperatureCategory, dataCategory, timeCategory, speedCategory, areaCategory, volumeCategory, pressureCategory, energyCategory, currencyCategory, fuelEconomyCategory];
-
+export const conversionCategories: ConversionCategory[] = [
+    lengthCategory, 
+    weightCategory, 
+    temperatureCategory, 
+    dataCategory, 
+    timeCategory, 
+    speedCategory, 
+    areaCategory, 
+    volumeCategory,
+    pressureCategory,
+    energyCategory,
+    currencyCategory,
+    fuelEconomyCategory,
+];

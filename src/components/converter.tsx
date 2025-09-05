@@ -30,7 +30,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2, ChevronDown, Sparkles, LogIn, Scale, Power } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2, ChevronDown, Sparkles, LogIn, Scale, Power, Gauge, Flame, DollarSign, Fuel } from "lucide-react";
 import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow.ts";
 import { useToast } from "@/hooks/use-toast";
@@ -156,13 +156,6 @@ export function Converter() {
             }
              if (newCategory.factors && newCategory.name !== 'Temperature') {
                 newCategory.factors[cu.symbol] = cu.factor;
-
-                // Special case for Currency, assuming USD is base
-                if (newCategory.name === 'Currency') {
-                    if (!newCategory.factors['USD']) {
-                        newCategory.factors['USD'] = 1; // Add USD if not present
-                    }
-                }
             }
         });
         
@@ -195,7 +188,6 @@ export function Converter() {
 
 
   const imageExportRef = React.useRef<HTMLDivElement>(null);
-  const searchTriggeredRef = useRef(false);
 
   const currentUnits = React.useMemo(() => {
     return selectedCategory.units.filter(u => !u.region || u.region === region);
@@ -342,10 +334,6 @@ export function Converter() {
   
   // Perform conversion whenever inputs change if auto-convert is on
   useEffect(() => {
-    if (searchTriggeredRef.current) {
-        searchTriggeredRef.current = false;
-        return;
-    }
     if (autoConvert) {
       performConversion(inputValue, fromUnit, toUnit);
     }
@@ -362,7 +350,7 @@ export function Converter() {
     const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
     localStorage.setItem('lastConversion', conversionString);
     
-    if (!history.includes(conversionString)) {
+    if (!history.some(h => h.startsWith(conversionString.split('|')[0]))) {
       incrementTodaysCalculations();
       const newHistory = [conversionString, ...history];
       setHistory(newHistory);
@@ -401,7 +389,6 @@ export function Converter() {
                     const toUnitExists = categoryUnits.some(u => u.symbol === parsed.toUnit);
 
                     if (fromUnitExists && toUnitExists) {
-                        searchTriggeredRef.current = true;
                         setSelectedCategory(category);
                         setFromUnit(parsed.fromUnit);
                         setToUnit(parsed.toUnit);
@@ -764,7 +751,10 @@ function UnitSelectionDialog({ categories, onUnitSelect, selectedCategory, selec
     const [search, setSearch] = useState("");
     const [activeCategory, setActiveCategory] = useState<ConversionCategory>(selectedCategory);
     
-    const selectedUnitInfo = useMemo(() => selectedCategory.units.find(u => u.symbol === selectedUnitSymbol), [selectedCategory, selectedUnitSymbol]);
+    const selectedUnitInfo = useMemo(() => {
+        const category = categories.find(c => c.name === selectedCategory.name);
+        return category?.units.find(u => u.symbol === selectedUnitSymbol);
+    }, [categories, selectedCategory, selectedUnitSymbol]);
     
     const filteredUnits = useMemo(() => activeCategory.units.filter(unit => 
         unit.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -777,6 +767,10 @@ function UnitSelectionDialog({ categories, onUnitSelect, selectedCategory, selec
     };
 
     useEffect(() => {
+        // This hook ensures that if the parent's selectedCategory changes,
+        // the dialog's active category is updated to match.
+        // It prevents a mismatch where the dialog shows a different category
+        // than the one currently active in the main converter view.
         if (selectedCategory.name !== activeCategory.name) {
             setActiveCategory(selectedCategory);
         }
@@ -916,5 +910,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
