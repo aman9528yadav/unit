@@ -4,25 +4,35 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Allow public read access to settings like maintenance mode
-    match /settings/maintenance {
-      allow read: if true;
-      allow write: if request.auth != null; // Only allow logged-in users to write (should be restricted further in production)
+    // Developer's email for admin access
+    function isDeveloper() {
+      return request.auth != null && request.auth.token.email == "amanyadavyadav9458@gmail.com";
     }
 
-    // Allow public read access to global notifications
-    match /notifications/{notificationId} {
+    // --- Global Settings ---
+    // Anyone can read notifications and maintenance mode.
+    // Only the developer can write to them.
+    match /settings/{setting} {
       allow read: if true;
-      allow write: if request.auth != null; // Only allow logged-in users to write (should be restricted further in production)
+      allow write: if isDeveloper();
     }
 
-    // Allow logged-in users to write their own events
+    match /notifications/{notification} {
+      allow read: if true;
+      allow create: if isDeveloper();
+      allow update, delete: if false;
+    }
+
+    // --- User Events ---
+    // Any authenticated user can log their own events.
+    // No one can read, update, or delete them.
     match /user_events/{eventId} {
-      allow create: if request.auth != null;
-      allow read, update, delete: if false; // Don't allow reading/modifying events
+      allow create: if request.auth != null && request.resource.data.email == request.auth.token.email;
+      allow read, update, delete: if false;
     }
 
-    // Deny all other access by default
+    // --- Default Deny ---
+    // By default, deny access to all other collections and documents.
     match /{document=**} {
       allow read, write: if false;
     }
