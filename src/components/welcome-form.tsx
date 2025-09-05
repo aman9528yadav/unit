@@ -106,7 +106,7 @@ export function WelcomeForm() {
   }
   
   const handleSkip = () => {
-    // Just navigate to the home page, no user profile is set
+    sessionStorage.setItem("hasSkippedLogin", "true");
     router.push("/");
   };
 
