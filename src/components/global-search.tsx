@@ -5,24 +5,28 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, StickyNote, History, HelpCircle, Settings, X, CornerDownLeft } from 'lucide-react';
+import { Search, StickyNote, History, HelpCircle, Settings, X, CornerDownLeft, ArrowRightLeft } from 'lucide-react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Note, NOTES_STORAGE_KEY_BASE } from './notepad';
 import { FAQ, FAQ_STORAGE_KEY } from './help';
+import { conversionCategories as baseConversionCategories, Unit, ConversionCategory } from '@/lib/conversions';
+import { offlineParseConversionQuery } from './converter';
+import { CustomCategory, CustomUnit } from './custom-unit-manager';
+
 
 interface SearchResult {
-  type: 'Note' | 'History' | 'Help' | 'Setting';
+  type: 'Note' | 'History' | 'Help' | 'Setting' | 'Conversion';
   title: string;
   description?: string;
   id: string;
   href: string;
 }
 
-const SETTINGS_PAGES: Omit<SearchResult, 'id'>[] = [
-  { type: 'Setting', title: 'General Settings', description: 'Edit profile, notifications, language, theme.', href: '/settings' },
-  { type: 'Setting', title: 'Custom Units', description: 'Manage custom units and categories.', href: '/settings/custom-units' },
-  { type: 'Setting', title: 'Theme Editor', description: 'Customize the application theme colors.', href: '/settings/theme' },
-  { type: 'Setting', title: 'Developer Panel', description: 'Access tools for debugging and testing.', href: '/dev' },
+const SETTINGS_PAGES: Omit<SearchResult, 'id' | 'type'>[] = [
+  { title: 'General Settings', description: 'Edit profile, notifications, language, theme.', href: '/settings' },
+  { title: 'Custom Units', description: 'Manage custom units and categories.', href: '/settings/custom-units' },
+  { title: 'Theme Editor', description: 'Customize the application theme colors.', href: '/settings/theme' },
+  { title: 'Developer Panel', description: 'Access tools for debugging and testing.', href: '/dev' },
 ];
 
 const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
@@ -35,12 +39,61 @@ export function GlobalSearch() {
   const debouncedQuery = useDebounce(query, 300);
   const router = useRouter();
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  
+  const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
+  const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
+  
+  const conversionCategories = React.useMemo(() => {
+    // This logic should be kept in sync with the converter component
+    const categoriesWithCustomData = [...baseConversionCategories].map(c => ({ ...c }));
+    customCategories.forEach(cc => {
+        if (!categoriesWithCustomData.some(c => c.name === cc.name)) {
+            categoriesWithCustomData.push({
+                name: cc.name,
+                icon: () => null, // Icon not needed for logic
+                units: [{ name: cc.baseUnitName, symbol: cc.baseUnitSymbol }],
+                factors: { [cc.baseUnitSymbol]: 1 },
+                convert: function(value: number, from: string, to: string) {
+                    const fromFactor = this.factors![from];
+                    const toFactor = this.factors![to];
+                    if (fromFactor === undefined || toFactor === undefined) return NaN;
+                    return (value * fromFactor) / toFactor;
+                },
+            });
+        }
+    });
+    return categoriesWithCustomData.map(category => {
+        const newCategory = { ...category, units: [...category.units], factors: { ...category.factors } };
+        const applicableUnits = customUnits.filter(cu => cu.category === category.name);
+        applicableUnits.forEach(cu => {
+            if (!newCategory.units.some(u => u.symbol === cu.symbol)) {
+                newCategory.units.push({ name: cu.name, symbol: cu.symbol });
+            }
+            if (newCategory.factors && newCategory.name !== 'Temperature') {
+                newCategory.factors[cu.symbol] = cu.factor;
+            }
+        });
+        return newCategory;
+    });
+  }, [customUnits, customCategories]);
+  
+  const allUnits = React.useMemo(() => conversionCategories.flatMap(c => c.units), [conversionCategories]);
+
 
   useEffect(() => {
     const storedProfile = localStorage.getItem('userProfile');
+    const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
+
     if (storedProfile) {
       setProfile(JSON.parse(storedProfile));
     }
+    
+    const savedCustomUnits = localStorage.getItem(`${userEmail || 'guest'}_customUnits`);
+    const savedCustomCategories = localStorage.getItem(`${userEmail || 'guest'}_customCategories`);
+
+    if (savedCustomUnits) setCustomUnits(JSON.parse(savedCustomUnits));
+    if (savedCustomCategories) setCustomCategories(JSON.parse(savedCustomCategories));
+
   }, [isFocused]);
 
   const search = useCallback(() => {
@@ -51,6 +104,19 @@ export function GlobalSearch() {
 
     const lowerQuery = debouncedQuery.toLowerCase();
     const allResults: SearchResult[] = [];
+
+    // Search Conversion first
+    const parsedConversion = offlineParseConversionQuery(debouncedQuery, allUnits, conversionCategories);
+    if (parsedConversion) {
+      allResults.push({
+        type: 'Conversion',
+        title: `Convert: ${debouncedQuery}`,
+        description: `Switch to converter for this calculation.`,
+        id: 'conversion-result',
+        href: '/converter',
+      });
+    }
+
 
     // Search Notes
     const notesKey = getUserNotesKey(profile?.email || null);
@@ -78,7 +144,7 @@ export function GlobalSearch() {
           type: 'History',
           title: h.split('|')[0],
           id: h,
-          href: `/converter`, // Restore action will be handled on page load
+          href: `/converter`,
         }));
     }
 
@@ -100,10 +166,10 @@ export function GlobalSearch() {
     // Search Settings
     SETTINGS_PAGES
       .filter(p => p.title.toLowerCase().includes(lowerQuery) || p.description?.toLowerCase().includes(lowerQuery))
-      .forEach(p => allResults.push({ ...p, id: p.href }));
+      .forEach(p => allResults.push({ ...p, id: p.href, type: 'Setting' }));
 
     setResults(allResults);
-  }, [debouncedQuery, profile]);
+  }, [debouncedQuery, profile, allUnits, conversionCategories]);
 
   useEffect(() => {
     search();
@@ -120,8 +186,8 @@ export function GlobalSearch() {
   }, []);
   
   const handleSelectResult = (result: SearchResult) => {
-    if (result.type === 'History') {
-        localStorage.setItem('restoreConversion', result.id);
+    if (result.type === 'History' || result.type === 'Conversion') {
+        localStorage.setItem('restoreConversion', result.type === 'Conversion' ? query : result.id);
     }
     router.push(result.href);
     setIsFocused(false);
@@ -134,6 +200,7 @@ export function GlobalSearch() {
       case 'History': return <History className="w-5 h-5 text-blue-500" />;
       case 'Help': return <HelpCircle className="w-5 h-5 text-green-500" />;
       case 'Setting': return <Settings className="w-5 h-5 text-gray-500" />;
+      case 'Conversion': return <ArrowRightLeft className="w-5 h-5 text-purple-500" />;
       default: return null;
     }
   };

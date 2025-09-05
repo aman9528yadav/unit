@@ -64,7 +64,7 @@ const getUserKey = (key: string, email: string | null) => {
 
 
 // Offline parser to replace the AI flow
-const offlineParseConversionQuery = (query: string, allUnits: Unit[]): ParseConversionQueryOutput | null => {
+export const offlineParseConversionQuery = (query: string, allUnits: Unit[], categories: ConversionCategory[]): ParseConversionQueryOutput | null => {
     // Regex to capture value and units, e.g., "10.5 km to m"
     const regex = /^\s*([0-9.,]+)\s*([a-zA-Z°/²³-]+)\s*(?:to|in|as|)\s*([a-zA-Z°/²³-]+)\s*$/i;
     const match = query.match(regex);
@@ -83,7 +83,7 @@ const offlineParseConversionQuery = (query: string, allUnits: Unit[]): ParseConv
     if (!fromUnit || !toUnit) return null;
 
     // Find the category that contains both units
-    const category = baseConversionCategories.find(c =>
+    const category = categories.find(c =>
         c.units.some(u => u.symbol === fromUnit.symbol) &&
         c.units.some(u => u.symbol === toUnit.symbol)
     );
@@ -410,7 +410,7 @@ export function Converter() {
 
     startSearchTransition(() => {
         try {
-            const parsed = offlineParseConversionQuery(searchQuery, allUnits);
+            const parsed = offlineParseConversionQuery(searchQuery, allUnits, conversionCategories);
 
             if (parsed) {
                 const category = conversionCategories.find(c => c.name === parsed.category);
