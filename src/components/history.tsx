@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Trash2, Clock, Star, RotateCcw, Home } from "lucide-react";
+import { ArrowLeft, Trash2, Clock, Star, RotateCcw, Home, Search, X, Filter, Power } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -18,13 +18,61 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "./ui/input";
+import { conversionCategories } from "@/lib/conversions";
+import { format, formatDistanceToNow, parseISO, isToday, isYesterday, isThisWeek } from 'date-fns';
+import { useDebounce } from "@/hooks/use-debounce";
 
 
-export default function History() {
+interface HistoryItemData {
+  conversion: string;
+  categoryName: string;
+  timestamp: string;
+  value: string;
+  from: string;
+  fromName: string;
+  result: string;
+  to: string;
+  toName: string;
+}
+
+const parseHistoryString = (item: string): HistoryItemData => {
+  const parts = item.split('|');
+  const conversion = parts[0] || '';
+  const categoryName = parts[1] || '';
+  const timestamp = parts[2] || new Date().toISOString();
+
+  const convParts = conversion.split(' ');
+  const value = convParts[0];
+  const fromSymbol = convParts[1];
+  const result = convParts[3];
+  const toSymbol = convParts[4];
+  
+  const category = conversionCategories.find(c => c.name === categoryName);
+  const fromUnit = category?.units.find(u => u.symbol === fromSymbol);
+  const toUnit = category?.units.find(u => u.symbol === toSymbol);
+
+  return {
+    conversion,
+    categoryName,
+    timestamp,
+    value,
+    from: fromSymbol,
+    fromName: fromUnit?.name || fromSymbol,
+    result,
+    to: toSymbol,
+    toName: toUnit?.name || toSymbol,
+  };
+};
+
+export function History() {
   const [history, setHistory] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState("history");
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   useEffect(() => {
     setIsClient(true);
@@ -38,82 +86,56 @@ export default function History() {
     }
   }, []);
 
-  const handleDelete = (itemToDelete: string) => {
-    const newHistory = history.filter(h => h !== itemToDelete);
-    setHistory(newHistory);
-    localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
-
-    if (favorites.includes(itemToDelete)) {
-      const newFavorites = favorites.filter(fav => fav !== itemToDelete);
-      setFavorites(newFavorites);
-      localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
-    }
-  };
-
   const handleRestore = (item: string) => {
     localStorage.setItem("restoreConversion", item);
     router.push("/converter");
   };
   
   const handleClearAll = () => {
-    setHistory([]);
+    if (activeTab === 'history') {
+        setHistory([]);
+        localStorage.removeItem("conversionHistory");
+    }
     setFavorites([]);
-    localStorage.removeItem("conversionHistory");
     localStorage.removeItem("favoriteConversions");
   };
-
-  const handleToggleFavorite = (item: string) => {
-    let newFavorites: string[];
-    if (favorites.includes(item)) {
-      newFavorites = favorites.filter(fav => fav !== item);
-    } else {
-      newFavorites = [item, ...favorites];
-    }
-    setFavorites(newFavorites);
-    localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
-  };
   
-  const favoriteItems = history.filter(item => favorites.includes(item));
-  const historyItems = history; // The history tab will show all items
-
-  const HistoryItem = ({ item }: { item: string }) => (
-    <div className="bg-card p-4 rounded-xl flex items-center justify-between group">
-        <div className="flex-1 cursor-pointer" onClick={() => handleRestore(item)}>
-            <p className="text-sm text-muted-foreground">{item.split('→')[0]}</p>
-            <p className="font-bold text-lg">→ {item.split('→')[1]}</p>
-        </div>
-        <div className="flex items-center gap-2">
-             <Button variant="ghost" size="icon" onClick={() => handleRestore(item)}>
-                <RotateCcw className="text-muted-foreground group-hover:text-primary transition-colors"/>
-            </Button>
-             <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}>
-                <Trash2 className="text-muted-foreground group-hover:text-destructive transition-colors"/>
-            </Button>
-        </div>
-     </div>
-  );
+  const itemsToDisplay = activeTab === 'history' 
+    ? history 
+    : history.filter(item => favorites.includes(item));
+    
+  const filteredItems = itemsToDisplay.filter(item => {
+    const parsed = parseHistoryString(item);
+    if (!debouncedSearch) return true;
+    return parsed.conversion.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+           parsed.categoryName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+           parsed.fromName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+           parsed.toName.toLowerCase().includes(debouncedSearch.toLowerCase());
+  }).map(parseHistoryString);
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-6">
-      <div className="w-full max-w-md mx-auto flex flex-col gap-4">
+      <div className="w-full max-w-2xl mx-auto flex flex-col gap-4">
         <header className="flex items-center justify-between sticky top-0 z-50 bg-background py-4">
-            <Button variant="ghost" size="icon" asChild>
-                <Link href="/">
-                    <Home />
-                </Link>
-            </Button>
-            <h1 className="text-xl font-bold">History</h1>
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" asChild>
+                    <Link href="/">
+                        <Home />
+                    </Link>
+                </Button>
+                <h1 className="text-xl font-bold flex items-center gap-2"><Clock/> Conversion History</h1>
+            </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon" disabled={history.length === 0}>
-                <Trash2 className="text-destructive"/>
+              <Button variant="outline" disabled={itemsToDisplay.length === 0}>
+                <Trash2 className="mr-2"/> Clear All
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will permanently delete all your conversion history, including favorites. This action cannot be undone.
+                  This will permanently delete all {activeTab === 'history' ? 'history and favorites' : 'favorites'}. This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -126,50 +148,85 @@ export default function History() {
           </AlertDialog>
         </header>
         
-        <Tabs defaultValue="history" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="history">History</TabsTrigger>
                 <TabsTrigger value="favorites">Favorites</TabsTrigger>
             </TabsList>
-            <TabsContent value="history" className="mt-4">
-                 {historyItems.length > 0 ? (
-                  <div className="flex flex-col gap-3">
-                    {historyItems.map((item, index) => (
-                         <HistoryItem key={`hist-${index}`} item={item} />
+            
+            <div className="flex items-center gap-2 my-4">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input placeholder="Search conversions" className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+              </div>
+              <Button variant="outline"><Filter className="mr-2"/> Category: All</Button>
+            </div>
+
+            <div className="bg-card p-4 rounded-lg">
+                <div className="grid grid-cols-4 text-muted-foreground text-sm font-semibold mb-2 px-2">
+                    <span>When</span>
+                    <span className="col-span-2">Conversion</span>
+                    <span>Action</span>
+                </div>
+                {filteredItems.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    {filteredItems.map((item, index) => (
+                         <HistoryItem key={`${item.timestamp}-${index}`} item={item} onRestore={handleRestore}/>
                     ))}
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-center text-muted-foreground bg-card p-8 rounded-xl gap-4 mt-16">
-                    <Clock size={48} />
-                    <h2 className="text-xl font-semibold">No History Yet</h2>
-                    <p>Your recent conversions will appear here.</p>
-                    <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90 mt-4">
-                      <Link href="/converter">Start Converting</Link>
-                    </Button>
+                  <div className="text-center py-16 text-muted-foreground">
+                    <p>No {activeTab} found.</p>
                   </div>
                 )}
-            </TabsContent>
-            <TabsContent value="favorites" className="mt-4">
-                {favoriteItems.length > 0 ? (
-                  <div className="flex flex-col gap-3">
-                    {favoriteItems.map((item, index) => (
-                         <HistoryItem key={`fav-${index}`} item={item} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-center text-muted-foreground bg-card p-8 rounded-xl gap-4 mt-16">
-                    <Star size={48} />
-                    <h2 className="text-xl font-semibold">No Favorites Yet</h2>
-                    <p>Star a conversion to see it here.</p>
-                     <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90 mt-4">
-                      <Link href="/converter">Start Converting</Link>
-                    </Button>
-                  </div>
-                )}
-            </TabsContent>
+            </div>
         </Tabs>
 
       </div>
     </main>
   );
+}
+
+
+function HistoryItem({ item, onRestore }: { item: HistoryItemData; onRestore: (item: string) => void }) {
+    const fullHistoryString = `${item.conversion}|${item.categoryName}|${item.timestamp}`;
+    const category = conversionCategories.find(c => c.name === item.categoryName);
+    const Icon = category?.icon || Power;
+
+    const formatWhen = (timestamp: string) => {
+        const date = parseISO(timestamp);
+        if (isToday(date)) {
+            return `Today, ${format(date, 'HH:mm')}`;
+        }
+        if (isYesterday(date)) {
+            return `Yesterday, ${format(date, 'HH:mm')}`;
+        }
+         if (isThisWeek(date, { weekStartsOn: 1 })) {
+            return `${format(date, 'EEEE')}, ${format(date, 'HH:mm')}`;
+        }
+        return format(date, 'd MMM, HH:mm');
+    }
+
+    return (
+        <div className="grid grid-cols-4 items-center p-2 rounded-lg hover:bg-secondary group">
+            <div className="flex flex-col">
+                <span className="font-semibold text-foreground">{formatDistanceToNow(parseISO(item.timestamp), { addSuffix: true })}</span>
+                <span className="text-xs">{formatWhen(item.timestamp)}</span>
+            </div>
+            <div className="col-span-2 flex items-center gap-3">
+                 <div className="p-2 bg-primary/10 text-primary rounded-full">
+                    <Icon/>
+                </div>
+                <div>
+                    <p className="font-semibold text-foreground">{item.value} {item.from} → {item.result} {item.to}</p>
+                    <p className="text-xs">From {item.fromName} to {item.toName}</p>
+                </div>
+            </div>
+             <div className="flex justify-end">
+                 <Button variant="ghost" onClick={() => onRestore(fullHistoryString)}>
+                    <RotateCcw className="mr-2"/> Use
+                </Button>
+            </div>
+        </div>
+    )
 }

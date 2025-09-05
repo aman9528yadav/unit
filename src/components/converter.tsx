@@ -45,7 +45,6 @@ import { Notifications } from "./notifications";
 import { GlobalSearchDialog } from "./global-search-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Badge } from "./ui/badge";
 import { formatDistanceToNow } from "date-fns";
 
 
@@ -600,14 +599,12 @@ export function Converter() {
             <Scale />
             <h1 className="text-xl font-bold">Unit Converter</h1>
         </div>
-        <div className="flex items-center gap-4">
-            <Button variant="outline" className="rounded-full" onClick={handleProfileClick}>
-                <span className="mr-2">Hi, {profile?.fullName || "Guest"}</span>
-                <Avatar className="w-6 h-6">
-                    <AvatarFallback><User /></AvatarFallback>
-                </Avatar>
+        <div className="flex items-center gap-2">
+            <Button variant="ghost" className="rounded-full" onClick={handleProfileClick}>
+                <span className="mr-2 hidden sm:inline">Hi, {profile?.fullName || "Guest"}</span>
+                <User />
             </Button>
-            <Button variant="secondary" onClick={handleShare}>
+            <Button variant="secondary" onClick={handleShare} className="hidden sm:flex">
                 <Share2 className="mr-2" /> Share
             </Button>
         </div>
