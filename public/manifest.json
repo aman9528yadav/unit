@@ -1,11 +1,12 @@
+
 {
-  "name": "UniConvert",
-  "short_name": "UniConvert",
-  "description": "A straightforward unit converter app for various measurements.",
+  "name": "Sutradhaar",
+  "short_name": "Sutradhaar",
+  "description": "A smart all-in-one Unit Converter + Calculator + Notes app.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0F172A",
-  "theme_color": "#0F172A",
+  "background_color": "#222a44",
+  "theme_color": "#3b82f6",
   "icons": [
     {
       "src": "/icon-192x192.png",
@@ -19,3 +20,5 @@
     }
   ]
 }
+
+    
