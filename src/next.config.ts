@@ -10,7 +10,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
     // Cache pages and static assets
     {
       urlPattern: /^https?.*/,
-      handler: 'NetworkFirst',
+      handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'pages-and-assets',
         expiration: {
