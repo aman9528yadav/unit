@@ -21,12 +21,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -638,12 +638,14 @@ export function Converter() {
                     <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-end">
                         <div className="flex flex-col gap-1.5">
                             <Label>From unit</Label>
-                             <CategoryAndUnitSelect 
+                             <UnitSelectionDialog 
                                 categories={conversionCategories}
+                                onUnitSelect={(category, unit) => {
+                                  setSelectedCategory(category)
+                                  setFromUnit(unit.symbol)
+                                }}
                                 selectedCategory={selectedCategory}
-                                onCategoryChange={handleCategoryChange}
-                                selectedUnit={fromUnit}
-                                onUnitChange={setFromUnit}
+                                selectedUnitSymbol={fromUnit}
                                 t={t}
                              />
                         </div>
@@ -654,12 +656,14 @@ export function Converter() {
                         
                         <div className="flex flex-col gap-1.5">
                             <Label>To unit</Label>
-                             <CategoryAndUnitSelect 
+                              <UnitSelectionDialog 
                                 categories={conversionCategories}
+                                onUnitSelect={(category, unit) => {
+                                  setSelectedCategory(category)
+                                  setToUnit(unit.symbol)
+                                }}
                                 selectedCategory={selectedCategory}
-                                onCategoryChange={handleCategoryChange}
-                                selectedUnit={toUnit}
-                                onUnitChange={setToUnit}
+                                selectedUnitSymbol={toUnit}
                                 t={t}
                              />
                         </div>
@@ -752,52 +756,80 @@ export function Converter() {
   );
 }
 
-function CategoryAndUnitSelect({ categories, selectedCategory, onCategoryChange, selectedUnit, onUnitChange, t }: { categories: ConversionCategory[], selectedCategory: ConversionCategory, onCategoryChange: (name: string) => void, selectedUnit: string, onUnitChange: (symbol: string) => void, t: (key: string, params?: any) => string }) {
-    const selectedUnitInfo = selectedCategory.units.find(u => u.symbol === selectedUnit);
+function UnitSelectionDialog({ categories, onUnitSelect, selectedCategory, selectedUnitSymbol, t }: { categories: ConversionCategory[], onUnitSelect: (category: ConversionCategory, unit: Unit) => void, selectedCategory: ConversionCategory, selectedUnitSymbol: string, t: (key: string, params?: any) => string }) {
+    const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState("");
+    const [activeCategory, setActiveCategory] = useState<ConversionCategory>(selectedCategory);
     
-    const filteredUnits = selectedCategory.units.filter(unit => 
+    const selectedUnitInfo = useMemo(() => activeCategory.units.find(u => u.symbol === selectedUnitSymbol), [activeCategory, selectedUnitSymbol]);
+    
+    const filteredUnits = useMemo(() => activeCategory.units.filter(unit => 
         unit.name.toLowerCase().includes(search.toLowerCase()) || 
         unit.symbol.toLowerCase().includes(search.toLowerCase())
-    );
+    ), [activeCategory, search]);
+
+    const handleSelectUnit = (unit: Unit) => {
+        onUnitSelect(activeCategory, unit);
+        setIsOpen(false);
+    };
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
                  <Button variant="outline" className="w-full justify-between h-12 text-base">
                     <div className="flex items-center gap-2">
                          <selectedCategory.icon className="w-5 h-5 text-accent" />
-                         <span>{selectedUnitInfo?.name} ({selectedUnitInfo?.symbol})</span>
+                         <span>{selectedUnitInfo?.name} ({selectedUnitSymbol})</span>
                     </div>
                     <ChevronDown className="w-4 h-4 opacity-50" />
                 </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] p-2">
-                <Input
-                    placeholder="Search..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="mb-2"
-                />
-                <ScrollArea className="h-48">
-                    {categories.map(cat => {
-                        const isSelected = cat.name === selectedCategory.name;
-                        if (!isSelected) return null; // Only show units for selected category
-                        
-                        return (
-                            <div key={cat.name}>
-                                <DropdownMenuLabel>{cat.name}</DropdownMenuLabel>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl p-0">
+                 <DialogHeader className="p-4 border-b">
+                    <DialogTitle>Select Unit</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-[1fr_2fr] gap-4 p-4">
+                    <div className="flex flex-col gap-1 border-r pr-4">
+                        {categories.map(cat => (
+                            <Button
+                                key={cat.name}
+                                variant={activeCategory.name === cat.name ? "secondary" : "ghost"}
+                                className="justify-start gap-2"
+                                onClick={() => setActiveCategory(cat)}
+                            >
+                                <cat.icon className="w-5 h-5" />
+                                {cat.name}
+                            </Button>
+                        ))}
+                    </div>
+                    <div className="flex flex-col gap-4">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                            <Input 
+                                placeholder="Search units..." 
+                                className="pl-10"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                        </div>
+                        <ScrollArea className="h-72">
+                            <div className="flex flex-col gap-1">
                                 {filteredUnits.map(unit => (
-                                    <DropdownMenuItem key={unit.symbol} onSelect={() => onUnitChange(unit.symbol)}>
-                                        {unit.name} ({unit.symbol})
-                                    </DropdownMenuItem>
+                                    <div
+                                      key={unit.symbol}
+                                      className="flex justify-between items-center p-2 rounded-md hover:bg-secondary cursor-pointer"
+                                      onClick={() => handleSelectUnit(unit)}
+                                    >
+                                        <span>{unit.name}</span>
+                                        <span className="text-muted-foreground">{unit.symbol}</span>
+                                    </div>
                                 ))}
                             </div>
-                        )
-                    })}
-                </ScrollArea>
-            </DropdownMenuContent>
-        </DropdownMenu>
+                        </ScrollArea>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -874,5 +906,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
