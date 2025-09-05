@@ -137,14 +137,13 @@ const ToolButton = ({ icon: Icon, label, href }: any) => (
     href={href}
     whileHover={{ y: -2, scale: 1.02 }}
     whileTap={{ scale: 0.98 }}
-    className="group rounded-xl border border-border bg-card hover:bg-secondary transition-all p-3 flex items-center gap-3 shadow-lg"
+    className="group rounded-lg border border-border bg-card hover:bg-secondary transition-all p-2 flex items-center gap-2 shadow-lg"
   >
-    <div className="size-8 grid place-items-center rounded-lg bg-secondary text-accent">
+    <div className="size-8 grid place-items-center rounded-md bg-secondary text-accent">
       <Icon className="size-4" />
     </div>
     <div className="flex-1">
-      <p className="font-medium text-foreground text-sm">{label}</p>
-      <p className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">Open {label}</p>
+      <p className="font-medium text-foreground text-xs">{label}</p>
     </div>
     <ArrowRight className="size-4 text-muted-foreground opacity-60 group-hover:opacity-100" />
   </motion.a>
@@ -236,6 +235,7 @@ export function Dashboard() {
   const [isClient, setIsClient] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [todayCalculations, setTodayCalculations] = useState(0);
+  const [allTimeCalculations, setAllTimeCalculations] = useState(0);
   const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string; value: number}[]>([]);
   const [savedNotesCount, setSavedNotesCount] = useState(0);
 
@@ -243,6 +243,7 @@ export function Dashboard() {
     setTodayCalculations(getTodaysCalculations(email));
     setWeeklyCalculations(getWeeklyCalculations(email));
     setSavedNotesCount(getSavedNotesCount(email));
+    setAllTimeCalculations(getAllTimeCalculations(email));
   }
 
   useEffect(() => {
@@ -278,17 +279,18 @@ export function Dashboard() {
 
         <Header name={profile?.fullName || 'Guest'} profile={profile} />
 
-        <section className="grid gap-4 mt-8">
+        <section className="grid grid-cols-2 gap-4 mt-8">
           <Stat icon={Calculator} label="Today Calculations" value={String(todayCalculations)} />
           <Stat icon={NotebookPen} label="Saved Notes" value={String(savedNotesCount)} />
           <Stat icon={History} label="Last 7 Days" value={String(weeklyCalculations.reduce((acc, curr) => acc + curr.value, 0))} />
+          <Stat icon={History} label="All Time" value={String(allTimeCalculations)} />
         </section>
 
         <section className="mt-10">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">Quick Access</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {quickTools.map((t) => (
               <ToolButton key={t.label} {...t} />
             ))}
@@ -354,3 +356,5 @@ export function Dashboard() {
     </div>
   );
 }
+
+    
