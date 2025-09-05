@@ -245,13 +245,20 @@ export function Dashboard() {
   useEffect(() => {
     setIsClient(true);
     const storedProfile = localStorage.getItem("userProfile");
-    if (storedProfile) {
-        const parsedProfile = JSON.parse(storedProfile);
-        setProfile(parsedProfile);
-        updateStats(parsedProfile.email);
-    } else {
-        updateStats(null);
-    }
+    const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
+    setProfile(storedProfile ? JSON.parse(storedProfile) : null);
+    updateStats(userEmail);
+
+    const handleStorageChange = (e: StorageEvent) => {
+        // If calculation history or notes change, update stats
+        if (e.key?.includes('dailyCalculations') || e.key?.includes('userNotesV2')) {
+            updateStats(userEmail);
+        }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+
   }, []);
   
   const handleThemeChange = (isDark: boolean) => {
