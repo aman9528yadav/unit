@@ -212,6 +212,7 @@ export function Converter() {
     const savedAutoConvert = localStorage.getItem(getUserKey('autoConvert', userEmail));
     const savedCustomUnits = localStorage.getItem(getUserKey('customUnits', userEmail));
     const savedCustomCategories = localStorage.getItem(getUserKey('customCategories', userEmail));
+    const savedDefaultRegion = localStorage.getItem(getUserKey('defaultRegion', userEmail));
 
     if (storedHistory) setHistory(JSON.parse(storedHistory));
     if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
@@ -219,6 +220,9 @@ export function Converter() {
     if (savedAutoConvert !== null) setAutoConvert(JSON.parse(savedAutoConvert));
     if (savedCustomUnits) setCustomUnits(JSON.parse(savedCustomUnits));
     if (savedCustomCategories) setCustomCategories(JSON.parse(savedCustomCategories));
+    if (savedDefaultRegion && regions.includes(savedDefaultRegion as Region)) {
+      setRegion(savedDefaultRegion as Region);
+    }
     
     const itemToRestore = localStorage.getItem("restoreConversion");
     if (itemToRestore) {
@@ -236,6 +240,9 @@ export function Converter() {
         }
         if (e.key === getUserKey('autoConvert', userEmail)) {
             setAutoConvert(e.newValue === null ? true : JSON.parse(e.newValue));
+        }
+        if (e.key === getUserKey('defaultRegion', userEmail) && e.newValue && regions.includes(e.newValue as Region)) {
+            setRegion(e.newValue as Region);
         }
         if (e.key === 'conversionHistory') {
             setHistory(JSON.parse(e.newValue || '[]'));

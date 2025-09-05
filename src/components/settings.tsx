@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, History, CalculatorIcon, Info, LogOut, Trash2, KeyRound } from "lucide-react";
+import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, History, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { useTheme } from "@/context/theme-context";
 import {
@@ -19,10 +19,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
+import { Region, conversionCategories } from "@/lib/conversions";
 
 export type CalculatorMode = 'basic' | 'scientific';
 
 const getUserKey = (key: string, email: string | null) => `${email || 'guest'}_${key}`;
+
+const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
 
 const Section = ({ title, children, description }: { title: string, children: React.ReactNode, description?: string }) => (
     <Card>
@@ -72,6 +75,7 @@ export function Settings() {
   
   const [autoConvert, setAutoConvert] = useState(true);
   const [saveConversionHistory, setSaveConversionHistory] = useState(true);
+  const [defaultRegion, setDefaultRegion] = useState<Region>('International');
 
   const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>('scientific');
   const [saveCalcHistory, setSaveCalcHistory] = useState(true);
@@ -98,6 +102,11 @@ export function Settings() {
 
     const saveConv = localStorage.getItem(getUserKey('saveConversionHistory', email));
     setSaveConversionHistory(saveConv === null ? true : JSON.parse(saveConv));
+    
+    const region = localStorage.getItem(getUserKey('defaultRegion', email));
+    if (region && regions.includes(region as Region)) {
+      setDefaultRegion(region as Region);
+    }
 
     const calcMode = localStorage.getItem('calculatorMode') as CalculatorMode;
     if (calcMode) setCalculatorMode(calcMode);
@@ -111,6 +120,7 @@ export function Settings() {
     localStorage.setItem(getUserKey('notificationsEnabled', userKey), JSON.stringify(notificationsEnabled));
     localStorage.setItem(getUserKey('autoConvert', userKey), JSON.stringify(autoConvert));
     localStorage.setItem(getUserKey('saveConversionHistory', userKey), JSON.stringify(saveConversionHistory));
+    localStorage.setItem(getUserKey('defaultRegion', userKey), defaultRegion);
     localStorage.setItem('calculatorMode', calculatorMode);
     localStorage.setItem('saveCalcHistory', JSON.stringify(saveCalcHistory));
     
@@ -118,6 +128,7 @@ export function Settings() {
     window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('notificationsEnabled', userKey), newValue: JSON.stringify(notificationsEnabled) }));
     window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('autoConvert', userKey), newValue: JSON.stringify(autoConvert) }));
     window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('saveConversionHistory', userKey), newValue: JSON.stringify(saveConversionHistory) }));
+    window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('defaultRegion', userKey), newValue: defaultRegion }));
     window.dispatchEvent(new StorageEvent('storage', { key: 'calculatorMode', newValue: calculatorMode }));
     window.dispatchEvent(new StorageEvent('storage', { key: 'saveCalcHistory', newValue: JSON.stringify(saveCalcHistory) }));
 
@@ -197,15 +208,16 @@ export function Settings() {
 
              <Section title="Unit Converter" description="Configure default units and conversion behavior.">
                  <SettingRow
-                    label="Unit System"
+                    label="Default Region"
                     control={
-                        <Select defaultValue="metric">
+                        <Select value={defaultRegion} onValueChange={(v) => setDefaultRegion(v as Region)}>
                             <SelectTrigger className="w-48">
-                                <SelectValue placeholder="Select a system" />
+                                <SelectValue placeholder="Select a region" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="metric">SI (Metric)</SelectItem>
-                                <SelectItem value="imperial">Imperial</SelectItem>
+                                {regions.map(r => (
+                                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     }
