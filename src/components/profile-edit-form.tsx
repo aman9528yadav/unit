@@ -74,7 +74,7 @@ export function ProfileEditForm() {
       if (user) {
         await updateProfile(user, {
           displayName: profile.fullName,
-          photoURL: profile.profileImage, // Save image to Firebase Auth profile
+          photoURL: profile.profileImage,
         });
 
         const storedProfile = localStorage.getItem("userProfile");
@@ -260,3 +260,5 @@ export function ProfileEditForm() {
 function IconEye({ show }: {show: boolean}) {
   return show ? <EyeOff /> : <Eye />;
 }
+
+    
