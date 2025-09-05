@@ -193,7 +193,7 @@ export function Converter() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [autoConvert, setAutoConvert] = useState(true);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
 
 
   const imageExportRef = React.useRef<HTMLDivElement>(null);
@@ -216,8 +216,8 @@ export function Converter() {
     const storedHistory = localStorage.getItem("conversionHistory");
     const storedFavorites = localStorage.getItem("favoriteConversions");
     const savedAutoConvert = localStorage.getItem(getUserKey('autoConvert', userEmail));
-    const savedCustomUnits = localStorage.getItem('customUnits');
-    const savedCustomCategories = localStorage.getItem('customCategories');
+    const savedCustomUnits = localStorage.getItem(getUserKey('customUnits', userEmail));
+    const savedCustomCategories = localStorage.getItem(getUserKey('customCategories', userEmail));
 
     if (storedHistory) setHistory(JSON.parse(storedHistory));
     if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
@@ -233,10 +233,11 @@ export function Converter() {
     }
     
     const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'customUnits') {
+        const userEmail = profile?.email || null;
+        if (e.key === getUserKey('customUnits', userEmail)) {
             setCustomUnits(JSON.parse(e.newValue || '[]'));
         }
-        if (e.key === 'customCategories') {
+        if (e.key === getUserKey('customCategories', userEmail)) {
             setCustomCategories(JSON.parse(e.newValue || '[]'));
         }
         if (e.key === getUserKey('autoConvert', userEmail)) {
@@ -257,7 +258,7 @@ export function Converter() {
       window.removeEventListener('online', goOnline);
       window.removeEventListener('offline', goOffline);
     };
-  }, []);
+  }, [profile?.email]);
   
   const getCurrentConversionString = (value: number, from: string, to: string, result: number) => {
     const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
@@ -346,7 +347,7 @@ export function Converter() {
 
   
   const handleSaveToHistory = React.useCallback(() => {
-    const saveConversionHistory = JSON.parse(localStorage.getItem('saveConversionHistory') || 'true');
+    const saveConversionHistory = JSON.parse(localStorage.getItem(getUserKey('saveConversionHistory', profile?.email || null)) || 'true');
     if (!saveConversionHistory) return;
 
     const numValue = parseFloat(inputValue);
@@ -357,8 +358,9 @@ export function Converter() {
     localStorage.setItem('lastConversion', conversionString);
     
     setHistory(prevHistory => {
-        // Prevent duplicates
-        if (prevHistory.some((h: string) => h.startsWith(conversionString.split('|')[0]))) {
+        // Prevent duplicates by checking just the conversion part, not the timestamp
+        const conversionPart = conversionString.split('|')[0];
+        if (prevHistory.some(h => h.startsWith(conversionPart))) {
             return prevHistory;
         }
         incrementTodaysCalculations();
@@ -366,7 +368,7 @@ export function Converter() {
         localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
         return newHistory;
     });
-  }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name]);
+  }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name, profile?.email]);
 
 
   // Effect to save history automatically when outputValue changes, as a result of a conversion
@@ -994,3 +996,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    

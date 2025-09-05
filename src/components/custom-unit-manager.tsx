@@ -27,7 +27,7 @@ import { conversionCategories as baseConversionCategories } from '@/lib/conversi
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 
-const getStorageKey = (baseKey: string, email: string) => `${email}_${baseKey}`;
+const getUserKey = (baseKey: string, email: string | null) => `${email || 'guest'}_${baseKey}`;
 
 const CUSTOM_UNITS_STORAGE_KEY_BASE = 'customUnits';
 const CUSTOM_CATEGORIES_STORAGE_KEY_BASE = 'customCategories';
@@ -74,15 +74,17 @@ export function CustomUnitManager() {
             const parsedProfile = JSON.parse(storedProfile);
             setProfile(parsedProfile);
             loadCustomData(parsedProfile.email);
+        } else {
+            loadCustomData(null);
         }
     }, []);
     
-    const loadCustomData = (email: string) => {
-        const savedUnits = localStorage.getItem(getStorageKey(CUSTOM_UNITS_STORAGE_KEY_BASE, email));
+    const loadCustomData = (email: string | null) => {
+        const savedUnits = localStorage.getItem(getUserKey(CUSTOM_UNITS_STORAGE_KEY_BASE, email));
         if (savedUnits) {
             setUnits(JSON.parse(savedUnits));
         }
-        const savedCategories = localStorage.getItem(getStorageKey(CUSTOM_CATEGORIES_STORAGE_KEY_BASE, email));
+        const savedCategories = localStorage.getItem(getUserKey(CUSTOM_CATEGORIES_STORAGE_KEY_BASE, email));
         if (savedCategories) {
             setCategories(JSON.parse(savedCategories));
         }
@@ -116,17 +118,15 @@ export function CustomUnitManager() {
 
 
     const updateStoredUnits = (updatedUnits: CustomUnit[]) => {
-        if (!profile) return;
         setUnits(updatedUnits);
-        const key = getStorageKey(CUSTOM_UNITS_STORAGE_KEY_BASE, profile.email);
+        const key = getUserKey(CUSTOM_UNITS_STORAGE_KEY_BASE, profile?.email || null);
         localStorage.setItem(key, JSON.stringify(updatedUnits));
         window.dispatchEvent(new StorageEvent('storage', { key, newValue: JSON.stringify(updatedUnits) }));
     };
     
     const updateStoredCategories = (updatedCategories: CustomCategory[]) => {
-        if (!profile) return;
         setCategories(updatedCategories);
-        const key = getStorageKey(CUSTOM_CATEGORIES_STORAGE_KEY_BASE, profile.email);
+        const key = getUserKey(CUSTOM_CATEGORIES_STORAGE_KEY_BASE, profile?.email || null);
         localStorage.setItem(key, JSON.stringify(updatedCategories));
          window.dispatchEvent(new StorageEvent('storage', { key, newValue: JSON.stringify(updatedCategories) }));
     };
@@ -409,3 +409,5 @@ export function CustomUnitManager() {
         </div>
     );
 }
+
+    
