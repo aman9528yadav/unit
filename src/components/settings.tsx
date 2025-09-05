@@ -288,7 +288,6 @@ export function Settings() {
               </AlertDialogContent>
             </AlertDialog>
             <div className="flex gap-2">
-                <Button variant="outline" onClick={handleLogout}><LogOut className="mr-2"/> Log out</Button>
                 <Button onClick={handleSaveChanges}>Save Changes</Button>
             </div>
         </footer>
