@@ -719,7 +719,7 @@ export function Converter() {
                                        {t(`categories.${selectedCategory.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: selectedCategory.name })}
                                    </Button>
                                </DropdownMenuTrigger>
-                               <DropdownMenuContent className="w-[300px] sm:w-[450px]">
+                               <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 p-2">
                                        {conversionCategories.map(cat => {
                                            const isLocked = isPremiumFeatureLocked && PREMIUM_CATEGORIES.includes(cat.name);
@@ -836,29 +836,27 @@ export function Converter() {
                                   <Dialog>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          disabled={!outputValue}
-                                          onClick={(e) => {
-                                            if (isPremiumFeatureLocked) {
-                                              e.preventDefault();
-                                            }
-                                          }}
-                                        >
-                                          <Share2 size={16} />
-                                        </Button>
+                                          <DialogTrigger asChild
+                                             onClick={(e) => {
+                                                if (isPremiumFeatureLocked) {
+                                                  e.preventDefault();
+                                                  toast({
+                                                    title: "Premium Feature Locked",
+                                                    description: "Unlock Premium to share and export conversions.",
+                                                  });
+                                                }
+                                              }}
+                                          >
+                                            <Button variant="ghost" size="icon" disabled={!outputValue}>
+                                              <Share2 size={16} />
+                                            </Button>
+                                          </DialogTrigger>
                                       </TooltipTrigger>
-                                      {isPremiumFeatureLocked ? (
-                                        <TooltipContent>
-                                          <p>Unlock Premium to share conversions.</p>
-                                        </TooltipContent>
-                                      ) : (
-                                        <DialogTrigger asChild>
-                                          {/* This is a dummy trigger for tooltip to work with dialog */}
-                                          <span />
-                                        </DialogTrigger>
-                                      )}
+                                       {isPremiumFeatureLocked && (
+                                         <TooltipContent>
+                                           <p>Unlock Premium to share conversions.</p>
+                                         </TooltipContent>
+                                       )}
                                     </Tooltip>
                                     {!isPremiumFeatureLocked && (
                                        <DialogContent>
@@ -1030,3 +1028,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
