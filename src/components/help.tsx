@@ -30,13 +30,18 @@ export const defaultFaqs: FAQ[] = [
     },
     {
         id: uuidv4(),
+        question: "What are the benefits of being a Premium Member?",
+        answer: `<p class="mb-2">Becoming a Premium Member unlocks exclusive features to enhance your experience. You can achieve Premium status by completing <strong>8,000 operations</strong> (conversions or calculations) within the app.</p><p class="mb-2">Premium benefits include:</p><ul class="list-disc pl-5 space-y-1"><li><strong>Custom Themes:</strong> Personalize the app's appearance by creating and applying your own color schemes in the Theme Editor.</li><li><strong>Custom Units:</strong> Add your own unique units and even create entirely new conversion categories tailored to your needs.</li></ul><p class="mt-2">You can track your progress towards becoming a Premium Member on your profile page.</p>`
+    },
+    {
+        id: uuidv4(),
         question: "How does the Notepad work?",
         answer: `<p class="mb-2">The notepad allows you to create and manage notes. Notes are automatically saved to your account if you are logged in.</p><ul class="list-disc pl-5 space-y-1"><li>Click the floating 'Edit' button to create a new note.</li><li>Use the toolbar to format your text, attach images, and insert previous calculations or conversions.</li><li>You can favorite notes, assign categories, and move them to the recycle bin.</li></ul>`
     },
     {
         id: uuidv4(),
         question: "How do I add custom units?",
-        answer: `<p>You can add your own units or even create new categories by going to <strong>Settings > Custom Unit</strong>. This allows you to tailor the converter to your specific needs, such as converting between fictional currencies or unique project measurements.</p>`
+        answer: `<p>You can add your own units or even create new categories by going to <strong>Settings > Custom Unit</strong>. This allows you to tailor the converter to your specific needs, such as converting between fictional currencies or unique project measurements. Note: This is a Premium feature.</p>`
     },
     {
         id: uuidv4(),

@@ -161,7 +161,7 @@ export function UserData() {
                     </div>
                     <Progress value={progress} />
                     <Button asChild variant="link" size="sm" className="p-0 h-auto mt-2 text-primary">
-                        <Link href="/updates">
+                        <Link href="/help">
                             <Info className="mr-1 h-3 w-3"/>
                             Learn more about Premium benefits
                         </Link>
