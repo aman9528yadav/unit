@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, History, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code } from "lucide-react";
+import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, History, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { useTheme } from "@/context/theme-context";
 import {
@@ -21,14 +21,18 @@ import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { Region } from "@/lib/conversions";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { getAllTimeCalculations } from "@/lib/utils";
 
 
 export type CalculatorMode = 'basic' | 'scientific';
+type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 const getUserKey = (key: string, email: string | null) => `${email || 'guest'}_${key}`;
 
 const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
+const PREMIUM_MEMBER_THRESHOLD = 8000;
 
 const Section = ({ title, children, description }: { title: string, children: React.ReactNode, description?: string }) => (
     <Card>
@@ -70,6 +74,8 @@ export function Settings() {
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const [userRole, setUserRole] = useState<UserRole>('Member');
+
 
   // Settings states
   const { language, setLanguage } = useLanguage();
@@ -93,6 +99,16 @@ export function Settings() {
       const parsedProfile = JSON.parse(storedProfile);
       setProfile(parsedProfile);
       loadSettings(parsedProfile.email);
+
+      const calculations = getAllTimeCalculations(parsedProfile.email);
+      if (parsedProfile.email === DEVELOPER_EMAIL) {
+          setUserRole('Owner');
+      } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
+          setUserRole('Premium Member');
+      } else {
+          setUserRole('Member');
+      }
+
     } else {
       loadSettings(null);
     }
@@ -133,7 +149,12 @@ export function Settings() {
     localStorage.setItem('calculatorMode', calculatorMode);
     localStorage.setItem('saveCalcHistory', JSON.stringify(saveCalcHistory));
     
-    setTheme(selectedTheme);
+    if (userRole === 'Member' && selectedTheme === 'custom') {
+        toast({ title: "Premium Feature", description: "Unlock Premium to apply custom themes.", variant: "destructive" });
+        setTheme('light'); // Revert to default
+    } else {
+        setTheme(selectedTheme);
+    }
     
     // Dispatch storage events to notify other components/tabs
     window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('notificationsEnabled', userKey), newValue: JSON.stringify(notificationsEnabled) }));
@@ -159,6 +180,8 @@ export function Settings() {
 
   if (!isClient) return null;
 
+  const isPremiumFeatureLocked = userRole === 'Member';
+
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-6 p-4 sm:p-6">
         <header className="flex items-center gap-4">
@@ -178,30 +201,48 @@ export function Settings() {
                     control={<User />}
                 />
             </Section>
-
-            <Section title="Appearance">
-                 <SettingRow
-                    label="Theme Mode"
-                    description="Switch between light, dark, or custom themes"
-                    control={
-                        <Select value={selectedTheme} onValueChange={(v) => setSelectedTheme(v as any)}>
-                            <SelectTrigger className="w-32"><SelectValue/></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="light">Light</SelectItem>
-                                <SelectItem value="dark">Dark</SelectItem>
-                                {customTheme && <SelectItem value="custom">Custom</SelectItem>}
-                            </SelectContent>
-                        </Select>
-                    }
-                />
-                 <SettingRow
-                    isLink
-                    href="/settings/theme"
-                    label="Customize Theme"
-                    description="Create your own color scheme"
-                    control={<Palette />}
-                />
-            </Section>
+            <TooltipProvider>
+                <Section title="Appearance">
+                     <SettingRow
+                        label="Theme Mode"
+                        description="Switch between light, dark, or custom themes"
+                        control={
+                            <Select value={selectedTheme} onValueChange={(v) => setSelectedTheme(v as any)}>
+                                <SelectTrigger className="w-32"><SelectValue/></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="light">Light</SelectItem>
+                                    <SelectItem value="dark">Dark</SelectItem>
+                                    {customTheme && (
+                                        <Tooltip delayDuration={100}>
+                                            <TooltipTrigger asChild>
+                                                <div>
+                                                    <SelectItem value="custom" disabled={isPremiumFeatureLocked}>
+                                                        {isPremiumFeatureLocked && <Lock className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2"/>}
+                                                        Custom
+                                                    </SelectItem>
+                                                </div>
+                                            </TooltipTrigger>
+                                            {isPremiumFeatureLocked && <TooltipContent>Unlock Premium to use custom themes.</TooltipContent>}
+                                        </Tooltip>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        }
+                    />
+                     <SettingRow
+                        isLink
+                        href="/settings/theme"
+                        label="Customize Theme"
+                        description="Create your own color scheme"
+                        control={
+                             <div className="flex items-center gap-2">
+                                {isPremiumFeatureLocked && <Lock className="w-4 h-4 text-amber-500" />}
+                                <Palette />
+                            </div>
+                        }
+                    />
+                </Section>
+            </TooltipProvider>
 
             <Section title="General">
                  <SettingRow
