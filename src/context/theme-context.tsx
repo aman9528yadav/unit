@@ -72,8 +72,8 @@ function hexToHsl(hex: string): string {
 
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>('dark');
-  const [lastNonCustomTheme, setLastNonCustomTheme] = useState< 'light' | 'dark'>('dark');
+  const [theme, setThemeState] = useState<Theme>('light');
+  const [lastNonCustomTheme, setLastNonCustomTheme] = useState< 'light' | 'dark'>('light');
   const [customTheme, setCustomThemeState] = useState<CustomTheme | null>(null);
 
   useEffect(() => {
