@@ -59,9 +59,7 @@ export function DevPanel() {
      useEffect(() => {
         if (!isAuthorized || !isAuthenticated) return;
         
-        const unsubscribe = listenToGlobalMaintenanceMode((status) => {
-            setIsMaintenanceMode(status);
-        });
+        const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenanceMode);
 
         return () => unsubscribe();
     }, [isAuthorized, isAuthenticated]);
@@ -141,7 +139,6 @@ export function DevPanel() {
     
      const handleMaintenanceModeToggle = async (enabled: boolean) => {
         try {
-            setIsMaintenanceMode(enabled); // Optimistic update
             await setGlobalMaintenanceMode(enabled);
             toast({
                 title: `Maintenance Mode ${enabled ? 'Enabled' : 'Disabled'}`,
@@ -150,7 +147,6 @@ export function DevPanel() {
         } catch (error) {
             console.error("Failed to toggle maintenance mode:", error);
             toast({ title: "Update Failed", description: "Could not change maintenance mode status.", variant: "destructive" });
-            setIsMaintenanceMode(!enabled); // Revert on failure
         }
     };
 

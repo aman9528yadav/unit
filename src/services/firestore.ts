@@ -95,37 +95,18 @@ export async function setGlobalMaintenanceMode(isEnabled: boolean) {
 }
 
 /**
- * Sets up a real-time listener for the global maintenance mode status and handles redirects.
+ * Sets up a real-time listener for the global maintenance mode status.
  * @param setIsMaintenanceMode - State setter to update the component's view of the maintenance status.
- * @param pathname - The current URL pathname from Next.js router.
- * @param router - The Next.js router instance.
  * @returns The unsubscribe function for the listener.
  */
 export function listenToGlobalMaintenanceMode(
-  setIsMaintenanceMode: (status: boolean) => void,
-  pathname: string,
-  router: AppRouterInstance
+  setIsMaintenanceMode: (status: boolean) => void
 ) {
     const maintenanceRef = doc(db, 'settings', 'maintenance');
 
     const unsubscribe = onSnapshot(maintenanceRef, (docSnap) => {
         const isEnabled = docSnap.exists() ? docSnap.data().isEnabled || false : false;
         setIsMaintenanceMode(isEnabled);
-        
-        // Centralize redirection logic here
-        const isDevRoute = pathname.startsWith('/dev');
-        if (isDevRoute) {
-            return; // Always allow access to dev routes
-        }
-
-        const isMaintenancePage = pathname === '/maintenance';
-        
-        if (isEnabled && !isMaintenancePage) {
-            router.replace('/maintenance');
-        } else if (!isEnabled && isMaintenancePage) {
-            router.replace('/');
-        }
-
     }, (error) => {
         console.error("Error listening to maintenance mode:", error);
         setIsMaintenanceMode(false);
