@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, History, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe } from "lucide-react";
+import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, History, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { useTheme } from "@/context/theme-context";
 import {
@@ -28,6 +28,7 @@ export type CalculatorMode = 'basic' | 'scientific';
 const getUserKey = (key: string, email: string | null) => `${email || 'guest'}_${key}`;
 
 const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
+const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 
 const Section = ({ title, children, description }: { title: string, children: React.ReactNode, description?: string }) => (
     <Card>
@@ -138,17 +139,6 @@ export function Settings() {
     toast({ title: "Settings Saved", description: "Your preferences have been updated."});
   };
 
-  const handleLogout = () => {
-    auth.signOut().then(() => {
-        localStorage.removeItem("userProfile");
-        toast({ title: "Logged Out", description: "You have been successfully logged out." });
-        router.push("/logout");
-    }).catch((error) => {
-        console.error("Logout Error:", error);
-        toast({ title: "Logout Failed", description: "An error occurred while logging out.", variant: "destructive" });
-    });
-  };
-
   const handleClearData = () => {
     localStorage.clear();
     toast({ title: "Data Cleared", description: "All app data has been wiped. You will be logged out." });
@@ -208,6 +198,15 @@ export function Settings() {
                     description="Customize the app's appearance"
                     control={<Palette />}
                 />
+                {profile?.email === DEVELOPER_EMAIL && (
+                  <SettingRow
+                      isLink
+                      href="/dev"
+                      label="Developer"
+                      description="Access developer tools"
+                      control={<Code />}
+                  />
+                )}
             </Section>
 
              <Section title="Unit Converter" description="Configure default units and conversion behavior.">

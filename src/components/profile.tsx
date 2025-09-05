@@ -91,14 +91,8 @@ export function Profile() {
     { icon: Settings, text: "Settings", href: "/settings" },
     { icon: HelpCircle, text: "Help", href: "/help" },
     { icon: Info, text: "About", href: "/about" },
+    { icon: LogOut, text: "Logout", onClick: handleLogout }
   ];
-
-  if (isClient && profile.email === DEVELOPER_EMAIL) {
-    menuItems.push({ icon: Code, text: "Developer", href: "/dev" });
-  }
-
-  // Add logout at the end
-  menuItems.push({ icon: LogOut, text: "Logout", onClick: handleLogout });
 
 
   if (!isClient) {
