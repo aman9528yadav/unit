@@ -44,10 +44,14 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
         if (isMaintenanceMode === null) return; // Wait until status is fetched
 
         const isAllowed = allowedPaths.includes(pathname) || pathname.startsWith('/dev');
+        const devHomeIsMaintenance = localStorage.getItem("devHomeIsMaintenance");
+        const isDevViewingMaintenance = devHomeIsMaintenance && JSON.parse(devHomeIsMaintenance);
+
 
         if (isMaintenanceMode && !isAllowed) {
             router.replace('/maintenance');
-        } else if (!isMaintenanceMode && pathname === '/maintenance') {
+        } else if (!isMaintenanceMode && pathname === '/maintenance' && !isDevViewingMaintenance) {
+            // Only redirect away from maintenance if global is off AND we are not in dev-view mode.
             router.replace('/');
         }
     }, [isMaintenanceMode, pathname, router]);
@@ -105,4 +109,3 @@ export default function RootLayout({
     </ThemeProvider>
   );
 }
-
