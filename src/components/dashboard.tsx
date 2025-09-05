@@ -335,9 +335,6 @@ export function Dashboard() {
           </div>
         </section>
 
-        <footer className="mt-14 py-8 text-sm text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© {new Date().getFullYear()} Sutradhaar • All rights reserved.</p>
-        </footer>
       </main>
     </div>
   );
