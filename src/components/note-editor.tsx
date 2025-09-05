@@ -18,6 +18,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+
 
 const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
 
@@ -47,6 +49,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const [customFontSize, setCustomFontSize] = useState('16');
     const [isDirty, setIsDirty] = useState(false);
     const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
 
 
     const router = useRouter();
@@ -96,6 +99,22 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             contentSetRef.current = true; // Mark that initial content has been set
         }
     }, [content]);
+
+     useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (isDirty) {
+                e.preventDefault();
+                e.returnValue = ''; // Required for legacy browsers
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [isDirty]);
+
 
     const applyStyle = (style: string, value: string) => {
         editorRef.current?.focus();
@@ -198,16 +217,14 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     };
 
 
-    const handleSave = (isAutoSave = false) => {
+    const handleSave = () => {
          const currentContent = editorRef.current?.innerHTML || '';
         if (!title.trim() && !currentContent.trim()) {
-            if (!isAutoSave) {
-                toast({
-                    title: "Cannot save empty note",
-                    description: "Please add a title or some content.",
-                    variant: "destructive"
-                });
-            }
+            toast({
+                title: "Cannot save empty note",
+                description: "Please add a title or some content.",
+                variant: "destructive"
+            });
             return;
         }
 
@@ -246,13 +263,11 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         localStorage.setItem(notesKey, JSON.stringify(notes));
         setIsDirty(false);
 
-        if (!isAutoSave) {
-            toast({
-                title: "Note Saved!",
-                description: "Your note has been saved successfully.",
-            });
-            router.push('/notes');
-        }
+        toast({
+            title: "Note Saved!",
+            description: "Your note has been saved successfully.",
+        });
+        router.push('/notes');
     };
     
     const handleSoftDelete = () => {
@@ -271,6 +286,15 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         router.push('/notes');
     };
 
+    const handleBack = () => {
+        if (isDirty) {
+            setShowUnsavedDialog(true);
+        } else {
+            router.back();
+        }
+    };
+
+
     if (!isClient && !isNewNote) {
         return null;
     }
@@ -278,7 +302,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     return (
         <div className="w-full max-w-md mx-auto flex flex-col h-screen">
             <header className="flex items-center justify-between p-4 flex-shrink-0 sticky top-0 z-50 bg-background">
-                <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                <Button variant="ghost" size="icon" onClick={handleBack}>
                     <ArrowLeft />
                 </Button>
                 <div className="flex items-center gap-2">
@@ -406,8 +430,29 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={handleSoftDelete}><Trash2 /></Button>
                 </div>
             </div>
+
+             <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>You have unsaved changes!</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to leave? Your changes will be discarded.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            variant="destructive"
+                            onClick={() => {
+                                setIsDirty(false); // Allow navigation now
+                                router.back();
+                            }}
+                        >
+                            Discard Changes
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
-
-    
