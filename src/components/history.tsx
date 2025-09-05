@@ -128,7 +128,10 @@ export function History() {
   
   const itemsToDisplay = activeTab === 'history' 
     ? history 
-    : history.filter(item => favorites.includes(item));
+    : history.filter(item => {
+        const conversionPart = item.split('|')[0];
+        return favorites.some(fav => fav.startsWith(conversionPart));
+      });
     
   const filteredItems = itemsToDisplay.filter(item => {
     const parsed = parseHistoryString(item);
