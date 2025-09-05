@@ -73,7 +73,7 @@ export function Settings() {
 
   // Settings states
   const { language, setLanguage } = useLanguage();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, customTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   
   const [autoConvert, setAutoConvert] = useState(true);
@@ -83,6 +83,8 @@ export function Settings() {
   const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>('scientific');
   const [saveCalcHistory, setSaveCalcHistory] = useState(true);
   
+  // Local state for theme selector
+  const [selectedTheme, setSelectedTheme] = useState(theme);
 
   useEffect(() => {
     setIsClient(true);
@@ -95,6 +97,10 @@ export function Settings() {
       loadSettings(null);
     }
   }, []);
+  
+  useEffect(() => {
+    setSelectedTheme(theme);
+  }, [theme]);
 
   const loadSettings = (email: string | null) => {
     const notifications = localStorage.getItem(getUserKey('notificationsEnabled', email));
@@ -127,6 +133,8 @@ export function Settings() {
     localStorage.setItem('calculatorMode', calculatorMode);
     localStorage.setItem('saveCalcHistory', JSON.stringify(saveCalcHistory));
     
+    setTheme(selectedTheme);
+    
     // Dispatch storage events to notify other components/tabs
     window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('notificationsEnabled', userKey), newValue: JSON.stringify(notificationsEnabled) }));
     window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('autoConvert', userKey), newValue: JSON.stringify(autoConvert) }));
@@ -134,6 +142,7 @@ export function Settings() {
     window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('defaultRegion', userKey), newValue: defaultRegion }));
     window.dispatchEvent(new StorageEvent('storage', { key: 'calculatorMode', newValue: calculatorMode }));
     window.dispatchEvent(new StorageEvent('storage', { key: 'saveCalcHistory', newValue: JSON.stringify(saveCalcHistory) }));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: selectedTheme }));
 
 
     toast({ title: "Settings Saved", description: "Your preferences have been updated."});
@@ -172,6 +181,30 @@ export function Settings() {
                 />
             </Section>
 
+            <Section title="Appearance">
+                 <SettingRow
+                    label="Theme Mode"
+                    description="Switch between light, dark, or custom themes"
+                    control={
+                        <Select value={selectedTheme} onValueChange={(v) => setSelectedTheme(v as any)}>
+                            <SelectTrigger className="w-32"><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="light">Light</SelectItem>
+                                <SelectItem value="dark">Dark</SelectItem>
+                                {customTheme && <SelectItem value="custom">Custom</SelectItem>}
+                            </SelectContent>
+                        </Select>
+                    }
+                />
+                 <SettingRow
+                    isLink
+                    href="/settings/theme"
+                    label="Customize Theme"
+                    description="Create your own color scheme"
+                    control={<Palette />}
+                />
+            </Section>
+
             <Section title="General">
                  <SettingRow
                     label="Notifications"
@@ -190,13 +223,6 @@ export function Settings() {
                             </SelectContent>
                         </Select>
                     }
-                />
-                 <SettingRow
-                    isLink
-                    href="/settings/theme"
-                    label="Theme"
-                    description="Customize the app's appearance"
-                    control={<Palette />}
                 />
                 {profile?.email === DEVELOPER_EMAIL && (
                   <SettingRow
