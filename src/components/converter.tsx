@@ -47,6 +47,7 @@ const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 
 
 interface UserProfile {
     fullName: string;
+    profileImage?: string;
     [key:string]: any;
 }
 
@@ -588,7 +589,10 @@ export function Converter() {
             {profile && <GlobalSearchDialog />}
             {profile && <Notifications />}
             <Button variant="ghost" size="icon" className="rounded-full" onClick={handleProfileClick}>
-                <User />
+                <Avatar>
+                    <AvatarImage src={profile?.profileImage} alt={profile?.fullName}/>
+                    <AvatarFallback><User /></AvatarFallback>
+                </Avatar>
               </Button>
         </div>
       </header>
@@ -939,7 +943,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
-
-    

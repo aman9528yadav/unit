@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ArrowLeft, Camera, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 
 export function ProfileEditForm() {
-  const [profile, setProfile] = useState({ fullName: '', email: '', dob: '' });
+  const [profile, setProfile] = useState({ fullName: '', email: '', dob: '', profileImage: '' });
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -28,6 +29,8 @@ export function ProfileEditForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   const { toast } = useToast();
   const router = useRouter();
@@ -51,6 +54,18 @@ export function ProfileEditForm() {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfile(prev => ({...prev, profileImage: reader.result as string }));
+        toast({ title: "Image ready", description: "Click 'Save Changes' to apply." });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSaveChanges = async () => {
     if (!profile.fullName) {
       toast({ title: "Full name is required", variant: "destructive" });
@@ -62,6 +77,7 @@ export function ProfileEditForm() {
       if (user) {
         await updateProfile(user, {
           displayName: profile.fullName,
+          photoURL: profile.profileImage, // Save image to Firebase Auth profile
         });
 
         const storedProfile = localStorage.getItem("userProfile");
@@ -69,6 +85,7 @@ export function ProfileEditForm() {
         const updatedProfile = { ...existingProfile, ...profile };
 
         localStorage.setItem("userProfile", JSON.stringify(updatedProfile));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'userProfile', newValue: JSON.stringify(updatedProfile) }));
         
         toast({ title: "Profile Updated", description: "Your personal information has been updated." });
         router.push("/profile/success");
@@ -144,7 +161,30 @@ export function ProfileEditForm() {
         </TabsList>
         <TabsContent value="account">
           <Card>
-            <CardHeader>
+            <CardHeader className="items-center">
+                <div className="relative group">
+                    <Avatar className="w-32 h-32 text-6xl">
+                        <AvatarImage src={profile.profileImage} alt={profile.fullName} />
+                        <AvatarFallback>
+                            <User/>
+                        </AvatarFallback>
+                    </Avatar>
+                    <Button 
+                        size="icon" 
+                        variant="secondary"
+                        className="absolute bottom-2 right-2 rounded-full group-hover:bg-primary group-hover:text-primary-foreground"
+                        onClick={() => fileInputRef.current?.click()}
+                    >
+                        <Camera />
+                    </Button>
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        className="hidden"
+                        accept="image/*" 
+                        onChange={handleImageChange}
+                    />
+                </div>
               <CardTitle>Account Information</CardTitle>
               <CardDescription>Make changes to your personal details here. Click save when you're done.</CardDescription>
             </CardHeader>

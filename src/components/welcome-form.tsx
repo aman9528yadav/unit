@@ -37,7 +37,8 @@ const handleSuccessfulLogin = async (user: User) => {
     const profile = {
         fullName: user.displayName || user.email?.split('@')[0] || "New User",
         email: user.email,
-        dob: existingProfile.email === user.email ? existingProfile.dob : ''
+        dob: existingProfile.email === user.email ? existingProfile.dob : '',
+        profileImage: user.photoURL || existingProfile.profileImage || ''
     };
 
     localStorage.setItem("userProfile", JSON.stringify(profile));

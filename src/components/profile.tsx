@@ -22,14 +22,24 @@ import { getStreakData, StreakData } from "@/lib/streak";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 
-const defaultProfile = {
+interface UserProfile {
+    fullName: string;
+    email: string;
+    birthday: string;
+    dob: string;
+    profileImage?: string;
+}
+
+const defaultProfile: UserProfile = {
     fullName: "Aman Yadav",
     email: "aman@example.com",
     birthday: "April 1st",
-    dob: "1990-04-01"
+    dob: "1990-04-01",
+    profileImage: '',
 };
 
 export function Profile() {
@@ -52,6 +62,15 @@ export function Profile() {
     } else {
         router.replace('/welcome');
     }
+
+    const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'userProfile' && e.newValue) {
+            setProfile(JSON.parse(e.newValue));
+        }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+
   }, [router]);
 
   const handleLogout = () => {
@@ -99,8 +118,13 @@ export function Profile() {
         </header>
 
         <div className="flex flex-col items-center text-center gap-2 mt-2">
-           <div className="relative w-28 h-28 flex items-center justify-center bg-secondary rounded-full border-4 border-white">
-                <User className="w-16 h-16 text-primary" />
+           <div className="relative w-28 h-28">
+                <Avatar className="w-28 h-28 text-6xl border-4 border-background">
+                    <AvatarImage src={profile.profileImage} alt={profile.fullName} />
+                    <AvatarFallback>
+                        <User />
+                    </AvatarFallback>
+                </Avatar>
                 <Button asChild size="icon" className="absolute bottom-0 right-0 rounded-full w-8 h-8">
                     <Link href="/profile/edit">
                         <Pencil />
