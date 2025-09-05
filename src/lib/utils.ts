@@ -31,6 +31,23 @@ type DailyCalculationData = {
     [date: string]: number; // date string 'YYYY-MM-DD'
 }
 
+export function getAllTimeCalculations(email: string | null): number {
+    if (typeof window === 'undefined') return 0;
+    
+    const storedData = localStorage.getItem(getUserKey(CALCULATION_STORAGE_KEY, email));
+    if (!storedData) {
+        return 0;
+    }
+    try {
+        const data: DailyCalculationData = JSON.parse(storedData);
+        // Sum all the values in the object
+        return Object.values(data).reduce((total, count) => total + count, 0);
+    } catch (error) {
+        console.error("Error parsing daily calculation data from localStorage", error);
+        return 0;
+    }
+}
+
 export function getWeeklyCalculations(email: string | null): { name: string; value: number }[] {
   if (typeof window === 'undefined') {
     return Array(7).fill(0).map((_, i) => {
@@ -108,3 +125,4 @@ export function incrementTodaysCalculations() {
     newValue: JSON.stringify(data),
   }));
 }
+

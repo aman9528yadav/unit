@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 import { ArrowRight, Settings, Star, PlayCircle, ClockIcon, User, Search, Bell, Home, StickyNote, CalculatorIcon, Clock, Hourglass, Sparkles, LogIn, Sigma } from "lucide-react";
-import { getTodaysCalculations, getWeeklyCalculations } from "@/lib/utils";
+import { getTodaysCalculations, getWeeklyCalculations, getAllTimeCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { recordVisit } from "@/lib/streak";
 import { cn } from "@/lib/utils";
@@ -69,6 +69,7 @@ export function Dashboard() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [todayCalculations, setTodayCalculations] = useState(0);
   const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string, value: number}[]>([]);
+  const [allTimeCalculations, setAllTimeCalculations] = useState(0);
   const [savedNotesCount, setSavedNotesCount] = useState(0);
   const { t } = useLanguage();
   const [showLoginDialog, setShowLoginDialog] = useState(false);
@@ -78,6 +79,7 @@ export function Dashboard() {
   const updateStats = (email: string | null) => {
     setTodayCalculations(getTodaysCalculations(email));
     setWeeklyCalculations(getWeeklyCalculations(email));
+    setAllTimeCalculations(getAllTimeCalculations(email));
     setSavedNotesCount(getSavedNotesCount(email));
   }
 
@@ -225,7 +227,7 @@ export function Dashboard() {
                 </ResponsiveContainer>
             </div>
              <div className="text-center text-sm text-muted-foreground mt-2">
-                Total this week: <strong>{weeklyTotal}</strong> calculations
+                Total calculations: <strong>{allTimeCalculations}</strong>
             </div>
         </Card>
 
@@ -300,4 +302,3 @@ export function Dashboard() {
   );
 }
 
-    
