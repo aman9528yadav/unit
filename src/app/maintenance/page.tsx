@@ -3,6 +3,7 @@
 
 import { ServerCog } from "lucide-react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function MaintenancePage() {
   return (
@@ -13,12 +14,14 @@ export default function MaintenancePage() {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="flex flex-col items-center gap-6"
       >
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-        >
-          <ServerCog className="w-24 h-24 text-primary" />
-        </motion.div>
+        <Link href="/dev">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+            >
+              <ServerCog className="w-24 h-24 text-primary" />
+            </motion.div>
+        </Link>
         <h1 className="text-4xl font-bold">Under Maintenance</h1>
         <p className="text-muted-foreground max-w-md">
           We're currently performing some scheduled maintenance to improve our services. We will be back online shortly. Thank you for your patience!
