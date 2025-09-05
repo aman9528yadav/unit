@@ -8,6 +8,8 @@ import html2canvas from 'html2canvas';
 import {
   Card,
   CardContent,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
   Select,
@@ -24,9 +26,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2, ChevronDown, Sparkles, LogIn } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2, ChevronDown, Sparkles, LogIn, Scale, Power } from "lucide-react";
 import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
-import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow";
+import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow.ts";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Calculator } from "./calculator";
@@ -41,13 +43,15 @@ import { Notifications } from "./notifications";
 import { GlobalSearchDialog } from "./global-search-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Badge } from "./ui/badge";
+import { formatDistanceToNow } from "date-fns";
 
 
 const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
 
 interface UserProfile {
     fullName: string;
-    profileImage?: string;
+    email: string;
     [key:string]: any;
 }
 
@@ -250,6 +254,28 @@ export function Converter() {
     const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
     return `${value} ${from} → ${formattedResult} ${to}`;
   };
+  
+  const getFullHistoryString = (value: number, from: string, to: string, result: number, categoryName: string) => {
+    const conversion = getCurrentConversionString(value, from, to, result);
+    const timestamp = new Date().toISOString();
+    return `${conversion}|${categoryName}|${timestamp}`;
+  }
+  
+  const parseHistoryString = (item: string) => {
+      const parts = item.split('|');
+      const conversion = parts[0] || '';
+      const categoryName = parts[1] || '';
+      const timestamp = parts[2] ? new Date(parts[2]) : new Date();
+
+      const convParts = conversion.split(' ');
+      const value = convParts[0];
+      const from = convParts[1];
+      const result = convParts[3];
+      const to = convParts[4];
+      
+      return { conversion, categoryName, timestamp, value, from, result, to };
+  }
+
 
   React.useEffect(() => {
     // Reset inputs when category changes, only if there are units available.
@@ -329,7 +355,7 @@ export function Converter() {
     const result = parseFloat(outputValue.replace(/,/g, ''));
     if (isNaN(numValue) || isNaN(result) || outputValue === '') return;
 
-    const conversionString = getCurrentConversionString(numValue, fromUnit, toUnit, result);
+    const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
     localStorage.setItem('lastConversion', conversionString);
     
     if (!history.includes(conversionString)) {
@@ -339,7 +365,7 @@ export function Converter() {
       localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inputValue, fromUnit, toUnit, outputValue, history]);
+  }, [inputValue, fromUnit, toUnit, outputValue, history, selectedCategory.name]);
 
   // Update favorite status & save history whenever output or favorites list change
   React.useEffect(() => {
@@ -352,9 +378,9 @@ export function Converter() {
     handleSaveToHistory();
 
     const result = parseFloat(outputValue.replace(/,/g, ''));
-    const conversionString = getCurrentConversionString(numValue, fromUnit, toUnit, result);
+    const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
     setIsFavorite(favorites.includes(conversionString));
-  }, [inputValue, fromUnit, toUnit, outputValue, favorites, handleSaveToHistory]);
+  }, [inputValue, fromUnit, toUnit, outputValue, favorites, handleSaveToHistory, selectedCategory.name]);
 
  const handleSearch = () => {
     if (searchQuery.trim() === "" || isSearching) {
@@ -425,7 +451,7 @@ export function Converter() {
     if (isNaN(numValue) || !outputValue) return;
 
     const result = parseFloat(outputValue.replace(/,/g, ''));
-    const conversionString = getCurrentConversionString(numValue, fromUnit, toUnit, result);
+    const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
 
     let newFavorites: string[];
     if (favorites.includes(conversionString)) {
@@ -442,19 +468,10 @@ export function Converter() {
 
 
   const handleRestoreHistory = (item: string) => {
-    const parts = item.split(' ');
-    if (parts.length < 5) return; // Basic validation
-  
-    const value = parts[0];
-    const from = parts[1];
-    // parts[2] is '→'
-    const result = parts[3];
-    const to = parts[4];
+    const { value, from, to, result, categoryName } = parseHistoryString(item);
   
     // Find category that has both units
-    const category = conversionCategories.find(c => 
-      c.units.some(u => u.symbol === from) && c.units.some(u => u.symbol === to)
-    );
+    const category = conversionCategories.find(c => c.name === categoryName);
   
     if (category) {
       const categoryUnits = category.units.filter(u => !u.region || u.region === region);
@@ -560,7 +577,7 @@ export function Converter() {
         toast({ title: t('converter.toast.exportedAsImage') });
     } catch (error) {
         console.error('Error exporting as image:', error);
-        toast({ title: t('converter.toast.exportFailed'), description: t('converter.toast.couldNotExportImage'), variant: "destructive" });
+        toast({ title: t('converter.toast.couldNotExportImage'), description: t('converter.toast.couldNotExportImage'), variant: "destructive" });
     }
   };
   
@@ -575,25 +592,22 @@ export function Converter() {
 
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col gap-4">
-      <header className="flex items-center justify-between sticky top-0 z-50 bg-background py-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/">
-              <Home />
-          </Link>
-        </Button>
-        <div className="flex-1 text-center">
-            <h1 className="text-2xl font-bold">Converter</h1>
-        </div>
+    <div className="w-full max-w-lg mx-auto flex flex-col gap-4">
+      <header className="flex items-center justify-between sticky top-0 z-50 bg-background/80 backdrop-blur-sm py-4">
         <div className="flex items-center gap-2">
-            {profile && <GlobalSearchDialog />}
-            {profile && <Notifications />}
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={handleProfileClick}>
-                <Avatar>
-                    <AvatarImage src={profile?.profileImage} alt={profile?.fullName}/>
+            <Scale />
+            <h1 className="text-xl font-bold">Unit Converter</h1>
+        </div>
+        <div className="flex items-center gap-4">
+            <Button variant="outline" className="rounded-full" onClick={handleProfileClick}>
+                <span className="mr-2">Hi, {profile?.fullName || "Guest"}</span>
+                <Avatar className="w-6 h-6">
                     <AvatarFallback><User /></AvatarFallback>
                 </Avatar>
-              </Button>
+            </Button>
+            <Button variant="secondary" onClick={handleShare}>
+                <Share2 className="mr-2" /> Share
+            </Button>
         </div>
       </header>
       
@@ -612,196 +626,107 @@ export function Converter() {
         )}
        </div>
 
+        <Card className="w-full">
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <CardTitle className="flex items-center gap-2"><Scale /> Quick Convert</CardTitle>
+                    <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-200">Fast & Accurate</Badge>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <div className="flex flex-col gap-4">
+                    <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-end">
+                        <div className="flex flex-col gap-1.5">
+                            <Label>From unit</Label>
+                             <CategoryAndUnitSelect 
+                                categories={conversionCategories}
+                                selectedCategory={selectedCategory}
+                                onCategoryChange={handleCategoryChange}
+                                selectedUnit={fromUnit}
+                                onUnitChange={setFromUnit}
+                                t={t}
+                             />
+                        </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="Unit">{t('converter.tabs.converter')}</TabsTrigger>
-          <TabsTrigger value="Calculator">{t('converter.tabs.calculator')}</TabsTrigger>
-        </TabsList>
-        <TabsContent value="Unit">
-          <div className="relative mt-4">
-            <Input
-              type="text"
-              placeholder={t('converter.searchPlaceholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              disabled={isSearching || isOffline}
-              className="bg-card h-12 text-base pl-4 pr-12"
-            />
-             <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleSearch}
-                disabled={isSearching || isOffline}
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 text-muted-foreground hover:bg-accent/20"
-              >
-                {isSearching ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
-              </Button>
-          </div>
-          
-    
-          <div className="bg-card p-4 rounded-xl flex flex-col gap-4 mt-4">
-            <div className="flex justify-between items-center">
-              <h2 className="font-bold text-lg">{t('converter.quickConvert')}</h2>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="text-sm text-muted-foreground flex items-center gap-1.5"><Globe size={16}/> {t('converter.region')}</label>
-                    <Select value={region} onValueChange={handleRegionChange}>
-                        <SelectTrigger className="bg-background mt-1">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
+                         <Button variant="outline" size="icon" className="rounded-full h-10 w-10 bg-secondary" onClick={handleSwapUnits}>
+                            <ArrowRightLeft className="w-5 h-5" />
+                        </Button>
+                        
+                        <div className="flex flex-col gap-1.5">
+                            <Label>To unit</Label>
+                             <CategoryAndUnitSelect 
+                                categories={conversionCategories}
+                                selectedCategory={selectedCategory}
+                                onCategoryChange={handleCategoryChange}
+                                selectedUnit={toUnit}
+                                onUnitChange={setToUnit}
+                                t={t}
+                             />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Card className="p-4 bg-secondary/50">
+                            <Label className="text-muted-foreground">Value</Label>
+                            <Input
+                                type="number"
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                className="bg-transparent border-none text-3xl font-bold p-0 h-auto focus-visible:ring-0 mt-1"
+                                placeholder="0"
+                              />
+                              <p className="text-xs text-muted-foreground mt-1">Enter a number to convert</p>
+                        </Card>
+                         <Card className="p-4 bg-secondary/50">
+                            <Label className="text-muted-foreground">Converted</Label>
+                            <p className="text-3xl font-bold h-auto mt-1">{outputValue || '0'}</p>
+                            <p className="text-xs text-muted-foreground mt-1">Auto-calculated result</p>
+                        </Card>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Info size={16}/>
+                            <p>Tip: Use the swap button to reverse units</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" asChild>
+                                <Link href="/history"><Clock className="mr-2"/> View History</Link>
+                            </Button>
+                             <Button onClick={handleConvertClick}><Zap className="mr-2"/> Convert</Button>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label className="text-sm text-muted-foreground flex items-center gap-1.5"><LayoutGrid size={16}/> {t('converter.category')}</label>
-                     <CategorySelector 
-                        categories={conversionCategories}
-                        selectedCategory={selectedCategory}
-                        onCategoryChange={handleCategoryChange}
-                        t={t}
-                     />
+            </CardContent>
+        </Card>
+
+        {history.length > 0 && (
+          <Card className="w-full">
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <CardTitle className="flex items-center gap-2"><Clock size={20} /> Recent Conversions</CardTitle>
+                    <Button variant="outline" onClick={handleClearHistory}><Trash2 className="mr-2"/> Clear</Button>
                 </div>
-            </div>
-    
-            <div>
-                <label className="text-sm text-muted-foreground">{t('converter.from')}</label>
-                <Input
-                    type="number"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    className="bg-background mt-1 h-12 text-lg"
-                    placeholder={t('converter.enterValue')}
-                  />
-            </div>
-            
-            <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-                <UnitSelect units={currentUnits} value={fromUnit} onValueChange={setFromUnit} t={t} />
-                <Button variant="outline" size="icon" className="rounded-full h-10 w-10 bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSwapUnits}>
-                    <ArrowRightLeft className="w-5 h-5" />
-                </Button>
-                <UnitSelect units={currentUnits} value={toUnit} onValueChange={setToUnit} t={t} />
-            </div>
-    
-            <div className="grid grid-cols-2 gap-2 text-xs">
-                {fromUnitInfo && <InfoBox text={fromUnitInfo} />}
-                {toUnitInfo && <InfoBox text={toUnitInfo} />}
-            </div>
-            
-            <div className="bg-background rounded-lg p-4 flex justify-between items-center h-16">
-                <span className={`text-lg ${!outputValue ? 'text-muted-foreground' : ''}`}>{outputValue || t('converter.resultPlaceholder')}</span>
-                {outputValue && (
-                     <div className="flex items-center gap-3">
-                        <Copy size={20} className="text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => {
-                            navigator.clipboard.writeText(outputValue)
-                            toast({ title: t('converter.toast.copied')})
-                            }} />
-                        <Star 
-                          size={20} 
-                          className={`cursor-pointer transition-colors ${isFavorite ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground hover:text-foreground'}`}
-                          onClick={handleToggleFavorite}
-                        />
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Share2 size={20} className="text-muted-foreground cursor-pointer hover:text-foreground" />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleExportAsImage}>
-                                    <ImageIcon className="mr-2 h-4 w-4" />
-                                    <span>{t('converter.export.asImage')}</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => toast({title: t('converter.export.notAvailable')})}>
-                                    <FileIcon className="mr-2 h-4 w-4" />
-                                    <span>{t('converter.export.asPDF')}</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleExportAsTxt}>
-                                    <FileText className="mr-2 h-4 w-4" />
-                                    <span>{t('converter.export.asTXT')}</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleShare}>
-                                    <Share2 className="mr-2 h-4 w-4" />
-                                    <span>{t('converter.export.share')}</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                     </div>
-                )}
-            </div>
-            
-            <div className="flex gap-2">
-                <Button onClick={handleConvertClick} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base font-bold flex-grow">{t('converter.convertButton')}</Button>
-                {outputValue && chartData.length > 0 && (
-                    <Button variant="outline" onClick={() => setIsGraphVisible(v => !v)} className="h-12">
-                        <BarChart2 />
-                        Compare All
-                    </Button>
-                )}
-            </div>
-          </div>
-            
-            {isGraphVisible && chartData.length > 0 && (
-                <div className="bg-card p-4 rounded-xl mt-4">
-                    <h3 className="font-bold text-lg mb-4 text-center">Comparison for {inputValue} {fromUnit}</h3>
-                    <ScrollArea className="h-60 w-full">
-                         <ResponsiveContainer width="100%" height={chartData.length * 40}>
-                            <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.3} />
-                                <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
-                                <YAxis 
-                                    dataKey="name" 
-                                    type="category" 
-                                    width={60} 
-                                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                                />
-                                <Tooltip
-                                    cursor={{fill: 'hsla(var(--muted), 0.5)'}}
-                                    contentStyle={{
-                                        backgroundColor: 'hsl(var(--background))',
-                                        borderColor: 'hsl(var(--border))',
-                                        borderRadius: 'var(--radius)',
-                                    }}
-                                />
-                                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                        <ScrollBar orientation="vertical" />
-                    </ScrollArea>
+            </CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                   {history.slice(0, 6).map((item) => {
+                       const { conversion, categoryName, timestamp } = parseHistoryString(item);
+                       const category = conversionCategories.find(c => c.name === categoryName);
+                       const Icon = category?.icon || Power;
+                       
+                       return (
+                         <div key={item} onClick={() => handleRestoreHistory(item)} className="bg-secondary p-3 rounded-lg cursor-pointer hover:bg-secondary/80">
+                           <p className="font-semibold">{conversion}</p>
+                           <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                                <span className="flex items-center gap-1.5"><Icon size={14}/> {categoryName}</span>
+                                <span>{formatDistanceToNow(timestamp, { addSuffix: true })}</span>
+                           </div>
+                         </div>
+                       );
+                   })}
                 </div>
-            )}
-    
-          {history.length > 0 && (
-              <div className="bg-card p-4 rounded-xl flex flex-col gap-3 mt-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} /> {t('converter.recentConversions')}</h3>
-                  </div>
-                  <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                      {history.slice(0, 3).map((item, index) => (
-                          <div key={index} className="flex justify-between items-center p-2 rounded hover:bg-background group">
-                             <div className="flex items-center gap-2">
-                               {favorites.includes(item) && <Star size={16} className="text-yellow-400 fill-yellow-400" />}
-                               <span>{item}</span>
-                             </div>
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <RotateCcw size={16} className="cursor-pointer hover:text-foreground" onClick={() => handleRestoreHistory(item)} />
-                                <Trash2 size={16} className="cursor-pointer hover:text-foreground" onClick={() => handleDeleteHistory(index)} />
-                            </div>
-                          </div>
-                      ))}
-                  </div>
-              </div>
-          )}
-        </TabsContent>
-        <TabsContent value="Calculator">
-          <div className="mt-4">
-            <Calculator />
-          </div>
-        </TabsContent>
-      </Tabs>
+            </CardContent>
+          </Card>
+      )}
       
        <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
         <AlertDialogContent>
@@ -827,44 +752,50 @@ export function Converter() {
   );
 }
 
-function CategorySelector({ categories, selectedCategory, onCategoryChange, t }: { categories: ConversionCategory[], selectedCategory: ConversionCategory, onCategoryChange: (name: string) => void, t: (key: string, params?: any) => string }) {
-    const [isOpen, setIsOpen] = useState(false);
-    const SelectedIcon = selectedCategory.icon;
+function CategoryAndUnitSelect({ categories, selectedCategory, onCategoryChange, selectedUnit, onUnitChange, t }: { categories: ConversionCategory[], selectedCategory: ConversionCategory, onCategoryChange: (name: string) => void, selectedUnit: string, onUnitChange: (symbol: string) => void, t: (key: string, params?: any) => string }) {
+    const selectedUnitInfo = selectedCategory.units.find(u => u.symbol === selectedUnit);
+    const [search, setSearch] = useState("");
+    
+    const filteredUnits = selectedCategory.units.filter(unit => 
+        unit.name.toLowerCase().includes(search.toLowerCase()) || 
+        unit.symbol.toLowerCase().includes(search.toLowerCase())
+    );
 
     return (
-        <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+        <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="bg-background mt-1 w-full justify-between">
+                 <Button variant="outline" className="w-full justify-between h-12 text-base">
                     <div className="flex items-center gap-2">
-                        <SelectedIcon className="w-4 h-4 text-accent" />
-                        <span>{t(`categories.${selectedCategory.name.toLowerCase()}`, { defaultValue: selectedCategory.name })}</span>
+                         <selectedCategory.icon className="w-5 h-5 text-accent" />
+                         <span>{selectedUnitInfo?.name} ({selectedUnitInfo?.symbol})</span>
                     </div>
-                    <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
+                    <ChevronDown className="w-4 h-4 opacity-50" />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] p-2">
-                <div className="grid grid-cols-3 gap-2">
+                <Input
+                    placeholder="Search..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="mb-2"
+                />
+                <ScrollArea className="h-48">
                     {categories.map(cat => {
-                        const Icon = cat.icon;
                         const isSelected = cat.name === selectedCategory.name;
+                        if (!isSelected) return null; // Only show units for selected category
+                        
                         return (
-                            <button
-                                key={cat.name}
-                                onClick={() => {
-                                    onCategoryChange(cat.name);
-                                    setIsOpen(false);
-                                }}
-                                className={cn(
-                                    "flex flex-col items-center justify-center gap-2 p-2 rounded-lg aspect-square transition-colors",
-                                    isSelected ? "bg-primary/20 text-primary" : "hover:bg-muted"
-                                )}
-                            >
-                                <Icon className="w-6 h-6" />
-                                <span className="text-xs text-center">{t(`categories.${cat.name.toLowerCase()}`, { defaultValue: cat.name })}</span>
-                            </button>
-                        );
+                            <div key={cat.name}>
+                                <DropdownMenuLabel>{cat.name}</DropdownMenuLabel>
+                                {filteredUnits.map(unit => (
+                                    <DropdownMenuItem key={unit.symbol} onSelect={() => onUnitChange(unit.symbol)}>
+                                        {unit.name} ({unit.symbol})
+                                    </DropdownMenuItem>
+                                ))}
+                            </div>
+                        )
                     })}
-                </div>
+                </ScrollArea>
             </DropdownMenuContent>
         </DropdownMenu>
     );
@@ -943,3 +874,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
