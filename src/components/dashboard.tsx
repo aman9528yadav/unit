@@ -21,6 +21,7 @@ import {
   Sun,
   UserCircle2,
   Settings,
+  Languages,
 } from "lucide-react";
 import {
   Area,
@@ -44,6 +45,8 @@ import { useTheme } from "@/context/theme-context";
 import { getTodaysCalculations, getWeeklyCalculations, getAllTimeCalculations } from "@/lib/utils";
 import { GlobalSearchDialog } from "./global-search-dialog";
 import { Notifications } from "./notifications";
+import { useLanguage } from "@/context/language-context";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 
 interface Note {
@@ -203,6 +206,22 @@ const Header = ({ name, profile }: { name: string, profile: UserProfile | null }
   );
 };
 
+const LanguageToggle = () => {
+    const { language, setLanguage } = useLanguage();
+    return (
+        <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'hi')}>
+            <SelectTrigger className="w-[120px] bg-card border-border">
+                <Languages className="mr-2 h-4 w-4" />
+                <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="hi">हिन्दी</SelectItem>
+            </SelectContent>
+        </Select>
+    );
+};
+
 const ThemeToggle = ({ isDark, onChange }: { isDark: boolean; onChange: (isDark: boolean) => void }) => (
   <div className="flex items-center gap-3 p-2 rounded-lg border border-border bg-card">
     <Sun className="size-4 text-yellow-400" />
@@ -250,7 +269,10 @@ export function Dashboard() {
       <main className="relative mx-auto max-w-6xl px-4 sm:px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <Badge className="bg-primary/20 text-primary border-primary/30">UniConvert • Dashboard</Badge>
-          <ThemeToggle isDark={theme === 'dark'} onChange={handleThemeChange} />
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle isDark={theme === 'dark'} onChange={handleThemeChange} />
+          </div>
         </div>
 
         <Header name={profile?.fullName || 'Guest'} profile={profile} />
@@ -331,4 +353,3 @@ export function Dashboard() {
     </div>
   );
 }
-

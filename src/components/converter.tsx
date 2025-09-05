@@ -601,6 +601,11 @@ export function Converter() {
     <div className="w-full max-w-lg mx-auto flex flex-col gap-4">
       <header className="flex items-center justify-between sticky top-0 z-50 bg-background/80 backdrop-blur-sm py-4">
         <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" asChild>
+                <Link href="/">
+                    <Home />
+                </Link>
+            </Button>
             <div className="p-2 bg-primary/10 text-primary rounded-lg">
               <Scale />
             </div>
@@ -986,5 +991,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
