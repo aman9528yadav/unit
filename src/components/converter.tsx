@@ -722,7 +722,7 @@ export function Converter() {
                            <p className="font-semibold">{conversion}</p>
                            <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
                                 <span className="flex items-center gap-1.5"><Icon size={14}/> {categoryName}</span>
-                                <span>{formatDistanceToNow(timestamp, { addSuffix: true })}</span>
+                                <span>{formatDistanceToNow(new Date(timestamp), { addSuffix: true })}</span>
                            </div>
                          </div>
                        );
@@ -760,6 +760,13 @@ function UnitSelectionDialog({ categories, onUnitSelect, selectedCategory, selec
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [activeCategory, setActiveCategory] = useState<ConversionCategory>(selectedCategory);
+    
+    useEffect(() => {
+        if (selectedCategory.name !== activeCategory.name) {
+            setActiveCategory(selectedCategory);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedCategory]);
     
     const selectedUnitInfo = useMemo(() => activeCategory.units.find(u => u.symbol === selectedUnitSymbol), [activeCategory, selectedUnitSymbol]);
     
