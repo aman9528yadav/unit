@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -9,6 +8,7 @@ import html2canvas from 'html2canvas';
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -31,7 +31,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2, ChevronDown, Sparkles, LogIn, Scale, Power, Gauge, Flame, DollarSign, Fuel } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2, ChevronDown, Sparkles, LogIn, Scale, Power, Gauge, Flame, DollarSign, Fuel, Edit } from "lucide-react";
 import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow.ts";
 import { useToast } from "@/hooks/use-toast";
@@ -48,7 +48,7 @@ import { Notifications } from "./notifications";
 import { GlobalSearchDialog } from "./global-search-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
 import { useDebounce } from "@/hooks/use-debounce";
 
 
@@ -582,24 +582,33 @@ export function Converter() {
     }
   };
 
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    if (isToday(date)) return 'Today';
+    if (isYesterday(date)) return 'Yesterday';
+    return format(date, 'MMM d');
+  }
 
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-4">
       <header className="flex items-center justify-between sticky top-0 z-50 bg-background/80 backdrop-blur-sm py-4">
         <div className="flex items-center gap-2">
-            <Scale />
+            <div className="p-2 bg-primary/10 text-primary rounded-lg">
+              <Scale />
+            </div>
             <h1 className="text-xl font-bold">Unit Converter</h1>
         </div>
         <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={handleProfileClick}>
-                <Avatar>
+            <Button variant="ghost" className="gap-2" onClick={handleProfileClick}>
+                Hi, {profile?.fullName.split(' ')[0] || 'Guest'}
+                <Avatar className="h-8 w-8">
                     <AvatarImage src={profile?.profileImage} alt={profile?.fullName}/>
                     <AvatarFallback><User /></AvatarFallback>
                 </Avatar>
             </Button>
-            <Button variant="secondary" onClick={handleShare} className="hidden sm:flex">
-                <Share2 className="mr-2" /> Share
+            <Button onClick={handleShare} variant="outline">
+                <Share2 className="mr-2 h-4 w-4" /> Share
             </Button>
         </div>
       </header>
@@ -618,143 +627,118 @@ export function Converter() {
             />
         )}
        </div>
-
-        <div className="bg-card p-4 rounded-xl flex flex-col gap-4">
-            <div className="flex justify-between items-center">
-                <h2 className="font-bold flex items-center gap-2"><LayoutGrid/> {t('converter.quickConvert')}</h2>
-                <div className="flex items-center gap-2">
-                    <Select value={region} onValueChange={handleRegionChange}>
-                        <SelectTrigger className="w-[150px] bg-background">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <CardTitle className="flex items-center gap-2"><Scale/> Quick Convert</CardTitle>
+                     <Badge variant="outline" className="text-amber-600 border-amber-500">Fast & Accurate</Badge>
                 </div>
-            </div>
-            
-            <div className="space-y-2">
-                <Label>{outputValue ? getCurrentConversionString(parseFloat(inputValue), fromUnit, toUnit, parseFloat(outputValue.replace(/,/g, ''))) : ' '}</Label>
-                <div className="flex items-center gap-2">
-                     <Button variant="outline" size="icon" onClick={handleToggleFavorite}>
-                        <Star className={cn("w-5 h-5", isFavorite && "fill-yellow-400 text-yellow-400")} />
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+                <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
+                    <div>
+                         <Label className="text-muted-foreground">From unit</Label>
+                        <UnitSelectionDialog
+                            trigger={
+                                <Button variant="outline" className="w-full justify-between mt-1">
+                                    <span className="flex items-center gap-2">
+                                        <selectedCategory.icon className="text-muted-foreground" />
+                                        {fromUnitInfo?.name} ({fromUnitInfo?.symbol})
+                                    </span>
+                                    <ChevronDown className="ml-1 h-4 w-4" />
+                                </Button>
+                            }
+                            selectedCategory={selectedCategory}
+                            onSelectUnit={(unit) => {
+                              const category = conversionCategories.find(c => c.units.some(u => u.symbol === unit.symbol));
+                              if (category) {
+                                setSelectedCategory(category);
+                                setFromUnit(unit.symbol);
+                              }
+                            }}
+                            conversionCategories={conversionCategories}
+                            t={t}
+                        />
+                    </div>
+                    
+                    <Button variant="outline" size="icon" className="rounded-full mt-6" onClick={handleSwapUnits}>
+                        <ArrowRightLeft className="w-5 h-5" />
                     </Button>
-                    <Button variant="outline" size="icon" onClick={() => {
-                        if (!outputValue) return;
-                        navigator.clipboard.writeText(outputValue);
-                        toast({ title: t('converter.toast.copied') });
-                    }}>
-                        <Copy className="w-5 h-5" />
-                    </Button>
+                    
+                     <div>
+                        <Label className="text-muted-foreground">To unit</Label>
+                         <UnitSelectionDialog
+                            trigger={
+                                 <Button variant="outline" className="w-full justify-between mt-1">
+                                    <span className="flex items-center gap-2">
+                                        <selectedCategory.icon className="text-muted-foreground" />
+                                        {toUnitInfo?.name} ({toUnitInfo?.symbol})
+                                    </span>
+                                    <ChevronDown className="ml-1 h-4 w-4" />
+                                </Button>
+                            }
+                            selectedCategory={selectedCategory}
+                            onSelectUnit={(unit) => setToUnit(unit.symbol)}
+                            conversionCategories={conversionCategories}
+                            t={t}
+                        />
+                     </div>
                 </div>
-            </div>
 
-            <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-                <div className="relative">
-                    <Input
-                        type="number"
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        className="text-lg bg-background"
-                        placeholder="0"
-                    />
-                    <UnitSelectionDialog
-                        trigger={
-                            <Button variant="ghost" className="absolute bottom-0 right-0 h-full">
-                                {fromUnitInfo?.symbol} <ChevronDown className="ml-1 h-4 w-4" />
-                            </Button>
-                        }
-                        selectedCategory={selectedCategory}
-                        onSelectUnit={(unit) => {
-                          const category = conversionCategories.find(c => c.units.some(u => u.symbol === unit.symbol));
-                          if (category) {
-                            setSelectedCategory(category);
-                            setFromUnit(unit.symbol);
-                          }
-                        }}
-                        conversionCategories={conversionCategories}
-                        t={t}
-                    />
+                <div className="grid grid-cols-2 gap-4">
+                    <Card className="bg-secondary/50">
+                        <CardHeader>
+                            <Label htmlFor="value" className="text-muted-foreground">Value</Label>
+                            <Input
+                                id="value"
+                                type="number"
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                className="text-2xl font-bold p-0 h-auto bg-transparent border-none shadow-none focus-visible:ring-0"
+                                placeholder="0"
+                            />
+                        </CardHeader>
+                        <CardContent>
+                             <p className="text-xs text-muted-foreground">Enter a number to convert</p>
+                        </CardContent>
+                    </Card>
+                     <Card className="bg-secondary/50">
+                        <CardHeader>
+                            <Label className="text-muted-foreground">Converted</Label>
+                            <p className="text-2xl font-bold text-primary truncate h-9">
+                                {outputValue || '...'}
+                            </p>
+                        </CardHeader>
+                         <CardContent>
+                            <p className="text-xs text-muted-foreground">Auto-calculated result</p>
+                        </CardContent>
+                    </Card>
                 </div>
                 
-                <Button variant="outline" size="icon" className="rounded-full" onClick={handleSwapUnits}>
-                    <ArrowRightLeft className="w-5 h-5" />
-                </Button>
-                
-                 <div className="relative">
-                    <Input
-                        readOnly
-                        value={outputValue}
-                        className="text-lg bg-background font-bold text-primary"
-                        placeholder={t('converter.resultPlaceholder')}
-                    />
-                    <UnitSelectionDialog
-                        trigger={
-                             <Button variant="ghost" className="absolute bottom-0 right-0 h-full">
-                                {toUnitInfo?.symbol} <ChevronDown className="ml-1 h-4 w-4" />
+                <div className="flex justify-between items-center mt-2">
+                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Info size={16}/>
+                        <p>Tip: Use the swap button to reverse units</p>
+                   </div>
+                    <div className="flex items-center gap-2">
+                         {!autoConvert && (
+                            <Button onClick={handleConvertClick}>
+                                <Zap className="mr-2 h-4 w-4"/>
+                                {t('converter.convertButton')}
                             </Button>
-                        }
-                        selectedCategory={selectedCategory}
-                        onSelectUnit={(unit) => setToUnit(unit.symbol)}
-                        conversionCategories={conversionCategories}
-                        t={t}
-                    />
+                        )}
+                        <Button variant="outline" onClick={() => router.push('/history')}>View History</Button>
+                    </div>
                 </div>
-            </div>
-            
-            {!autoConvert && (
-                <Button onClick={handleConvertClick} className="w-full h-12 text-lg">
-                    {t('converter.convertButton')}
-                </Button>
-            )}
-
-             <div className="flex justify-between items-center mt-4">
-                <Button variant="ghost" onClick={() => setIsGraphVisible(!isGraphVisible)}>
-                    <BarChart2 className="mr-2"/> Compare Units
-                </Button>
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <Button variant="outline">Share & Export</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Share & Export</DialogTitle>
-                        </DialogHeader>
-                        <div className="grid grid-cols-2 gap-4">
-                            <Button onClick={handleExportAsImage}><ImageIcon className="mr-2"/> Image</Button>
-                            <Button onClick={handleExportAsTxt}><FileIcon className="mr-2"/> Txt File</Button>
-                            <Button onClick={handleShare} className="col-span-2"><Share2 className="mr-2"/> Share Conversion</Button>
-                        </div>
-                    </DialogContent>
-                </Dialog>
-            </div>
-            
-        </div>
-
-        {isGraphVisible && chartData.length > 0 && (
-             <div className="bg-card p-4 rounded-xl">
-                 <h3 className="font-bold mb-4 text-center">Unit Comparison Chart</h3>
-                 <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                         <BarChart data={chartData} layout="vertical">
-                             <CartesianGrid strokeDasharray="3 3" />
-                             <XAxis type="number" />
-                             <YAxis dataKey="name" type="category" width={60}/>
-                             <Tooltip cursor={{fill: 'hsla(var(--muted), 0.5)'}} contentStyle={{backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))'}}/>
-                             <Bar dataKey="value" fill="hsl(var(--primary))" barSize={20} />
-                         </BarChart>
-                     </ResponsiveContainer>
-                 </div>
-             </div>
-        )}
+            </CardContent>
+        </Card>
 
         {history.length > 0 && (
           <Card className="w-full">
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle className="flex items-center gap-2"><Clock size={20} /> Recent Conversions</CardTitle>
-                    <Button variant="outline" onClick={handleClearHistory}><Trash2 className="mr-2"/> Clear</Button>
+                    <Button variant="outline" onClick={handleClearHistory}><Trash2 className="mr-2 h-4 w-4"/> Clear</Button>
                 </div>
             </CardHeader>
             <CardContent>
@@ -769,7 +753,7 @@ export function Converter() {
                            <p className="font-semibold">{conversion}</p>
                            <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
                                 <span className="flex items-center gap-1.5"><Icon size={14}/> {categoryName}</span>
-                                <span>{formatDistanceToNow(new Date(timestamp), { addSuffix: true })}</span>
+                                <span>{formatTimestamp(timestamp)}</span>
                            </div>
                          </div>
                        );
@@ -818,7 +802,9 @@ function UnitSelectionDialog({ trigger, selectedCategory, onSelectUnit, conversi
   const debouncedSearch = useDebounce(search, 300);
 
   useEffect(() => {
-    setActiveCategory(selectedCategory);
+    if (isOpen) {
+      setActiveCategory(selectedCategory);
+    }
   }, [selectedCategory, isOpen]);
   
   const filteredUnits = useMemo(() => {
@@ -928,3 +914,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
