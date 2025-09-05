@@ -35,7 +35,6 @@ export function DevPanel() {
     const [notificationTitle, setNotificationTitle] = useState('');
     const [notificationDescription, setNotificationDescription] = useState('');
     const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
-    const [homeIsMaintenance, setHomeIsMaintenance] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -46,11 +45,6 @@ export function DevPanel() {
         const storedUpdateText = localStorage.getItem("nextUpdateText");
         if (storedUpdateText) {
             setUpdateText(storedUpdateText);
-        }
-
-        const devHomeMaint = localStorage.getItem("devHomeIsMaintenance");
-        if (devHomeMaint) {
-            setHomeIsMaintenance(JSON.parse(devHomeMaint));
         }
         
         if (storedProfile) {
@@ -146,7 +140,6 @@ export function DevPanel() {
     };
     
      const handleMaintenanceModeToggle = async (enabled: boolean) => {
-        setIsMaintenanceMode(enabled); // Optimistic UI update
         try {
             await setGlobalMaintenanceMode(enabled);
             toast({
@@ -154,16 +147,9 @@ export function DevPanel() {
                 description: enabled ? "App is now in maintenance mode." : "App is now live.",
             });
         } catch (error) {
-            setIsMaintenanceMode(!enabled); // Revert on error
             console.error("Failed to toggle maintenance mode:", error);
             toast({ title: "Update Failed", description: "Could not change maintenance mode status.", variant: "destructive" });
         }
-    };
-    
-    const handleHomeRedirectToggle = (enabled: boolean) => {
-        setHomeIsMaintenance(enabled);
-        localStorage.setItem('devHomeIsMaintenance', JSON.stringify(enabled));
-        toast({ title: `Local Home Page is now ${enabled ? 'Maintenance' : 'Dashboard'}` });
     };
 
 
@@ -327,24 +313,13 @@ export function DevPanel() {
                         <CardContent className="space-y-4">
                              <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
                                 <div>
-                                    <Label htmlFor="maintenance-mode">Global Maintenance Mode</Label>
+                                    <Label htmlFor="maintenance-mode">Enable Maintenance Mode</Label>
                                     <p className='text-xs text-muted-foreground'>Redirects all users to /maintenance.</p>
                                 </div>
                                 <Switch
                                     id="maintenance-mode"
                                     checked={isMaintenanceMode}
                                     onCheckedChange={handleMaintenanceModeToggle}
-                                />
-                            </div>
-                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                <div>
-                                    <Label htmlFor="dev-maintenance-mode">Set Home to Maintenance</Label>
-                                    <p className='text-xs text-muted-foreground'>Locally redirects / to /maintenance.</p>
-                                </div>
-                                <Switch
-                                    id="dev-maintenance-mode"
-                                    checked={homeIsMaintenance}
-                                    onCheckedChange={handleHomeRedirectToggle}
                                 />
                             </div>
                         </CardContent>

@@ -38,8 +38,6 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
         return () => unsubscribe();
     }, []);
 
-    const allowedPaths = ['/maintenance'];
-
     useEffect(() => {
         if (isMaintenanceMode === null) return; // Wait until status is fetched
 
@@ -48,14 +46,12 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        const devHomeIsMaintenance = localStorage.getItem("devHomeIsMaintenance");
-        const isDevViewingMaintenance = devHomeIsMaintenance && JSON.parse(devHomeIsMaintenance);
-        const isAllowed = allowedPaths.includes(pathname);
+        const isMaintenancePage = pathname === '/maintenance';
 
-        if (isMaintenanceMode && !isAllowed) {
+        if (isMaintenanceMode && !isMaintenancePage) {
             router.replace('/maintenance');
-        } else if (!isMaintenanceMode && pathname === '/maintenance' && !isDevViewingMaintenance) {
-            // Only redirect away from maintenance if global is off AND we are not in dev-view mode.
+        } else if (!isMaintenanceMode && isMaintenancePage) {
+            // Redirect away from maintenance only if global is off.
             router.replace('/');
         }
     }, [isMaintenanceMode, pathname, router]);
@@ -69,14 +65,15 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
         );
     }
     
-    // Render children if not in maintenance or on an allowed path
+    // Always allow dev routes to render
     if (pathname.startsWith('/dev')) {
         return <>{children}</>;
     }
-
-    const isAllowed = allowedPaths.includes(pathname);
-    if (isMaintenanceMode && !isAllowed) {
-        return null; // Redirecting, so don't render children yet
+    
+    const isMaintenancePage = pathname === '/maintenance';
+    // If in maintenance and not on the maintenance page, we are redirecting, so render nothing.
+    if (isMaintenanceMode && !isMaintenancePage) {
+        return null; 
     }
 
     return <>{children}</>;
