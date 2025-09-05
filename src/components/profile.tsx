@@ -86,7 +86,7 @@ export function Profile() {
   };
 
   const menuItems = [
-    { icon: User, text: "Profile", href: "/profile/edit" },
+    { icon: User, text: "User Data", href: "/userdata" },
     { icon: Star, text: "Favorite", href: "/history" },
     { icon: Gift, text: "What's New", href: "/updates" },
     { icon: Lock, text: "Privacy Policy", href: "/privacy-policy" },
