@@ -654,7 +654,7 @@ export function Converter() {
   const handleCopy = () => {
     if (outputValue) {
         navigator.clipboard.writeText(outputValue);
-        toast({ title: "Result Copied!", description: `Copied "${outputValue}" to your clipboard.`});
+        toast({ title: t('converter.toast.copied'), description: t('converter.toast.copiedDescription', {outputValue})});
     }
   };
   
@@ -673,11 +673,11 @@ export function Converter() {
             <div className="p-2 bg-primary/10 text-primary rounded-lg">
               <Scale />
             </div>
-            <h1 className="text-xl font-bold">Unit Converter</h1>
+            <h1 className="text-xl font-bold">{t('converter.welcome')}</h1>
         </div>
         <div className="flex items-center gap-2">
             <Button variant="ghost" className="gap-2" onClick={handleProfileClick}>
-                Hi, {profile?.fullName.split(' ')[0] || 'Guest'}
+                {t('dashboard.greeting', { name: profile?.fullName.split(' ')[0] || t('dashboard.guest') })}
                 <Avatar className="h-8 w-8">
                     <AvatarImage src={profile?.profileImage} alt={profile?.fullName}/>
                     <AvatarFallback><User /></AvatarFallback>
@@ -703,8 +703,7 @@ export function Converter() {
         <Card>
             <CardHeader>
                 <div className="flex justify-between items-center">
-                    <CardTitle className="flex items-center gap-2"><Scale/> Quick Convert</CardTitle>
-                    <Badge variant="outline" className="text-amber-600 border-amber-500">Fast & Accurate</Badge>
+                    <CardTitle className="flex items-center gap-2"><Scale/>{t('converter.quickConvert')}</CardTitle>
                 </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
@@ -714,9 +713,12 @@ export function Converter() {
                        <TooltipProvider>
                            <DropdownMenu>
                                <DropdownMenuTrigger asChild>
-                                   <Button variant="outline" className="w-full justify-start">
-                                       <selectedCategory.icon className="mr-2 h-4 w-4" />
-                                       {t(`categories.${selectedCategory.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: selectedCategory.name })}
+                                   <Button variant="outline" className="w-full justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <selectedCategory.icon className="mr-2 h-4 w-4" />
+                                        {t(`categories.${selectedCategory.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: selectedCategory.name })}
+                                      </div>
+                                      <ChevronDown className="h-4 w-4 opacity-50" />
                                    </Button>
                                </DropdownMenuTrigger>
                                <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
@@ -743,7 +745,7 @@ export function Converter() {
                                                            <div>{categoryItem}</div>
                                                        </TooltipTrigger>
                                                        <TooltipContent>
-                                                           <p>Unlock Premium to use this category.</p>
+                                                           <p>{t('converter.toast.premiumCategory')}</p>
                                                        </TooltipContent>
                                                    </Tooltip>
                                                );
@@ -787,7 +789,7 @@ export function Converter() {
                     </Button>
 
                     <div className="flex-1">
-                        <Label>To</Label>
+                        <Label>{t('converter.to')}</Label>
                         <Select value={toUnit} onValueChange={setToUnit}>
                             <SelectTrigger>
                                 <SelectValue placeholder="To" />
@@ -802,7 +804,7 @@ export function Converter() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card className="bg-secondary/50">
                         <CardHeader>
-                            <Label htmlFor="value" className="text-muted-foreground">Value</Label>
+                            <Label htmlFor="value" className="text-muted-foreground">{t('converter.value')}</Label>
                             <Input
                                 id="value"
                                 type="number"
@@ -813,14 +815,14 @@ export function Converter() {
                             />
                         </CardHeader>
                         <CardContent>
-                             <p className="text-xs text-muted-foreground">Enter a number to convert</p>
+                             <p className="text-xs text-muted-foreground">{t('converter.enterValue')}</p>
                         </CardContent>
                     </Card>
                      <Card className="bg-secondary/50">
                         <CardHeader>
-                            <Label className="text-muted-foreground">Converted</Label>
+                            <Label className="text-muted-foreground">{t('converter.converted')}</Label>
                             <p className="text-2xl font-bold text-primary truncate h-9">
-                                {outputValue || '...'}
+                                {outputValue || t('converter.resultPlaceholder')}
                             </p>
                         </CardHeader>
                          <CardContent>
@@ -836,49 +838,43 @@ export function Converter() {
                                   <Dialog>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
-                                          <DialogTrigger asChild
-                                             onClick={(e) => {
-                                                if (isPremiumFeatureLocked) {
-                                                  e.preventDefault();
-                                                  toast({
-                                                    title: "Premium Feature Locked",
-                                                    description: "Unlock Premium to share and export conversions.",
-                                                  });
-                                                }
-                                              }}
-                                          >
-                                            <Button variant="ghost" size="icon" disabled={!outputValue}>
-                                              <Share2 size={16} />
-                                            </Button>
-                                          </DialogTrigger>
+                                          <Button variant="ghost" size="icon" disabled={!outputValue} onClick={(e) => {
+                                            if (isPremiumFeatureLocked) {
+                                                e.preventDefault();
+                                                toast({
+                                                    title: t('converter.toast.premiumFeatureLocked'),
+                                                    description: t('converter.toast.premiumShare'),
+                                                });
+                                            }
+                                          }}>
+                                            <Share2 size={16} />
+                                          </Button>
                                       </TooltipTrigger>
-                                       {isPremiumFeatureLocked && (
-                                         <TooltipContent>
-                                           <p>Unlock Premium to share conversions.</p>
-                                         </TooltipContent>
-                                       )}
+                                      {isPremiumFeatureLocked && (
+                                        <TooltipContent>
+                                          <p>{t('converter.toast.premiumShare')}</p>
+                                        </TooltipContent>
+                                      )}
                                     </Tooltip>
                                     {!isPremiumFeatureLocked && (
-                                       <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Share or Export Conversion</DialogTitle>
-                                        </DialogHeader>
-                                        <div className="flex flex-col gap-4">
-                                            <Button onClick={handleShare}>
-                                            <Share2 className="mr-2 h-4 w-4" /> Share via System
-                                            Dialog
-                                            </Button>
-                                            <Button onClick={handleExportAsTxt} variant="secondary">
-                                            <FileText className="mr-2 h-4 w-4" /> Export as
-                                            .txt
-                                            </Button>
-                                            <Button onClick={handleExportAsImage} variant="secondary">
-                                            <ImageIcon className="mr-2 h-4 w-4" /> Export as
-                                            .png
-                                            </Button>
-                                        </div>
-                                        </DialogContent>
+                                      <DialogTrigger asChild><span/></DialogTrigger>
                                     )}
+                                    <DialogContent>
+                                      <DialogHeader>
+                                          <DialogTitle>{t('converter.export.title')}</DialogTitle>
+                                      </DialogHeader>
+                                      <div className="flex flex-col gap-4">
+                                          <Button onClick={handleShare}>
+                                          <Share2 className="mr-2 h-4 w-4" /> {t('converter.export.shareSystem')}
+                                          </Button>
+                                          <Button onClick={handleExportAsTxt} variant="secondary">
+                                          <FileText className="mr-2 h-4 w-4" /> {t('converter.export.asTXT')}
+                                          </Button>
+                                          <Button onClick={handleExportAsImage} variant="secondary">
+                                          <ImageIcon className="mr-2 h-4 w-4" /> {t('converter.export.asImage')}
+                                          </Button>
+                                      </div>
+                                    </DialogContent>
                                   </Dialog>
                                 </TooltipProvider>
                              </div>
@@ -910,7 +906,7 @@ export function Converter() {
                 <div className="flex flex-col md:flex-row justify-between items-center mt-2 gap-4">
                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Info size={16}/>
-                        <p>Tip: Use the swap button to reverse units</p>
+                        <p>{t('converter.tip')}</p>
                    </div>
                     <div className="flex items-center gap-2 w-full md:w-auto">
                          {!autoConvert && (
@@ -919,7 +915,7 @@ export function Converter() {
                                 {t('converter.convertButton')}
                             </Button>
                         )}
-                        <Button variant="outline" onClick={() => router.push('/history')} className="w-full">View History</Button>
+                        <Button variant="outline" onClick={() => router.push('/history')} className="w-full">{t('converter.viewHistory')}</Button>
                     </div>
                 </div>
             </CardContent>
@@ -929,8 +925,8 @@ export function Converter() {
           <Card className="w-full">
             <CardHeader>
                 <div className="flex justify-between items-center">
-                    <CardTitle className="flex items-center gap-2"><Clock size={20} /> Recent Conversions</CardTitle>
-                    <Button variant="ghost" onClick={() => setShowRecentHistory(false)}><Trash2 className="mr-2 h-4 w-4"/> Clear</Button>
+                    <CardTitle className="flex items-center gap-2"><Clock size={20} />{t('converter.recentConversions')}</CardTitle>
+                    <Button variant="ghost" onClick={() => setShowRecentHistory(false)}><Trash2 className="mr-2 h-4 w-4"/>{t('converter.clear')}</Button>
                 </div>
             </CardHeader>
             <CardContent>
@@ -963,16 +959,16 @@ export function Converter() {
             <div className="p-3 bg-primary/10 rounded-full mb-4 w-fit">
               <Sparkles className="w-8 h-8 text-primary" />
             </div>
-            <AlertDialogTitle className="text-2xl">Unlock Your Profile</AlertDialogTitle>
+            <AlertDialogTitle className="text-2xl">{t('dashboard.unlockProfile.title')}</AlertDialogTitle>
             <AlertDialogDescription className="max-w-xs">
-              Log in or create an account to personalize your experience, save preferences, and access your history.
+              {t('dashboard.unlockProfile.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col-reverse sm:flex-col-reverse gap-2">
-            <AlertDialogCancel>Not Now</AlertDialogCancel>
+            <AlertDialogCancel>{t('dashboard.unlockProfile.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={() => router.push('/welcome')} className="bg-primary hover:bg-primary/90">
               <LogIn className="mr-2"/>
-              Continue to Login
+              {t('dashboard.unlockProfile.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1028,5 +1024,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    

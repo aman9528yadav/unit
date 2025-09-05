@@ -49,6 +49,7 @@ const workerCode = `
 
 
 function PomodoroTimer() {
+    const { t } = useLanguage();
     const [minutes, setMinutes] = React.useState(25);
     const [seconds, setSeconds] = React.useState(0);
     const [isActive, setIsActive] = React.useState(false);
@@ -235,23 +236,23 @@ function PomodoroTimer() {
              <audio ref={audioRef} src="/alarm.mp3" preload="auto"></audio>
             <CardHeader>
                 <div className="flex justify-center gap-2 mb-4">
-                    <Button variant={mode === 'work' ? 'secondary' : 'ghost'} onClick={() => switchMode('work', true)}>Pomodoro</Button>
-                    <Button variant={mode === 'shortBreak' ? 'secondary' : 'ghost'} onClick={() => switchMode('shortBreak', true)}>Short Break</Button>
-                    <Button variant={mode === 'longBreak' ? 'secondary' : 'ghost'} onClick={() => switchMode('longBreak', true)}>Long Break</Button>
+                    <Button variant={mode === 'work' ? 'secondary' : 'ghost'} onClick={() => switchMode('work', true)}>{t('timePage.pomodoro.pomodoro')}</Button>
+                    <Button variant={mode === 'shortBreak' ? 'secondary' : 'ghost'} onClick={() => switchMode('shortBreak', true)}>{t('timePage.pomodoro.shortBreak')}</Button>
+                    <Button variant={mode === 'longBreak' ? 'secondary' : 'ghost'} onClick={() => switchMode('longBreak', true)}>{t('timePage.pomodoro.longBreak')}</Button>
                 </div>
                 <div className="text-7xl font-bold tracking-tighter">
                     {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
                 </div>
-                 <p className="text-muted-foreground">Cycles completed: {pomodoros}</p>
+                 <p className="text-muted-foreground">{t('timePage.pomodoro.cyclesCompleted', { count: pomodoros })}</p>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
                  <div className="flex items-center gap-4">
                     <Button onClick={toggle} className="w-24 h-12 text-lg">
                         {isActive ? <Pause/> : <Play/>}
-                        {isActive ? 'Pause' : 'Start'}
+                        {isActive ? t('timePage.pomodoro.pause') : t('timePage.pomodoro.start')}
                     </Button>
                     <Button onClick={reset} variant="outline" className="w-24 h-12 text-lg">
-                        <RotateCcw/> Reset
+                        <RotateCcw/> {t('timePage.pomodoro.reset')}
                     </Button>
                     <PomodoroSettingsDialog
                         isOpen={isSettingsOpen}
@@ -266,6 +267,7 @@ function PomodoroTimer() {
 }
 
 function PomodoroSettingsDialog({ isOpen, setIsOpen, currentSettings, onSave }: any) {
+    const { t } = useLanguage();
     const [localSettings, setLocalSettings] = React.useState(currentSettings);
 
     const handleChange = (key: keyof typeof localSettings, value: string) => {
@@ -295,28 +297,28 @@ function PomodoroSettingsDialog({ isOpen, setIsOpen, currentSettings, onSave }: 
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Pomodoro Settings</DialogTitle>
+                    <DialogTitle>{t('timePage.pomodoro.settings.title')}</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="pomodoroLength" className="text-right">Work</Label>
+                        <Label htmlFor="pomodoroLength" className="text-right">{t('timePage.pomodoro.settings.work')}</Label>
                         <Input id="pomodoroLength" type="number" value={localSettings.pomodoroLength} onChange={e => handleChange('pomodoroLength', e.target.value)} className="col-span-3" />
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="shortBreakLength" className="text-right">Short Break</Label>
+                        <Label htmlFor="shortBreakLength" className="text-right">{t('timePage.pomodoro.settings.shortBreak')}</Label>
                         <Input id="shortBreakLength" type="number" value={localSettings.shortBreakLength} onChange={e => handleChange('shortBreakLength', e.target.value)} className="col-span-3" />
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="longBreakLength" className="text-right">Long Break</Label>
+                        <Label htmlFor="longBreakLength" className="text-right">{t('timePage.pomodoro.settings.longBreak')}</Label>
                         <Input id="longBreakLength" type="number" value={localSettings.longBreakLength} onChange={e => handleChange('longBreakLength', e.target.value)} className="col-span-3" />
                     </div>
                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="pomodorosUntilLongBreak" className="text-right">Cycles</Label>
+                        <Label htmlFor="pomodorosUntilLongBreak" className="text-right">{t('timePage.pomodoro.settings.cycles')}</Label>
                         <Input id="pomodorosUntilLongBreak" type="number" value={localSettings.pomodorosUntilLongBreak} onChange={e => handleChange('pomodorosUntilLongBreak', e.target.value)} className="col-span-3" />
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleSave}>Save</Button>
+                    <Button onClick={handleSave}>{t('timePage.pomodoro.settings.save')}</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -325,6 +327,7 @@ function PomodoroSettingsDialog({ isOpen, setIsOpen, currentSettings, onSave }: 
 
 
 function Stopwatch() {
+    const { t } = useLanguage();
     const [time, setTime] = React.useState(0);
     const [isRunning, setIsRunning] = React.useState(false);
     const [laps, setLaps] = React.useState<number[]>([]);
@@ -437,13 +440,13 @@ function Stopwatch() {
                  <div className="flex items-center gap-4">
                     <Button onClick={startStop} className="w-24 h-12 text-lg">
                         {isRunning ? <Pause/> : <Play/>}
-                        {isRunning ? 'Pause' : 'Start'}
+                        {isRunning ? t('timePage.pomodoro.pause') : t('timePage.pomodoro.start')}
                     </Button>
                     <Button onClick={reset} variant="outline" className="w-24 h-12 text-lg">
-                        <RotateCcw/> Reset
+                        <RotateCcw/> {t('timePage.pomodoro.reset')}
                     </Button>
                      <Button onClick={lap} variant="outline" className="w-24 h-12 text-lg" disabled={!isRunning}>
-                        <Flag/> Lap
+                        <Flag/> {t('timePage.stopwatch.lap')}
                     </Button>
                 </div>
                 {laps.length > 0 && (
@@ -452,7 +455,7 @@ function Stopwatch() {
                             <div className="flex flex-col gap-2 p-2">
                                 {laps.map((lapTime, index) => (
                                     <div key={index} className="flex justify-between items-center bg-secondary p-2 rounded-md">
-                                        <span className="text-muted-foreground">Lap {index + 1}</span>
+                                        <span className="text-muted-foreground">{t('timePage.stopwatch.lap')} {index + 1}</span>
                                         <span className="font-mono">{formatTime(lapTime - (laps[index - 1] || 0))}</span>
                                         <span className="font-mono text-foreground">{formatTime(lapTime)}</span>
                                     </div>
@@ -460,7 +463,7 @@ function Stopwatch() {
                             </div>
                         </ScrollArea>
                         <Button onClick={clearLaps} variant="ghost" size="sm" className="text-muted-foreground mt-2">
-                            <Trash2 className="mr-2 h-4 w-4"/> Clear Laps
+                            <Trash2 className="mr-2 h-4 w-4"/> {t('timePage.stopwatch.clearLaps')}
                         </Button>
                     </div>
                 )}
@@ -470,6 +473,7 @@ function Stopwatch() {
 }
 
 function DateDifference() {
+    const { t } = useLanguage();
     const [startDate, setStartDate] = React.useState<Date | undefined>(new Date());
     const [endDate, setEndDate] = React.useState<Date | undefined>(new Date());
     const [duration, setDuration] = React.useState<Duration>({});
@@ -488,17 +492,17 @@ function DateDifference() {
     return (
         <Card className="w-full">
              <CardHeader>
-                <CardTitle className="text-center">Time Between Dates</CardTitle>
+                <CardTitle className="text-center">{t('timePage.dateCalc.differenceTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-full flex flex-col gap-1.5">
-                        <Label>Start Date</Label>
+                        <Label>{t('timePage.dateCalc.startDate')}</Label>
                          <Popover>
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start text-left font-normal">
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                                    {startDate ? format(startDate, "PPP") : <span>{t('timePage.dateCalc.pickDate')}</span>}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
@@ -508,12 +512,12 @@ function DateDifference() {
                     </div>
                     <ArrowDown className="text-muted-foreground" />
                     <div className="w-full flex flex-col gap-1.5">
-                        <Label>End Date</Label>
+                        <Label>{t('timePage.dateCalc.endDate')}</Label>
                          <Popover>
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start text-left font-normal">
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
+                                    {endDate ? format(endDate, "PPP") : <span>{t('timePage.dateCalc.pickDate')}</span>}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
@@ -524,15 +528,15 @@ function DateDifference() {
                 </div>
 
                 <div className="bg-secondary p-4 rounded-xl mt-4">
-                    <h3 className="font-semibold mb-3 text-center">Result</h3>
+                    <h3 className="font-semibold mb-3 text-center">{t('timePage.dateCalc.result')}</h3>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                        <StatCard value={duration.years} label="Years" />
-                        <StatCard value={duration.months} label="Months" />
-                        <StatCard value={duration.weeks} label="Weeks" />
-                        <StatCard value={duration.days} label="Days" />
+                        <StatCard value={duration.years} label={t('timePage.dateCalc.years')} />
+                        <StatCard value={duration.months} label={t('timePage.dateCalc.months')} />
+                        <StatCard value={duration.weeks} label={t('timePage.dateCalc.weeks')} />
+                        <StatCard value={duration.days} label={t('timePage.dateCalc.days')} />
                     </div>
                      <div className="text-center text-sm text-muted-foreground mt-4">
-                        Total Days: {startDate && endDate ? differenceInDays(endDate, startDate) : 0}
+                        {t('timePage.dateCalc.totalDays', { count: startDate && endDate ? differenceInDays(endDate, startDate) : 0 })}
                     </div>
                 </div>
             </CardContent>
@@ -541,6 +545,7 @@ function DateDifference() {
 }
 
 function AddSubtractTime() {
+    const { t } = useLanguage();
     const [date, setDate] = React.useState<Date | undefined>(new Date());
     const [amount, setAmount] = React.useState<number>(1);
     const [unit, setUnit] = React.useState<'days' | 'weeks' | 'months' | 'years'>('days');
@@ -559,16 +564,16 @@ function AddSubtractTime() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="text-center">Add / Subtract Time</CardTitle>
+                <CardTitle className="text-center">{t('timePage.dateCalc.addSubTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
-                    <Label>Date</Label>
+                    <Label>{t('timePage.dateCalc.date')}</Label>
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button variant="outline" className="w-full justify-start text-left font-normal">
                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                {date ? format(date, "PPP") : <span>Pick a date</span>}
+                                {date ? format(date, "PPP") : <span>{t('timePage.dateCalc.pickDate')}</span>}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
@@ -577,42 +582,42 @@ function AddSubtractTime() {
                     </Popover>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                    <Label>Operation</Label>
+                    <Label>{t('timePage.dateCalc.operation')}</Label>
                     <RadioGroup defaultValue="add" onValueChange={(v) => setOperation(v as any)} className="flex gap-4">
                          <div className="flex items-center space-x-2">
                             <RadioGroupItem value="add" id="add" />
-                            <Label htmlFor="add">Add</Label>
+                            <Label htmlFor="add">{t('timePage.dateCalc.add')}</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="subtract" id="subtract" />
-                            <Label htmlFor="subtract">Subtract</Label>
+                            <Label htmlFor="subtract">{t('timePage.dateCalc.subtract')}</Label>
                         </div>
                     </RadioGroup>
                 </div>
                 <div className="flex gap-2">
                      <div className="flex-grow flex-col gap-1.5">
-                        <Label htmlFor="amount">Amount</Label>
+                        <Label htmlFor="amount">{t('timePage.dateCalc.amount')}</Label>
                         <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
                     </div>
                      <div className="flex-grow-[2] flex-col gap-1.5">
-                        <Label>Unit</Label>
+                        <Label>{t('timePage.dateCalc.unit')}</Label>
                         <Select value={unit} onValueChange={(v) => setUnit(v as any)}>
                             <SelectTrigger>
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="days">Days</SelectItem>
-                                <SelectItem value="weeks">Weeks</SelectItem>
-                                <SelectItem value="months">Months</SelectItem>
-                                <SelectItem value="years">Years</SelectItem>
+                                <SelectItem value="days">{t('timePage.dateCalc.days')}</SelectItem>
+                                <SelectItem value="weeks">{t('timePage.dateCalc.weeks')}</SelectItem>
+                                <SelectItem value="months">{t('timePage.dateCalc.months')}</SelectItem>
+                                <SelectItem value="years">{t('timePage.dateCalc.years')}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                 </div>
-                <Button onClick={calculate}>Calculate</Button>
+                <Button onClick={calculate}>{t('timePage.dateCalc.calculate')}</Button>
                  {resultDate && (
                     <div className="bg-secondary p-4 rounded-xl mt-4 text-center">
-                        <h3 className="font-semibold mb-2">Resulting Date</h3>
+                        <h3 className="font-semibold mb-2">{t('timePage.dateCalc.resultingDate')}</h3>
                         <p className="text-2xl font-bold">{format(resultDate, "PPP")}</p>
                     </div>
                  )}
@@ -622,6 +627,7 @@ function AddSubtractTime() {
 }
 
 function AgeCalculator() {
+    const { t } = useLanguage();
     const [birthDate, setBirthDate] = React.useState<Date | undefined>();
     const [age, setAge] = React.useState<Duration | null>(null);
 
@@ -634,13 +640,13 @@ function AgeCalculator() {
 
     return (
         <Card>
-            <CardHeader><CardTitle className="text-center">Age Calculator</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-center">{t('timePage.dateCalc.ageTitle')}</CardTitle></CardHeader>
             <CardContent className="flex flex-col gap-4 items-center">
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-start text-left font-normal">
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {birthDate ? format(birthDate, "PPP") : <span>Pick your birthdate</span>}
+                            {birthDate ? format(birthDate, "PPP") : <span>{t('timePage.dateCalc.pickBirthdate')}</span>}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -649,11 +655,11 @@ function AgeCalculator() {
                 </Popover>
                  {age && (
                     <div className="bg-secondary p-4 rounded-xl mt-4 w-full">
-                        <h3 className="font-semibold mb-3 text-center">Your Age Is</h3>
+                        <h3 className="font-semibold mb-3 text-center">{t('timePage.dateCalc.yourAge')}</h3>
                         <div className="grid grid-cols-3 gap-4 text-center">
-                            <StatCard value={age.years} label="Years" />
-                            <StatCard value={age.months} label="Months" />
-                            <StatCard value={age.days} label="Days" />
+                            <StatCard value={age.years} label={t('timePage.dateCalc.years')} />
+                            <StatCard value={age.months} label={t('timePage.dateCalc.months')} />
+                            <StatCard value={age.days} label={t('timePage.dateCalc.days')} />
                         </div>
                     </div>
                 )}
@@ -663,6 +669,7 @@ function AgeCalculator() {
 }
 
 function WorkingDaysCalculator() {
+    const { t } = useLanguage();
     const [startDate, setStartDate] = React.useState<Date | undefined>(new Date());
     const [endDate, setEndDate] = React.useState<Date | undefined>(addDays(new Date(), 10));
     const [holidays, setHolidays] = React.useState<string>("");
@@ -679,29 +686,29 @@ function WorkingDaysCalculator() {
     
     return (
         <Card>
-            <CardHeader><CardTitle className="text-center">Working Days Calculator</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-center">{t('timePage.dateCalc.workDaysTitle')}</CardTitle></CardHeader>
             <CardContent className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
-                    <Label>Start Date</Label>
+                    <Label>{t('timePage.dateCalc.startDate')}</Label>
                     <Popover>
-                        <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{startDate ? format(startDate, "PPP") : <span>Pick date</span>}</Button></PopoverTrigger>
+                        <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{startDate ? format(startDate, "PPP") : <span>{t('timePage.dateCalc.pickDate')}</span>}</Button></PopoverTrigger>
                         <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={setStartDate} /></PopoverContent>
                     </Popover>
                 </div>
                  <div className="flex flex-col gap-1.5">
-                    <Label>End Date</Label>
+                    <Label>{t('timePage.dateCalc.endDate')}</Label>
                     <Popover>
-                        <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{endDate ? format(endDate, "PPP") : <span>Pick date</span>}</Button></PopoverTrigger>
+                        <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{endDate ? format(endDate, "PPP") : <span>{t('timePage.dateCalc.pickDate')}</span>}</Button></PopoverTrigger>
                         <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={setEndDate} /></PopoverContent>
                     </Popover>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                    <Label>Holidays (optional)</Label>
-                    <Textarea placeholder="Enter holidays, one per line in YYYY-MM-DD format" value={holidays} onChange={(e) => setHolidays(e.target.value)} />
+                    <Label>{t('timePage.dateCalc.holidays')}</Label>
+                    <Textarea placeholder={t('timePage.dateCalc.holidaysPlaceholder')} value={holidays} onChange={(e) => setHolidays(e.target.value)} />
                 </div>
-                <Button onClick={calculate}>Calculate Working Days</Button>
+                <Button onClick={calculate}>{t('timePage.dateCalc.calculateWorkDays')}</Button>
                 <div className="bg-secondary p-4 rounded-xl mt-4 text-center">
-                    <h3 className="font-semibold mb-2">Total Working Days</h3>
+                    <h3 className="font-semibold mb-2">{t('timePage.dateCalc.totalWorkDays')}</h3>
                     <p className="text-4xl font-bold">{workingDays}</p>
                 </div>
             </CardContent>
@@ -710,6 +717,7 @@ function WorkingDaysCalculator() {
 }
 
 function Countdown() {
+    const { t } = useLanguage();
     const [targetDate, setTargetDate] = React.useState<Date | undefined>();
     const [timeLeft, setTimeLeft] = React.useState<Duration | null>(null);
 
@@ -731,13 +739,13 @@ function Countdown() {
 
     return (
         <Card>
-            <CardHeader><CardTitle className="text-center">Countdown Timer</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-center">{t('timePage.dateCalc.countdownTitle')}</CardTitle></CardHeader>
             <CardContent className="flex flex-col gap-4 items-center">
                  <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-start text-left font-normal">
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {targetDate ? format(targetDate, "PPP") : <span>Pick a target date</span>}
+                            {targetDate ? format(targetDate, "PPP") : <span>{t('timePage.dateCalc.pickTargetDate')}</span>}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -746,16 +754,16 @@ function Countdown() {
                 </Popover>
                 {timeLeft ? (
                      <div className="bg-secondary p-4 rounded-xl mt-4 w-full">
-                        <h3 className="font-semibold mb-3 text-center">Time Remaining</h3>
+                        <h3 className="font-semibold mb-3 text-center">{t('timePage.dateCalc.timeRemaining')}</h3>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                            <StatCard value={timeLeft.days} label="Days" />
-                            <StatCard value={timeLeft.hours} label="Hours" />
-                            <StatCard value={timeLeft.minutes} label="Minutes" />
-                            <StatCard value={timeLeft.seconds} label="Seconds" />
+                            <StatCard value={timeLeft.days} label={t('timePage.dateCalc.days')} />
+                            <StatCard value={timeLeft.hours} label={t('timePage.dateCalc.hours')} />
+                            <StatCard value={timeLeft.minutes} label={t('timePage.dateCalc.minutes')} />
+                            <StatCard value={timeLeft.seconds} label={t('timePage.dateCalc.seconds')} />
                         </div>
                     </div>
                 ) : (
-                    <p className="text-muted-foreground mt-4">Please select a future date to start the countdown.</p>
+                    <p className="text-muted-foreground mt-4">{t('timePage.dateCalc.countdownMessage')}</p>
                 )}
             </CardContent>
         </Card>
@@ -772,17 +780,18 @@ function StatCard({ value, label }: { value: number | undefined, label: string }
 }
 
 function DateCalculator() {
+    const { t } = useLanguage();
     const [activeTab, setActiveTab] = React.useState("difference");
     
     return (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <ScrollArea className="w-full whitespace-nowrap rounded-lg">
                 <TabsList className="inline-flex">
-                    <TabsTrigger value="difference">Difference</TabsTrigger>
-                    <TabsTrigger value="add-subtract">Add/Sub</TabsTrigger>
-                    <TabsTrigger value="age">Age</TabsTrigger>
-                    <TabsTrigger value="work-days">Work Days</TabsTrigger>
-                    <TabsTrigger value="countdown">Countdown</TabsTrigger>
+                    <TabsTrigger value="difference">{t('timePage.dateCalc.tabs.difference')}</TabsTrigger>
+                    <TabsTrigger value="add-subtract">{t('timePage.dateCalc.tabs.addSub')}</TabsTrigger>
+                    <TabsTrigger value="age">{t('timePage.dateCalc.tabs.age')}</TabsTrigger>
+                    <TabsTrigger value="work-days">{t('timePage.dateCalc.tabs.workDays')}</TabsTrigger>
+                    <TabsTrigger value="countdown">{t('timePage.dateCalc.tabs.countdown')}</TabsTrigger>
                 </TabsList>
                 <ScrollBar orientation="horizontal" />
             </ScrollArea>
@@ -808,15 +817,15 @@ export function TimeUtilities() {
                   <Home />
               </Link>
             </Button>
-            <h1 className="text-xl font-bold">Time Utilities</h1>
+            <h1 className="text-xl font-bold">{t('timePage.title')}</h1>
             <div className="w-10"></div>
         </header>
 
          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="timer">Timer</TabsTrigger>
-                <TabsTrigger value="stopwatch">Stopwatch</TabsTrigger>
-                <TabsTrigger value="date-diff">Date Calc</TabsTrigger>
+                <TabsTrigger value="timer">{t('timePage.tabs.timer')}</TabsTrigger>
+                <TabsTrigger value="stopwatch">{t('timePage.tabs.stopwatch')}</TabsTrigger>
+                <TabsTrigger value="date-diff">{t('timePage.tabs.dateCalc')}</TabsTrigger>
             </TabsList>
             <TabsContent value="timer" className="mt-4">
                 <PomodoroTimer />

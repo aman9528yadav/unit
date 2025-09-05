@@ -23,8 +23,14 @@
             "notes": "नोट्स",
             "history": "इतिहास",
             "time": "समय उपकरण",
-            "settings": "सेटिंग्स"
+            "settings": "सेटिंग्स",
+            "dateCalc": "दिनांक गणना",
+            "favorites": "पसंदीदा",
+            "timer": "टाइमर",
+            "stopwatch": "स्टॉपवॉच"
         },
+        "showMore": "और दिखाओ",
+        "showLess": "कम दिखाओ",
         "calculationStats": "गणना आँकड़े",
         "last7Days": "पिछले 7 दिन",
         "whatsNew": "नया क्या है",
@@ -74,20 +80,25 @@
         "region": "क्षेत्र",
         "category": "श्रेणी",
         "from": "से",
-        "enterValue": "मान दर्ज करें",
-        "resultPlaceholder": "परिणाम यहाँ दिखाई देगा!",
+        "to": "तक",
+        "value": "मान",
+        "converted": "परिवर्तित",
+        "enterValue": "बदलने के लिए एक संख्या दर्ज करें",
+        "resultPlaceholder": "...",
+        "tip": "सुझाव: इकाइयों को उलटने के लिए स्वैप बटन का उपयोग करें",
+        "viewHistory": "इतिहास देखें",
         "convertButton": "बदलें",
         "recentConversions": "हाल के रूपांतरण",
+        "clear": "हटा दें",
         "image": {
             "conversion": "रूपांतरण",
             "generatedBy": "द्वारा बनाया गया"
         },
         "export": {
-            "asImage": "छवि के रूप में निर्यात करें",
-            "asPDF": "पीडीएफ के रूप में निर्यात करें",
-            "asTXT": "TXT के रूप में निर्यात करें",
-            "share": "इसे साझा करें",
-            "notAvailable": "निर्यात अभी उपलब्ध नहीं है"
+            "title": "रूपांतरण साझा करें या निर्यात करें",
+            "shareSystem": "सिस्टम डायलॉग के माध्यम से साझा करें",
+            "asImage": ".png के रूप में निर्यात करें",
+            "asTXT": ".txt के रूप में निर्यात करें"
         },
         "share": {
             "title": "इकाई रूपांतरण"
@@ -101,44 +112,109 @@
             "favRemoved": "पसंदीदा से हटा दिया गया।",
             "favAdded": "पसंदीदा में जोड़ा गया!",
             "cannotRestore": "पुनर्स्थापित नहीं किया जा सकता",
-            "copied": "क्लिपबोर्ड पर कॉपी किया गया!",
+            "copied": "परिणाम कॉपी किया गया!",
+            "copiedDescription": "\"{{outputValue}}\" आपके क्लिपबोर्ड पर कॉपी किया गया।",
             "nothingToShare": "साझा करने के लिए कुछ भी नहीं है",
             "performConversionFirst": "कृपया पहले एक रूपांतरण करें।",
             "shareFailed": "साझा करना विफल रहा",
             "couldNotShare": "रूपांतरण साझा नहीं किया जा सका।",
             "notSupported": "समर्थित नहीं है",
             "webShareApi": "आपके ब्राउज़र में वेब शेयर एपीआई समर्थित नहीं है।",
-            "nothingToExport": "निर्यात करने के लिए कुछ भी नहीं है",
+            "nothingToExport": "निर्यात करने के लिए कुछ بھی نہیں ਹੈ",
             "exportedAsTxt": "TXT के रूप में निर्यात किया गया!",
             "exportedAsImage": "छवि के रूप में निर्यात किया गया!",
             "exportFailed": "निर्यात विफल रहा",
-            "couldNotExportImage": "रूपांतरण को छवि के रूप में निर्यात नहीं किया जा सका।"
+            "couldNotExportImage": "रूपांतरण को छवि के रूप में निर्यात नहीं किया जा सका।",
+            "premiumFeatureLocked": "प्रीमियम सुविधा लॉक है",
+            "premiumShare": "रूपांतरण साझा करने और निर्यात करने के लिए प्रीमियम अनलॉक करें।",
+            "premiumCategory": "इस श्रेणी का उपयोग करने के लिए प्रीमियम अनलॉक करें।"
         }
     },
     "settings": {
         "title": "सेटिंग्स",
         "general": {
-            "title": "सामान्य सेटिंग",
-            "editProfile": "प्रोफ़ाइल जानकारी संपादित करें",
-            "notifications": "सूचनाएं",
-            "language": "भाषा",
-            "theme": "थीम",
-            "lightMode": "लाइट मोड"
+            "title": "सामान्य",
+            "editProfile": {
+                "label": "प्रोफ़ाइल संपादित करें",
+                "description": "अपनी व्यक्तिगत जानकारी प्रबंधित करें"
+            },
+            "notifications": {
+                "label": "सूचनाएं",
+                "description_on": "सक्षम",
+                "description_off": "अक्षम"
+            },
+            "language": {
+                "label": "भाषा",
+                "description": "अपनी पसंदीदा भाषा सेट करें"
+            },
+            "developer": {
+                "label": "डेवलपर",
+                "description": "डेवलपर टूल तक पहुंचें"
+            }
+        },
+        "appearance": {
+            "title": "सूरत",
+            "themeMode": {
+                "label": "थीम मोड",
+                "description": "लाइट, डार्क, या कस्टम थीम के बीच स्विच करें"
+            },
+            "customizeTheme": {
+                "label": "थीम अनुकूलित करें",
+                "description": "अपनी खुद की रंग योजना बनाएं"
+            },
+            "themes": {
+                "light": "लाइट",
+                "dark": "डार्क",
+                "custom": "कस्टम"
+            },
+            "premiumTooltip": "कस्टम थीम का उपयोग करने के लिए प्रीमियम अनलॉक करें।"
         },
         "unitConverter": {
             "title": "यूनिट कनवर्टर",
-            "changeIcon": "आइकन बदलें",
-            "autoConvert": "ऑटो कनवर्टर",
-            "customUnit": "कस्टम यूनिट",
-            "off": "बंद",
-            "saveHistory": "इतिहास सहेजें"
+            "description": "डिफ़ॉल्ट इकाइयों और रूपांतरण व्यवहार को कॉन्फ़िगर करें।",
+            "defaultRegion": "डिफ़ॉल्ट क्षेत्र",
+            "autoConvert": {
+                "label": "ऑटो कन्वर्ट",
+                "description": "मान परिवर्तन पर स्वचालित रूप से कनवर्ट करें"
+            },
+            "customUnit": {
+                "label": "कस्टम इकाइयाँ",
+                "description": "अपनी खुद की इकाइयाँ जोड़ें या प्रबंधित करें"
+            },
+            "saveHistory": {
+                "label": "रूपांतरण इतिहास सहेजें",
+                "description": "अपने रूपांतरणों का रिकॉर्ड रखें"
+            }
         },
         "calculator": {
             "title": "कैलकुलेटर",
-            "mode": "मोड",
-            "basic": "बुनियादी",
-            "scientific": "वैज्ञानिक",
-            "saveHistory": "इतिहास सहेजें"
+            "mode": {
+                "label": "मोड",
+                "description": "कैलकुलेटर प्रकारों के बीच स्विच करें"
+            },
+            "modes": {
+                "basic": "बुनियादी",
+                "scientific": "वैज्ञानिक"
+            },
+            "saveHistory": {
+                "label": "गणना इतिहास सहेजें",
+                "description": "अपनी गणनाओं का रिकॉर्ड रखें"
+            },
+            "keypressSound": {
+                "label": "कीप्रेस ध्वनि",
+                "description": "बटन दबाने पर ध्वनि चलाएं"
+            },
+            "premiumTooltip": "वैज्ञानिक कैलकुलेटर का उपयोग करने के लिए प्रीमियम अनलॉक करें।"
+        },
+        "data": {
+            "clearData": "डेटा साफ़ करें",
+            "saveChanges": "परिवर्तन सहेजें",
+            "dialog": {
+                "title": "क्या आप पूरी तरह निश्चित हैं?",
+                "description": "यह क्रिया पूर्ववत नहीं की जा सकती। यह आपकी सेटिंग्स, इतिहास और नोट्स सहित सभी ऐप डेटा को स्थायी रूप से हटा देगा, और आपको लॉग आउट कर देगा।",
+                "cancel": "रद्द करें",
+                "confirm": "हाँ, सब कुछ साफ़ करें"
+            }
         }
     },
     "categories": {
@@ -230,5 +306,74 @@
         "litersper100km": "लीटर प्रति 100 किमी",
         "milespergallon": "मील प्रति गैलन",
         "kilometersperliter": "किलोमीटर प्रति लीटर"
+    },
+    "timePage": {
+        "title": "समय उपयोगिताएँ",
+        "tabs": {
+            "timer": "टाइमर",
+            "stopwatch": "स्टॉपवॉच",
+            "dateCalc": "दिनांक गणना"
+        },
+        "pomodoro": {
+            "pomodoro": "पोमोडोरो",
+            "shortBreak": "छोटा ब्रेक",
+            "longBreak": "लंबा ब्रेक",
+            "cyclesCompleted": "चक्र पूरे हुए: {{count}}",
+            "start": "शुरू करें",
+            "pause": "रोकें",
+            "reset": "रीसेट",
+            "settings": {
+                "title": "पोमोडोरो सेटिंग्स",
+                "work": "काम",
+                "shortBreak": "छोटा ब्रेक",
+                "longBreak": "लंबा ब्रेक",
+                "cycles": "चक्र",
+                "save": "सहेजें"
+            }
+        },
+        "stopwatch": {
+            "lap": "लैप",
+            "clearLaps": "लैप्स साफ़ करें"
+        },
+        "dateCalc": {
+            "tabs": {
+                "difference": "अंतर",
+                "addSub": "जोड़ें/घटाएं",
+                "age": "आयु",
+                "workDays": "कार्य दिवस",
+                "countdown": "उल्टी गिनती"
+            },
+            "differenceTitle": "तिथियों के बीच का समय",
+            "startDate": "आरंभ तिथि",
+            "endDate": "अंतिम तिथि",
+            "pickDate": "एक तारीख चुनें",
+            "result": "परिणाम",
+            "years": "वर्ष",
+            "months": "महीने",
+            "weeks": "सप्ताह",
+            "days": "दिन",
+            "totalDays": "कुल दिन: {{count}}",
+            "addSubTitle": "समय जोड़ें / घटाएं",
+            "date": "दिनांक",
+            "operation": "ऑपरेशन",
+            "add": "जोड़ें",
+            "subtract": "घटाएं",
+            "amount": "मात्रा",
+            "unit": "इकाई",
+            "calculate": "गणना करें",
+            "resultingDate": "परिणामी दिनांक",
+            "ageTitle": "आयु कैलकुलेटर",
+            "pickBirthdate": "अपनी जन्मतिथि चुनें",
+            "yourAge": "आपकी आयु है",
+            "workDaysTitle": "कार्य दिवस कैलकुलेटर",
+            "holidays": "छुट्टियाँ (वैकल्पिक)",
+            "holidaysPlaceholder": "YYYY-MM-DD प्रारूप में प्रति पंक्ति एक छुट्टी दर्ज करें",
+            "calculateWorkDays": "कार्य दिवसों की गणना करें",
+            "totalWorkDays": "कुल कार्य दिवस",
+            "countdownTitle": "उल्टी गिनती टाइमर",
+            "pickTargetDate": "एक लक्ष्य तिथि चुनें",
+            "timeRemaining": "शेष समय",
+            "countdownMessage": "उल्टी गिनती शुरू करने کے लिए कृपया भविष्य کی تاریخ منتخب کریں۔"
+        }
     }
 }

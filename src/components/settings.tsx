@@ -78,7 +78,7 @@ export function Settings() {
 
 
   // Settings states
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme, customTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   
@@ -195,7 +195,7 @@ export function Settings() {
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
                 <ArrowLeft />
             </Button>
-          <h1 className="text-xl font-bold">Settings</h1>
+          <h1 className="text-xl font-bold">{t('settings.title')}</h1>
         </header>
 
         <div className="flex flex-col gap-6">
@@ -203,33 +203,33 @@ export function Settings() {
                 <SettingRow
                     isLink
                     href="/profile/edit"
-                    label="Edit Profile"
-                    description="Manage your personal information"
+                    label={t('settings.general.editProfile.label')}
+                    description={t('settings.general.editProfile.description')}
                     control={<User />}
                 />
             </Section>
             <TooltipProvider>
-                <Section title="Appearance">
+                <Section title={t('settings.appearance.title')}>
                      <SettingRow
-                        label="Theme Mode"
-                        description="Switch between light, dark, or custom themes"
+                        label={t('settings.appearance.themeMode.label')}
+                        description={t('settings.appearance.themeMode.description')}
                         control={
                             <Select value={selectedTheme} onValueChange={(v) => setSelectedTheme(v as any)}>
                                 <SelectTrigger className="w-32"><SelectValue/></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="light">Light</SelectItem>
-                                    <SelectItem value="dark">Dark</SelectItem>
+                                    <SelectItem value="light">{t('settings.appearance.themes.light')}</SelectItem>
+                                    <SelectItem value="dark">{t('settings.appearance.themes.dark')}</SelectItem>
                                     {customTheme && (
                                         <Tooltip delayDuration={100}>
                                             <TooltipTrigger asChild>
                                                 <div>
                                                     <SelectItem value="custom" disabled={isPremiumFeatureLocked}>
                                                         {isPremiumFeatureLocked && <Lock className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2"/>}
-                                                        Custom
+                                                        {t('settings.appearance.themes.custom')}
                                                     </SelectItem>
                                                 </div>
                                             </TooltipTrigger>
-                                            {isPremiumFeatureLocked && <TooltipContent>Unlock Premium to use custom themes.</TooltipContent>}
+                                            {isPremiumFeatureLocked && <TooltipContent><p>{t('settings.appearance.premiumTooltip')}</p></TooltipContent>}
                                         </Tooltip>
                                     )}
                                 </SelectContent>
@@ -239,8 +239,8 @@ export function Settings() {
                      <SettingRow
                         isLink
                         href="/settings/theme"
-                        label="Customize Theme"
-                        description="Create your own color scheme"
+                        label={t('settings.appearance.customizeTheme.label')}
+                        description={t('settings.appearance.customizeTheme.description')}
                         control={
                              <div className="flex items-center gap-2">
                                 {isPremiumFeatureLocked && <Lock className="w-4 h-4 text-amber-500" />}
@@ -251,15 +251,15 @@ export function Settings() {
                 </Section>
             </TooltipProvider>
 
-            <Section title="General">
+            <Section title={t('settings.general.title')}>
                  <SettingRow
-                    label="Notifications"
-                    description={notificationsEnabled ? "Enabled" : "Disabled"}
+                    label={t('settings.general.notifications.label')}
+                    description={notificationsEnabled ? t('settings.general.notifications.description_on') : t('settings.general.notifications.description_off')}
                     control={<Switch checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />}
                 />
                  <SettingRow
-                    label="Language"
-                    description="Set your preferred language"
+                    label={t('settings.general.language.label')}
+                    description={t('settings.general.language.description')}
                     control={
                          <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'hi')}>
                             <SelectTrigger className="w-32"><SelectValue/></SelectTrigger>
@@ -274,16 +274,16 @@ export function Settings() {
                   <SettingRow
                       isLink
                       href="/dev"
-                      label="Developer"
-                      description="Access developer tools"
+                      label={t('settings.general.developer.label')}
+                      description={t('settings.general.developer.description')}
                       control={<Code />}
                   />
                 )}
             </Section>
 
-             <Section title="Unit Converter" description="Configure default units and conversion behavior.">
+             <Section title={t('settings.unitConverter.title')} description={t('settings.unitConverter.description')}>
                  <SettingRow
-                    label="Default Region"
+                    label={t('settings.unitConverter.defaultRegion')}
                     control={
                         <Select value={defaultRegion} onValueChange={(v) => setDefaultRegion(v as Region)}>
                             <SelectTrigger className="w-48">
@@ -298,15 +298,15 @@ export function Settings() {
                     }
                  />
                  <SettingRow
-                    label="Auto Convert"
-                    description="Automatically convert on value change"
+                    label={t('settings.unitConverter.autoConvert.label')}
+                    description={t('settings.unitConverter.autoConvert.description')}
                     control={<Switch checked={autoConvert} onCheckedChange={setAutoConvert} />}
                 />
                  <SettingRow
                     isLink
                     href="/settings/custom-units"
-                    label="Custom Units"
-                    description="Add or manage your own units"
+                    label={t('settings.unitConverter.customUnit.label')}
+                    description={t('settings.unitConverter.customUnit.description')}
                     control={
                         <div className="flex items-center gap-2">
                             {isPremiumFeatureLocked && <Lock className="w-4 h-4 text-amber-500" />}
@@ -315,16 +315,16 @@ export function Settings() {
                     }
                 />
                  <SettingRow
-                    label="Save Conversion History"
-                    description="Keep a record of your conversions"
+                    label={t('settings.unitConverter.saveHistory.label')}
+                    description={t('settings.unitConverter.saveHistory.description')}
                     control={<Switch checked={saveConversionHistory} onCheckedChange={setSaveConversionHistory} />}
                 />
             </Section>
             <TooltipProvider>
-                <Section title="Calculator">
+                <Section title={t('settings.calculator.title')}>
                      <SettingRow
-                        label="Mode"
-                        description="Switch between calculator types"
+                        label={t('settings.calculator.mode.label')}
+                        description={t('settings.calculator.mode.description')}
                         control={
                             <Select value={calculatorMode} onValueChange={(v) => setCalculatorMode(v as CalculatorMode)} disabled={isPremiumFeatureLocked}>
                                 <SelectTrigger className="w-32">
@@ -332,30 +332,30 @@ export function Settings() {
                                     <SelectValue/>
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="basic">Basic</SelectItem>
+                                    <SelectItem value="basic">{t('settings.calculator.modes.basic')}</SelectItem>
                                      <Tooltip delayDuration={100}>
                                         <TooltipTrigger asChild>
                                             <div>
                                                 <SelectItem value="scientific" disabled={isPremiumFeatureLocked}>
                                                     {isPremiumFeatureLocked && <Lock className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2"/>}
-                                                    Scientific
+                                                    {t('settings.calculator.modes.scientific')}
                                                 </SelectItem>
                                             </div>
                                         </TooltipTrigger>
-                                        {isPremiumFeatureLocked && <TooltipContent>Unlock Premium to use the Scientific Calculator.</TooltipContent>}
+                                        {isPremiumFeatureLocked && <TooltipContent><p>{t('settings.calculator.premiumTooltip')}</p></TooltipContent>}
                                     </Tooltip>
                                 </SelectContent>
                             </Select>
                         }
                     />
                       <SettingRow
-                        label="Save Calculation History"
-                        description="Keep a record of your calculations"
+                        label={t('settings.calculator.saveHistory.label')}
+                        description={t('settings.calculator.saveHistory.description')}
                         control={<Switch checked={saveCalcHistory} onCheckedChange={setSaveCalcHistory} />}
                     />
                      <SettingRow
-                        label="Keypress Sound"
-                        description="Play sound on button press"
+                        label={t('settings.calculator.keypressSound.label')}
+                        description={t('settings.calculator.keypressSound.description')}
                         control={<Switch checked={calculatorSound} onCheckedChange={setCalculatorSound} />}
                     />
                 </Section>
@@ -365,31 +365,27 @@ export function Settings() {
         <footer className="flex justify-between items-center gap-4 mt-4">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive"><Trash2 className="mr-2 h-4 w-4"/> Clear Data</Button>
+                <Button variant="destructive"><Trash2 className="mr-2 h-4 w-4"/>{t('settings.data.clearData')}</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogTitle>{t('settings.data.dialog.title')}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete all app data, including your settings, history, and notes, and log you out.
+                    {t('settings.data.dialog.description')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{t('settings.data.dialog.cancel')}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleClearData} className="bg-destructive hover:bg-destructive/90">
-                    Yes, Clear Everything
+                    {t('settings.data.dialog.confirm')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
             <div className="flex gap-2">
-                <Button onClick={handleSaveChanges}>Save Changes</Button>
+                <Button onClick={handleSaveChanges}>{t('settings.data.saveChanges')}</Button>
             </div>
         </footer>
     </div>
   );
 }
-
-    
-
-    

@@ -281,14 +281,14 @@ export function Dashboard() {
       { label: t('dashboard.tools.calculator'), icon: Calculator, href: "/calculator", color: "text-orange-400" },
       { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
       { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
-      { label: "Date Calc", icon: Calendar, href: "/time", color: "text-green-400" },
+      { label: t('dashboard.tools.dateCalc'), icon: Calendar, href: "/time", color: "text-green-400" },
       { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
     ];
     
     const moreTools = [
-        { label: 'Favorites', icon: Star, href: '/history', color: 'text-yellow-500' },
-        { label: 'Timer', icon: Timer, href: '/time', color: 'text-red-500' },
-        { label: 'Stopwatch', icon: Hourglass, href: '/time', color: 'text-indigo-500' },
+        { label: t('dashboard.tools.favorites'), icon: Star, href: '/history', color: 'text-yellow-500' },
+        { label: t('dashboard.tools.timer'), icon: Timer, href: '/time', color: 'text-red-500' },
+        { label: t('dashboard.tools.stopwatch'), icon: Hourglass, href: '/time', color: 'text-indigo-500' },
     ];
 
     const toolsToShow = showMoreTools ? [...quickTools, ...moreTools] : quickTools;
@@ -381,7 +381,7 @@ export function Dashboard() {
                 className="w-full mt-4"
                 onClick={() => setShowMoreTools(!showMoreTools)}
             >
-                {showMoreTools ? 'Show Less' : 'Show More'}
+                {showMoreTools ? t('dashboard.showLess') : t('dashboard.showMore')}
                 <ChevronDown className={cn("ml-2 h-4 w-4 transition-transform", showMoreTools && "rotate-180")} />
             </Button>
           </CardContent>
