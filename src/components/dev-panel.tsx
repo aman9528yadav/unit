@@ -12,7 +12,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
-import { sendGlobalNotification } from '@/services/firestore';
+import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode } from '@/services/firestore';
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -34,6 +34,7 @@ export function DevPanel() {
     const [updateText, setUpdateText] = useState('');
     const [notificationTitle, setNotificationTitle] = useState('');
     const [notificationDescription, setNotificationDescription] = useState('');
+    const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -54,6 +55,12 @@ export function DevPanel() {
             }
         }
     }, []);
+    
+     useEffect(() => {
+        if (!isAuthorized) return;
+        const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenanceMode);
+        return () => unsubscribe();
+    }, [isAuthorized]);
     
     const handlePasswordSubmit = () => {
         if (password === DEFAULT_DEV_PASSWORD) {
@@ -127,6 +134,19 @@ export function DevPanel() {
             toast({ title: "Broadcast Failed", description: "Could not send notification. Check console for errors.", variant: "destructive" });
         }
     };
+    
+     const handleMaintenanceModeToggle = async (enabled: boolean) => {
+        try {
+            await setGlobalMaintenanceMode(enabled);
+            toast({
+                title: `Maintenance Mode ${enabled ? 'Enabled' : 'Disabled'}`,
+                description: enabled ? "App is now in maintenance mode." : "App is now live.",
+            });
+        } catch (error) {
+            console.error("Failed to toggle maintenance mode:", error);
+            toast({ title: "Update Failed", description: "Could not change maintenance mode status.", variant: "destructive" });
+        }
+    };
 
 
     if (!isClient) {
@@ -187,10 +207,11 @@ export function DevPanel() {
             </header>
 
             <Tabs defaultValue="updates" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="updates">Updates</TabsTrigger>
                     <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
                     <TabsTrigger value="data">Data</TabsTrigger>
+                    <TabsTrigger value="general">General</TabsTrigger>
                 </TabsList>
                 <TabsContent value="updates" className="mt-4">
                     <Card>
@@ -280,11 +301,26 @@ export function DevPanel() {
                         </CardContent>
                     </Card>
                 </TabsContent>
+                 <TabsContent value="general" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><ServerCog /> General Controls</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <Label htmlFor="maintenance-mode">Maintenance Mode</Label>
+                                <Switch
+                                    id="maintenance-mode"
+                                    checked={isMaintenanceMode}
+                                    onCheckedChange={handleMaintenanceModeToggle}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
             </Tabs>
             
             <Button onClick={() => router.push('/')} variant="outline" className="mt-4">Back to App</Button>
         </div>
     );
 }
-
-    

@@ -2,7 +2,7 @@
 "use client";
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, Timestamp, doc, setDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, Timestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 import type { AppNotification } from '@/lib/notifications';
 
 
@@ -74,6 +74,44 @@ export function listenToGlobalNotifications(callback: (notifications: Omit<AppNo
         callback(notifications);
     }, (error) => {
         console.error("Error listening to notifications: ", error);
+    });
+
+    return unsubscribe;
+}
+
+/**
+ * Sets the global maintenance mode status in Firestore.
+ * @param isEnabled - Boolean indicating if maintenance mode should be on or off.
+ */
+export async function setGlobalMaintenanceMode(isEnabled: boolean) {
+    try {
+        const maintenanceRef = doc(db, 'settings', 'maintenance');
+        await setDoc(maintenanceRef, { isEnabled: isEnabled });
+    } catch (error) {
+        console.error("Error setting maintenance mode:", error);
+        throw error;
+    }
+}
+
+/**
+ * Sets up a real-time listener for the global maintenance mode status.
+ * @param callback - Function to be called with the maintenance status (boolean) whenever it changes.
+ * @returns The unsubscribe function for the listener.
+ */
+export function listenToGlobalMaintenanceMode(callback: (isEnabled: boolean) => void) {
+    const maintenanceRef = doc(db, 'settings', 'maintenance');
+
+    const unsubscribe = onSnapshot(maintenanceRef, (docSnap) => {
+        if (docSnap.exists()) {
+            callback(docSnap.data().isEnabled || false);
+        } else {
+            // If the document doesn't exist, assume maintenance mode is off.
+            callback(false);
+        }
+    }, (error) => {
+        console.error("Error listening to maintenance mode:", error);
+        // In case of an error, default to not being in maintenance mode
+        callback(false);
     });
 
     return unsubscribe;

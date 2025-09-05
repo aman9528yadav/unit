@@ -5,12 +5,14 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { LanguageProvider } from '@/context/language-context';
 import { ThemeProvider } from '@/context/theme-context';
-import React from 'react';
-import { usePathname } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { listenToGlobalMaintenanceMode } from '@/services/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function AppFooter() {
     const pathname = usePathname();
-    const showFooter = !pathname.startsWith('/dev'); // Simplified logic
+    const showFooter = !pathname.startsWith('/dev') && !pathname.startsWith('/maintenance');
 
     if (!showFooter) {
         return null;
@@ -22,6 +24,51 @@ function AppFooter() {
         </footer>
     );
 }
+
+function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
+    const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean | null>(null);
+    const pathname = usePathname();
+    const router = useRouter();
+
+    useEffect(() => {
+        const unsubscribe = listenToGlobalMaintenanceMode((status) => {
+            setIsMaintenanceMode(status);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        if (isMaintenanceMode === null) return; // Wait until status is fetched
+
+        const allowedPaths = ['/maintenance'];
+        const isAllowed = allowedPaths.includes(pathname) || pathname.startsWith('/dev');
+
+        if (isMaintenanceMode && !isAllowed) {
+            router.replace('/maintenance');
+        } else if (!isMaintenanceMode && pathname === '/maintenance') {
+            router.replace('/');
+        }
+    }, [isMaintenanceMode, pathname, router]);
+
+    if (isMaintenanceMode === null) {
+        return (
+            <div className="flex flex-col min-h-screen items-center justify-center">
+                <Skeleton className="h-32 w-full max-w-md" />
+                <Skeleton className="h-16 w-full max-w-md mt-4" />
+            </div>
+        );
+    }
+    
+    // Render children if not in maintenance or on an allowed path
+    const isAllowed = allowedPaths.includes(pathname) || pathname.startsWith('/dev');
+    if (isMaintenanceMode && !isAllowed) {
+        return null; // Redirecting, so don't render children yet
+    }
+
+    return <>{children}</>;
+}
+
 
 export default function RootLayout({
   children,
@@ -42,12 +89,14 @@ export default function RootLayout({
             <link rel="apple-touch-icon" href="/icon-192x192.png" />
           </head>
           <body className="font-body antialiased">
-            <div className="flex flex-col min-h-screen">
-                <main className="flex-grow">
-                    {children}
-                </main>
-                <AppFooter />
-            </div>
+            <MaintenanceRedirect>
+              <div className="flex flex-col min-h-screen">
+                  <main className="flex-grow">
+                      {children}
+                  </main>
+                  <AppFooter />
+              </div>
+            </MaintenanceRedirect>
             <Toaster />
           </body>
         </html>
