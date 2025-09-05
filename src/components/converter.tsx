@@ -589,6 +589,13 @@ export function Converter() {
     return format(date, 'MMM d');
   }
 
+  const handleCopy = () => {
+    if (outputValue) {
+        navigator.clipboard.writeText(outputValue);
+        toast({ title: "Result Copied!", description: `Copied "${outputValue}" to your clipboard.`});
+    }
+  };
+
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-4">
@@ -607,9 +614,21 @@ export function Converter() {
                     <AvatarFallback><User /></AvatarFallback>
                 </Avatar>
             </Button>
-            <Button onClick={handleShare} variant="outline">
-                <Share2 className="mr-2 h-4 w-4" /> Share
-            </Button>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="outline"><Share2 className="mr-2 h-4 w-4" /> Share & Export</Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Share or Export Conversion</DialogTitle>
+                    </DialogHeader>
+                     <div className="flex flex-col gap-4">
+                        <Button onClick={handleShare}><Share2 className="mr-2 h-4 w-4"/> Share via System Dialog</Button>
+                        <Button onClick={handleExportAsTxt} variant="secondary"><FileText className="mr-2 h-4 w-4"/> Export as .txt</Button>
+                        <Button onClick={handleExportAsImage} variant="secondary"><ImageIcon className="mr-2 h-4 w-4"/> Export as .png</Button>
+                     </div>
+                </DialogContent>
+            </Dialog>
         </div>
       </header>
       
@@ -631,7 +650,18 @@ export function Converter() {
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <CardTitle className="flex items-center gap-2"><Scale/> Quick Convert</CardTitle>
-                     <Badge variant="outline" className="text-amber-600 border-amber-500">Fast & Accurate</Badge>
+                    <div className="flex items-center gap-2">
+                        <Select value={region} onValueChange={handleRegionChange}>
+                            <SelectTrigger className="w-[150px]">
+                                <Globe size={16} className="mr-2"/>
+                                <SelectValue placeholder="Select Region"/>
+                            </SelectTrigger>
+                            <SelectContent>
+                                {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Badge variant="outline" className="text-amber-600 border-amber-500">Fast & Accurate</Badge>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
@@ -710,10 +740,39 @@ export function Converter() {
                             </p>
                         </CardHeader>
                          <CardContent>
-                            <p className="text-xs text-muted-foreground">Auto-calculated result</p>
+                             <div className="flex items-center gap-2">
+                                <Button variant="ghost" size="icon" onClick={handleCopy} disabled={!outputValue}><Copy size={16}/></Button>
+                                <Button variant="ghost" size="icon" onClick={handleToggleFavorite} disabled={!outputValue}>
+                                    <Star size={16} className={cn(isFavorite && "fill-yellow-400 text-yellow-400")}/>
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => setIsGraphVisible(v => !v)} disabled={!outputValue || selectedCategory.name === 'Temperature'}>
+                                    <BarChart2 size={16} />
+                                </Button>
+                             </div>
                         </CardContent>
                     </Card>
                 </div>
+                 {isGraphVisible && chartData.length > 0 && (
+                     <div className="h-48 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={chartData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => value.toLocaleString()} />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--background))',
+                                        borderColor: 'hsl(var(--border))',
+                                        color: 'hsl(var(--foreground))',
+                                        borderRadius: 'var(--radius)',
+                                    }}
+                                    cursor={{ fill: 'hsla(var(--muted), 0.5)' }}
+                                />
+                                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                )}
                 
                 <div className="flex justify-between items-center mt-2">
                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -742,8 +801,8 @@ export function Converter() {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                   {history.slice(0, 6).map((item) => {
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
+                   {history.slice(0, 4).map((item) => {
                        const { conversion, categoryName, timestamp } = parseHistoryString(item);
                        const category = conversionCategories.find(c => c.name === categoryName);
                        const Icon = category?.icon || Power;
@@ -804,6 +863,7 @@ function UnitSelectionDialog({ trigger, selectedCategory, onSelectUnit, conversi
   useEffect(() => {
     if (isOpen) {
       setActiveCategory(selectedCategory);
+      setSearch(''); // Reset search on open
     }
   }, [selectedCategory, isOpen]);
   
@@ -914,5 +974,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
