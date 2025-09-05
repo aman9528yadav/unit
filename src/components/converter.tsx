@@ -61,6 +61,13 @@ interface UserProfile {
     [key:string]: any;
 }
 
+const getUserKey = (key: string, email: string | null) => {
+    if (typeof window === 'undefined') return key;
+    const prefix = email || 'guest';
+    return `${prefix}_${key}`;
+};
+
+
 // Offline parser to replace the AI flow
 const offlineParseConversionQuery = (query: string, allUnits: Unit[]): ParseConversionQueryOutput | null => {
     // Regex to capture value and units, e.g., "10.5 km to m"
@@ -203,16 +210,18 @@ export function Converter() {
 
 
   React.useEffect(() => {
+    const storedProfileData = localStorage.getItem("userProfile");
+    const userEmail = storedProfileData ? JSON.parse(storedProfileData).email : null;
+
     const storedHistory = localStorage.getItem("conversionHistory");
     const storedFavorites = localStorage.getItem("favoriteConversions");
-    const storedProfile = localStorage.getItem("userProfile");
-    const savedAutoConvert = localStorage.getItem('autoConvert');
+    const savedAutoConvert = localStorage.getItem(getUserKey('autoConvert', userEmail));
     const savedCustomUnits = localStorage.getItem('customUnits');
     const savedCustomCategories = localStorage.getItem('customCategories');
 
     if (storedHistory) setHistory(JSON.parse(storedHistory));
     if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
-    if (storedProfile) setProfile(JSON.parse(storedProfile));
+    if (storedProfileData) setProfile(JSON.parse(storedProfileData));
     if (savedAutoConvert !== null) setAutoConvert(JSON.parse(savedAutoConvert));
     if (savedCustomUnits) setCustomUnits(JSON.parse(savedCustomUnits));
     if (savedCustomCategories) setCustomCategories(JSON.parse(savedCustomCategories));
