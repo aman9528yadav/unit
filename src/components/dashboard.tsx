@@ -27,6 +27,8 @@ import {
   Flame,
   Sparkles,
   LogIn,
+  Gift,
+  Zap,
 } from "lucide-react";
 import {
   Area,
@@ -117,6 +119,25 @@ const recommendations = [
   },
 ];
 
+const recentUpdates = [
+  {
+    icon: Zap,
+    title: "Time Utilities",
+    description: "Pomodoro timer, stopwatch, and date calculators.",
+    href: "/updates",
+    color: "text-green-400",
+    bgColor: "bg-green-500/10"
+  },
+  {
+    icon: Gift,
+    title: "Custom Units",
+    description: "Create your own units and conversion categories.",
+    href: "/updates",
+    color: "text-blue-400",
+    bgColor: "bg-blue-500/10"
+  },
+];
+
 const Stat = ({ icon: Icon, label, value, trend }: any) => (
   <Card className="bg-card border-border shadow-sm">
     <CardContent className="p-4">
@@ -147,6 +168,24 @@ const ToolButton = ({ icon: Icon, label, href, color }: any) => (
         </div>
         <p className="font-semibold text-foreground text-sm">{label}</p>
     </Link>
+);
+
+const UpdateCard = ({ update }: any) => (
+  <Link href={update.href} className="flex-1">
+    <Card className="bg-card border-border shadow-sm hover:bg-secondary transition-colors h-full">
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+            <div className={cn("size-10 grid place-items-center rounded-lg", update.bgColor, update.color)}>
+              <update.icon className="size-5" />
+            </div>
+            <div className="flex-1">
+                <p className="font-semibold text-foreground">{update.title}</p>
+                <p className="text-xs text-muted-foreground">{update.description}</p>
+            </div>
+        </div>
+      </CardContent>
+    </Card>
+  </Link>
 );
 
 
@@ -300,6 +339,22 @@ export function Dashboard() {
         </section>
 
         <section className="mt-8">
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-foreground">What's New</h2>
+                <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
+                    <Link href="/updates">
+                        See All <ArrowRight className="size-4" />
+                    </Link>
+                </Button>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+                {recentUpdates.map((update) => (
+                    <UpdateCard key={update.title} update={update} />
+                ))}
+            </div>
+        </section>
+
+        <section className="mt-8">
           <Card className="bg-card border-border shadow-sm">
             <CardHeader>
               <CardTitle>Quick Access</CardTitle>
@@ -385,3 +440,4 @@ export function Dashboard() {
     </div>
   );
 }
+
