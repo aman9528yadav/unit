@@ -209,6 +209,8 @@ export function Converter() {
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
   const [userRole, setUserRole] = useState<UserRole>('Member');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
 
   const imageExportRef = React.useRef<HTMLDivElement>(null);
@@ -258,15 +260,12 @@ export function Converter() {
       setRegion(savedDefaultRegion as Region);
     }
     
-    // This logic handles restoring state from global search or history page
     const itemToRestore = localStorage.getItem("restoreConversion");
     if (itemToRestore) {
-        // First, try parsing as a direct query (e.g., from global search)
         const parsedQuery = offlineParseConversionQuery(itemToRestore, allUnits, conversionCategories);
         if (parsedQuery) {
             restoreFromParsedQuery(parsedQuery);
         } else {
-            // If that fails, assume it's a history item
             handleRestoreHistory(itemToRestore);
         }
         localStorage.removeItem("restoreConversion");
@@ -343,12 +342,11 @@ export function Converter() {
 
 
   React.useEffect(() => {
-    // Reset inputs when category changes, only if there are units available.
     if (currentUnits.length > 0) {
       setFromUnit(currentUnits[0].symbol);
       setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
       setInputValue("1");
-      setIsGraphVisible(false); // Hide graph when category changes
+      setIsGraphVisible(false);
     }
   }, [selectedCategory, region, currentUnits]);
 
@@ -382,8 +380,7 @@ export function Converter() {
     const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
     setOutputValue(formattedResult);
 
-    // Prepare data for multi-unit comparison chart
-    if (categoryToUse.name !== 'Temperature') { // Charting temp isn't straightforward
+    if (categoryToUse.name !== 'Temperature') {
         const allUnitsInCategory = categoryToUse.units.filter(u => !u.region || u.region === region);
         const chartDataPromises = allUnitsInCategory.map(async (unit) => {
             const convertedValue = await categoryToUse.convert(numValue, from, unit.symbol, region);
@@ -413,7 +410,6 @@ export function Converter() {
     localStorage.setItem('lastConversion', conversionString);
     
     setHistory(prevHistory => {
-        // Prevent duplicates by checking just the conversion part, not the timestamp
         const conversionPart = conversionString.split('|')[0];
         if (prevHistory.some(h => h.startsWith(conversionPart))) {
             return prevHistory;
@@ -426,29 +422,24 @@ export function Converter() {
   }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name, profile?.email]);
 
 
-  // Effect to save history automatically when outputValue changes, as a result of a conversion
   React.useEffect(() => {
     if (outputValue) {
         handleSaveToHistory();
     }
   }, [outputValue, handleSaveToHistory]);
   
-  // Perform conversion whenever inputs change if auto-convert is on
   useEffect(() => {
     if (!autoConvert) return;
   
-    // Try to parse the input as a full query first
     const parsed = offlineParseConversionQuery(debouncedInputValue, allUnits, conversionCategories);
   
     if (parsed) {
       restoreFromParsedQuery(parsed);
     } else {
-      // If parsing fails, treat it as a simple number input
       performConversion(inputValue, fromUnit, toUnit);
     }
   }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion, inputValue, allUnits, conversionCategories]);
 
-  // Update favorite status whenever output or favorites list change
   React.useEffect(() => {
     const numValue = parseFloat(inputValue);
     if (isNaN(numValue) || !outputValue) {
@@ -484,7 +475,7 @@ export function Converter() {
                         setToUnit(parsed.toUnit);
                         setInputValue(String(parsed.value));
                         performConversion(parsed.value, parsed.fromUnit, parsed.toUnit);
-                        setSearchQuery(""); // Clear search
+                        setSearchQuery("");
                     } else {
                         toast({ title: t('converter.toast.cannotConvert'), description: t('converter.toast.regionError', { region }), variant: "destructive" });
                     }
@@ -710,6 +701,69 @@ export function Converter() {
     }
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (!query) {
+      setSuggestions([]);
+      return;
+    }
+
+    const newSuggestions: string[] = [];
+    const queryLower = query.toLowerCase();
+    const queryParts = queryLower.split(" ");
+    const lastPart = queryParts[queryParts.length - 1];
+
+    if (queryLower.includes(" to ")) {
+        const fromPart = queryLower.split(" to ")[0].trim();
+        const fromUnitSymbol = fromPart.split(" ").pop();
+        if (fromUnitSymbol) {
+            const fromUnit = allUnits.find(u => u.symbol.toLowerCase() === fromUnitSymbol);
+            if (fromUnit) {
+                const category = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit.symbol));
+                if (category) {
+                    category.units.forEach(toUnit => {
+                        if (toUnit.symbol !== fromUnit.symbol) {
+                            newSuggestions.push(`${fromPart} to ${toUnit.symbol}`);
+                        }
+                    });
+                }
+            }
+        }
+    } else {
+        const numberPart = queryParts[0];
+        if (!isNaN(parseFloat(numberPart))) {
+            const unitPart = queryParts.slice(1).join(" ");
+            allUnits.forEach(unit => {
+                if (unit.symbol.toLowerCase().startsWith(unitPart) || unit.name.toLowerCase().startsWith(unitPart)) {
+                    newSuggestions.push(`${numberPart} ${unit.symbol}`);
+                }
+            });
+        }
+    }
+
+    setSuggestions(newSuggestions.slice(0, 5));
+  };
+  
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchQuery(suggestion);
+    setSuggestions([]);
+    handleSearch();
+  };
+  
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setSuggestions([]);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-4">
       <header className="flex items-center justify-between sticky top-0 z-50 bg-background/80 backdrop-blur-sm py-4">
@@ -735,7 +789,6 @@ export function Converter() {
         </div>
       </header>
       
-      {/* Element to be captured for image export */}
       <div className="absolute -left-[9999px] -top-[9999px]">
         {outputValue && (
             <ConversionImage
@@ -757,16 +810,33 @@ export function Converter() {
                 </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-                <div className="flex items-center gap-2">
-                    <Input
-                        placeholder={t('converter.searchPlaceholder')}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    />
-                    <Button onClick={handleSearch} disabled={isSearching}>
-                        {isSearching ? <Loader2 className="animate-spin"/> : <Search />}
-                    </Button>
+                <div className="relative" ref={searchContainerRef}>
+                    <div className="flex items-center gap-2">
+                        <Input
+                            placeholder={t('converter.searchPlaceholder')}
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                        />
+                        <Button onClick={handleSearch} disabled={isSearching}>
+                            {isSearching ? <Loader2 className="animate-spin"/> : <Search />}
+                        </Button>
+                    </div>
+                     {suggestions.length > 0 && (
+                        <div className="absolute top-full mt-2 w-full bg-card rounded-lg border shadow-lg z-50 max-h-[200px] overflow-y-auto">
+                            <ul className="p-2">
+                                {suggestions.map((s, i) => (
+                                    <li 
+                                        key={i} 
+                                        className="p-2 rounded-md hover:bg-secondary cursor-pointer"
+                                        onClick={() => handleSuggestionClick(s)}
+                                    >
+                                        {s}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
             </CardContent>
         </Card>
@@ -1076,3 +1146,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
