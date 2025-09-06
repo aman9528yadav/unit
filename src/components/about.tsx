@@ -85,9 +85,11 @@ export function About() {
           <div className="bg-white shadow-lg rounded-2xl p-8 hover:shadow-xl transition">
             <h2 className="text-2xl font-bold text-indigo-600 mb-4">Release Plan</h2>
             <ul className="text-gray-600 leading-relaxed space-y-2">
-              <li>📍 <strong>Beta Release:</strong> Sept 2025</li>
-              <li>⚡ <strong>Stable Release:</strong> Dec 2025</li>
-              <li>🚀 <strong>Major Updates:</strong> Early 2026</li>
+              <li>📝 <strong>Planning:</strong> 12 May 2025</li>
+              <li>🧪 <strong>Beta Test 1:</strong> 29 Dec 2025</li>
+              <li>🧪 <strong>Beta Test 2:</strong> 1 July 2026</li>
+              <li>🧪 <strong>Beta Test 3:</strong> 12 Oct 2027</li>
+              <li>🚀 <strong>Final Release:</strong> 15 Aug 2028</li>
             </ul>
           </div>
         </section>
