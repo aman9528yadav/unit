@@ -258,18 +258,22 @@ export function Dashboard() {
 
 
   const updateStats = useCallback(async (email: string | null) => {
-    const [today, weekly, allTime, notes, streak] = await Promise.all([
-        getTodaysCalculations(email),
-        getWeeklyCalculations(email),
-        getAllTimeCalculations(email),
-        getAllTimeNotes(email),
-        getStreakData(email)
-    ]);
-    setTodayCalculations(today);
-    setWeeklyCalculations(weekly);
-    setAllTimeCalculations(allTime);
-    setSavedNotesCount(notes);
-    setStreakData(streak);
+    try {
+        const [today, weekly, allTime, notes, streak] = await Promise.all([
+            getTodaysCalculations(email),
+            getWeeklyCalculations(email),
+            getAllTimeCalculations(email),
+            getAllTimeNotes(email),
+            getStreakData(email)
+        ]);
+        setTodayCalculations(today);
+        setWeeklyCalculations(weekly);
+        setAllTimeCalculations(allTime);
+        setSavedNotesCount(notes);
+        setStreakData(streak);
+    } catch (error) {
+        console.error("Failed to update stats:", error);
+    }
   }, []);
 
   useEffect(() => {
@@ -574,3 +578,5 @@ export function Dashboard() {
     </div>
   );
 }
+
+    

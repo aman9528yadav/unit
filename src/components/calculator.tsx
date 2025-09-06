@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Clock, RefreshCw, Trash2, Delete, Divide, X, Minus, Plus, Equal, Sigma, RotateCcw, CalculatorIcon, Home, User, Lock } from 'lucide-react';
-import { incrementTodaysCalculations, getAllTimeCalculations } from '@/lib/utils';
+import { getAllTimeCalculations } from '@/lib/utils';
 import type { CalculatorMode } from './settings';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useRouter } from 'next/navigation';
@@ -104,21 +104,29 @@ export function Calculator() {
 
   useEffect(() => {
     setIsClient(true);
+
+    const checkUserRole = async (email: string) => {
+        const calculations = await getAllTimeCalculations(email);
+        if (email === DEVELOPER_EMAIL) {
+            return 'Owner';
+        } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
+            return 'Premium Member';
+        } else {
+            return 'Member';
+        }
+    };
     
     const storedProfileData = localStorage.getItem("userProfile");
-     if (storedProfileData) {
+    if (storedProfileData) {
         const parsedProfile = JSON.parse(storedProfileData);
         setProfile(parsedProfile);
-        const calculations = getAllTimeCalculations(parsedProfile.email);
-        if (parsedProfile.email === DEVELOPER_EMAIL) {
-            setUserRole('Owner');
-        } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
-            setUserRole('Premium Member');
-        } else {
-            setUserRole('Member');
-            setMode('basic'); // Force basic mode for members
-            localStorage.setItem('calculatorMode', 'basic');
-        }
+        checkUserRole(parsedProfile.email).then(role => {
+            setUserRole(role);
+            if (role === 'Member') {
+                setMode('basic');
+                localStorage.setItem('calculatorMode', 'basic');
+            }
+        });
     } else {
         setUserRole('Member');
         setMode('basic');
@@ -143,7 +151,6 @@ export function Calculator() {
     return () => {
         window.removeEventListener('storage', handleStorageChange);
     };
-
   }, [isClient, userRole]);
   
   const playSound = () => {
@@ -379,7 +386,5 @@ const BasicLayout = () => (
     </div>
   );
 }
-
-    
 
     

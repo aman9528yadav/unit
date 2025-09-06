@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -25,14 +26,15 @@ export default function ThemeEditorPage() {
     const storedProfile = localStorage.getItem("userProfile");
     if (storedProfile) {
        const parsedProfile = JSON.parse(storedProfile);
-       const calculations = getAllTimeCalculations(parsedProfile.email);
-       if (parsedProfile.email === DEVELOPER_EMAIL) {
-           setUserRole('Owner');
-       } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
-           setUserRole('Premium Member');
-       } else {
-           setUserRole('Member');
-       }
+       getAllTimeCalculations(parsedProfile.email).then(calculations => {
+           if (parsedProfile.email === DEVELOPER_EMAIL) {
+               setUserRole('Owner');
+           } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
+               setUserRole('Premium Member');
+           } else {
+               setUserRole('Member');
+           }
+       });
     } else {
       router.replace('/welcome');
     }
