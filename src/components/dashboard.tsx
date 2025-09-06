@@ -283,14 +283,15 @@ export function Dashboard() {
       { label: t('dashboard.tools.calculator'), icon: Calculator, href: "/calculator", color: "text-orange-400" },
       { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
       { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
-      { label: t('dashboard.tools.dateCalc'), icon: Calendar, href: "/time", color: "text-green-400" },
       { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
+      { label: t('dashboard.tools.about'), icon: Info, href: "/about", color: "text-purple-400" },
     ];
     
     const moreTools = [
-        { label: t('dashboard.tools.favorites'), icon: Star, href: '/history', color: 'text-yellow-500' },
-        { label: t('dashboard.tools.timer'), icon: Timer, href: '/time', color: 'text-red-500' },
-        { label: t('dashboard.tools.stopwatch'), icon: Hourglass, href: '/time', color: 'text-indigo-500' },
+        { label: t('dashboard.tools.favorites'), icon: Star, href: '/history?tab=favorites', color: 'text-yellow-500' },
+        { label: t('dashboard.tools.dateCalc'), icon: Calendar, href: "/time?tab=date-diff", color: "text-green-400" },
+        { label: t('dashboard.tools.timer'), icon: Timer, href: '/time?tab=timer', color: 'text-red-500' },
+        { label: t('dashboard.tools.stopwatch'), icon: Hourglass, href: '/time?tab=stopwatch', color: 'text-indigo-500' },
     ];
 
     const toolsToShow = showMoreTools ? [...quickTools, ...moreTools] : quickTools;

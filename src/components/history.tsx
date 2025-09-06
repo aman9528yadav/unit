@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Trash2, Clock, Star, RotateCcw, Home, Search, X, Filter, Power, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,7 +51,9 @@ export function History() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("history");
+  const searchParams = useSearchParams();
+  const tabFromQuery = searchParams.get('tab') as 'history' | 'favorites' | null;
+  const [activeTab, setActiveTab] = useState(tabFromQuery || "history");
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
@@ -194,7 +196,7 @@ export function History() {
           </AlertDialog>
         </header>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'history' | 'favorites')} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="history">{t('history.tabs.history')}</TabsTrigger>
                 <TabsTrigger value="favorites">{t('history.tabs.favorites')}</TabsTrigger>
@@ -289,7 +291,7 @@ function HistoryItem({ item, onRestore, onDelete, t, language, activeTab }: { it
                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onRestore(fullHistoryString)}>
                     <RotateCcw className="h-4 w-4"/>
                 </Button>
-                <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive h-7 w-7" onClick={onDelete}>
+                <Button size="icon" variant="destructive" className="h-7 w-7" onClick={onDelete}>
                     <Trash2 className="h-4 w-4"/>
                 </Button>
             </div>

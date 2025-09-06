@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { incrementTodaysCalculations } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
 
 // --- Web Worker Code ---
 // This code will be run in a separate thread to ensure timers work in the background.
@@ -807,7 +808,9 @@ function DateCalculator() {
 
 export function TimeUtilities() {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = React.useState("timer");
+  const searchParams = useSearchParams();
+  const tabFromQuery = searchParams.get('tab') as 'timer' | 'stopwatch' | 'date-diff' | null;
+  const [activeTab, setActiveTab] = React.useState(tabFromQuery || "timer");
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-4">
@@ -821,7 +824,7 @@ export function TimeUtilities() {
             <div className="w-10"></div>
         </header>
 
-         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+         <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'timer' | 'stopwatch' | 'date-diff')} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="timer">{t('timePage.tabs.timer')}</TabsTrigger>
                 <TabsTrigger value="stopwatch">{t('timePage.tabs.stopwatch')}</TabsTrigger>
