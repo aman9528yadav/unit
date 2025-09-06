@@ -86,7 +86,7 @@ export function Profile() {
   };
 
   const menuItems = [
-    { icon: Star, text: t('profile.menu.favorites'), href: "/history" },
+    { icon: Star, text: t('profile.menu.favorites'), href: "/history?tab=favorites" },
     { icon: Gift, text: t('profile.menu.whatsNew'), href: "/updates" },
     { icon: Lock, text: t('profile.menu.privacy'), href: "/privacy-policy" },
     { icon: Settings, text: t('profile.menu.settings'), href: "/settings" },
@@ -117,19 +117,21 @@ export function Profile() {
         </header>
 
         <div className="flex flex-col items-center text-center gap-2 mt-2">
-           <div className="relative w-28 h-28">
-                <Avatar className="w-28 h-28 text-6xl border-4 border-background">
-                    <AvatarImage src={profile.profileImage} alt={profile.fullName} />
-                    <AvatarFallback>
-                        <User />
-                    </AvatarFallback>
-                </Avatar>
-                <Button asChild size="icon" className="absolute bottom-0 right-0 rounded-full w-8 h-8">
-                    <Link href="/profile/edit">
-                        <Pencil />
-                    </Link>
-                </Button>
-            </div>
+            <Link href="/userdata">
+                <div className="relative w-28 h-28 cursor-pointer">
+                    <Avatar className="w-28 h-28 text-6xl border-4 border-background">
+                        <AvatarImage src={profile.profileImage} alt={profile.fullName} />
+                        <AvatarFallback>
+                            <User />
+                        </AvatarFallback>
+                    </Avatar>
+                    <Button asChild size="icon" className="absolute bottom-0 right-0 rounded-full w-8 h-8">
+                        <Link href="/profile/edit">
+                            <Pencil />
+                        </Link>
+                    </Button>
+                </div>
+            </Link>
           <h2 className="text-2xl font-bold mt-2">{profile.fullName}</h2>
           <p className="text-sm">{profile.email}</p>
           <p className="text-sm">{t('profile.birthday')}: {profile.birthday}</p>
@@ -150,8 +152,8 @@ export function Profile() {
               );
 
             return (
-              <li key={index} onClick={item.onClick}>
-                {item.href ? <Link href={item.href}>{content}</Link> : <div className="cursor-pointer">{content}</div>}
+              <li key={index} onClick={item.onClick} className="cursor-pointer">
+                {item.href ? <Link href={item.href}>{content}</Link> : <div>{content}</div>}
               </li>
             )
           })}
@@ -160,5 +162,3 @@ export function Profile() {
     </div>
   );
 }
-
-    

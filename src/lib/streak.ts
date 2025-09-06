@@ -27,14 +27,19 @@ const setVisits = (visits: string[], email: string) => {
 };
 
 export const recordVisit = (email?: string | null) => {
-    if (!email) return;
+    if (!email || typeof window === 'undefined') return;
+    
     const visits = getVisits(email);
     const today = format(new Date(), 'yyyy-MM-dd');
+    
     if (!visits.includes(today)) {
-        const updatedVisits = [...visits, today];
+        const updatedVisits = [...new Set([...visits, today])];
         setVisits(updatedVisits, email);
+        // Dispatch a storage event to notify other components/tabs
+        window.dispatchEvent(new StorageEvent('storage', { key: getUserStreakKey(email), newValue: JSON.stringify(updatedVisits) }));
     }
 };
+
 
 export const getStreakData = (email?: string | null): StreakData => {
     if (!email) {
@@ -73,20 +78,36 @@ export const getStreakData = (email?: string | null): StreakData => {
     const today = new Date();
     const lastVisit = visitDates[visitDates.length - 1];
 
-    if (lastVisit && (differenceInCalendarDays(today, lastVisit) === 0 || differenceInCalendarDays(today, lastVisit) === 1)) {
-        currentStreak = 1;
-        for (let i = visitDates.length - 2; i >= 0; i--) {
-            if (differenceInCalendarDays(visitDates[i + 1], visitDates[i]) === 1) {
-                currentStreak++;
-            } else {
-                break;
+    if (lastVisit) {
+        const daysSinceLastVisit = differenceInCalendarDays(today, lastVisit);
+
+        if (daysSinceLastVisit <= 1) {
+            currentStreak = 1;
+            for (let i = visitDates.length - 2; i >= 0; i--) {
+                if (differenceInCalendarDays(visitDates[i + 1], visitDates[i]) === 1) {
+                    currentStreak++;
+                } else {
+                    break;
+                }
+            }
+            if (daysSinceLastVisit > 1) {
+                currentStreak = 0;
             }
         }
-        // If last visit was not today, the streak might be broken
-        if (differenceInCalendarDays(today, lastVisit) > 1) {
-             currentStreak = 0;
-        }
     }
+    
+    // If today hasn't been recorded yet, and yesterday was part of the streak, the streak is maintained.
+    const todayStr = format(today, 'yyyy-MM-dd');
+    if (!visits.includes(todayStr) && currentStreak === 0 && visits.length > 0) {
+       const yesterday = subDays(today, 1);
+       const yesterdayStr = format(yesterday, 'yyyy-MM-dd');
+       if(visits.includes(yesterdayStr)) {
+            // Recalculate streak as if today was visited
+            const tempStreakData = getStreakData(email);
+            currentStreak = tempStreakData.currentStreak;
+       }
+    }
+
 
     // Calculate Days Not Opened
     const firstVisit = visitDates[0];

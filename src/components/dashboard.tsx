@@ -57,7 +57,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/context/theme-context";
 import { getTodaysCalculations, getWeeklyCalculations, getAllTimeCalculations } from "@/lib/utils";
-import { getStreakData, type StreakData } from "@/lib/streak";
+import { getStreakData, recordVisit, type StreakData } from "@/lib/streak";
 import { GlobalSearch } from "./global-search";
 import { Notifications } from "./notifications";
 import { useLanguage } from "@/context/language-context";
@@ -253,11 +253,17 @@ export function Dashboard() {
     setIsClient(true);
     const storedProfile = localStorage.getItem("userProfile");
     const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
-    setProfile(storedProfile ? JSON.parse(storedProfile) : null);
+    
+    if(storedProfile) {
+        const parsedProfile = JSON.parse(storedProfile);
+        setProfile(parsedProfile);
+        recordVisit(parsedProfile.email); // Record visit for streak tracking
+    }
+    
     updateStats(userEmail);
 
     const handleStorageChange = (e: StorageEvent) => {
-        // If calculation history or notes change, update stats
+        // If calculation history, notes, or visits change, update stats
         if (e.key?.includes('dailyCalculations') || e.key?.includes('userNotesV2') || e.key?.includes('userVisitHistory')) {
             updateStats(userEmail);
         }
