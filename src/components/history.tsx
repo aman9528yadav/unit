@@ -223,7 +223,7 @@ export function History() {
                 {filteredItems.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {filteredItems.map((item, index) => (
-                         <HistoryItem key={`${item.timestamp}-${index}`} item={item} onRestore={handleRestore} onDelete={() => setItemToDelete(`${item.conversion}|${item.categoryName}|${item.timestamp}`)} t={t} language={language}/>
+                         <HistoryItem key={`${item.timestamp}-${index}`} item={item} onRestore={handleRestore} onDelete={() => setItemToDelete(`${item.conversion}|${item.categoryName}|${item.timestamp}`)} t={t} language={language} activeTab={activeTab}/>
                     ))}
                   </div>
                 ) : (
@@ -256,7 +256,7 @@ export function History() {
 }
 
 
-function HistoryItem({ item, onRestore, onDelete, t, language }: { item: HistoryItemData; onRestore: (item: string) => void; onDelete: () => void; t: (key: string, params?: any) => string; language: string; }) {
+function HistoryItem({ item, onRestore, onDelete, t, language, activeTab }: { item: HistoryItemData; onRestore: (item: string) => void; onDelete: () => void; t: (key: string, params?: any) => string; language: string; activeTab: string; }) {
     const fullHistoryString = `${item.conversion}|${item.categoryName}|${item.timestamp}`;
     const category = conversionCategories.find(c => c.name === item.categoryName);
     const Icon = category?.icon || Power;
@@ -278,6 +278,7 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
     return (
         <div className="bg-secondary p-3 rounded-lg group relative">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                {activeTab === 'favorites' && <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />}
                 <Icon size={14}/> 
                 <span>{t(`categories.${item.categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: item.categoryName })}</span>
                 <span>•</span>
