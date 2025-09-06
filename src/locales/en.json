@@ -1009,6 +1009,22 @@
             "initialLaunch": {
                 "title": "Initial Launch",
                 "description": "Welcome to UniConvert! The initial version includes a robust unit converter, a scientific calculator, and a notepad for all your needs."
+            },
+            "appearance": {
+                "title": "Appearance Settings",
+                "description": "Customize your theme with light, dark, and custom color options."
+            },
+            "smartSearch": {
+                "title": "Smart AI Search",
+                "description": "Search for conversions, notes, and settings with a single, intelligent search bar."
+            },
+            "languageSupport": {
+                "title": "Language Support: Hindi",
+                "description": "The entire app is now available in Hindi."
+            },
+            "profileManagement": {
+                "title": "Profile Management",
+                "description": "Manage your profile, track stats, and view your premium membership progress."
             }
         }
     },

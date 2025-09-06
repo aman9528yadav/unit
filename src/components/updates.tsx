@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Gift, Zap, Rocket, Timer } from "lucide-react";
+import { ArrowLeft, Gift, Zap, Rocket, Timer, Palette, Languages, User, Wand2 } from "lucide-react";
 import { format, intervalToDuration, differenceInDays } from "date-fns";
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/language-context';
@@ -13,33 +13,69 @@ const UPDATE_TIMER_STORAGE_KEY = "nextUpdateTime";
 const UPDATE_TEXT_STORAGE_KEY = "nextUpdateText";
 
 const getUpdates = (t: (key: string) => string) => [
-  {
-    version: "v2.1.0",
-    date: "2024-08-15T10:00:00Z",
-    title: t('updates.items.timeTools.title'),
-    description: t('updates.items.timeTools.description'),
-    icon: Zap,
-    bgColor: "bg-green-500/10",
-    textColor: "text-green-400"
-  },
-  {
-    version: "v2.0.0",
-    date: "2024-07-20T09:00:00Z",
-    title: t('updates.items.customUnits.title'),
-    description: t('updates.items.customUnits.description'),
-    icon: Gift,
-    bgColor: "bg-blue-500/10",
-    textColor: "text-blue-400"
-  },
-  {
-    version: "v1.0.0",
-    date: "2024-06-01T12:00:00Z",
-    title: t('updates.items.initialLaunch.title'),
-    description: t('updates.items.initialLaunch.description'),
-    icon: Rocket,
-    bgColor: "bg-purple-500/10",
-    textColor: "text-purple-400"
-  },
+    {
+        version: "v2.4.0",
+        date: "2024-10-01T10:00:00Z",
+        title: t('updates.items.profileManagement.title'),
+        description: t('updates.items.profileManagement.description'),
+        icon: User,
+        bgColor: "bg-orange-500/10",
+        textColor: "text-orange-400"
+    },
+    {
+        version: "v2.3.0",
+        date: "2024-09-25T10:00:00Z",
+        title: t('updates.items.languageSupport.title'),
+        description: t('updates.items.languageSupport.description'),
+        icon: Languages,
+        bgColor: "bg-teal-500/10",
+        textColor: "text-teal-400"
+    },
+     {
+        version: "v2.2.0",
+        date: "2024-09-10T10:00:00Z",
+        title: t('updates.items.smartSearch.title'),
+        description: t('updates.items.smartSearch.description'),
+        icon: Wand2,
+        bgColor: "bg-indigo-500/10",
+        textColor: "text-indigo-400"
+    },
+    {
+        version: "v2.1.5",
+        date: "2024-08-20T10:00:00Z",
+        title: t('updates.items.appearance.title'),
+        description: t('updates.items.appearance.description'),
+        icon: Palette,
+        bgColor: "bg-pink-500/10",
+        textColor: "text-pink-400"
+    },
+    {
+        version: "v2.1.0",
+        date: "2024-08-15T10:00:00Z",
+        title: t('updates.items.timeTools.title'),
+        description: t('updates.items.timeTools.description'),
+        icon: Zap,
+        bgColor: "bg-green-500/10",
+        textColor: "text-green-400"
+    },
+    {
+        version: "v2.0.0",
+        date: "2024-07-20T09:00:00Z",
+        title: t('updates.items.customUnits.title'),
+        description: t('updates.items.customUnits.description'),
+        icon: Gift,
+        bgColor: "bg-blue-500/10",
+        textColor: "text-blue-400"
+    },
+    {
+        version: "v1.0.0",
+        date: "2024-06-01T12:00:00Z",
+        title: t('updates.items.initialLaunch.title'),
+        description: t('updates.items.initialLaunch.description'),
+        icon: Rocket,
+        bgColor: "bg-purple-500/10",
+        textColor: "text-purple-400"
+    },
 ];
 
 
@@ -184,5 +220,3 @@ export function Updates() {
     </div>
   );
 }
-
-    
