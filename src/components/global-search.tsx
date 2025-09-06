@@ -125,45 +125,57 @@ export function GlobalSearch() {
     const notesKey = getUserNotesKey(profile?.email || null);
     const notesData = localStorage.getItem(notesKey);
     if (notesData) {
-      const notes: Note[] = JSON.parse(notesData);
-      notes
-        .filter(n => !n.deletedAt && (n.title.toLowerCase().includes(lowerQuery) || n.content.toLowerCase().includes(lowerQuery)))
-        .forEach(n => allResults.push({
-          type: 'Note',
-          title: n.title || t('globalSearch.results.note.untitled'),
-          description: n.content.replace(/<[^>]*>?/gm, '').substring(0, 100),
-          id: n.id,
-          href: `/notes/edit/${n.id}`,
-        }));
+      try {
+        const notes: Note[] = JSON.parse(notesData);
+        notes
+          .filter(n => !n.deletedAt && (n.title.toLowerCase().includes(lowerQuery) || n.content.toLowerCase().includes(lowerQuery)))
+          .forEach(n => allResults.push({
+            type: 'Note',
+            title: n.title || t('globalSearch.results.note.untitled'),
+            description: n.content.replace(/<[^>]*>?/gm, '').substring(0, 100),
+            id: n.id,
+            href: `/notes/edit/${n.id}`,
+          }));
+      } catch (e) {
+        console.error("Failed to parse notes:", e);
+      }
     }
 
     // Search History
     const historyData = localStorage.getItem('conversionHistory');
     if (historyData) {
-      const history: string[] = JSON.parse(historyData);
-      history
-        .filter(h => h.toLowerCase().includes(lowerQuery))
-        .forEach(h => allResults.push({
-          type: 'History',
-          title: h.split('|')[0],
-          id: h,
-          href: `/converter`,
-        }));
+      try {
+        const history: string[] = JSON.parse(historyData);
+        history
+          .filter(h => h.toLowerCase().includes(lowerQuery))
+          .forEach(h => allResults.push({
+            type: 'History',
+            title: h.split('|')[0],
+            id: h,
+            href: `/converter`,
+          }));
+      } catch (e) {
+        console.error("Failed to parse history:", e);
+      }
     }
 
     // Search Help/FAQs
     const faqData = localStorage.getItem(FAQ_STORAGE_KEY);
     if (faqData) {
-      const faqs: FAQ[] = JSON.parse(faqData);
-      faqs
-        .filter(f => f.question.toLowerCase().includes(lowerQuery) || f.answer.toLowerCase().includes(lowerQuery))
-        .forEach(f => allResults.push({
-          type: 'Help',
-          title: f.question,
-          description: f.answer.replace(/<[^>]*>?/gm, '').substring(0, 100),
-          id: f.id,
-          href: '/help',
-        }));
+      try {
+        const faqs: FAQ[] = JSON.parse(faqData);
+        faqs
+          .filter(f => f.question.toLowerCase().includes(lowerQuery) || f.answer.toLowerCase().includes(lowerQuery))
+          .forEach(f => allResults.push({
+            type: 'Help',
+            title: f.question,
+            description: f.answer.replace(/<[^>]*>?/gm, '').substring(0, 100),
+            id: f.id,
+            href: '/help',
+          }));
+      } catch (e) {
+        console.error("Failed to parse FAQs:", e);
+      }
     }
 
     // Search Settings

@@ -82,12 +82,8 @@ const getUserKey = (key: string, email: string | null) => {
 
 // Offline parser to replace the AI flow
 export const offlineParseConversionQuery = (query: string, allUnits: Unit[], categories: ConversionCategory[]): ParseConversionQueryOutput | null => {
-    // This regex tries to capture:
-    // 1. A number (value)
-    // 2. A unit string (fromUnitStr)
-    // 3. An optional "to"
-    // 4. Another unit string (toUnitStr)
-    const regex = /^\s*([0-9.,]+)\s*([a-zA-Z°/²³\s-]+?)\s*(?:to|in|as)?\s+([a-zA-Z°/²³\s-]+)\s*$/i;
+    // This regex is more flexible, capturing numbers, then unit symbols/names, an optional separator, and the final unit.
+    const regex = /^\s*([0-9.,]+)\s*([a-zA-Z°/²³\s]+?)\s*(?:to|in|as)\s+([a-zA-Z°/²³\s]+)\s*$/i;
     const match = query.match(regex);
 
     if (!match) return null;
@@ -99,7 +95,8 @@ export const offlineParseConversionQuery = (query: string, allUnits: Unit[], cat
     
     const findUnit = (unitStr: string): Unit | undefined => {
         const lowerUnitStr = unitStr.trim().toLowerCase();
-        return allUnits.find(u => u.symbol.toLowerCase() === lowerUnitStr || u.name.toLowerCase() === lowerUnitStr);
+        // Exact match for symbol first, then name
+        return allUnits.find(u => u.symbol.toLowerCase() === lowerUnitStr) || allUnits.find(u => u.name.toLowerCase() === lowerUnitStr);
     }
 
     const fromUnit = findUnit(fromUnitStr);
@@ -456,8 +453,9 @@ export function Converter() {
     };
 
     const result = parseFloat(outputValue.replace(/,/g, ''));
-    const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
-    setIsFavorite(favorites.some(fav => fav.startsWith(conversionStringPart.split('|')[0])));
+    const conversionStringPart = getCurrentConversionString(numValue, fromUnit, toUnit, result);
+    const fullHistoryString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
+    setIsFavorite(favorites.some(fav => fav.startsWith(conversionStringPart)));
   }, [inputValue, fromUnit, toUnit, outputValue, favorites, selectedCategory.name]);
 
 
@@ -484,6 +482,7 @@ export function Converter() {
                         setInputValue(String(parsed.value));
                         performConversion(parsed.value, parsed.fromUnit, parsed.toUnit);
                         setSearchQuery("");
+                        setSuggestions([]);
                     } else {
                         toast({ title: t('converter.toast.cannotConvert'), description: t('converter.toast.regionError', { region }), variant: "destructive" });
                     }
@@ -713,56 +712,49 @@ export function Converter() {
     setSearchQuery(query);
 
     if (!query.trim()) {
-      setSuggestions([]);
-      return;
+        setSuggestions([]);
+        return;
     }
 
     const newSuggestions: string[] = [];
     const queryLower = query.toLowerCase();
 
     // Regex to extract number and the start of a unit
-    const valueUnitRegex = /^([0-9.,]+)\s*(.*)/i;
-    const valueUnitMatch = query.match(valueUnitRegex);
+    const valueUnitRegex = /^([0-9.,\s]+)?[a-zA-Z°/²³\s]*/i;
+    const match = query.match(valueUnitRegex);
 
-    if (queryLower.includes(" to ")) {
-        // Suggest "to" units
-        const parts = queryLower.split(" to ");
-        const fromPart = parts[0].trim();
-        const toPart = parts[1].trim();
+    if (match) {
+        const numericPart = (match[1] || '1').trim();
+        const textPart = query.substring(match[0].lastIndexOf(numericPart) + numericPart.length).trim().toLowerCase();
 
-        const fromValueUnitRegex = /^([0-9.,]+)\s*([a-zA-Z°/²³\s-]+)/i;
-        const fromMatch = fromPart.match(fromValueUnitRegex);
-        
-        if (fromMatch) {
-            const [, , fromUnitStr] = fromMatch;
-            const fromUnit = allUnits.find(u => u.symbol.toLowerCase() === fromUnitStr.trim().toLowerCase() || u.name.toLowerCase() === fromUnitStr.trim().toLowerCase());
+        if (textPart.includes(" to ")) {
+            const parts = textPart.split(" to ");
+            const fromPart = parts[0].trim();
+            const toPart = parts[1].trim();
+            
+            const fromUnit = allUnits.find(u => u.symbol.toLowerCase() === fromPart || u.name.toLowerCase() === fromPart);
+            
             if (fromUnit) {
                 const category = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit.symbol));
                 if (category) {
-                    category.units.forEach(toUnit => {
-                        if (toUnit.symbol !== fromUnit.symbol && toUnit.name.toLowerCase().startsWith(toPart)) {
-                            newSuggestions.push(`${fromPart} to ${toUnit.name}`);
+                    category.units.forEach(unit => {
+                        if (unit.symbol !== fromUnit.symbol && (unit.name.toLowerCase().startsWith(toPart) || unit.symbol.toLowerCase().startsWith(toPart))) {
+                            newSuggestions.push(`${numericPart} ${fromUnit.name} to ${unit.name}`);
                         }
                     });
                 }
             }
-        }
-    } else if (valueUnitMatch) {
-        // Suggest "from" units
-        const [, valueStr, unitPart] = valueUnitMatch;
-        const unitPartLower = unitPart.toLowerCase();
-
-        if (unitPartLower) {
+        } else if (textPart) {
             allUnits.forEach(unit => {
-                if (unit.symbol.toLowerCase().startsWith(unitPartLower) || unit.name.toLowerCase().startsWith(unitPartLower)) {
-                    newSuggestions.push(`${valueStr.trim()} ${unit.name}`);
+                if (unit.symbol.toLowerCase().startsWith(textPart) || unit.name.toLowerCase().startsWith(textPart)) {
+                    newSuggestions.push(`${numericPart} ${unit.name}`);
                 }
             });
         }
     }
 
-    setSuggestions(newSuggestions.slice(0, 5));
-  };
+    setSuggestions([...new Set(newSuggestions)].slice(0, 5));
+};
   
   const handleSuggestionClick = (suggestion: string) => {
     setSearchQuery(suggestion);
