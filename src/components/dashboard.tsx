@@ -420,10 +420,6 @@ export function Dashboard() {
       </section>
 
       <section>
-        <AboutCard />
-      </section>
-
-      <section>
           <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-foreground">{t('dashboard.whatsNew')}</h2>
               <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
@@ -479,7 +475,9 @@ export function Dashboard() {
       </AlertDialogContent>
     </AlertDialog>
 
+    <section>
+        <AboutCard />
+      </section>
     </div>
   );
 }
-
