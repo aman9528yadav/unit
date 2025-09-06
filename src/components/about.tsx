@@ -54,107 +54,109 @@ export function About() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-indigo-100 flex flex-col items-center px-6 py-12 w-full">
-      <header className="w-full max-w-6xl mb-12">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft />
-        </Button>
-      </header>
-      {/* Hero Section */}
-      <section className="text-center max-w-3xl">
-        <h1 className="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-          About Sutradhaar
-        </h1>
-        <p className="mt-4 text-lg md:text-xl text-gray-600">
-          Sutradhaar is a modern, smart, and simple unit converter app built by Aman Yadav. It combines design, speed, and accuracy to help you calculate effortlessly.
-        </p>
-      </section>
-
-      {/* App Info Section */}
-      <section className="mt-12 grid md:grid-cols-2 gap-8 max-w-5xl w-full">
-        <div className="bg-white shadow-lg rounded-2xl p-8 hover:shadow-xl transition">
-          <h2 className="text-2xl font-bold text-indigo-600 mb-4">App Information</h2>
-          <ul className="text-gray-600 leading-relaxed space-y-2">
-            <li><strong>Version:</strong> 1.4.2</li>
-            <li><strong>Build:</strong> 2025.09.01</li>
-            <li><strong>Release Channel:</strong> Beta 1</li>
-            <li><strong>License:</strong> MIT</li>
-          </ul>
-        </div>
-
-        <div className="bg-white shadow-lg rounded-2xl p-8 hover:shadow-xl transition">
-          <h2 className="text-2xl font-bold text-indigo-600 mb-4">Release Plan</h2>
-          <ul className="text-gray-600 leading-relaxed space-y-2">
-            <li>📍 <strong>Beta Release:</strong> Sept 2025</li>
-            <li>⚡ <strong>Stable Release:</strong> Dec 2025</li>
-            <li>🚀 <strong>Major Updates:</strong> Early 2026</li>
-          </ul>
-        </div>
-      </section>
-
-      {/* Roadmap Section */}
-      <section className="mt-16 max-w-6xl w-full">
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-10">
-          Feature & Roadmap
-        </h2>
-        <div className="flex flex-wrap justify-center gap-8">
-          {features.map((step, idx) => (
-            <div
-              key={idx}
-              className="relative bg-white w-64 p-6 rounded-2xl shadow-md hover:shadow-xl transition group border-t-4 border-indigo-400"
-            >
-              <div className="text-4xl mb-3">{step.icon}</div>
-              <h3 className="text-lg font-bold text-indigo-600 mb-2 group-hover:text-purple-600">
-                {step.title}
-              </h3>
-              <p className="text-gray-600 text-sm leading-relaxed">{step.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Credits Section */}
-      <section className="mt-16 max-w-6xl w-full text-center">
-        <h2 className="text-3xl font-bold text-gray-800 mb-10">Credits</h2>
-        <div className="flex flex-wrap justify-center gap-8">
-          <div className="flex flex-col items-center">
-            <Image src="https://picsum.photos/seed/aman/100/100" alt="Aman Yadav" width={96} height={96} data-ai-hint="man portrait" className="w-24 h-24 rounded-full shadow-md object-cover ring-4 ring-indigo-400" />
-            <h3 className="mt-3 text-lg font-semibold text-indigo-600">Aman Yadav</h3>
-            <p className="text-gray-600 text-sm">Founder & Engineer</p>
-          </div>
-        </div>
-      </section>
-
-      {/* About Owner Section */}
-      <section className="mt-16 max-w-4xl w-full text-center">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">About the Owner</h2>
-        <div className="bg-white rounded-2xl shadow-lg p-8">
-          <p className="text-gray-600 leading-relaxed text-lg">
-            Hi, I'm <span className="font-semibold text-indigo-600">Aman Yadav</span>, the founder and engineer behind Sutradhaar. 
-            My vision with this project is to create a simple yet powerful productivity tool that helps people save time, 
-            focus on their work, and achieve more with ease.
+      <div className="w-full max-w-lg mx-auto">
+        <header className="w-full mb-12">
+          <Button variant="ghost" size="icon" onClick={() => router.back()}>
+            <ArrowLeft />
+          </Button>
+        </header>
+        {/* Hero Section */}
+        <section className="text-center">
+          <h1 className="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            About Sutradhaar
+          </h1>
+          <p className="mt-4 text-lg md:text-xl text-gray-600">
+            Sutradhaar is a modern, smart, and simple unit converter app built by Aman Yadav. It combines design, speed, and accuracy to help you calculate effortlessly.
           </p>
-        </div>
-      </section>
+        </section>
 
-      {/* Legal Section */}
-      <section className="mt-16 max-w-4xl w-full">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Legal</h2>
-        <ul className="bg-white shadow-lg rounded-2xl divide-y">
-          <li className="p-4 flex justify-between"><span>Terms of Service</span><Link href="#" className="text-indigo-600 hover:underline">Open document →</Link></li>
-          <li className="p-4 flex justify-between"><span>Privacy Policy</span><Link href="/privacy-policy" className="text-indigo-600 hover:underline">Open document →</Link></li>
-          <li className="p-4 flex justify-between"><span>Open Source Notices</span><Link href="#" className="text-indigo-600 hover:underline">View libraries →</Link></li>
-        </ul>
-      </section>
+        {/* App Info Section */}
+        <section className="mt-12 grid md:grid-cols-2 gap-8 w-full">
+          <div className="bg-white shadow-lg rounded-2xl p-8 hover:shadow-xl transition">
+            <h2 className="text-2xl font-bold text-indigo-600 mb-4">App Information</h2>
+            <ul className="text-gray-600 leading-relaxed space-y-2">
+              <li><strong>Version:</strong> 1.4.2</li>
+              <li><strong>Build:</strong> 2025.09.01</li>
+              <li><strong>Release Channel:</strong> Beta 1</li>
+              <li><strong>License:</strong> MIT</li>
+            </ul>
+          </div>
 
-      {/* Support Section */}
-      <section className="mt-16 max-w-4xl w-full">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Support</h2>
-        <ul className="bg-white shadow-lg rounded-2xl divide-y">
-          <li className="p-4 flex justify-between"><span>Help Center</span><Link href="/help" className="text-indigo-600 hover:underline">Visit →</Link></li>
-          <li className="p-4 flex justify-between"><span>Contact</span><a href="mailto:support@sutradhaar.app" className="text-indigo-600 hover:underline">support@sutradhaar.app</a></li>
-          <li className="p-4 flex justify-between"><span>Report an Issue</span><Link href="#" className="text-indigo-600 hover:underline">Create ticket →</Link></li>
-        </ul>
-      </section>
+          <div className="bg-white shadow-lg rounded-2xl p-8 hover:shadow-xl transition">
+            <h2 className="text-2xl font-bold text-indigo-600 mb-4">Release Plan</h2>
+            <ul className="text-gray-600 leading-relaxed space-y-2">
+              <li>📍 <strong>Beta Release:</strong> Sept 2025</li>
+              <li>⚡ <strong>Stable Release:</strong> Dec 2025</li>
+              <li>🚀 <strong>Major Updates:</strong> Early 2026</li>
+            </ul>
+          </div>
+        </section>
+
+        {/* Roadmap Section */}
+        <section className="mt-16 w-full">
+          <h2 className="text-3xl font-bold text-center text-gray-800 mb-10">
+            Feature & Roadmap
+          </h2>
+          <div className="flex flex-wrap justify-center gap-8">
+            {features.map((step, idx) => (
+              <div
+                key={idx}
+                className="relative bg-white w-64 p-6 rounded-2xl shadow-md hover:shadow-xl transition group border-t-4 border-indigo-400"
+              >
+                <div className="text-4xl mb-3">{step.icon}</div>
+                <h3 className="text-lg font-bold text-indigo-600 mb-2 group-hover:text-purple-600">
+                  {step.title}
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Credits Section */}
+        <section className="mt-16 w-full text-center">
+          <h2 className="text-3xl font-bold text-gray-800 mb-10">Credits</h2>
+          <div className="flex flex-wrap justify-center gap-8">
+            <div className="flex flex-col items-center">
+              <Image src="https://picsum.photos/seed/aman/100/100" alt="Aman Yadav" width={96} height={96} data-ai-hint="man portrait" className="w-24 h-24 rounded-full shadow-md object-cover ring-4 ring-indigo-400" />
+              <h3 className="mt-3 text-lg font-semibold text-indigo-600">Aman Yadav</h3>
+              <p className="text-gray-600 text-sm">Founder & Engineer</p>
+            </div>
+          </div>
+        </section>
+
+        {/* About Owner Section */}
+        <section className="mt-16 w-full text-center">
+          <h2 className="text-3xl font-bold text-gray-800 mb-6">About the Owner</h2>
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <p className="text-gray-600 leading-relaxed text-lg">
+              Hi, I'm <span className="font-semibold text-indigo-600">Aman Yadav</span>, the founder and engineer behind Sutradhaar.
+              My vision with this project is to create a simple yet powerful productivity tool that helps people save time,
+              focus on their work, and achieve more with ease.
+            </p>
+          </div>
+        </section>
+
+        {/* Legal Section */}
+        <section className="mt-16 w-full">
+          <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Legal</h2>
+          <ul className="bg-white shadow-lg rounded-2xl divide-y">
+            <li className="p-4 flex justify-between"><span>Terms of Service</span><Link href="#" className="text-indigo-600 hover:underline">Open document →</Link></li>
+            <li className="p-4 flex justify-between"><span>Privacy Policy</span><Link href="/privacy-policy" className="text-indigo-600 hover:underline">Open document →</Link></li>
+            <li className="p-4 flex justify-between"><span>Open Source Notices</span><Link href="#" className="text-indigo-600 hover:underline">View libraries →</Link></li>
+          </ul>
+        </section>
+
+        {/* Support Section */}
+        <section className="mt-16 w-full">
+          <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Support</h2>
+          <ul className="bg-white shadow-lg rounded-2xl divide-y">
+            <li className="p-4 flex justify-between"><span>Help Center</span><Link href="/help" className="text-indigo-600 hover:underline">Visit →</Link></li>
+            <li className="p-4 flex justify-between"><span>Contact</span><a href="mailto:support@sutradhaar.app" className="text-indigo-600 hover:underline">support@sutradhaar.app</a></li>
+            <li className="p-4 flex justify-between"><span>Report an Issue</span><Link href="#" className="text-indigo-600 hover:underline">Create ticket →</Link></li>
+          </ul>
+        </section>
+      </div>
     </div>
   );
 }
