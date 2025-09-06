@@ -150,7 +150,7 @@ const RecommendationCard = ({ item }: any) => (
       <Image src={item.img} alt={item.title} layout="fill" objectFit="cover" data-ai-hint={item.dataAiHint} />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
       <Button asChild size="icon" className="absolute bottom-3 left-3 rounded-full shadow-xl bg-primary hover:bg-primary/90">
-         <Link href="/help">
+         <Link href="/how-to-use">
             <PlayCircle className="size-5 text-primary-foreground" />
          </Link>
       </Button>
