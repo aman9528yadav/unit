@@ -1,7 +1,10 @@
 
+
 import { format, differenceInCalendarDays, subDays, parseISO } from 'date-fns';
+import { getUserData, updateUserData } from '@/services/firestore';
 
 const STREAK_STORAGE_KEY_BASE = 'userVisitHistory';
+
 
 export interface StreakData {
     currentStreak: number;
@@ -9,44 +12,34 @@ export interface StreakData {
     daysNotOpened: number;
 }
 
-const getUserStreakKey = (email: string) => `${email}_${STREAK_STORAGE_KEY_BASE}`;
-
-// Ensure window is defined before accessing localStorage
-const getVisits = (email: string): string[] => {
-    if (typeof window === 'undefined') {
-        return [];
-    }
-    const storedVisits = localStorage.getItem(getUserStreakKey(email));
-    return storedVisits ? JSON.parse(storedVisits) : [];
+const getVisits = async (email: string): Promise<string[]> => {
+    const userData = await getUserData(email);
+    return userData?.[STREAK_STORAGE_KEY_BASE] || [];
 };
 
-const setVisits = (visits: string[], email: string) => {
-    if (typeof window !== 'undefined') {
-        localStorage.setItem(getUserStreakKey(email), JSON.stringify(visits));
-    }
+const setVisits = async (visits: string[], email: string) => {
+    await updateUserData(email, { [STREAK_STORAGE_KEY_BASE]: visits });
 };
 
-export const recordVisit = (email?: string | null) => {
-    if (!email || typeof window === 'undefined') return;
+export const recordVisit = async (email?: string | null) => {
+    if (!email) return;
     
-    const visits = getVisits(email);
+    const visits = await getVisits(email);
     const today = format(new Date(), 'yyyy-MM-dd');
     
     if (!visits.includes(today)) {
         const updatedVisits = [...new Set([...visits, today])];
-        setVisits(updatedVisits, email);
-        // Dispatch a storage event to notify other components/tabs
-        window.dispatchEvent(new StorageEvent('storage', { key: getUserStreakKey(email), newValue: JSON.stringify(updatedVisits) }));
+        await setVisits(updatedVisits, email);
     }
 };
 
 
-export const getStreakData = (email?: string | null): StreakData => {
+export const getStreakData = async (email?: string | null): Promise<StreakData> => {
     if (!email) {
          return { currentStreak: 0, bestStreak: 0, daysNotOpened: 0 };
     }
 
-    const visits = getVisits(email);
+    const visits = await getVisits(email);
     if (visits.length === 0) {
         return { currentStreak: 0, bestStreak: 0, daysNotOpened: 0 };
     }
@@ -103,7 +96,7 @@ export const getStreakData = (email?: string | null): StreakData => {
        const yesterdayStr = format(yesterday, 'yyyy-MM-dd');
        if(visits.includes(yesterdayStr)) {
             // Recalculate streak as if today was visited
-            const tempStreakData = getStreakData(email);
+            const tempStreakData = await getStreakData(email);
             currentStreak = tempStreakData.currentStreak;
        }
     }

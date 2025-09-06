@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -69,17 +70,18 @@ export function UserData() {
             setProfile(parsedProfile);
             loadSettings(parsedProfile.email);
             
-            const calculations = getAllTimeCalculations(parsedProfile.email);
-            setTotalCalculations(calculations);
-            setProgress((calculations / PREMIUM_MEMBER_THRESHOLD) * 100);
+            getAllTimeCalculations(parsedProfile.email).then(calculations => {
+                setTotalCalculations(calculations);
+                setProgress((calculations / PREMIUM_MEMBER_THRESHOLD) * 100);
 
-            if (parsedProfile.email === DEVELOPER_EMAIL) {
-                setUserRole('Owner');
-            } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
-                setUserRole('Premium Member');
-            } else {
-                setUserRole('Member');
-            }
+                if (parsedProfile.email === DEVELOPER_EMAIL) {
+                    setUserRole('Owner');
+                } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
+                    setUserRole('Premium Member');
+                } else {
+                    setUserRole('Member');
+                }
+            });
         } else {
             router.push('/welcome');
         }

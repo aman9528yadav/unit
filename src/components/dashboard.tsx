@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import Link from 'next/link';
 import { motion } from "framer-motion";
 import {
@@ -58,7 +59,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/context/theme-context";
-import { getTodaysCalculations, getWeeklyCalculations, getAllTimeCalculations } from "@/lib/utils";
+import { getTodaysCalculations, getWeeklyCalculations, getAllTimeCalculations, getAllTimeNotes } from "@/lib/utils";
 import { getStreakData, recordVisit, type StreakData } from "@/lib/streak";
 import { GlobalSearch } from "./global-search";
 import { Notifications } from "./notifications";
@@ -256,13 +257,20 @@ export function Dashboard() {
   const router = useRouter();
 
 
-  const updateStats = (email: string | null) => {
-    setTodayCalculations(getTodaysCalculations(email));
-    setWeeklyCalculations(getWeeklyCalculations(email));
-    setSavedNotesCount(getSavedNotesCount(email));
-    setAllTimeCalculations(getAllTimeCalculations(email));
-    setStreakData(getStreakData(email));
-  }
+  const updateStats = useCallback(async (email: string | null) => {
+    const [today, weekly, allTime, notes, streak] = await Promise.all([
+        getTodaysCalculations(email),
+        getWeeklyCalculations(email),
+        getAllTimeCalculations(email),
+        getAllTimeNotes(email),
+        getStreakData(email)
+    ]);
+    setTodayCalculations(today);
+    setWeeklyCalculations(weekly);
+    setAllTimeCalculations(allTime);
+    setSavedNotesCount(notes);
+    setStreakData(streak);
+  }, []);
 
   useEffect(() => {
     setIsClient(true);
@@ -272,27 +280,16 @@ export function Dashboard() {
     }
     
     const storedProfile = localStorage.getItem("userProfile");
-    const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
     
     if(storedProfile) {
         const parsedProfile = JSON.parse(storedProfile);
         setProfile(parsedProfile);
         recordVisit(parsedProfile.email); // Record visit for streak tracking
+        updateStats(parsedProfile.email);
+    } else {
+        updateStats(null); // Load guest data
     }
-    
-    updateStats(userEmail);
-
-    const handleStorageChange = (e: StorageEvent) => {
-        // If calculation history, notes, or visits change, update stats
-        if (e.key?.includes('dailyCalculations') || e.key?.includes('userNotesV2') || e.key?.includes('userVisitHistory')) {
-            updateStats(userEmail);
-        }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-
-  }, []);
+  }, [updateStats]);
   
   const handleThemeChange = (isDark: boolean) => {
       setTheme(isDark ? 'dark' : 'light');

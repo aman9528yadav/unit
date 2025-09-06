@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, Timestamp, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, Timestamp, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import type { AppNotification } from '@/lib/notifications';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
@@ -113,4 +114,34 @@ export function listenToGlobalMaintenanceMode(
     });
 
     return unsubscribe;
+}
+
+/**
+ * Retrieves a user's data document from Firestore.
+ * @param email - The user's email, used as the document ID.
+ * @returns The user data object or null if it doesn't exist.
+ */
+export async function getUserData(email: string) {
+    try {
+        const userDocRef = doc(db, 'users', email);
+        const docSnap = await getDoc(userDocRef);
+        return docSnap.exists() ? docSnap.data() : null;
+    } catch (error) {
+        console.error("Error getting user data:", error);
+        return null;
+    }
+}
+
+/**
+ * Creates or updates a user's data document in Firestore.
+ * @param email - The user's email, used as the document ID.
+ * @param data - The data object to merge with existing data.
+ */
+export async function updateUserData(email: string, data: { [key: string]: any }) {
+    try {
+        const userDocRef = doc(db, 'users', email);
+        await setDoc(userDocRef, data, { merge: true });
+    } catch (error) {
+        console.error("Error updating user data:", error);
+    }
 }
