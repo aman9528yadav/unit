@@ -314,7 +314,7 @@ export function Dashboard() {
         minutes: 5,
         minutesLabel: t('dashboard.minutes'),
         by: "Aman",
-        img: "https://images.unsplash.com/photo-1686061594183-8c864f508b00?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxkaWdpdGFsJTIwYW5hbHl0aWNzfGVufDB8fHx8MTc1NzEzMTU5Nnww&ixlib=rb-4.1.0&q=80&w=1080",
+        img: "https://picsum.photos/seed/tech1/400/200",
         dataAiHint: "digital analytics"
       },
       {
@@ -323,7 +323,7 @@ export function Dashboard() {
         minutes: 15,
         minutesLabel: t('dashboard.minutes'),
         by: "Aman",
-        img: "https://images.unsplash.com/photo-1745436831788-d8b8dcf662f9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxmaW5hbmNpYWwlMjBjYWxjdWxhdG9yfGVufDB8fHx8MTc1NzEzMTU5Nnww&ixlib=rb-4.1.0&q=80&w=1080",
+        img: "https://picsum.photos/seed/tech2/400/200",
         dataAiHint: "financial calculator"
       },
       {
@@ -332,7 +332,7 @@ export function Dashboard() {
         minutes: 8,
         minutesLabel: t('dashboard.minutes'),
         by: "Aman",
-        img: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0ZWFtJTIwd29ya2luZ3xlbnwwfHx8fDE3NTcxMzE1OTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+        img: "https://picsum.photos/seed/tech3/400/200",
         dataAiHint: "team working"
       },
     ];
