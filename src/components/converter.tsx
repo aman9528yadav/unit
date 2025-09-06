@@ -86,11 +86,11 @@ export const offlineParseConversionQuery = (query: string, allUnits: Unit[], cat
     const normalizedQuery = query.trim().toLowerCase();
 
     // Regex to capture value, from unit (can have spaces), and to unit (can have spaces)
-    const regex = /^([0-9.,\s]+)\s*([a-z\s²°/]+?)\s+(?:to|in|as)\s+([a-z\s²°/]+)$/i;
+    const regex = /^([0-9.,\s]+)\s*([^0-9\s].*?)\s+(?:to|in|as)\s+([^0-9\s].*?)$/i;
     const match = normalizedQuery.match(regex);
-
+    
     if (!match) return null;
-
+    
     const [, valueStr, fromUnitStr, toUnitStr] = match;
     const value = parseFloat(valueStr.replace(/,/g, ''));
     if (isNaN(value)) return null;
@@ -723,7 +723,7 @@ export function Converter() {
     const lowerQuery = query.toLowerCase();
 
     // Regex to find a number and some text
-    const valueUnitRegex = /^([0-9.,\s]+)?(.+)/i;
+    const valueUnitRegex = /^([0-9.,\s]+)?\s*(.*)/i;
     const match = query.match(valueUnitRegex);
     
     let numericPart: string | undefined = undefined;
@@ -731,18 +731,18 @@ export function Converter() {
 
     if (match) {
         numericPart = (match[1] || '').trim();
-        textPart = (match[2] || '').trim().replace(/\s/g, ''); // ignore spacing
+        textPart = (match[2] || '').trim();
     } else {
-        textPart = query.trim().toLowerCase().replace(/\s/g, '');
+        textPart = query.trim().toLowerCase();
     }
     
-    const toSeparator = "to";
-    const toIndex = textPart.toLowerCase().indexOf(toSeparator);
+    const toSeparator = " to ";
+    const toIndex = textPart.toLowerCase().lastIndexOf(toSeparator.trim());
 
-    if (toIndex !== -1 && textPart.endsWith(toSeparator)) {
+    if (toIndex !== -1 && (textPart.toLowerCase().endsWith(toSeparator.trim()) || textPart.toLowerCase().endsWith(toSeparator.trim() + ' '))) {
        const fromPart = textPart.substring(0, toIndex).trim();
        
-       const fromUnit = allUnits.find(u => u.name.toLowerCase().replace(/\s/g, '') === fromPart || u.symbol.toLowerCase().replace(/\s/g, '') === fromPart);
+       const fromUnit = allUnits.find(u => u.name.toLowerCase().replace(/\s/g,'') === fromPart.replace(/\s/g,'') || u.symbol.toLowerCase().replace(/\s/g,'') === fromPart.replace(/\s/g,''));
 
        if (fromUnit) {
            const category = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit.symbol));
@@ -765,15 +765,18 @@ export function Converter() {
         });
     }
 
-
     setSuggestions([...new Set(newSuggestions)].slice(0, 5));
 };
 
   
   const handleSuggestionClick = (suggestion: string) => {
-    setSearchQuery(suggestion);
+    // Remove the symbol part for parsing, e.g. "10 Kilometers (km)" -> "10 Kilometers"
+    const queryToParse = suggestion.replace(/\s\([^)]*\)$/, '');
+    setSearchQuery(queryToParse);
     setSuggestions([]);
-    handleSearch();
+    
+    // Use a slight delay to allow state to update before searching
+    setTimeout(() => handleSearch(), 0);
   };
   
   useEffect(() => {
