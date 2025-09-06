@@ -431,13 +431,16 @@ export function Converter() {
   
   // Perform conversion whenever inputs change if auto-convert is on
   useEffect(() => {
-    if (autoConvert) {
-      const parsed = offlineParseConversionQuery(debouncedInputValue, allUnits, conversionCategories);
-      if (parsed) {
-        restoreFromParsedQuery(parsed);
-      } else {
-        performConversion(inputValue, fromUnit, toUnit);
-      }
+    if (!autoConvert) return;
+  
+    // Try to parse the input as a full query first
+    const parsed = offlineParseConversionQuery(debouncedInputValue, allUnits, conversionCategories);
+  
+    if (parsed) {
+      restoreFromParsedQuery(parsed);
+    } else {
+      // If parsing fails, treat it as a simple number input
+      performConversion(inputValue, fromUnit, toUnit);
     }
   }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion, inputValue, allUnits, conversionCategories]);
 
@@ -705,7 +708,7 @@ export function Converter() {
         </div>
         <div className="flex items-center gap-2">
             <Button variant="ghost" className="gap-2" onClick={handleProfileClick}>
-                {t('dashboard.greeting', { name: profile?.fullName.split(' ')[0] || t('dashboard.guest') })}
+                Hi, {profile?.fullName.split(' ')[0] || 'Guest'}
                 <Avatar className="h-8 w-8">
                     <AvatarImage src={profile?.profileImage} alt={profile?.fullName}/>
                     <AvatarFallback><User /></AvatarFallback>
@@ -964,7 +967,7 @@ export function Converter() {
                                <Icon size={14}/> 
                                <span>{t(`categories.${categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: categoryName })}</span>
                                <span>•</span>
-                               <span>{formatTimestamp(timestamp)}</span>
+                               <span>{formatTimestamp(new Date(timestamp))}</span>
                            </div>
                          </div>
                        );

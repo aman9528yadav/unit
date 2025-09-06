@@ -280,7 +280,7 @@ export function Dashboard() {
 
   const handleProfileClick = () => {
     if (profile) {
-      router.push('/userdata');
+      router.push('/profile');
     } else {
       setShowLoginDialog(true);
     }
