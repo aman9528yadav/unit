@@ -509,12 +509,12 @@ export function Converter() {
     }
   };
 
-  const handleRegionChange = (value: string) => {
-    const isLocked = isPremiumFeatureLocked && PREMIUM_REGIONS.includes(value);
+  const handleRegionChange = (newRegion: string) => {
+    const isLocked = isPremiumFeatureLocked && PREMIUM_REGIONS.includes(newRegion);
     if (isLocked) {
         setShowPremiumLockDialog(true);
     } else {
-        setRegion(value as Region);
+        setRegion(newRegion as Region);
     }
   }
 
@@ -749,7 +749,7 @@ export function Converter() {
             />
         )}
        </div>
-        <Card>
+        <Card className="border-2 border-transparent">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">Quick Convert</CardTitle>
             </CardHeader>
@@ -1058,9 +1058,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
-
-    
-
-
