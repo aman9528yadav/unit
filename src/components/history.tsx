@@ -31,6 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "./ui/input";
 import { conversionCategories } from "@/lib/conversions";
 import { format, formatDistanceToNow, parseISO, isToday, isYesterday, isThisWeek } from 'date-fns';
+import { enUS, hi } from 'date-fns/locale';
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLanguage } from "@/context/language-context";
 
@@ -57,7 +58,7 @@ export function History() {
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
 
 
   const parseHistoryString = (item: string): HistoryItemData => {
@@ -169,25 +170,25 @@ export function History() {
                         <Home />
                     </Link>
                 </Button>
-                <h1 className="text-xl font-bold flex items-center gap-2"><Clock/> Conversion History</h1>
+                <h1 className="text-xl font-bold flex items-center gap-2"><Clock/> {t('history.title')}</h1>
             </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" disabled={itemsToDisplay.length === 0}>
-                <Trash2 className="mr-2"/> Clear All
+                <Trash2 className="mr-2"/> {t('history.clearAll')}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogTitle>{t('history.dialog.title')}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will permanently delete all {activeTab === 'history' ? 'history and favorites' : 'favorites'}. This action cannot be undone.
+                    {t('history.dialog.description', {tab: activeTab === 'history' ? t('history.tabs.history') : t('history.tabs.favorites')})}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{t('history.dialog.cancel')}</AlertDialogCancel>
                 <AlertDialogAction onClick={handleClearAll} className="bg-destructive hover:bg-destructive/90">
-                  Clear All
+                  {t('history.dialog.confirm')}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -196,23 +197,23 @@ export function History() {
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="history">History</TabsTrigger>
-                <TabsTrigger value="favorites">Favorites</TabsTrigger>
+                <TabsTrigger value="history">{t('history.tabs.history')}</TabsTrigger>
+                <TabsTrigger value="favorites">{t('history.tabs.favorites')}</TabsTrigger>
             </TabsList>
             
             <div className="flex items-center gap-2 my-4">
               <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Search conversions" className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                <Input placeholder={t('history.searchPlaceholder')} className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline"><Filter className="mr-2"/> {categoryFilter === 'All' ? 'All' : t(`categories.${categoryFilter.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: categoryFilter })} <ChevronDown className="ml-2 h-4 w-4" /></Button>
+                  <Button variant="outline"><Filter className="mr-2"/> {categoryFilter === 'All' ? t('history.filter.all') : t(`categories.${categoryFilter.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: categoryFilter })} <ChevronDown className="ml-2 h-4 w-4" /></Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                     <DropdownMenuRadioGroup value={categoryFilter} onValueChange={setCategoryFilter}>
                         {availableCategories.map(cat => (
-                            <DropdownMenuRadioItem key={cat} value={cat}>{cat === 'All' ? 'All' : t(`categories.${cat.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat })}</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem key={cat} value={cat}>{cat === 'All' ? t('history.filter.all') : t(`categories.${cat.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat })}</DropdownMenuRadioItem>
                         ))}
                     </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
@@ -223,12 +224,12 @@ export function History() {
                 {filteredItems.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {filteredItems.map((item, index) => (
-                         <HistoryItem key={`${item.timestamp}-${index}`} item={item} onRestore={handleRestore} onDelete={() => setItemToDelete(`${item.conversion}|${item.categoryName}|${item.timestamp}`)} t={t}/>
+                         <HistoryItem key={`${item.timestamp}-${index}`} item={item} onRestore={handleRestore} onDelete={() => setItemToDelete(`${item.conversion}|${item.categoryName}|${item.timestamp}`)} t={t} language={language}/>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-16 text-muted-foreground">
-                    <p>No {activeTab} found.</p>
+                    <p>{t('history.emptyState', {tab: t(`history.tabs.${activeTab}`)})}</p>
                   </div>
                 )}
             </div>
@@ -237,15 +238,15 @@ export function History() {
         <AlertDialog open={!!itemToDelete}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete History Item?</AlertDialogTitle>
+              <AlertDialogTitle>{t('history.dialog.deleteTitle')}</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete this history item.
+                {t('history.dialog.deleteDescription')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setItemToDelete(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => setItemToDelete(null)}>{t('history.dialog.cancel')}</AlertDialogCancel>
               <AlertDialogAction onClick={() => handleDeleteItem(itemToDelete!)} className="bg-destructive hover:bg-destructive/90">
-                Delete
+                {t('history.dialog.deleteConfirm')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -256,14 +257,15 @@ export function History() {
 }
 
 
-function HistoryItem({ item, onRestore, onDelete, t }: { item: HistoryItemData; onRestore: (item: string) => void; onDelete: () => void; t: (key: string, params?: any) => string; }) {
+function HistoryItem({ item, onRestore, onDelete, t, language }: { item: HistoryItemData; onRestore: (item: string) => void; onDelete: () => void; t: (key: string, params?: any) => string; language: string; }) {
     const fullHistoryString = `${item.conversion}|${item.categoryName}|${item.timestamp}`;
     const category = conversionCategories.find(c => c.name === item.categoryName);
     const Icon = category?.icon || Power;
+    const locale = language === 'hi' ? hi : enUS;
 
     const formatTimestamp = (timestamp: string) => {
         const date = parseISO(timestamp);
-        return formatDistanceToNow(date, { addSuffix: true });
+        return formatDistanceToNow(date, { addSuffix: true, locale: locale });
     };
 
     return (

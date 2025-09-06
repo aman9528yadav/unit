@@ -130,6 +130,28 @@
             "premiumCategory": "Unlock Premium to use this category."
         }
     },
+    "history": {
+        "title": "Conversion History",
+        "clearAll": "Clear All",
+        "tabs": {
+            "history": "History",
+            "favorites": "Favorites"
+        },
+        "searchPlaceholder": "Search conversions",
+        "filter": {
+            "all": "All"
+        },
+        "emptyState": "No {{tab}} found.",
+        "dialog": {
+            "title": "Are you sure?",
+            "description": "This will permanently delete all {{tab}}. This action cannot be undone.",
+            "cancel": "Cancel",
+            "confirm": "Clear All",
+            "deleteTitle": "Delete History Item?",
+            "deleteDescription": "This action cannot be undone. This will permanently delete this history item.",
+            "deleteConfirm": "Delete"
+        }
+    },
     "settings": {
         "title": "Settings",
         "general": {
