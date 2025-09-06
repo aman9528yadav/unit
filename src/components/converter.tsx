@@ -31,7 +31,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2, ChevronDown, Sparkles, LogIn, Scale, Power, Gauge, Flame, DollarSign, Fuel, Edit, Lock } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2, ChevronDown, Sparkles, LogIn, Scale, Power, Gauge, Flame, DollarSign, Fuel, Edit, Lock, Plus, Minus } from "lucide-react";
 import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow.ts";
 import { useToast } from "@/hooks/use-toast";
@@ -61,6 +61,8 @@ type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 
 const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
+const PREMIUM_REGIONS = ['Japan', 'Korea', 'China', 'Middle East'];
+
 
 const PREMIUM_CATEGORIES = ['Pressure', 'Energy', 'Currency', 'Fuel Economy'];
 
@@ -507,7 +509,12 @@ export function Converter() {
   };
 
   const handleRegionChange = (value: string) => {
-    setRegion(value as Region);
+    const isLocked = isPremiumFeatureLocked && PREMIUM_REGIONS.includes(value);
+    if (isLocked) {
+        setShowPremiumLockDialog(true);
+    } else {
+        setRegion(value as Region);
+    }
   }
 
   const handleSwapUnits = () => {
@@ -700,6 +707,11 @@ export function Converter() {
       handleCategoryChange(categoryName);
     }
   };
+  
+  const adjustValue = (amount: number) => {
+    setInputValue(prev => String(Number(prev) + amount));
+  };
+
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-4">
@@ -800,7 +812,17 @@ export function Converter() {
                                 <SelectValue placeholder="Select Region"/>
                             </SelectTrigger>
                             <SelectContent>
-                                {regions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                                {regions.map(r => {
+                                    const isLocked = isPremiumFeatureLocked && PREMIUM_REGIONS.includes(r);
+                                    return (
+                                        <SelectItem key={r} value={r} disabled={isLocked}>
+                                            <div className="flex items-center gap-2">
+                                                {isLocked && <Lock className="w-3 h-3" />}
+                                                {r}
+                                            </div>
+                                        </SelectItem>
+                                    )
+                                })}
                             </SelectContent>
                         </Select>
                     </div>
@@ -837,7 +859,7 @@ export function Converter() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="bg-secondary/50 p-4 flex flex-col justify-between">
+                    <Card className="bg-secondary/50 p-4 flex flex-col justify-between border-primary/50 border">
                          <div>
                             <Label htmlFor="value" className="text-muted-foreground">{fromUnitInfo?.name}</Label>
                              <div className="flex items-baseline gap-2">
@@ -850,6 +872,10 @@ export function Converter() {
                                     placeholder="0"
                                 />
                                 <span className="text-xl font-semibold text-muted-foreground">{fromUnitInfo?.symbol}</span>
+                                <div className="flex flex-col gap-1">
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => adjustValue(1)}><Plus size={16}/></Button>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => adjustValue(-1)}><Minus size={16}/></Button>
+                                </div>
                             </div>
                         </div>
                         <p className="text-xs text-muted-foreground">{t('converter.enterValue')}</p>
@@ -874,18 +900,17 @@ export function Converter() {
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                             <Button variant="ghost" size="icon" onClick={handleShareClick}>
-                                                <Share2 size={16} />
-                                            </Button>
+                                            <div onClick={handleShareClick}>
+                                                <DialogTrigger asChild={!isPremiumFeatureLocked}>
+                                                    <Button variant="ghost" size="icon">
+                                                        <Share2 size={16} />
+                                                    </Button>
+                                                </DialogTrigger>
+                                            </div>
                                         </TooltipTrigger>
                                          {isPremiumFeatureLocked && <TooltipContent><p>{t('converter.toast.premiumShare')}</p></TooltipContent>}
                                     </Tooltip>
                                 </TooltipProvider>
-                                {!isPremiumFeatureLocked && (
-                                     <DialogTrigger asChild>
-                                         <span/>
-                                     </DialogTrigger>
-                                )}
                                 <DialogContent>
                                     <DialogHeader>
                                         <DialogTitle>{t('converter.export.title')}</DialogTitle>
@@ -962,14 +987,20 @@ export function Converter() {
                        const Icon = category?.icon || Power;
                        
                        return (
-                         <div key={item} onClick={() => handleRestoreHistory(item)} className="bg-secondary p-3 rounded-lg cursor-pointer hover:bg-secondary/80">
-                           <p className="font-semibold">{conversion}</p>
-                           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                               <Icon size={14}/> 
-                               <span>{t(`categories.${categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: categoryName })}</span>
-                               <span>•</span>
-                               <span>{formatTimestamp(new Date(timestamp))}</span>
-                           </div>
+                         <div key={item} className="bg-secondary p-3 rounded-lg group relative">
+                            <div className="cursor-pointer" onClick={() => handleRestoreHistory(item)}>
+                               <p className="font-semibold">{conversion}</p>
+                               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                   <Icon size={14}/> 
+                                   <span>{t(`categories.${categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: categoryName })}</span>
+                                   <span>•</span>
+                                   <span>{formatTimestamp(new Date(timestamp))}</span>
+                               </div>
+                            </div>
+                            <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRestoreHistory(item)}><RotateCcw size={14} /></Button>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-destructive/20 hover:text-destructive" onClick={() => setHistory(h => h.filter(i => i !== item))}><Trash2 size={14} /></Button>
+                            </div>
                          </div>
                        );
                    })}
@@ -1007,7 +1038,7 @@ export function Converter() {
                     </div>
                     <AlertDialogTitle className="text-2xl">Premium Feature Locked</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This conversion category is available to Premium Members. Complete 8,000 operations to unlock this feature and more!
+                        This feature is available to Premium Members. Complete 8,000 operations to unlock this feature and more!
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="sm:justify-center flex-col-reverse sm:flex-row gap-2">
@@ -1069,5 +1100,7 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
 
     
