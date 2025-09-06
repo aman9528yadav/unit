@@ -724,8 +724,8 @@
             "passwordFieldsRequired": "Please fill all password fields",
             "passwordsNoMatch": "New passwords do not match",
             "passwordTooShort": {
-                "title": "Password Too Short",
-                "description": "New password must be at least 6 characters."
+                "title": "Password too short",
+                "description": "Password must be at least 6 characters."
             },
             "passwordChanged": {
                 "title": "Password Changed",
@@ -850,13 +850,13 @@
             "passwordsNoMatch": "Passwords do not match",
             "passwordTooShort": {
                 "title": "Password too short",
-                "description": "Password must be at least 8 characters."
+                "description": "Password must be at least {{min}} characters."
             },
             "signupFailed": {
                 "title": "Sign-up Failed",
                 "default": "An unexpected error occurred. Please try again.",
                 "emailInUse": "This email address is already in use. Please log in or use a different email.",
-                "weakPassword": "The password is too weak. Please choose a stronger password (at least 8 characters)."
+                "weakPassword": "The password is too weak. Please choose a stronger password."
             }
         }
     },

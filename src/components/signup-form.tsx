@@ -15,6 +15,7 @@ import { ArrowLeft, Eye, EyeOff, Play, ArrowRight, User as UserIcon } from "luci
 import { logUserEvent } from "@/services/firestore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/language-context";
+import { cn } from "@/lib/utils";
 
 
 const handleSuccessfulSignup = async (user: User) => {
@@ -36,6 +37,21 @@ const handleSuccessfulSignup = async (user: User) => {
     }
 }
 
+const checkPasswordStrength = (password: string) => {
+    let score = 0;
+    if (!password) return null;
+
+    if (password.length >= 8) score++;
+    if (password.length >= 12) score++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^a-zA-Z0-9]/.test(password)) score++;
+
+    if (score < 3) return { label: 'Weak', color: 'bg-red-500', width: 'w-1/3' };
+    if (score < 5) return { label: 'Medium', color: 'bg-yellow-500', width: 'w-2/3' };
+    return { label: 'Strong', color: 'bg-green-500', width: 'w-full' };
+};
+
 
 export function SignupForm() {
   const { toast } = useToast();
@@ -52,6 +68,12 @@ export function SignupForm() {
   const [canResend, setCanResend] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState<{label: string; color: string; width: string} | null>(null);
+
+  useEffect(() => {
+    setPasswordStrength(checkPasswordStrength(password));
+  }, [password]);
+
 
   useEffect(() => {
     let timerInterval: NodeJS.Timeout | null = null;
@@ -120,8 +142,8 @@ export function SignupForm() {
       toast({ title: t('signup.toast.passwordsNoMatch'), variant: "destructive" });
       return;
     }
-    if (password.length < 8) {
-      toast({ title: t('signup.toast.passwordTooShort.title'), description: t('signup.toast.passwordTooShort.description'), variant: "destructive" });
+    if (password.length < 6) {
+      toast({ title: t('signup.toast.passwordTooShort.title', {min: 6}), description: t('signup.toast.passwordTooShort.description', {min: 6}), variant: "destructive" });
       return;
     }
     setIsSubmitting(true);
@@ -219,6 +241,14 @@ export function SignupForm() {
                   >
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
+                  {passwordStrength && (
+                    <div className="mt-2 flex items-center gap-2">
+                        <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                            <div className={cn("h-full transition-all", passwordStrength.color, passwordStrength.width)}></div>
+                        </div>
+                        <span className="text-xs font-semibold" style={{ color: `var(--${passwordStrength.label.toLowerCase()})` }}>{passwordStrength.label}</span>
+                    </div>
+                  )}
               </div>
               <div className="relative">
                   <Label htmlFor="confirmPassword">{t('signup.labels.confirmPassword')}</Label>
@@ -255,5 +285,3 @@ export function SignupForm() {
     </div>
   );
 }
-
-    
