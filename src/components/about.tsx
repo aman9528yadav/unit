@@ -4,7 +4,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BarChart, Calendar, Lightbulb, Code, Sparkles, Globe, Wrench, Rocket } from "lucide-react";
+import { ArrowLeft, BarChart, Calendar, Lightbulb, Code, Sparkles, Globe, Wrench, Rocket, FileText, Shield, LifeBuoy, Flag } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export function About() {
@@ -51,6 +51,19 @@ export function About() {
       icon: <Rocket className="w-8 h-8 text-indigo-500" />,
     },
   ];
+  
+  const legalLinks = [
+    { title: 'Terms of Service', href: '#', icon: <FileText/> },
+    { title: 'Privacy Policy', href: '/privacy-policy', icon: <Shield/> },
+    { title: 'Open Source', href: '#', icon: <Code/> },
+  ];
+
+  const supportLinks = [
+    { title: 'Help Center', href: '/how-to-use', icon: <LifeBuoy/> },
+    { title: 'Contact Us', href: 'https://aman9528.wixstudio.com/my-site-3', icon: <Globe/> },
+    { title: 'Report an Issue', href: 'https://aman9528.wixstudio.com/my-site-3', icon: <Flag/> },
+  ];
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-indigo-100 flex flex-col items-center px-6 py-12 w-full">
@@ -139,23 +152,33 @@ export function About() {
         </section>
 
         {/* Legal Section */}
-        <section className="mt-16 w-full">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Legal</h2>
-          <ul className="bg-white shadow-lg rounded-2xl divide-y">
-            <li className="p-3 flex justify-between items-center"><span>Terms of Service</span><Link href="#" className="text-indigo-600 hover:underline text-sm">Open document →</Link></li>
-            <li className="p-3 flex justify-between items-center"><span>Privacy Policy</span><Link href="/privacy-policy" className="text-indigo-600 hover:underline text-sm">Open document →</Link></li>
-            <li className="p-3 flex justify-between items-center"><span>Open Source Notices</span><Link href="#" className="text-indigo-600 hover:underline text-sm">View libraries →</Link></li>
-          </ul>
+         <section className="mt-16 w-full">
+            <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Legal</h2>
+            <div className="grid grid-cols-3 gap-4">
+              {legalLinks.map(link => (
+                <Link href={link.href} key={link.title}>
+                   <div className="bg-white shadow-lg rounded-2xl p-4 h-24 flex flex-col items-center justify-center hover:shadow-xl transition text-center group">
+                      <div className="text-indigo-500 mb-2 group-hover:scale-110 transition-transform">{link.icon}</div>
+                      <p className="text-sm font-semibold text-gray-700">{link.title}</p>
+                   </div>
+                </Link>
+              ))}
+            </div>
         </section>
 
         {/* Support Section */}
         <section className="mt-16 w-full">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Support</h2>
-          <ul className="bg-white shadow-lg rounded-2xl divide-y">
-            <li className="p-3 flex justify-between items-center"><span>Help Center</span><Link href="/how-to-use" className="text-indigo-600 hover:underline text-sm">Visit →</Link></li>
-            <li className="p-3 flex justify-between items-center"><span>Contact</span><a href="https://aman9528.wixstudio.com/my-site-3" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-sm">Contact Us →</a></li>
-            <li className="p-3 flex justify-between items-center"><span>Report an Issue</span><a href="https://aman9528.wixstudio.com/my-site-3" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-sm">Create ticket →</a></li>
-          </ul>
+            <div className="grid grid-cols-3 gap-4">
+               {supportLinks.map(link => (
+                <a href={link.href} key={link.title} target="_blank" rel="noopener noreferrer">
+                   <div className="bg-white shadow-lg rounded-2xl p-4 h-24 flex flex-col items-center justify-center hover:shadow-xl transition text-center group">
+                       <div className="text-indigo-500 mb-2 group-hover:scale-110 transition-transform">{link.icon}</div>
+                      <p className="text-sm font-semibold text-gray-700">{link.title}</p>
+                   </div>
+                </a>
+              ))}
+            </div>
         </section>
       </div>
     </div>
