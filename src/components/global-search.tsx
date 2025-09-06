@@ -47,7 +47,7 @@ export function GlobalSearch() {
             categoriesWithCustomData.push({
                 name: cc.name,
                 icon: () => null, // Icon not needed for logic
-                units: [{ name: cc.baseUnitName, symbol: cc.baseUnitSymbol }],
+                units: [{ name: cc.baseUnitName, symbol: cc.baseUnitSymbol, info: '' }],
                 factors: { [cc.baseUnitSymbol]: 1 },
                 convert: function(value: number, from: string, to: string) {
                     const fromFactor = this.factors![from];
@@ -63,7 +63,7 @@ export function GlobalSearch() {
         const applicableUnits = customUnits.filter(cu => cu.category === category.name);
         applicableUnits.forEach(cu => {
             if (!newCategory.units.some(u => u.symbol === cu.symbol)) {
-                newCategory.units.push({ name: cu.name, symbol: cu.symbol });
+                newCategory.units.push({ name: cu.name, symbol: cu.symbol, info: '' });
             }
             if (newCategory.factors && newCategory.name !== 'Temperature') {
                 newCategory.factors[cu.symbol] = cu.factor;

@@ -751,7 +751,10 @@ export function Converter() {
        </div>
         <Card className="border-2 border-transparent">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">Quick Convert</CardTitle>
+                <div className="flex items-center gap-2">
+                    <Search/>
+                    <CardTitle className="flex items-center gap-2">{t('converter.quickConvert')}</CardTitle>
+                </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
                 <div className="flex items-center gap-2">
@@ -765,6 +768,10 @@ export function Converter() {
                         {isSearching ? <Loader2 className="animate-spin"/> : <Search />}
                     </Button>
                 </div>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardContent className="flex flex-col gap-4 pt-6">
                 <div className="grid grid-cols-2 gap-4">
                      <div>
                         <Label className="flex items-center gap-2 mb-2"><Globe size={16}/>{t('converter.region')}</Label>
@@ -1069,5 +1076,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
