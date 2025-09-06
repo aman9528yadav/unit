@@ -8,8 +8,7 @@ import Link from "next/link";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, intervalToDuration, differenceInDays } from "date-fns";
-
-const UPDATE_TIMER_STORAGE_KEY = "nextUpdateTime";
+import { listenToUpdateInfo, UpdateInfo } from '@/services/firestore';
 
 const CountdownBox = ({ value, label }: { value: number; label: string }) => (
     <div className="bg-primary/10 p-4 rounded-lg text-primary w-24">
@@ -35,20 +34,32 @@ const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementTy
 
 export default function MaintenancePage() {
   const [targetDate, setTargetDate] = useState<Date | null>(null);
+  const [updateText, setUpdateText] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<Duration & { totalDays?: number } | null>(null);
 
   useEffect(() => {
-    const savedDate = localStorage.getItem(UPDATE_TIMER_STORAGE_KEY);
-    if (savedDate) {
-        const date = new Date(savedDate);
-        if (!isNaN(date.getTime()) && date > new Date()) {
-            setTargetDate(date);
+    const unsubscribe = listenToUpdateInfo((info: UpdateInfo) => {
+        if (info.targetDate) {
+            const date = new Date(info.targetDate);
+            if (!isNaN(date.getTime()) && date > new Date()) {
+                setTargetDate(date);
+            } else {
+                setTargetDate(null);
+            }
+        } else {
+            setTargetDate(null);
         }
-    }
+        setUpdateText(info.updateText || "General improvements and bug fixes.");
+    });
+    
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!targetDate) return;
+    if (!targetDate) {
+        setTimeLeft(null);
+        return;
+    };
 
     const timer = setInterval(() => {
       const now = new Date();
@@ -59,7 +70,6 @@ export default function MaintenancePage() {
       } else {
         setTimeLeft(null);
         setTargetDate(null);
-        localStorage.removeItem(UPDATE_TIMER_STORAGE_KEY);
         clearInterval(timer);
       }
     }, 1000);

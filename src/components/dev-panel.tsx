@@ -13,7 +13,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
-import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode } from '@/services/firestore';
+import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo } from '@/services/firestore';
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -44,11 +44,6 @@ export function DevPanel() {
         setIsClient(true);
         const storedProfile = localStorage.getItem('userProfile');
         
-        const storedUpdateText = localStorage.getItem("nextUpdateText");
-        if (storedUpdateText) {
-            setUpdateText(storedUpdateText);
-        }
-
         if (storedProfile) {
             const parsedProfile = JSON.parse(storedProfile);
             setProfile(parsedProfile);
@@ -88,34 +83,49 @@ export function DevPanel() {
         setDuration(prev => ({ ...prev, [unit]: isNaN(numValue) ? 0 : numValue }));
     };
 
-    const handleSetTimer = () => {
+    const handleSetTimer = async () => {
         const now = new Date();
         const { days, hours, minutes, seconds } = duration;
         const totalMilliseconds = (days * 86400 + hours * 3600 + minutes * 60 + seconds) * 1000;
         
         if(totalMilliseconds <= 0) {
-            toast({ title: 'Invalid Duration', description: 'Please enter a positive duration.', variant: 'destructive' });
+            await setUpdateInfo({ targetDate: null, updateText });
+            toast({ title: 'Countdown Cleared', description: 'Duration was zero or negative.' });
             return;
         }
 
         const targetDateTime = new Date(now.getTime() + totalMilliseconds);
-
-        localStorage.setItem("nextUpdateTime", targetDateTime.toISOString());
-        window.dispatchEvent(new StorageEvent('storage', { key: "nextUpdateTime", newValue: targetDateTime.toISOString() }));
-        toast({ title: 'Countdown Set!', description: `Timer set for ${targetDateTime.toLocaleString()}` });
+        
+        try {
+            await setUpdateInfo({ targetDate: targetDateTime.toISOString(), updateText });
+            toast({ title: 'Countdown Set!', description: `Timer set for ${targetDateTime.toLocaleString()}` });
+        } catch (error) {
+            toast({ title: 'Error', description: 'Could not set countdown in database.', variant: 'destructive'});
+        }
     };
 
-    const handleClearTimer = () => {
-        localStorage.removeItem("nextUpdateTime");
-        window.dispatchEvent(new StorageEvent('storage', { key: "nextUpdateTime", newValue: null }));
-        setDuration({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        toast({ title: 'Countdown Cleared' });
+    const handleClearTimer = async () => {
+        try {
+            await setUpdateInfo({ targetDate: null, updateText });
+            setDuration({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+            toast({ title: 'Countdown Cleared' });
+        } catch (error) {
+            toast({ title: 'Error', description: 'Could not clear countdown in database.', variant: 'destructive'});
+        }
     };
     
-    const handleSaveUpdateText = () => {
-        localStorage.setItem("nextUpdateText", updateText);
-         window.dispatchEvent(new StorageEvent('storage', { key: "nextUpdateText", newValue: updateText }));
-        toast({ title: 'Update Text Saved' });
+    const handleSaveUpdateText = async () => {
+        const now = new Date();
+        const { days, hours, minutes, seconds } = duration;
+        const totalMilliseconds = (days * 86400 + hours * 3600 + minutes * 60 + seconds) * 1000;
+        const targetDateTime = totalMilliseconds > 0 ? new Date(now.getTime() + totalMilliseconds) : null;
+        
+        try {
+             await setUpdateInfo({ targetDate: targetDateTime?.toISOString() ?? null, updateText });
+             toast({ title: 'Update Text Saved' });
+        } catch(e) {
+            toast({ title: 'Error saving update text', variant: 'destructive' });
+        }
     };
 
     const handleSendNotification = async () => {

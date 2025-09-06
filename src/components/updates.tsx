@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -8,9 +9,7 @@ import { ArrowLeft, Gift, Zap, Rocket, Timer, Palette, Languages, User, Wand2 } 
 import { format, intervalToDuration, differenceInDays } from "date-fns";
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/language-context';
-
-const UPDATE_TIMER_STORAGE_KEY = "nextUpdateTime";
-const UPDATE_TEXT_STORAGE_KEY = "nextUpdateText";
+import { listenToUpdateInfo, UpdateInfo } from '@/services/firestore';
 
 const getUpdates = (t: (key: string) => string) => [
     {
@@ -93,42 +92,24 @@ export function Updates() {
     setIsClient(true);
   }, []);
 
-  const loadData = () => {
-    const savedDate = localStorage.getItem(UPDATE_TIMER_STORAGE_KEY);
-    const savedText = localStorage.getItem(UPDATE_TEXT_STORAGE_KEY);
-    
-    if (savedText) {
-        setUpdateText(savedText);
-    } else {
-        setUpdateText("General improvements and bug fixes.");
-    }
-
-    if (savedDate) {
-      const date = new Date(savedDate);
-      if (!isNaN(date.getTime()) && date > new Date()) {
-        setTargetDate(date);
-      } else {
-        setTargetDate(null);
-        localStorage.removeItem(UPDATE_TIMER_STORAGE_KEY);
-      }
-    } else {
-        setTargetDate(null);
-    }
-  };
-  
   useEffect(() => {
     if(!isClient) return;
     
-    loadData();
-    
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === UPDATE_TIMER_STORAGE_KEY || event.key === UPDATE_TEXT_STORAGE_KEY) {
-        loadData();
-      }
-    };
+    const unsubscribe = listenToUpdateInfo((info: UpdateInfo) => {
+        if (info.targetDate) {
+            const date = new Date(info.targetDate);
+             if (!isNaN(date.getTime()) && date > new Date()) {
+                setTargetDate(date);
+            } else {
+                setTargetDate(null);
+            }
+        } else {
+            setTargetDate(null);
+        }
+       setUpdateText(info.updateText || "General improvements and bug fixes.");
+    });
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    return () => unsubscribe();
   }, [isClient]);
 
 
@@ -147,7 +128,6 @@ export function Updates() {
       } else {
         setTimeLeft(null);
         setTargetDate(null);
-        localStorage.removeItem(UPDATE_TIMER_STORAGE_KEY);
         clearInterval(timer);
       }
     }, 1000);

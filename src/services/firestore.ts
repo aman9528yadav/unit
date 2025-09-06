@@ -24,6 +24,11 @@ export interface UserData {
     [key: string]: any;
 }
 
+export interface UpdateInfo {
+    targetDate: string | null;
+    updateText: string | null;
+}
+
 
 /**
  * Logs a user event (login or signup) to Firestore.
@@ -123,6 +128,41 @@ export function listenToGlobalMaintenanceMode(
     }, (error) => {
         console.error("Error listening to maintenance mode:", error);
         setIsMaintenanceMode(false); // Default to off on error
+    });
+
+    return unsubscribe;
+}
+
+/**
+ * Sets the upcoming update information (countdown target and text) in Realtime Database.
+ * @param info - An object containing the targetDate (as ISO string) and updateText.
+ */
+export async function setUpdateInfo(info: UpdateInfo) {
+    try {
+        const updateInfoRef = ref(rtdb, 'settings/updateInfo');
+        await setRealtimeDb(updateInfoRef, info);
+    } catch (error) {
+        console.error("Error setting update info:", error);
+        throw error;
+    }
+}
+
+/**
+ * Listens for real-time changes to the upcoming update information.
+ * @param callback - Function to be called with the update info.
+ * @returns The unsubscribe function.
+ */
+export function listenToUpdateInfo(callback: (info: UpdateInfo) => void) {
+    const updateInfoRef = ref(rtdb, 'settings/updateInfo');
+    const unsubscribe = onValue(updateInfoRef, (snapshot) => {
+        const data = snapshot.val();
+        callback({
+            targetDate: data?.targetDate || null,
+            updateText: data?.updateText || null,
+        });
+    }, (error) => {
+        console.error("Error listening to update info:", error);
+        callback({ targetDate: null, updateText: null });
     });
 
     return unsubscribe;
