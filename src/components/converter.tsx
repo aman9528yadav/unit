@@ -431,16 +431,15 @@ export function Converter() {
   
   // Perform conversion whenever inputs change if auto-convert is on
   useEffect(() => {
-    const parsed = offlineParseConversionQuery(debouncedInputValue, allUnits, conversionCategories);
-    if(parsed) {
-        restoreFromParsedQuery(parsed);
-        return;
-    }
-
     if (autoConvert) {
-      performConversion(inputValue, fromUnit, toUnit);
+      const parsed = offlineParseConversionQuery(debouncedInputValue, allUnits, conversionCategories);
+      if (parsed) {
+        restoreFromParsedQuery(parsed);
+      } else {
+        performConversion(inputValue, fromUnit, toUnit);
+      }
     }
-  }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion]);
+  }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion, inputValue, allUnits, conversionCategories]);
 
   // Update favorite status whenever output or favorites list change
   React.useEffect(() => {
@@ -516,7 +515,12 @@ export function Converter() {
   };
 
   const handleConvertClick = () => {
-    performConversion(inputValue, fromUnit, toUnit);
+    const parsed = offlineParseConversionQuery(inputValue, allUnits, conversionCategories);
+    if (parsed) {
+      restoreFromParsedQuery(parsed);
+    } else {
+      performConversion(inputValue, fromUnit, toUnit);
+    }
   };
   
   const handleToggleFavorite = () => {
@@ -1041,5 +1045,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
