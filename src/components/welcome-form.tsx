@@ -151,9 +151,10 @@ export function WelcomeForm() {
                 {t('welcome.signupLink')}
                 </Link>
             </p>
+            <p className="text-center text-xs text-muted-foreground mt-6">
+                By continuing, you agree to our <Link href="/privacy-policy" className="font-semibold text-primary hover:underline">Privacy Policy</Link>.
+            </p>
         </div>
     </div>
   );
 }
-
-    
