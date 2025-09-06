@@ -80,8 +80,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const savedTheme = localStorage.getItem('theme') as Theme | null;
     const savedCustomTheme = localStorage.getItem('customTheme');
     
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    const initialTheme = savedTheme || 'light';
     
     setThemeState(initialTheme);
     if(initialTheme !== 'custom') {
