@@ -64,6 +64,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { cn } from "@/lib/utils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { AboutCard } from "./about-card";
+import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 
 
 interface Note {
@@ -123,8 +124,7 @@ const ToolButton = ({ icon: Icon, label, href, color }: any) => (
 );
 
 const UpdateCard = ({ update }: any) => (
-  <Link href={update.href} className="flex-1">
-    <Card className="bg-card border-border shadow-sm hover:bg-secondary transition-colors h-full">
+    <Card className="bg-card border-border shadow-sm hover:bg-secondary transition-colors h-full w-[240px] flex-shrink-0">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
             <div className={cn("size-10 grid place-items-center rounded-lg", update.bgColor, update.color)}>
@@ -137,7 +137,6 @@ const UpdateCard = ({ update }: any) => (
         </div>
       </CardContent>
     </Card>
-  </Link>
 );
 
 
@@ -284,7 +283,6 @@ export function Dashboard() {
       { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
       { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
       { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
-      { label: t('dashboard.tools.about'), icon: Info, href: "/about", color: "text-purple-400" },
     ];
     
     const moreTools = [
@@ -434,11 +432,14 @@ export function Dashboard() {
                   </Link>
               </Button>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4">
-              {recentUpdates.map((update) => (
-                  <UpdateCard key={update.title} update={update} />
-              ))}
-          </div>
+          <ScrollArea className="w-full whitespace-nowrap rounded-lg">
+            <div className="flex gap-4 pb-4">
+                {recentUpdates.map((update) => (
+                    <UpdateCard key={update.title} update={update} />
+                ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
       </section>
 
       <section>
@@ -481,3 +482,5 @@ export function Dashboard() {
     </div>
   );
 }
+
+    
