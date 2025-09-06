@@ -14,7 +14,8 @@ import {
   Search,
   ChevronDown,
   PieChart as PieChartIcon,
-  Lightbulb
+  Lightbulb,
+  CalculatorIcon
 } from "lucide-react";
 import {
   Area,
@@ -35,17 +36,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getWeeklyCalculations, getMonthlyCalculations, getTodaysCalculations, getAllTimeCalculations, getWeeklyNotes, getMonthlyNotes } from "@/lib/utils";
+import { getWeeklyCalculations, getMonthlyCalculations, getTodaysCalculations, getAllTimeCalculations, getWeeklyNotes, getMonthlyNotes, getAllTimeNotes } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { useRouter } from "next/navigation";
 
-
-const topOperations = [
-    { name: "Date Calc", icon: Timer, count: 42, lastUsed: "Sep 5, 2025", trend: 5 },
-    { name: "Smart Search", icon: Search, count: 35, lastUsed: "Sep 4, 2025", trend: -2 },
-    { name: "Notes", icon: NotebookPen, count: 28, lastUsed: "Sep 3, 2025", trend: 8 },
-    { name: "Converter", icon: Sigma, count: 19, lastUsed: "Sep 5, 2025", trend: 3 },
-];
 
 const timeTrackingData = [
   { name: 'Converter', value: 400, color: 'hsl(var(--chart-1))' },
@@ -61,6 +55,8 @@ export function Analytics() {
   const [monthlyCalculations, setMonthlyCalculations] = useState<{name: string; value: number}[]>([]);
   const [weeklyNotes, setWeeklyNotes] = useState<{name: string; value: number}[]>([]);
   const [monthlyNotes, setMonthlyNotes] = useState<{name: string; value: number}[]>([]);
+  const [allTimeCalcs, setAllTimeCalcs] = useState(0);
+  const [allTimeNotes, setAllTimeNotes] = useState(0);
 
   const { t } = useLanguage();
   const router = useRouter();
@@ -75,6 +71,8 @@ export function Analytics() {
     setMonthlyCalculations(getMonthlyCalculations(userEmail));
     setWeeklyNotes(getWeeklyNotes(userEmail));
     setMonthlyNotes(getMonthlyNotes(userEmail));
+    setAllTimeCalcs(getAllTimeCalculations(userEmail));
+    setAllTimeNotes(getAllTimeNotes(userEmail));
   }, []);
 
   const getChartData = () => {
@@ -82,12 +80,20 @@ export function Analytics() {
       switch (toolFilter) {
           case 'notes':
               return isWeekly ? weeklyNotes : monthlyNotes;
-          case 'calc': // Currently shows all data as calculator-specific data is not tracked
+          case 'calc':
           case 'all':
           default:
               return isWeekly ? weeklyCalculations : monthlyCalculations;
       }
   };
+  
+  const topOperations = [
+      { name: "Date Calc", icon: Timer, count: 42, lastUsed: "Sep 5, 2025", trend: 5 },
+      { name: "Smart Search", icon: Search, count: 35, lastUsed: "Sep 4, 2025", trend: -2 },
+      { name: "Notes", icon: NotebookPen, count: allTimeNotes, lastUsed: "Sep 3, 2025", trend: allTimeNotes > 20 ? 8 : 1 },
+      { name: "Calculator/Converter", icon: CalculatorIcon, count: allTimeCalcs, lastUsed: "Sep 5, 2025", trend: allTimeCalcs > 50 ? 3 : -1 },
+  ];
+
 
   const chartData = getChartData();
 
@@ -125,7 +131,7 @@ export function Analytics() {
                                 <TabsList>
                                     <TabsTrigger value="weekly">Weekly</TabsTrigger>
                                     <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                                    <TabsTrigger value="custom" disabled>Custom Range</TabsTrigger>
+                                    <TabsTrigger value="custom">Custom Range</TabsTrigger>
                                 </TabsList>
                                 <Select value={toolFilter} onValueChange={setToolFilter}>
                                     <SelectTrigger className="w-40">

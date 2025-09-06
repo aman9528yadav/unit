@@ -94,17 +94,21 @@ const incrementTodaysCount = (storageKey: string) => {
     window.dispatchEvent(new StorageEvent('storage', { key: userKey, newValue: JSON.stringify(data) }));
 };
 
+const getAllTimeData = (storageKey: string, email: string | null): number => {
+    const data = getDataForDays(storageKey, email);
+    return Object.values(data).reduce((total, count) => total + count, 0);
+};
+
 // --- General Calculations ---
 export const incrementTodaysCalculations = () => incrementTodaysCount(CALCULATION_STORAGE_KEY);
 export const getTodaysCalculations = (email: string | null): number => getDataForDays(CALCULATION_STORAGE_KEY, email)[getTodayString()] || 0;
 export const getWeeklyCalculations = (email: string | null) => getWeeklyData(CALCULATION_STORAGE_KEY, email);
 export const getMonthlyCalculations = (email: string | null) => getMonthlyData(CALCULATION_STORAGE_KEY, email);
-export const getAllTimeCalculations = (email: string | null): number => {
-    const data = getDataForDays(CALCULATION_STORAGE_KEY, email);
-    return Object.values(data).reduce((total, count) => total + count, 0);
-}
+export const getAllTimeCalculations = (email: string | null): number => getAllTimeData(CALCULATION_STORAGE_KEY, email);
+
 
 // --- Note-specific Tracking ---
 export const incrementTodaysNotes = () => incrementTodaysCount(NOTE_STORAGE_KEY);
 export const getWeeklyNotes = (email: string | null) => getWeeklyData(NOTE_STORAGE_KEY, email);
 export const getMonthlyNotes = (email: string | null) => getMonthlyData(NOTE_STORAGE_KEY, email);
+export const getAllTimeNotes = (email: string | null): number => getAllTimeData(NOTE_STORAGE_KEY, email);
