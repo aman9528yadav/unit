@@ -11,6 +11,7 @@ import { usePathname } from 'next/navigation';
 import { listenToGlobalMaintenanceMode, syncOfflineData } from '@/services/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
+import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
 function AppFooter() {
     const pathname = usePathname();
@@ -33,7 +34,11 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
-        const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenanceMode);
+        const unsubscribe = listenToGlobalMaintenanceMode(
+            setIsMaintenanceMode, 
+            router,
+            pathname
+        );
         
         const handleOnline = () => {
           console.log('App is online, attempting to sync data.');
@@ -51,13 +56,7 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
             unsubscribe();
             window.removeEventListener('online', handleOnline);
         };
-    }, []);
-
-    useEffect(() => {
-        if (isMaintenanceMode === true && !pathname.startsWith('/dev')) {
-             router.replace("/maintenance");
-        }
-    }, [isMaintenanceMode, pathname, router]);
+    }, [router, pathname]);
 
 
     if (isMaintenanceMode === null) {
@@ -75,7 +74,7 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     }
     
     // If in maintenance, we are redirecting, so render nothing.
-    if (isMaintenanceMode) {
+    if (isMaintenanceMode && pathname !== '/maintenance') {
         return null; 
     }
 

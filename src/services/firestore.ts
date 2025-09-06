@@ -100,10 +100,14 @@ export async function setGlobalMaintenanceMode(isEnabled: boolean) {
 /**
  * Sets up a real-time listener for the global maintenance mode status from Realtime Database.
  * @param setIsMaintenanceMode - State setter to update the component's view of the maintenance status.
+ * @param router - The Next.js router instance for navigation.
+ * @param pathname - The current route's pathname.
  * @returns The unsubscribe function for the listener.
  */
 export function listenToGlobalMaintenanceMode(
   setIsMaintenanceMode: (status: boolean) => void,
+  router: AppRouterInstance,
+  pathname: string
 ) {
     const maintenanceRef = ref(rtdb, 'settings/maintenance');
     
@@ -111,6 +115,11 @@ export function listenToGlobalMaintenanceMode(
         const data = snapshot.val();
         const isEnabled = data?.isEnabled || false;
         setIsMaintenanceMode(isEnabled);
+        
+        // Handle redirection
+        if (isEnabled && !pathname.startsWith('/dev') && pathname !== '/maintenance') {
+            router.replace("/maintenance");
+        }
     }, (error) => {
         console.error("Error listening to maintenance mode:", error);
         setIsMaintenanceMode(false); // Default to off on error
