@@ -63,8 +63,9 @@ export function Analytics() {
 
    useEffect(() => {
     setIsClient(true);
-    // In a real app, you would fetch this for the logged-in user
-    setWeeklyCalculations(getWeeklyCalculations(null));
+    const storedProfile = localStorage.getItem("userProfile");
+    const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
+    setWeeklyCalculations(getWeeklyCalculations(userEmail));
   }, []);
 
   if (!isClient) {
