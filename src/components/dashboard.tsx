@@ -115,7 +115,7 @@ const Stat = ({ icon: Icon, label, value, trend }: any) => (
 );
 
 const ToolButton = ({ icon: Icon, label, href, color }: any) => (
-    <Link href={href} className="group rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex flex-col items-center justify-center gap-2 shadow-sm text-center">
+    <Link href={href} className="group aspect-square rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex flex-col items-center justify-center gap-2 shadow-sm text-center">
         <div className={cn("size-12 grid place-items-center rounded-full bg-secondary", color)}>
             <Icon className="size-6" />
         </div>
@@ -483,4 +483,3 @@ export function Dashboard() {
   );
 }
 
-    
