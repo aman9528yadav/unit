@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -117,7 +116,7 @@ export function Profile() {
         </header>
 
         <div className="flex flex-col items-center text-center gap-2 mt-2">
-            <Link href="/userdata">
+            <Link href="/profile">
                 <div className="relative w-28 h-28 cursor-pointer">
                     <Avatar className="w-28 h-28 text-6xl border-4 border-background">
                         <AvatarImage src={profile.profileImage} alt={profile.fullName} />

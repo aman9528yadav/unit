@@ -1,4 +1,3 @@
-
 import { UserData } from "@/components/userdata";
 
 export default function ProfilePage() {

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -69,7 +68,7 @@ export default function ThemeEditorPage() {
                 <p className="text-muted-foreground">
                     The Theme Editor is available to Premium Members. Complete 8,000 operations to unlock this feature and more!
                 </p>
-                <Button onClick={() => router.push('/userdata')} className="mt-4">
+                <Button onClick={() => router.push('/profile')} className="mt-4">
                     Check Your Progress
                 </Button>
             </div>

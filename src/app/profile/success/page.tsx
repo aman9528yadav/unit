@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect } from "react";
@@ -11,7 +10,7 @@ export default function ProfileSuccessPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push("/userdata");
+      router.push("/profile");
     }, 2500); // Increased duration for animation
 
     return () => clearTimeout(timer);
