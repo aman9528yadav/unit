@@ -35,7 +35,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getWeeklyCalculations, getMonthlyCalculations, getTodaysCalculations, getAllTimeCalculations } from "@/lib/utils";
+import { getWeeklyCalculations, getMonthlyCalculations, getTodaysCalculations, getAllTimeCalculations, getWeeklyNotes, getMonthlyNotes } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { useRouter } from "next/navigation";
 
@@ -59,6 +59,9 @@ export function Analytics() {
   const [isClient, setIsClient] = useState(false);
   const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string; value: number}[]>([]);
   const [monthlyCalculations, setMonthlyCalculations] = useState<{name: string; value: number}[]>([]);
+  const [weeklyNotes, setWeeklyNotes] = useState<{name: string; value: number}[]>([]);
+  const [monthlyNotes, setMonthlyNotes] = useState<{name: string; value: number}[]>([]);
+
   const { t } = useLanguage();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('weekly');
@@ -70,9 +73,23 @@ export function Analytics() {
     const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
     setWeeklyCalculations(getWeeklyCalculations(userEmail));
     setMonthlyCalculations(getMonthlyCalculations(userEmail));
+    setWeeklyNotes(getWeeklyNotes(userEmail));
+    setMonthlyNotes(getMonthlyNotes(userEmail));
   }, []);
 
-  const chartData = activeTab === 'weekly' ? weeklyCalculations : monthlyCalculations;
+  const getChartData = () => {
+      const isWeekly = activeTab === 'weekly';
+      switch (toolFilter) {
+          case 'notes':
+              return isWeekly ? weeklyNotes : monthlyNotes;
+          case 'calc': // Currently shows all data as calculator-specific data is not tracked
+          case 'all':
+          default:
+              return isWeekly ? weeklyCalculations : monthlyCalculations;
+      }
+  };
+
+  const chartData = getChartData();
 
   if (!isClient) {
       return null; // Or return a skeleton loader

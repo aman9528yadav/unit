@@ -26,34 +26,37 @@ const getTodayString = () => {
 };
 
 const CALCULATION_STORAGE_KEY = 'dailyCalculations';
+const NOTE_STORAGE_KEY = 'dailyNotes';
 
-type DailyCalculationData = {
+
+type DailyData = {
     [date: string]: number; // date string 'YYYY-MM-DD'
 }
 
-export function getAllTimeCalculations(email: string | null): number {
-    if (typeof window === 'undefined') return 0;
-    
-    const storedData = localStorage.getItem(getUserKey(CALCULATION_STORAGE_KEY, email));
-    if (!storedData) {
-        return 0;
-    }
-    try {
-        const data: DailyCalculationData = JSON.parse(storedData);
-        // Sum all the values in the object
-        return Object.values(data).reduce((total, count) => total + count, 0);
-    } catch (error) {
-        console.error("Error parsing daily calculation data from localStorage", error);
-        return 0;
-    }
+const getDataForDays = (storageKey: string, email: string | null): DailyData => {
+    if (typeof window === 'undefined') return {};
+    const storedData = localStorage.getItem(getUserKey(storageKey, email));
+    return storedData ? JSON.parse(storedData) : {};
+};
+
+const getWeeklyData = (storageKey: string, email: string | null): { name: string; value: number }[] => {
+    const data = getDataForDays(storageKey, email);
+    const today = new Date();
+    const weekAgo = subDays(today, 6);
+    const last7Days = eachDayOfInterval({ start: weekAgo, end: today });
+
+    return last7Days.map(date => {
+        const formattedDateKey = format(date, 'yyyy-MM-dd');
+        const dayName = format(date, 'MMM d');
+        return {
+          name: dayName,
+          value: data[formattedDateKey] || 0,
+        };
+    });
 }
 
-export function getMonthlyCalculations(email: string | null): { name: string; value: number }[] {
-    if (typeof window === 'undefined') return [];
-
-    const storedData = localStorage.getItem(getUserKey(CALCULATION_STORAGE_KEY, email));
-    const data: DailyCalculationData = storedData ? JSON.parse(storedData) : {};
-
+const getMonthlyData = (storageKey: string, email: string | null): { name: string; value: number }[] => {
+    const data = getDataForDays(storageKey, email);
     const monthlyTotals: { [month: string]: number } = {};
 
     for (const dateStr in data) {
@@ -71,84 +74,37 @@ export function getMonthlyCalculations(email: string | null): { name: string; va
             const date = new Date(Number(year), Number(month) - 1);
             return { name: format(date, 'MMM yyyy'), value };
         })
-        .sort((a, b) => new Date(a.name).getTime() - new Date(b.name).getTime()); // Sort by month
-}
+        .sort((a, b) => new Date(a.name).getTime() - new Date(b.name).getTime());
+};
 
 
-export function getWeeklyCalculations(email: string | null): { name: string; value: number }[] {
-  if (typeof window === 'undefined') {
-    return Array(7).fill(0).map((_, i) => {
-      const date = subDays(new Date(), 6 - i);
-      return { name: format(date, 'MMM d'), value: 0 };
-    });
-  }
-
-  const storedData = localStorage.getItem(getUserKey(CALCULATION_STORAGE_KEY, email));
-  const data: DailyCalculationData = storedData ? JSON.parse(storedData) : {};
-  
-  const today = new Date();
-  const weekAgo = subDays(today, 6);
-  
-  const last7Days = eachDayOfInterval({ start: weekAgo, end: today });
-  
-  return last7Days.map(date => {
-    // Format the key for lookup in the same local format
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const formattedDateKey = `${year}-${month}-${day}`;
-
-    const dayName = format(date, 'MMM d');
-    return {
-      name: dayName,
-      value: data[formattedDateKey] || 0,
-    };
-  });
-}
-
-export function getTodaysCalculations(email: string | null): number {
-  if (typeof window === 'undefined') return 0;
-  
-  const storedData = localStorage.getItem(getUserKey(CALCULATION_STORAGE_KEY, email));
-  if (!storedData) {
-    return 0;
-  }
-  try {
-    const data: DailyCalculationData = JSON.parse(storedData);
+const incrementTodaysCount = (storageKey: string) => {
+    if (typeof window === 'undefined') return;
+    
+    const storedProfile = localStorage.getItem('userProfile');
+    const email = storedProfile ? JSON.parse(storedProfile).email : null;
+    
     const today = getTodayString();
-    return data[today] || 0;
-  } catch (error) {
-    console.error("Error parsing daily calculation data from localStorage", error);
-    return 0;
-  }
+    const userKey = getUserKey(storageKey, email);
+    const data = getDataForDays(storageKey, email);
+    
+    data[today] = (data[today] || 0) + 1;
+    
+    localStorage.setItem(userKey, JSON.stringify(data));
+    window.dispatchEvent(new StorageEvent('storage', { key: userKey, newValue: JSON.stringify(data) }));
+};
+
+// --- General Calculations ---
+export const incrementTodaysCalculations = () => incrementTodaysCount(CALCULATION_STORAGE_KEY);
+export const getTodaysCalculations = (email: string | null): number => getDataForDays(CALCULATION_STORAGE_KEY, email)[getTodayString()] || 0;
+export const getWeeklyCalculations = (email: string | null) => getWeeklyData(CALCULATION_STORAGE_KEY, email);
+export const getMonthlyCalculations = (email: string | null) => getMonthlyData(CALCULATION_STORAGE_KEY, email);
+export const getAllTimeCalculations = (email: string | null): number => {
+    const data = getDataForDays(CALCULATION_STORAGE_KEY, email);
+    return Object.values(data).reduce((total, count) => total + count, 0);
 }
 
-export function incrementTodaysCalculations() {
-  if (typeof window === 'undefined') return;
-
-  const storedProfile = localStorage.getItem('userProfile');
-  const email = storedProfile ? JSON.parse(storedProfile).email : null;
-
-  const today = getTodayString();
-  const userKey = getUserKey(CALCULATION_STORAGE_KEY, email);
-  const storedData = localStorage.getItem(userKey);
-  
-  let data: DailyCalculationData = {};
-  if (storedData) {
-    try {
-      data = JSON.parse(storedData);
-    } catch (error) {
-       console.error("Error parsing daily calculation data from localStorage", error);
-    }
-  }
-
-  data[today] = (data[today] || 0) + 1;
-  
-  localStorage.setItem(userKey, JSON.stringify(data));
-
-  // Dispatch a storage event so other tabs can update
-  window.dispatchEvent(new StorageEvent('storage', {
-    key: userKey,
-    newValue: JSON.stringify(data),
-  }));
-}
+// --- Note-specific Tracking ---
+export const incrementTodaysNotes = () => incrementTodaysCount(NOTE_STORAGE_KEY);
+export const getWeeklyNotes = (email: string | null) => getWeeklyData(NOTE_STORAGE_KEY, email);
+export const getMonthlyNotes = (email: string | null) => getMonthlyData(NOTE_STORAGE_KEY, email);
