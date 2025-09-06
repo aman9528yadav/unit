@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -82,7 +83,8 @@ const getUserKey = (key: string, email: string | null) => {
 
 // Offline parser to replace the AI flow
 export const offlineParseConversionQuery = (query: string, allUnits: Unit[], categories: ConversionCategory[]): ParseConversionQueryOutput | null => {
-    const regex = /^\s*([0-9.,]+)\s*([a-zA-Z°/²³\s]+?)\s*(?:to|in|as)\s+([a-zA-Z°/²³\s]+)\s*$/i;
+    // Regex updated to be less greedy and handle multi-word units better.
+    const regex = /^\s*([0-9.,]+)\s*([a-zA-Z°/²³\s]+?)\s+(?:to|in|as)\s+([a-zA-Z°/²³\s]+)\s*$/i;
     const match = query.match(regex);
 
     if (!match) return null;
@@ -91,16 +93,19 @@ export const offlineParseConversionQuery = (query: string, allUnits: Unit[], cat
 
     const value = parseFloat(valueStr.replace(/,/g, ''));
     if (isNaN(value)) return null;
+    
+    // Sort units by length of name descending to match longer names first (e.g., "Square Meters" before "Meters")
+    const sortedUnits = [...allUnits].sort((a, b) => b.name.length - a.name.length);
 
     const findUnit = (unitStr: string): Unit | undefined => {
         const lowerUnitStr = unitStr.trim().toLowerCase();
-        // Match full name first, then symbol for better accuracy with multi-word names
-        return allUnits.find(u => u.name.toLowerCase() === lowerUnitStr) || allUnits.find(u => u.symbol.toLowerCase() === lowerUnitStr);
+        // Match full name first (case-insensitive), then symbol
+        return sortedUnits.find(u => u.name.toLowerCase() === lowerUnitStr) || sortedUnits.find(u => u.symbol.toLowerCase() === lowerUnitStr);
     };
 
     const fromUnit = findUnit(fromUnitStr);
     const toUnit = findUnit(toUnitStr);
-
+    
     if (!fromUnit || !toUnit) return null;
 
     // Find the category that contains both units
@@ -719,31 +724,32 @@ export function Converter() {
     const queryLower = query.toLowerCase();
 
     // Regex to extract number and the start of a unit
-    const valueUnitRegex = /^([0-9.,\s]+)?([a-zA-Z°/²³\s]*)/i;
+    const valueUnitRegex = /^([0-9.,\s]+)?\s*([a-zA-Z°/²³\s]*)/i;
     const match = query.match(valueUnitRegex);
     
     if (match) {
         const numericPart = (match[1] || '1').trim();
-        let textPart = query.substring(match[0].length).trim().toLowerCase();
+        let textPart = query.toLowerCase().replace(numericPart.toLowerCase(), "").trim();
         
-        // If query is "10kg to" textPart becomes " to"
-        if(query.toLowerCase().includes(" to ")){
-           textPart = query.toLowerCase().split(" to ")[0].replace(numericPart.toLowerCase(), "").trim();
-           const toPart = query.toLowerCase().split(" to ")[1].trim();
+        const toSeparator = " to ";
+        const toIndex = textPart.indexOf(toSeparator);
 
-            const fromUnit = allUnits.find(u => u.symbol.toLowerCase() === textPart || u.name.toLowerCase() === textPart);
+        if (toIndex !== -1) {
+           const fromPart = textPart.substring(0, toIndex).trim();
+           const toPart = textPart.substring(toIndex + toSeparator.length).trim();
 
-             if(fromUnit) {
-                const category = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit.symbol));
-                if (category) {
-                    category.units.forEach(unit => {
-                        if (unit.symbol !== fromUnit.symbol && (unit.name.toLowerCase().startsWith(toPart) || unit.symbol.toLowerCase().startsWith(toPart))) {
-                            newSuggestions.push(`${numericPart} ${fromUnit.name} to ${unit.name}`);
-                        }
-                    });
-                }
-            }
+           const fromUnit = allUnits.find(u => u.name.toLowerCase() === fromPart || u.symbol.toLowerCase() === fromPart);
 
+           if (fromUnit) {
+               const category = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit.symbol));
+               if (category) {
+                   category.units.forEach(unit => {
+                       if (unit.symbol !== fromUnit.symbol && (unit.name.toLowerCase().startsWith(toPart) || unit.symbol.toLowerCase().startsWith(toPart))) {
+                           newSuggestions.push(`${numericPart} ${fromUnit.name} to ${unit.name}`);
+                       }
+                   });
+               }
+           }
         } else if (textPart) {
             allUnits.forEach(unit => {
                 if (unit.name.toLowerCase().startsWith(textPart) || unit.symbol.toLowerCase().startsWith(textPart)) {
@@ -752,7 +758,6 @@ export function Converter() {
             });
         }
     }
-
 
     setSuggestions([...new Set(newSuggestions)].slice(0, 5));
 };
