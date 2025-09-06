@@ -72,7 +72,7 @@ export function About() {
 
         {/* App Info Section */}
         <section className="mt-12 grid md:grid-cols-2 gap-8 w-full">
-          <div className="bg-white shadow-lg rounded-2xl p-6 hover:shadow-xl transition">
+          <div className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-xl transition">
             <h2 className="text-2xl font-bold text-indigo-600 mb-4">App Information</h2>
             <ul className="text-gray-600 leading-relaxed space-y-2">
               <li><strong>Version:</strong> Beta 1.0.0</li>
@@ -82,7 +82,7 @@ export function About() {
             </ul>
           </div>
 
-          <div className="bg-white shadow-lg rounded-2xl p-6 hover:shadow-xl transition">
+          <div className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-xl transition">
             <h2 className="text-2xl font-bold text-indigo-600 mb-4">Release Plan</h2>
             <ul className="text-gray-600 leading-relaxed space-y-2">
               <li>📝 <strong>Planning:</strong> 12 May 2025</li>
@@ -129,7 +129,7 @@ export function About() {
         {/* About Owner Section */}
         <section className="mt-16 w-full text-center">
           <h2 className="text-3xl font-bold text-gray-800 mb-6">About the Owner</h2>
-          <div className="bg-white rounded-2xl shadow-lg p-6">
+          <div className="bg-white rounded-2xl shadow-lg p-4">
             <p className="text-gray-600 leading-relaxed text-lg">
               Hi, I'm <span className="font-semibold text-indigo-600">Aman Yadav</span>, the founder and engineer behind Sutradhaar.
               My vision with this project is to create a simple yet powerful productivity tool that helps people save time,
@@ -142,9 +142,9 @@ export function About() {
         <section className="mt-16 w-full">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Legal</h2>
           <ul className="bg-white shadow-lg rounded-2xl divide-y">
-            <li className="p-4 flex justify-between"><span>Terms of Service</span><Link href="#" className="text-indigo-600 hover:underline">Open document →</Link></li>
-            <li className="p-4 flex justify-between"><span>Privacy Policy</span><Link href="/privacy-policy" className="text-indigo-600 hover:underline">Open document →</Link></li>
-            <li className="p-4 flex justify-between"><span>Open Source Notices</span><Link href="#" className="text-indigo-600 hover:underline">View libraries →</Link></li>
+            <li className="p-3 flex justify-between items-center"><span>Terms of Service</span><Link href="#" className="text-indigo-600 hover:underline text-sm">Open document →</Link></li>
+            <li className="p-3 flex justify-between items-center"><span>Privacy Policy</span><Link href="/privacy-policy" className="text-indigo-600 hover:underline text-sm">Open document →</Link></li>
+            <li className="p-3 flex justify-between items-center"><span>Open Source Notices</span><Link href="#" className="text-indigo-600 hover:underline text-sm">View libraries →</Link></li>
           </ul>
         </section>
 
@@ -152,9 +152,9 @@ export function About() {
         <section className="mt-16 w-full">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Support</h2>
           <ul className="bg-white shadow-lg rounded-2xl divide-y">
-            <li className="p-4 flex justify-between"><span>Help Center</span><Link href="/how-to-use" className="text-indigo-600 hover:underline">Visit →</Link></li>
-            <li className="p-4 flex justify-between"><span>Contact</span><a href="https://aman9528.wixstudio.com/my-site-3" rel="noopener noreferrer" className="text-indigo-600 hover:underline">Contact Us →</a></li>
-            <li className="p-4 flex justify-between"><span>Report an Issue</span><a href="https://aman9528.wixstudio.com/my-site-3" rel="noopener noreferrer" className="text-indigo-600 hover:underline">Create ticket →</a></li>
+            <li className="p-3 flex justify-between items-center"><span>Help Center</span><Link href="/how-to-use" className="text-indigo-600 hover:underline text-sm">Visit →</Link></li>
+            <li className="p-3 flex justify-between items-center"><span>Contact</span><a href="https://aman9528.wixstudio.com/my-site-3" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-sm">Contact Us →</a></li>
+            <li className="p-3 flex justify-between items-center"><span>Report an Issue</span><a href="https://aman9528.wixstudio.com/my-site-3" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-sm">Create ticket →</a></li>
           </ul>
         </section>
       </div>
