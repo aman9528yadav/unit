@@ -83,32 +83,29 @@ const getUserKey = (key: string, email: string | null) => {
 
 // Offline parser to replace the AI flow
 export const offlineParseConversionQuery = (query: string, allUnits: Unit[], categories: ConversionCategory[]): ParseConversionQueryOutput | null => {
-    const normalizedQuery = query.trim().replace(/\s+/g, ' ');
-    const regex = /^([0-9.,]+)\s*([^0-9\s]+(?:\s+[^0-9\s]+)*?)\s+(?:to|in|as)\s+([^0-9\s]+(?:\s+[^0-9\s]+)*)$/i;
+    const normalizedQuery = query.trim().replace(/\s+/g, ' ').toLowerCase();
+    const regex = /^([0-9.,]+)\s*([^0-9\s].*?)\s+(?:to|in|as)\s+([^0-9\s].*)$/i;
     const match = normalizedQuery.match(regex);
 
     if (!match) return null;
 
     const [, valueStr, fromUnitStr, toUnitStr] = match;
-
     const value = parseFloat(valueStr.replace(/,/g, ''));
     if (isNaN(value)) return null;
-    
-    // Sort units by length of name descending to match longer names first (e.g., "Square Meters" before "Meters")
-    const sortedUnits = [...allUnits].sort((a, b) => b.name.length - a.name.length);
+
+    // Sort units by length of name descending to match longer names first
+    const sortedUnits = [...allUnits].sort((a, b) => (b.name.length + b.symbol.length) - (a.name.length + a.symbol.length));
 
     const findUnit = (unitStr: string): Unit | undefined => {
-        const lowerUnitStr = unitStr.trim().toLowerCase();
-        // Match full name first (case-insensitive), then symbol
-        return sortedUnits.find(u => u.name.toLowerCase() === lowerUnitStr) || sortedUnits.find(u => u.symbol.toLowerCase() === lowerUnitStr);
+        const lowerUnitStr = unitStr.trim();
+        return sortedUnits.find(u => u.name.toLowerCase() === lowerUnitStr || u.symbol.toLowerCase() === lowerUnitStr);
     };
 
     const fromUnit = findUnit(fromUnitStr);
     const toUnit = findUnit(toUnitStr);
-    
+
     if (!fromUnit || !toUnit) return null;
 
-    // Find the category that contains both units
     const category = categories.find(c =>
         c.units.some(u => u.symbol === fromUnit.symbol) &&
         c.units.some(u => u.symbol === toUnit.symbol)
@@ -469,36 +466,32 @@ export function Converter() {
     }
 
     startSearchTransition(() => {
-        try {
-            const parsed = offlineParseConversionQuery(searchQuery, allUnits, conversionCategories);
+        const parsed = offlineParseConversionQuery(searchQuery, allUnits, conversionCategories);
 
-            if (parsed) {
-                const category = conversionCategories.find(c => c.name === parsed.category);
-                if (category) {
-                    const categoryUnits = category.units.filter(u => !u.region || u.region === region);
-                    const fromUnitExists = categoryUnits.some(u => u.symbol === parsed.fromUnit);
-                    const toUnitExists = categoryUnits.some(u => u.symbol === parsed.toUnit);
+        if (parsed) {
+            const category = conversionCategories.find(c => c.name === parsed.category);
+            if (category) {
+                const categoryUnits = category.units.filter(u => !u.region || u.region === region);
+                const fromUnitExists = categoryUnits.some(u => u.symbol === parsed.fromUnit);
+                const toUnitExists = categoryUnits.some(u => u.symbol === parsed.toUnit);
 
-                    if (fromUnitExists && toUnitExists) {
-                        setSelectedCategory(category);
-                        setFromUnit(parsed.fromUnit);
-                        setToUnit(parsed.toUnit);
-                        setInputValue(String(parsed.value));
-                        performConversion(parsed.value, parsed.fromUnit, parsed.toUnit);
-                        setSearchQuery("");
-                        setSuggestions([]);
-                    } else {
-                        toast({ title: t('converter.toast.cannotConvert'), description: t('converter.toast.regionError', { region }), variant: "destructive" });
-                    }
+                if (fromUnitExists && toUnitExists) {
+                    setSelectedCategory(category);
+                    setFromUnit(parsed.fromUnit);
+                    setToUnit(parsed.toUnit);
+                    setInputValue(String(parsed.value));
+                    performConversion(parsed.value, parsed.fromUnit, parsed.toUnit);
+                    setSearchQuery("");
+                    setSuggestions([]);
                 } else {
-                    toast({ title: t('converter.toast.cannotConvert'), description: t('converter.toast.categoryError'), variant: "destructive" });
+                    toast({ title: t('converter.toast.cannotConvert'), description: t('converter.toast.regionError', { region }), variant: "destructive" });
                 }
-            } else {
-                toast({ title: t('converter.toast.invalidSearch'), description: t('converter.toast.queryError'), variant: "destructive" });
             }
-        } catch (error) {
-            console.error("Search conversion failed:", error);
-            toast({ title: t('converter.toast.invalidSearch'), description: t('converter.toast.queryError'), variant: "destructive" });
+        } else {
+            // Only show toast if the query looks like a conversion attempt
+            if (searchQuery.match(/^\d/) && searchQuery.match(/to|in|as/i)) {
+                 toast({ title: t('converter.toast.invalidSearch'), description: t('converter.toast.queryError'), variant: "destructive" });
+            }
         }
     });
 };
@@ -721,8 +714,8 @@ export function Converter() {
     }
 
     const newSuggestions: string[] = [];
-    const queryLower = query.toLowerCase();
-
+    
+    // Regex to find a number and a unit, e.g., "10kg", "5.5 meters"
     const valueUnitRegex = /^([0-9.,\s]+)?\s*([a-zA-Z°/²³\s]*)/i;
     const match = query.match(valueUnitRegex);
     
@@ -751,7 +744,9 @@ export function Converter() {
            }
         } else if (textPart) {
             allUnits.forEach(unit => {
-                if (unit.name.toLowerCase().startsWith(textPart) || unit.symbol.toLowerCase().startsWith(textPart)) {
+                const unitNameLower = unit.name.toLowerCase();
+                const unitSymbolLower = unit.symbol.toLowerCase();
+                if (unitNameLower.startsWith(textPart) || unitSymbolLower.startsWith(textPart)) {
                     newSuggestions.push(`${numericPart} ${unit.name} (${unit.symbol})`);
                 }
             });
@@ -1161,10 +1156,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
-
-    
-
-    
-

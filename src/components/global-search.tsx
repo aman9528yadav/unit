@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, StickyNote, History, HelpCircle, Settings, X, CornerDownLeft, ArrowRightLeft } from 'lucide-react';
+import { Search, StickyNote, History, HelpCircle, Settings, X, CornerDownLeft, ArrowRightLeft, Loader2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Note, NOTES_STORAGE_KEY_BASE } from './notepad';
 import { FAQ, FAQ_STORAGE_KEY } from './help';
@@ -231,6 +231,7 @@ export function GlobalSearch() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => setIsFocused(true)}
+                 onKeyDown={(e) => e.key === 'Enter' && results.length > 0 && handleSelectResult(results[0])}
             />
              <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground p-1.5 border border-border rounded-md">⌘K</div>
         </div>
