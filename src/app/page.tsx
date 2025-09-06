@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 function DashboardSkeleton() {
     return (
-        <div className="w-full max-w-md mx-auto flex flex-col gap-6">
+        <div className="w-full max-w-lg mx-auto flex flex-col gap-6 p-4 sm:p-6">
             <header className="flex justify-between items-center">
                 <div>
                     <Skeleton className="h-8 w-40 mb-2" />

@@ -69,7 +69,7 @@ export function WelcomeForm() {
       }
       
       await handleSuccessfulLogin(user);
-      router.push("/profile/success");
+      router.push("/");
 
     } catch (error: any) {
        toast({ title: t('welcome.toast.loginFailed.title'), description: t('welcome.toast.loginFailed.invalidCredentials'), variant: "destructive" });
