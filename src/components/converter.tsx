@@ -153,7 +153,7 @@ export function Converter() {
                 units: [{
                     name: cc.baseUnitName,
                     symbol: cc.baseUnitSymbol,
-                    info: `Base unit for ${cc.name}`
+                    info: `1 ${cc.symbol} = ${cc.factor} base units`,
                 }],
                 factors: { [cc.baseUnitSymbol]: 1 },
                 convert: function(value, from, to) {

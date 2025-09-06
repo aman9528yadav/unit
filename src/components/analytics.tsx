@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -67,12 +68,12 @@ export function Analytics() {
     setIsClient(true);
     const storedProfile = localStorage.getItem("userProfile");
     const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
-    setWeeklyCalculations(getWeeklyCalculations(userEmail));
-    setMonthlyCalculations(getMonthlyCalculations(userEmail));
-    setWeeklyNotes(getWeeklyNotes(userEmail));
-    setMonthlyNotes(getMonthlyNotes(userEmail));
-    setAllTimeCalcs(getAllTimeCalculations(userEmail));
-    setAllTimeNotes(getAllTimeNotes(userEmail));
+    getWeeklyCalculations(userEmail).then(setWeeklyCalculations);
+    getMonthlyCalculations(userEmail).then(setMonthlyCalculations);
+    getWeeklyNotes(userEmail).then(setWeeklyNotes);
+    getMonthlyNotes(userEmail).then(setMonthlyNotes);
+    getAllTimeCalculations(userEmail).then(setAllTimeCalcs);
+    getAllTimeNotes(userEmail).then(setAllTimeNotes);
   }, []);
 
   const getChartData = () => {

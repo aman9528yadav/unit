@@ -578,5 +578,3 @@ export function Dashboard() {
     </div>
   );
 }
-
-    
