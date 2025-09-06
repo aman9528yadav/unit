@@ -83,9 +83,9 @@ const getUserKey = (key: string, email: string | null) => {
 
 // Offline parser to replace the AI flow
 export const offlineParseConversionQuery = (query: string, allUnits: Unit[], categories: ConversionCategory[]): ParseConversionQueryOutput | null => {
-    // Regex updated to be less greedy and handle multi-word units better.
-    const regex = /^\s*([0-9.,]+)\s*([a-zA-Z°/²³\s]+?)\s+(?:to|in|as)\s+([a-zA-Z°/²³\s]+)\s*$/i;
-    const match = query.match(regex);
+    const normalizedQuery = query.trim().replace(/\s+/g, ' ');
+    const regex = /^([0-9.,]+)\s*([^0-9\s]+(?:\s+[^0-9\s]+)*?)\s+(?:to|in|as)\s+([^0-9\s]+(?:\s+[^0-9\s]+)*)$/i;
+    const match = normalizedQuery.match(regex);
 
     if (!match) return null;
 
@@ -440,14 +440,14 @@ export function Converter() {
   useEffect(() => {
     if (!autoConvert) return;
   
-    const parsed = offlineParseConversionQuery(debouncedInputValue, allUnits, conversionCategories);
+    const parsed = offlineParseConversionQuery(searchQuery, allUnits, conversionCategories);
   
     if (parsed) {
       restoreFromParsedQuery(parsed);
     } else {
       performConversion(inputValue, fromUnit, toUnit);
     }
-  }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion, inputValue, allUnits, conversionCategories]);
+  }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion, inputValue, allUnits, conversionCategories, searchQuery]);
 
   React.useEffect(() => {
     const numValue = parseFloat(inputValue);
@@ -723,13 +723,12 @@ export function Converter() {
     const newSuggestions: string[] = [];
     const queryLower = query.toLowerCase();
 
-    // Regex to extract number and the start of a unit
     const valueUnitRegex = /^([0-9.,\s]+)?\s*([a-zA-Z°/²³\s]*)/i;
     const match = query.match(valueUnitRegex);
     
     if (match) {
         const numericPart = (match[1] || '1').trim();
-        let textPart = query.toLowerCase().replace(numericPart.toLowerCase(), "").trim();
+        let textPart = query.toLowerCase().replace(new RegExp(`^${numericPart.replace('.', '\\.')}`), '').trim();
         
         const toSeparator = " to ";
         const toIndex = textPart.indexOf(toSeparator);
@@ -753,7 +752,7 @@ export function Converter() {
         } else if (textPart) {
             allUnits.forEach(unit => {
                 if (unit.name.toLowerCase().startsWith(textPart) || unit.symbol.toLowerCase().startsWith(textPart)) {
-                    newSuggestions.push(`${numericPart} ${unit.name}`);
+                    newSuggestions.push(`${numericPart} ${unit.name} (${unit.symbol})`);
                 }
             });
         }
@@ -1168,3 +1167,4 @@ ConversionImage.displayName = 'ConversionImage';
     
 
     
+
