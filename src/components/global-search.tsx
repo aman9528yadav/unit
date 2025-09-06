@@ -35,13 +35,6 @@ export function GlobalSearch() {
   const router = useRouter();
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
-
-  const SETTINGS_PAGES: Omit<SearchResult, 'id' | 'type'>[] = [
-    { title: t('globalSearch.settings.general.title'), description: t('globalSearch.settings.general.description'), href: '/settings' },
-    { title: t('globalSearch.settings.customUnits.title'), description: t('globalSearch.settings.customUnits.description'), href: '/settings/custom-units' },
-    { title: t('globalSearch.settings.theme.title'), description: t('globalSearch.settings.theme.description'), href: '/settings/theme' },
-    { title: t('globalSearch.settings.developer.title'), description: t('globalSearch.settings.developer.description'), href: '/dev' },
-  ];
   
   const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
   const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
@@ -104,6 +97,13 @@ export function GlobalSearch() {
       setResults([]);
       return;
     }
+    
+    const SETTINGS_PAGES: Omit<SearchResult, 'id' | 'type'>[] = [
+        { title: t('globalSearch.settings.general.title'), description: t('globalSearch.settings.general.description'), href: '/settings' },
+        { title: t('globalSearch.settings.customUnits.title'), description: t('globalSearch.settings.customUnits.description'), href: '/settings/custom-units' },
+        { title: t('globalSearch.settings.theme.title'), description: t('globalSearch.settings.theme.description'), href: '/settings/theme' },
+        { title: t('globalSearch.settings.developer.title'), description: t('globalSearch.settings.developer.description'), href: '/dev' },
+    ];
 
     const lowerQuery = debouncedQuery.toLowerCase();
     const allResults: SearchResult[] = [];
@@ -172,7 +172,7 @@ export function GlobalSearch() {
       .forEach(p => allResults.push({ ...p, id: p.href, type: 'Setting' }));
 
     setResults(allResults);
-  }, [debouncedQuery, profile, allUnits, conversionCategories, t, SETTINGS_PAGES]);
+  }, [debouncedQuery, profile, allUnits, conversionCategories, t]);
 
   useEffect(() => {
     search();
@@ -253,5 +253,3 @@ export function GlobalSearch() {
     </div>
   );
 }
-
-    
