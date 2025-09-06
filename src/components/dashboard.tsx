@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   Moon,
   Sun,
+  User,
   UserCircle2,
   Settings,
   Languages,
@@ -124,7 +125,7 @@ const ToolButton = ({ icon: Icon, label, href, color }: any) => (
 );
 
 const UpdateCard = ({ update }: any) => (
-    <Card className="bg-card border-border shadow-sm hover:bg-secondary transition-colors w-[240px] flex-shrink-0 flex flex-col p-4 aspect-square">
+    <Card className="bg-card border-border shadow-sm hover:bg-secondary transition-colors w-[240px] flex-shrink-0 flex flex-col p-4">
       <div className="flex items-start gap-3">
           <div className={cn("size-10 grid place-items-center rounded-lg", update.bgColor, update.color)}>
             <update.icon className="size-5" />
@@ -134,7 +135,9 @@ const UpdateCard = ({ update }: any) => (
           </div>
       </div>
       <div className="flex-1 min-h-0">
-        <p className="text-xs text-muted-foreground pt-2 whitespace-normal break-words">{update.description}</p>
+        <div className="text-xs text-muted-foreground pt-2 whitespace-normal break-words flex-1 min-h-0">
+          {update.description}
+        </div>
       </div>
     </Card>
 );
@@ -472,7 +475,7 @@ export function Dashboard() {
           </Button>
         </div>
         <div className="overflow-hidden">
-            <div className="flex gap-4 overflow-x-auto pb-4 -mb-4 -mx-4 px-4">
+             <div className="flex gap-4 overflow-x-auto pb-4 -mb-4 -mx-4 px-4">
               {recommendations.map((r) => (
                 <RecommendationCard key={r.id} item={r} />
               ))}
