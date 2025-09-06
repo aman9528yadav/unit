@@ -196,6 +196,7 @@ export function Converter() {
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
   const [isGraphVisible, setIsGraphVisible] = useState(false);
   const [showRecentHistory, setShowRecentHistory] = useState(true);
+  const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
 
 
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -596,10 +597,7 @@ export function Converter() {
 
   const handleShare = async () => {
     if (isPremiumFeatureLocked) {
-      toast({
-        title: t('converter.toast.premiumFeatureLocked'),
-        description: t('converter.toast.premiumShare'),
-      });
+        setShowPremiumLockDialog(true);
       return;
     }
     
@@ -691,6 +689,15 @@ export function Converter() {
   
   const isPremiumFeatureLocked = userRole === 'Member';
 
+  const handleCategorySelect = (e: React.MouseEvent, categoryName: string) => {
+    const isLocked = isPremiumFeatureLocked && PREMIUM_CATEGORIES.includes(categoryName);
+    if (isLocked) {
+      e.preventDefault();
+      setShowPremiumLockDialog(true);
+    } else {
+      handleCategoryChange(categoryName);
+    }
+  };
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-4">
@@ -760,7 +767,7 @@ export function Converter() {
                                                <DropdownMenuItem
                                                    key={cat.name}
                                                    disabled={isLocked}
-                                                   onSelect={() => handleCategoryChange(cat.name)}
+                                                   onSelect={(e) => handleCategorySelect(e as unknown as React.MouseEvent, cat.name)}
                                                    className="flex flex-col items-center justify-center h-20 gap-1"
                                                >
                                                    <cat.icon className="w-6 h-6" />
@@ -771,14 +778,9 @@ export function Converter() {
 
                                            if (isLocked) {
                                                return (
-                                                   <Tooltip key={cat.name}>
-                                                       <TooltipTrigger asChild>
-                                                           <div>{categoryItem}</div>
-                                                       </TooltipTrigger>
-                                                       <TooltipContent>
-                                                           <p>{t('converter.toast.premiumCategory')}</p>
-                                                       </TooltipContent>
-                                                   </Tooltip>
+                                                    <div key={cat.name} onClick={(e) => handleCategorySelect(e, cat.name)}>
+                                                        {categoryItem}
+                                                    </div>
                                                );
                                            }
                                            return categoryItem;
@@ -997,6 +999,26 @@ export function Converter() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+        <AlertDialog open={showPremiumLockDialog} onOpenChange={setShowPremiumLockDialog}>
+            <AlertDialogContent>
+                <AlertDialogHeader className="items-center text-center">
+                     <div className="p-4 bg-primary/10 rounded-full mb-4">
+                        <Lock className="w-10 h-10 text-primary" />
+                    </div>
+                    <AlertDialogTitle className="text-2xl">Premium Feature Locked</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This conversion category is available to Premium Members. Complete 8,000 operations to unlock this feature and more!
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="sm:justify-center flex-col-reverse sm:flex-row gap-2">
+                     <AlertDialogCancel onClick={() => setShowPremiumLockDialog(false)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => router.push('/profile')}>
+                        Check Your Progress
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }
@@ -1048,3 +1070,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
