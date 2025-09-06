@@ -10,6 +10,7 @@
     "dashboard": {
         "greeting": "Hi, {{name}}",
         "welcome": "Welcome back",
+        "dynamicWelcome": "What are we conquering today?",
         "guest": "Guest",
         "todayOps": "Today's Ops",
         "currentStreak": "Current Streak",

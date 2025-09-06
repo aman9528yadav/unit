@@ -10,6 +10,7 @@
     "dashboard": {
         "greeting": "नमस्ते, {{name}}",
         "welcome": "वापसी पर स्वागत है",
+        "dynamicWelcome": "आज हम क्या जीत रहे हैं?",
         "guest": "अतिथि",
         "todayOps": "आज के ऑपरेशन",
         "currentStreak": "वर्तमान स्ट्रीक",

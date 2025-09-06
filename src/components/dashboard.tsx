@@ -174,6 +174,15 @@ interface UserProfile {
 const Header = ({ name, profile, onProfileClick }: { name: string, profile: UserProfile | null, onProfileClick: () => void }) => {
   const router = useRouter();
   const { t } = useLanguage();
+  const [welcomeMessage, setWelcomeMessage] = useState(t('dashboard.welcome'));
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setWelcomeMessage(t('dashboard.dynamicWelcome'));
+    }, 120000); // 2 minutes in milliseconds
+
+    return () => clearTimeout(timer);
+  }, [t]);
   
   return (
     <div className="flex flex-col gap-4">
@@ -182,7 +191,7 @@ const Header = ({ name, profile, onProfileClick }: { name: string, profile: User
             <h1 className="text-2xl font-bold tracking-tight text-foreground">{t('dashboard.greeting', { name: name })}</h1>
              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <CheckCircle2 className="size-4 text-green-500" />
-                {t('dashboard.welcome')}
+                {welcomeMessage}
             </div>
         </div>
         <div className="flex items-center gap-2">
