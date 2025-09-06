@@ -312,7 +312,7 @@ export function DevPanel() {
                              <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
                                 <div>
                                     <Label htmlFor="maintenance-mode">Enable Maintenance Mode</Label>
-                                    <p className='text-xs text-muted-foreground'>Redirects all users to /maintenance.</p>
+                                    <p className='text-xs text-muted-foreground'>Redirects all users to maintenance site.</p>
                                 </div>
                                 <Switch
                                     id="maintenance-mode"
@@ -340,3 +340,5 @@ export function DevPanel() {
         </div>
     );
 }
+
+    

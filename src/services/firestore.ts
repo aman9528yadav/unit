@@ -99,14 +99,10 @@ export async function setGlobalMaintenanceMode(isEnabled: boolean) {
 /**
  * Sets up a real-time listener for the global maintenance mode status.
  * @param setIsMaintenanceMode - State setter to update the component's view of the maintenance status.
- * @param router - The Next.js router instance for navigation.
- * @param pathname - The current URL path.
  * @returns The unsubscribe function for the listener.
  */
 export function listenToGlobalMaintenanceMode(
   setIsMaintenanceMode: (status: boolean) => void,
-  pathname?: string,
-  router?: AppRouterInstance
 ) {
     const maintenanceRef = doc(db, 'settings', 'maintenance');
 
@@ -114,15 +110,11 @@ export function listenToGlobalMaintenanceMode(
         const isEnabled = docSnap.exists() ? docSnap.data().isEnabled || false : false;
         setIsMaintenanceMode(isEnabled);
         
-        if (router && pathname) {
-            const isMaintenancePage = pathname === '/maintenance';
-            const isDevPage = pathname.startsWith('/dev');
-            if (isEnabled && !isMaintenancePage && !isDevPage) {
-                router.replace('/maintenance');
-            } else if (!isEnabled && isMaintenancePage) {
-                router.replace('/');
-            }
+        const isDevPage = window.location.pathname.startsWith('/dev');
+        if (isEnabled && !isDevPage) {
+            window.location.href = "https://maintenance-page-wit-d5gt.bolt.host/";
         }
+
     }, (error) => {
         console.error("Error listening to maintenance mode:", error);
         setIsMaintenanceMode(false); // Default to off on error
@@ -254,3 +246,5 @@ export async function updateUserData(email: string | null, data: { [key: string]
     localStorage.setItem(localDataKey, JSON.stringify(newLocalData));
 }
 
+
+    

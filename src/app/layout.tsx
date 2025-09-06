@@ -7,13 +7,13 @@ import { Toaster } from "@/components/ui/toaster"
 import { LanguageProvider } from '@/context/language-context';
 import { ThemeProvider } from '@/context/theme-context';
 import React, { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { listenToGlobalMaintenanceMode, syncOfflineData } from '@/services/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function AppFooter() {
     const pathname = usePathname();
-    const showFooter = !pathname.startsWith('/dev') && !pathname.startsWith('/maintenance');
+    const showFooter = !pathname.startsWith('/dev');
 
     if (!showFooter) {
         return null;
@@ -29,10 +29,9 @@ function AppFooter() {
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean | null>(null);
     const pathname = usePathname();
-    const router = useRouter();
 
     useEffect(() => {
-        const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenanceMode, pathname, router);
+        const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenanceMode);
         
         const handleOnline = () => {
           console.log('App is online, attempting to sync data.');
@@ -50,7 +49,7 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
             unsubscribe();
             window.removeEventListener('online', handleOnline);
         };
-    }, [pathname, router]);
+    }, []);
 
     if (isMaintenanceMode === null) {
         return (
@@ -66,9 +65,8 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
         return <>{children}</>;
     }
     
-    const isMaintenancePage = pathname === '/maintenance';
-    // If in maintenance and not on the maintenance page, we are redirecting, so render nothing.
-    if (isMaintenanceMode && !isMaintenancePage) {
+    // If in maintenance, we are redirecting, so render nothing.
+    if (isMaintenanceMode) {
         return null; 
     }
 
@@ -111,3 +109,5 @@ export default function RootLayout({
     </ThemeProvider>
   );
 }
+
+    
