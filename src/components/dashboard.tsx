@@ -124,18 +124,18 @@ const ToolButton = ({ icon: Icon, label, href, color }: any) => (
 );
 
 const UpdateCard = ({ update }: any) => (
-    <Card className="bg-card border-border shadow-sm hover:bg-secondary transition-colors h-full w-[240px] flex-shrink-0">
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-            <div className={cn("size-10 grid place-items-center rounded-lg", update.bgColor, update.color)}>
-              <update.icon className="size-5" />
-            </div>
-            <div className="flex-1">
-                <p className="font-semibold text-foreground">{update.title}</p>
-                <p className="text-xs text-muted-foreground">{update.description}</p>
-            </div>
-        </div>
-      </CardContent>
+    <Card className="bg-card border-border shadow-sm hover:bg-secondary transition-colors w-[240px] flex-shrink-0 flex flex-col p-4 aspect-square">
+      <div className="flex items-start gap-3">
+          <div className={cn("size-10 grid place-items-center rounded-lg", update.bgColor, update.color)}>
+            <update.icon className="size-5" />
+          </div>
+          <div className="flex-1">
+              <p className="font-semibold text-foreground">{update.title}</p>
+          </div>
+      </div>
+      <div className="flex-1 min-h-0">
+        <p className="text-xs text-muted-foreground pt-2 whitespace-normal break-words">{update.description}</p>
+      </div>
     </Card>
 );
 
@@ -327,27 +327,51 @@ export function Dashboard() {
     const recentUpdates = [
       {
         icon: Palette,
-        title: t('dashboard.updates.appearance.title'),
-        description: t('dashboard.updates.appearance.description'),
+        title: t('updates.items.appearance.title'),
+        description: t('updates.items.appearance.description'),
         href: "/updates",
         color: "text-pink-400",
         bgColor: "bg-pink-500/10"
       },
       {
         icon: Zap,
-        title: t('dashboard.updates.time.title'),
-        description: t('dashboard.updates.time.description'),
+        title: t('updates.items.timeTools.title'),
+        description: t('updates.items.timeTools.description'),
         href: "/updates",
         color: "text-green-400",
         bgColor: "bg-green-500/10"
       },
       {
         icon: Gift,
-        title: t('dashboard.updates.customUnits.title'),
-        description: t('dashboard.updates.customUnits.description'),
+        title: t('updates.items.customUnits.title'),
+        description: t('updates.items.customUnits.description'),
         href: "/updates",
         color: "text-blue-400",
         bgColor: "bg-blue-500/10"
+      },
+      {
+        icon: Wand2,
+        title: t('updates.items.smartSearch.title'),
+        description: t('updates.items.smartSearch.description'),
+        href: "/updates",
+        color: "text-indigo-400",
+        bgColor: "bg-indigo-500/10"
+      },
+       {
+        icon: Languages,
+        title: t('updates.items.languageSupport.title'),
+        description: t('updates.items.languageSupport.description'),
+        href: "/updates",
+        color: "text-teal-400",
+        bgColor: "bg-teal-500/10"
+      },
+       {
+        icon: User,
+        title: t('updates.items.profileManagement.title'),
+        description: t('updates.items.profileManagement.description'),
+        href: "/updates",
+        color: "text-orange-400",
+        bgColor: "bg-orange-500/10"
       },
     ];
 
@@ -447,10 +471,12 @@ export function Dashboard() {
               </Link>
           </Button>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4">
-          {recommendations.map((r) => (
-            <RecommendationCard key={r.id} item={r} />
-          ))}
+        <div className="overflow-hidden">
+            <div className="flex gap-4 overflow-x-auto pb-4 -mb-4 -mx-4 px-4">
+              {recommendations.map((r) => (
+                <RecommendationCard key={r.id} item={r} />
+              ))}
+            </div>
         </div>
       </section>
       
