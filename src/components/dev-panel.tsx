@@ -321,6 +321,13 @@ export function DevPanel() {
                                     onCheckedChange={handleMaintenanceModeToggle}
                                 />
                             </div>
+                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <div>
+                                    <Label htmlFor="maintenance-mode">Manage Help Content</Label>
+                                    <p className='text-xs text-muted-foreground'>Edit the FAQ on the help page.</p>
+                                </div>
+                                <Button onClick={() => router.push('/dev/help')}>Manage</Button>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>

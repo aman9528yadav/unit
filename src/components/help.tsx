@@ -23,41 +23,41 @@ export interface FAQ {
 
 export const FAQ_STORAGE_KEY = 'faqData';
 
-export const getDefaultFaqs = (t: (key: string, params?: any) => string): FAQ[] => [
+export const defaultFaqs: FAQ[] = [
     {
         id: uuidv4(),
-        question: t('help.faqs.q1.question'),
-        answer: `<p class="mb-2">${t('help.faqs.q1.answer.p1')}</p><ul class="list-disc pl-5 space-y-1"><li>${t('help.faqs.q1.answer.li1')}</li><li>${t('help.faqs.q1.answer.li2')}</li><li>${t('help.faqs.q1.answer.li3')}</li><li>${t('help.faqs.q1.answer.li4')}</li></ul>`
+        question: "How do I use the Unit Converter?",
+        answer: `<p class="mb-2">The unit converter is designed for ease of use. You can either use the AI-powered search bar (e.g., "10kg to lbs") or manually select the category and units.</p><ul class="list-disc pl-5 space-y-1"><li>Use the dropdowns to select the conversion category (e.g., Length, Weight).</li><li>Enter the value you want to convert.</li><li>Select the 'from' and 'to' units.</li><li>The result will be displayed automatically if 'Auto Convert' is enabled in settings, or after you click the 'Convert' button.</li></ul>`
     },
     {
         id: uuidv4(),
-        question: t('help.faqs.q2.question'),
-        answer: `<p class="mb-2">${t('help.faqs.q2.answer.p1', { ops: '<strong>8,000</strong>' })}</p><p class="mb-2">${t('help.faqs.q2.answer.p2')}</p><ul class="list-disc pl-5 space-y-1"><li><strong>${t('help.faqs.q2.answer.li1.strong')}:</strong> ${t('help.faqs.q2.answer.li1.text')}</li><li><strong>${t('help.faqs.q2.answer.li2.strong')}:</strong> ${t('help.faqs.q2.answer.li2.text')}</li></ul><p class="mt-2">${t('help.faqs.q2.answer.p3')}</p>`
+        question: "What are the benefits of being a Premium Member?",
+        answer: `<p class="mb-2">Becoming a Premium Member unlocks exclusive features to enhance your experience. You can achieve Premium status by completing <strong>8,000</strong> operations (conversions or calculations) within the app.</p><p class="mb-2">Premium benefits include:</p><ul class="list-disc pl-5 space-y-1"><li><strong>Custom Themes:</strong> Personalize the app's appearance by creating and applying your own color schemes in the Theme Editor.</li><li><strong>Custom Units:</strong> Add your own unique units and even create entirely new conversion categories tailored to your needs.</li></ul><p class="mt-2">You can track your progress towards becoming a Premium Member on your profile page.</p>`
     },
     {
         id: uuidv4(),
-        question: t('help.faqs.q3.question'),
-        answer: `<p class="mb-2">${t('help.faqs.q3.answer.p1')}</p><ul class="list-disc pl-5 space-y-1"><li>${t('help.faqs.q3.answer.li1')}</li><li>${t('help.faqs.q3.answer.li2')}</li><li>${t('help.faqs.q3.answer.li3')}</li></ul>`
+        question: "How does the Notepad work?",
+        answer: `<p class="mb-2">The notepad allows you to create and manage notes. Notes are automatically saved to your account if you are logged in.</p><ul class="list-disc pl-5 space-y-1"><li>Click the floating 'Edit' button to create a new note.</li><li>Use the toolbar to format your text, attach images, and insert previous calculations or conversions.</li><li>You can favorite notes, assign categories, and move them to the recycle bin.</li></ul>`
     },
     {
         id: uuidv4(),
-        question: t('help.faqs.q4.question'),
-        answer: `<p>${t('help.faqs.q4.answer.p1', { settings: `<strong>${t('help.faqs.q4.answer.settingsPath')}</strong>` })}</p>`
+        question: "How do I add custom units?",
+        answer: `<p>You can add your own units or even create new categories by going to <strong>Settings > Custom Unit</strong>. This allows you to tailor the converter to your specific needs, such as converting between fictional currencies or unique project measurements. Note: This is a Premium feature.</p>`
     },
     {
         id: uuidv4(),
-        question: t('help.faqs.q5.question'),
-        answer: t('help.faqs.q5.answer')
+        question: "How do I reset my password?",
+        answer: "You can reset your password by going to the login page and clicking on the \"Forgot Password\" link. An email will be sent to you with instructions."
     },
     {
         id: uuidv4(),
-        question: t('help.faqs.q6.question'),
-        answer: t('help.faqs.q6.answer')
+        question: "How do I update my profile?",
+        answer: "You can update your profile information, including your name and profile picture, by navigating to the \"My Profile\" page and clicking the pencil icon."
     },
     {
         id: uuidv4(),
-        question: t('help.faqs.q7.question'),
-        answer: `${t('help.faqs.q7.answer')} <a href="https://aman9528.wixstudio.com/my-site-3" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Contact Us</a>.`
+        question: "Contact Us",
+        answer: "If you have any other questions or need further assistance, please feel free to contact our support team at <a href=\"mailto:amanyadavyadav9458@gmail.com\" class=\"text-primary hover:underline\">amanyadavyadav9458@gmail.com</a>."
     }
 ];
 
@@ -75,17 +75,9 @@ export function Help() {
         setProfile(JSON.parse(storedProfile));
     }
     
-    const defaultFaqs = getDefaultFaqs(t);
     const storedFaqs = localStorage.getItem(FAQ_STORAGE_KEY);
     if (storedFaqs) {
-        // Simple check to see if we need to update faqs (e.g. on language change)
-        const parsedFaqs: FAQ[] = JSON.parse(storedFaqs);
-        if (parsedFaqs[0]?.question !== defaultFaqs[0]?.question) {
-             setFaqs(defaultFaqs);
-             localStorage.setItem(FAQ_STORAGE_KEY, JSON.stringify(defaultFaqs));
-        } else {
-             setFaqs(parsedFaqs);
-        }
+        setFaqs(JSON.parse(storedFaqs));
     } else {
         setFaqs(defaultFaqs);
         localStorage.setItem(FAQ_STORAGE_KEY, JSON.stringify(defaultFaqs));
@@ -130,5 +122,3 @@ export function Help() {
     </div>
   );
 }
-
-    
