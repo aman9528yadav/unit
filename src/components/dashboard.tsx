@@ -36,7 +36,8 @@ import {
   Timer,
   ChevronDown,
   Info,
-  Newspaper
+  Newspaper,
+  Rocket
 } from "lucide-react";
 import {
   Area,
@@ -541,14 +542,16 @@ export function Dashboard() {
     <AlertDialog open={showBetaDialog} onOpenChange={setShowBetaDialog}>
         <AlertDialogContent>
           <AlertDialogHeader className="items-center text-center">
-            <div className="p-3 bg-primary/10 rounded-full mb-4 w-fit">
-              <Info className="w-8 h-8 text-primary" />
-            </div>
-            <AlertDialogTitle className="text-2xl">Welcome to Sutradhaar Beta!</AlertDialogTitle>
+            <motion.div 
+                className="p-3 bg-primary/10 rounded-full mb-4 w-fit"
+                animate={{ rotate: [0, -15, 15, -15, 15, 0], y: [0, -10, 0] }}
+                transition={{ duration: 0.8, ease: "easeInOut", repeat: Infinity, repeatDelay: 2 }}
+            >
+              <Rocket className="w-8 h-8 text-primary" />
+            </motion.div>
+            <AlertDialogTitle className="text-2xl">Welcome to the Beta!</AlertDialogTitle>
             <AlertDialogDescription className="max-w-md">
-              Thank you for trying out the beta version. The app is currently in Phase 1 of testing. If you encounter any issues or have feedback, please don't hesitate to contact me. I apologize for any inconvenience.
-              <br/><br/>
-              - Aman
+                Thanks for testing Sutradhaar! This app is a work in progress. Your feedback is valuable.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex items-center space-x-2 my-4 justify-center">
@@ -557,8 +560,11 @@ export function Dashboard() {
               Don't show this message again
             </Label>
           </div>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-col-reverse gap-2">
             <AlertDialogAction onClick={handleBetaDialogClose}>Got it!</AlertDialogAction>
+            <Button asChild variant="outline">
+                <Link href="/about">About App</Link>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
