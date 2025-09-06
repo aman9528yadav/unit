@@ -34,6 +34,7 @@ import {
   Star,
   Timer,
   ChevronDown,
+  Info,
 } from "lucide-react";
 import {
   Area,
@@ -289,6 +290,7 @@ export function Dashboard() {
         { label: t('dashboard.tools.favorites'), icon: Star, href: '/history', color: 'text-yellow-500' },
         { label: t('dashboard.tools.timer'), icon: Timer, href: '/time', color: 'text-red-500' },
         { label: t('dashboard.tools.stopwatch'), icon: Hourglass, href: '/time', color: 'text-indigo-500' },
+        { label: t('profile.menu.about'), icon: Info, href: "/about", color: "text-purple-400" },
     ];
 
     const toolsToShow = showMoreTools ? [...quickTools, ...moreTools] : quickTools;
