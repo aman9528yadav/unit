@@ -2,150 +2,159 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Book, MessageSquare, Code, FileText, Shield, Info, Users, GitBranch, ChevronsRight } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, BarChart, Calendar, Lightbulb, Code, Sparkles, Globe, Wrench, Rocket } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useLanguage } from "@/context/language-context";
-
-
-const appInfo = {
-    version: "1.4.2",
-    build: "2025.09.01",
-    releaseChannel: "Beta 1",
-    license: "MIT",
-};
-
-const credits = [
-    {
-        name: "Aman Yadav",
-        role: "Founder & Engineer",
-        avatar: "https://picsum.photos/seed/aman/100/100",
-        dataAiHint: "man portrait"
-    },
-    {
-        name: "Priya Sharma",
-        role: "Product Designer",
-        avatar: "https://picsum.photos/seed/priya/100/100",
-        dataAiHint: "woman portrait"
-    },
-    {
-        name: "Arjun Mehta",
-        role: "QA & Support",
-        avatar: "https://picsum.photos/seed/arjun/100/100",
-        dataAiHint: "man portrait smiling"
-    },
-];
-
-const Section = ({ title, description, children, icon: Icon }: { title: string, description: string, children: React.ReactNode, icon: React.ElementType }) => (
-    <div className="bg-card p-6 rounded-xl">
-        <div className="flex items-center gap-3 mb-4">
-            <Icon className="w-6 h-6 text-primary" />
-            <div>
-                <h2 className="text-lg font-bold text-foreground">{title}</h2>
-                <p className="text-sm text-muted-foreground">{description}</p>
-            </div>
-        </div>
-        {children}
-    </div>
-)
 
 export function About() {
-    const router = useRouter();
-    const { t } = useLanguage();
-
-    const legalLinks = [
-        { text: t('about.legal.terms'), action: t('about.actions.open'), href: "/#" },
-        { text: t('about.legal.privacy'), action: t('about.actions.open'), href: "/privacy-policy" },
-        { text: t('about.legal.openSource'), action: t('about.actions.view'), href: "/#" },
-    ];
-
-    const supportLinks = [
-        { text: t('about.support.helpCenter'), action: t('about.actions.visit'), href: "/help" },
-        { text: t('about.support.contact'), action: "support@sutradhaar.app", href: "mailto:support@sutradhaar.app" },
-        { text: t('about.support.reportIssue'), action: t('about.actions.create'), href: "/#" },
-    ];
+  const router = useRouter();
+  const features = [
+    {
+      title: "App Feature",
+      desc: "Deep dive into the main features of Sutradhaar, designed to make unit conversion smarter and faster.",
+      icon: <BarChart className="w-8 h-8 text-indigo-500" />,
+    },
+    {
+      title: "Release Plan",
+      desc: "Planned roadmap with milestones, beta releases, and public launch dates.",
+      icon: <Calendar className="w-8 h-8 text-indigo-500" />,
+    },
+    {
+      title: "Figma UI",
+      desc: "Designing a modern UI prototype in Figma to ensure user-friendly layouts.",
+      icon: <Lightbulb className="w-8 h-8 text-indigo-500" />,
+    },
+    {
+      title: "Convert Into Code",
+      desc: "Transforming UI prototypes into responsive and clean React components.",
+      icon: <Code className="w-8 h-8 text-indigo-500" />,
+    },
+    {
+      title: "Add Updates",
+      desc: "Regular feature enhancements and improvements after launch.",
+      icon: <Sparkles className="w-8 h-8 text-indigo-500" />,
+    },
+    {
+      title: "Make a Website",
+      desc: "Deploying a full-featured Sutradhaar website for online access.",
+      icon: <Globe className="w-8 h-8 text-indigo-500" />,
+    },
+    {
+      title: "Proper Testing",
+      desc: "Ensuring app stability through bug fixes, testing cycles, and optimizations.",
+      icon: <Wrench className="w-8 h-8 text-indigo-500" />,
+    },
+    {
+      title: "Make App",
+      desc: "Official release of the Sutradhaar app across platforms.",
+      icon: <Rocket className="w-8 h-8 text-indigo-500" />,
+    },
+  ];
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 p-4 sm:p-6">
-      <header className="flex items-center justify-between">
-         <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                <ArrowLeft />
-            </Button>
-            <h1 className="text-xl font-bold">{t('about.title')}</h1>
-        </div>
-        <p className="text-sm text-muted-foreground">{t('about.breadcrumbs')}</p>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-indigo-100 flex flex-col items-center px-6 py-12 w-full">
+      <header className="w-full max-w-6xl mb-12">
+        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+          <ArrowLeft />
+        </Button>
       </header>
+      {/* Hero Section */}
+      <section className="text-center max-w-3xl">
+        <h1 className="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          About Sutradhaar
+        </h1>
+        <p className="mt-4 text-lg md:text-xl text-gray-600">
+          Sutradhaar is a modern, smart, and simple unit converter app built by Aman Yadav. It combines design, speed, and accuracy to help you calculate effortlessly.
+        </p>
+      </section>
 
-      <Section title={t('about.appInfo.title')} description={t('about.appInfo.description')} icon={Info}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <InfoCard label={t('about.appInfo.version')} value={appInfo.version} />
-              <InfoCard label={t('about.appInfo.build')} value={appInfo.build} />
-              <InfoCard label={t('about.appInfo.release')} value={<Badge variant="outline">{appInfo.releaseChannel}</Badge>} />
-              <InfoCard label={t('about.appInfo.license')} value={appInfo.license} />
+      {/* App Info Section */}
+      <section className="mt-12 grid md:grid-cols-2 gap-8 max-w-5xl w-full">
+        <div className="bg-white shadow-lg rounded-2xl p-8 hover:shadow-xl transition">
+          <h2 className="text-2xl font-bold text-indigo-600 mb-4">App Information</h2>
+          <ul className="text-gray-600 leading-relaxed space-y-2">
+            <li><strong>Version:</strong> 1.4.2</li>
+            <li><strong>Build:</strong> 2025.09.01</li>
+            <li><strong>Release Channel:</strong> Beta 1</li>
+            <li><strong>License:</strong> MIT</li>
+          </ul>
+        </div>
+
+        <div className="bg-white shadow-lg rounded-2xl p-8 hover:shadow-xl transition">
+          <h2 className="text-2xl font-bold text-indigo-600 mb-4">Release Plan</h2>
+          <ul className="text-gray-600 leading-relaxed space-y-2">
+            <li>📍 <strong>Beta Release:</strong> Sept 2025</li>
+            <li>⚡ <strong>Stable Release:</strong> Dec 2025</li>
+            <li>🚀 <strong>Major Updates:</strong> Early 2026</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* Roadmap Section */}
+      <section className="mt-16 max-w-6xl w-full">
+        <h2 className="text-3xl font-bold text-center text-gray-800 mb-10">
+          Feature & Roadmap
+        </h2>
+        <div className="flex flex-wrap justify-center gap-8">
+          {features.map((step, idx) => (
+            <div
+              key={idx}
+              className="relative bg-white w-64 p-6 rounded-2xl shadow-md hover:shadow-xl transition group border-t-4 border-indigo-400"
+            >
+              <div className="text-4xl mb-3">{step.icon}</div>
+              <h3 className="text-lg font-bold text-indigo-600 mb-2 group-hover:text-purple-600">
+                {step.title}
+              </h3>
+              <p className="text-gray-600 text-sm leading-relaxed">{step.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Credits Section */}
+      <section className="mt-16 max-w-6xl w-full text-center">
+        <h2 className="text-3xl font-bold text-gray-800 mb-10">Credits</h2>
+        <div className="flex flex-wrap justify-center gap-8">
+          <div className="flex flex-col items-center">
+            <Image src="https://picsum.photos/seed/aman/100/100" alt="Aman Yadav" width={96} height={96} data-ai-hint="man portrait" className="w-24 h-24 rounded-full shadow-md object-cover ring-4 ring-indigo-400" />
+            <h3 className="mt-3 text-lg font-semibold text-indigo-600">Aman Yadav</h3>
+            <p className="text-gray-600 text-sm">Founder & Engineer</p>
           </div>
-      </Section>
-      
-      <Section title={t('about.credits.title')} description={t('about.credits.description')} icon={Users}>
-         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {credits.map(person => (
-                <CreditCard key={person.name} name={person.name} role={t(`about.credits.roles.${person.role.split(' ')[0].toLowerCase()}`)} avatar={person.avatar} dataAiHint={person.dataAiHint} />
-            ))}
-         </div>
-      </Section>
-
-      <Section title={t('about.legal.title')} description={t('about.legal.description')} icon={Shield}>
-        <div className="space-y-2">
-            {legalLinks.map(link => (
-                <LinkCard key={link.text} text={link.text} action={link.action} href={link.href} />
-            ))}
         </div>
-      </Section>
+      </section>
 
-      <Section title={t('about.support.title')} description={t('about.support.description')} icon={MessageSquare}>
-        <div className="space-y-2">
-            {supportLinks.map(link => (
-                 <LinkCard key={link.text} text={link.text} action={link.action} href={link.href} />
-            ))}
+      {/* About Owner Section */}
+      <section className="mt-16 max-w-4xl w-full text-center">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">About the Owner</h2>
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <p className="text-gray-600 leading-relaxed text-lg">
+            Hi, I'm <span className="font-semibold text-indigo-600">Aman Yadav</span>, the founder and engineer behind Sutradhaar. 
+            My vision with this project is to create a simple yet powerful productivity tool that helps people save time, 
+            focus on their work, and achieve more with ease.
+          </p>
         </div>
-      </Section>
+      </section>
 
-      <footer className="flex justify-end items-center gap-4 mt-4">
-        <Button variant="outline"><Book className="mr-2 h-4 w-4"/> {t('about.footer.docs')}</Button>
-        <Button><MessageSquare className="mr-2 h-4 w-4"/> {t('about.footer.support')}</Button>
-      </footer>
+      {/* Legal Section */}
+      <section className="mt-16 max-w-4xl w-full">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Legal</h2>
+        <ul className="bg-white shadow-lg rounded-2xl divide-y">
+          <li className="p-4 flex justify-between"><span>Terms of Service</span><Link href="#" className="text-indigo-600 hover:underline">Open document →</Link></li>
+          <li className="p-4 flex justify-between"><span>Privacy Policy</span><Link href="/privacy-policy" className="text-indigo-600 hover:underline">Open document →</Link></li>
+          <li className="p-4 flex justify-between"><span>Open Source Notices</span><Link href="#" className="text-indigo-600 hover:underline">View libraries →</Link></li>
+        </ul>
+      </section>
+
+      {/* Support Section */}
+      <section className="mt-16 max-w-4xl w-full">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Support</h2>
+        <ul className="bg-white shadow-lg rounded-2xl divide-y">
+          <li className="p-4 flex justify-between"><span>Help Center</span><Link href="/help" className="text-indigo-600 hover:underline">Visit →</Link></li>
+          <li className="p-4 flex justify-between"><span>Contact</span><a href="mailto:support@sutradhaar.app" className="text-indigo-600 hover:underline">support@sutradhaar.app</a></li>
+          <li className="p-4 flex justify-between"><span>Report an Issue</span><Link href="#" className="text-indigo-600 hover:underline">Create ticket →</Link></li>
+        </ul>
+      </section>
     </div>
   );
 }
-
-const InfoCard = ({ label, value }: { label: string, value: string | React.ReactNode }) => (
-    <div className="bg-background p-4 rounded-lg">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="text-lg font-semibold text-foreground">{value}</p>
-    </div>
-)
-
-const CreditCard = ({ name, role, avatar, dataAiHint }: { name: string, role: string, avatar: string, dataAiHint: string }) => (
-    <div className="bg-background p-4 rounded-lg text-center flex flex-col items-center">
-        <Avatar className="w-16 h-16 mb-2">
-            <AvatarImage src={avatar} alt={name} data-ai-hint={dataAiHint}/>
-            <AvatarFallback>{name.charAt(0)}</AvatarFallback>
-        </Avatar>
-        <p className="font-semibold text-foreground">{name}</p>
-        <p className="text-xs text-muted-foreground">{role}</p>
-    </div>
-)
-
-const LinkCard = ({ text, action, href }: { text: string, action: string, href: string }) => (
-    <Link href={href} className="flex justify-between items-center bg-background p-4 rounded-lg hover:bg-secondary transition-colors">
-        <span className="font-medium text-foreground">{text}</span>
-        <div className="flex items-center gap-2 text-primary">
-            <span className="text-sm">{action}</span>
-            <ChevronsRight className="w-4 h-4" />
-        </div>
-    </Link>
-)
-
-    
