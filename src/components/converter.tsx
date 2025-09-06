@@ -837,70 +837,73 @@ export function Converter() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="bg-secondary/50">
-                        <CardHeader>
-                            <Label htmlFor="value" className="text-muted-foreground">{t('converter.value')}</Label>
-                            <Input
-                                id="value"
-                                type="text"
-                                value={inputValue}
-                                onChange={(e) => setInputValue(e.target.value)}
-                                className="text-2xl font-bold p-0 h-auto bg-transparent border-none shadow-none focus-visible:ring-0"
-                                placeholder="0"
-                            />
-                        </CardHeader>
-                        <CardContent>
-                             <p className="text-xs text-muted-foreground">{t('converter.enterValue')}</p>
-                        </CardContent>
+                    <Card className="bg-secondary/50 p-4 flex flex-col justify-between">
+                         <div>
+                            <Label htmlFor="value" className="text-muted-foreground">{fromUnitInfo?.name}</Label>
+                             <div className="flex items-baseline gap-2">
+                                <Input
+                                    id="value"
+                                    type="text"
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    className="text-3xl font-bold p-0 h-auto bg-transparent border-none shadow-none focus-visible:ring-0 flex-1"
+                                    placeholder="0"
+                                />
+                                <span className="text-xl font-semibold text-muted-foreground">{fromUnitInfo?.symbol}</span>
+                            </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{t('converter.enterValue')}</p>
                     </Card>
-                     <Card className="bg-secondary/50">
-                        <CardHeader>
-                            <Label className="text-muted-foreground">{t('converter.converted')}</Label>
-                            <p className="text-2xl font-bold text-primary truncate h-9">
-                                {outputValue || t('converter.resultPlaceholder')}
+                     <Card className="bg-secondary/50 p-4 flex flex-col justify-between">
+                        <div>
+                            <Label className="text-muted-foreground">{toUnitInfo?.name}</Label>
+                            <p className="text-3xl font-bold text-primary truncate h-10 flex items-baseline gap-2">
+                               <span>{outputValue || t('converter.resultPlaceholder')}</span>
+                               <span className="text-xl font-semibold text-primary/80">{toUnitInfo?.symbol}</span>
                             </p>
-                        </CardHeader>
-                         <CardContent>
-                             <div className="flex items-center gap-2">
-                                <Button variant="ghost" size="icon" onClick={handleCopy} disabled={!outputValue}><Copy size={16}/></Button>
-                                <Button variant="ghost" size="icon" onClick={handleToggleFavorite} disabled={!outputValue}>
-                                    <Star size={16} className={cn(isFavorite && "fill-yellow-400 text-yellow-400")}/>
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => setIsGraphVisible(v => !v)} disabled={!outputValue || selectedCategory.name === 'Temperature'}>
-                                    <BarChart2 size={16} />
-                                </Button>
+                        </div>
+                         <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" onClick={handleCopy} disabled={!outputValue}><Copy size={16}/></Button>
+                            <Button variant="ghost" size="icon" onClick={handleToggleFavorite} disabled={!outputValue}>
+                                <Star size={16} className={cn(isFavorite && "fill-yellow-400 text-yellow-400")}/>
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => setIsGraphVisible(v => !v)} disabled={!outputValue || selectedCategory.name === 'Temperature'}>
+                                <BarChart2 size={16} />
+                            </Button>
+                            <Dialog>
                                 <TooltipProvider>
-                                    <Dialog>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" onClick={handleShareClick}>
-                                                    <Share2 size={16} />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            {isPremiumFeatureLocked && <TooltipContent><p>{t('converter.toast.premiumShare')}</p></TooltipContent>}
-                                        </Tooltip>
-                                        {!isPremiumFeatureLocked && (
-                                            <DialogContent>
-                                                <DialogHeader>
-                                                    <DialogTitle>{t('converter.export.title')}</DialogTitle>
-                                                </DialogHeader>
-                                                <div className="flex flex-col gap-4">
-                                                    <Button onClick={handleShare}>
-                                                        <Share2 className="mr-2 h-4 w-4" /> {t('converter.export.shareSystem')}
-                                                    </Button>
-                                                    <Button onClick={handleExportAsTxt} variant="secondary">
-                                                        <FileText className="mr-2 h-4 w-4" /> {t('converter.export.asTXT')}
-                                                    </Button>
-                                                    <Button onClick={handleExportAsImage} variant="secondary">
-                                                        <ImageIcon className="mr-2 h-4 w-4" /> {t('converter.export.asImage')}
-                                                    </Button>
-                                                </div>
-                                            </DialogContent>
-                                        )}
-                                    </Dialog>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                             <Button variant="ghost" size="icon" onClick={handleShareClick}>
+                                                <Share2 size={16} />
+                                            </Button>
+                                        </TooltipTrigger>
+                                         {isPremiumFeatureLocked && <TooltipContent><p>{t('converter.toast.premiumShare')}</p></TooltipContent>}
+                                    </Tooltip>
                                 </TooltipProvider>
-                             </div>
-                        </CardContent>
+                                {!isPremiumFeatureLocked && (
+                                     <DialogTrigger asChild>
+                                         <span/>
+                                     </DialogTrigger>
+                                )}
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>{t('converter.export.title')}</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="flex flex-col gap-4">
+                                        <Button onClick={handleShare}>
+                                            <Share2 className="mr-2 h-4 w-4" /> {t('converter.export.shareSystem')}
+                                        </Button>
+                                        <Button onClick={handleExportAsTxt} variant="secondary">
+                                            <FileText className="mr-2 h-4 w-4" /> {t('converter.export.asTXT')}
+                                        </Button>
+                                        <Button onClick={handleExportAsImage} variant="secondary">
+                                            <ImageIcon className="mr-2 h-4 w-4" /> {t('converter.export.asImage')}
+                                        </Button>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+                         </div>
                     </Card>
                 </div>
                  {isGraphVisible && chartData.length > 0 && (
