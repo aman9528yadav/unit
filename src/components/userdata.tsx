@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Upload, LogOut, Settings, HelpCircle, X, Pencil, TrendingUp, Info } from "lucide-react";
+import { User, Upload, LogOut, Settings, HelpCircle, X, Pencil, TrendingUp, Info, CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
@@ -33,7 +33,9 @@ const PREMIUM_MEMBER_THRESHOLD = 8000;
 const DetailRow = ({ label, value, valueClassName }: { label: string, value: React.ReactNode, valueClassName?: string }) => (
     <div className="flex justify-between items-center py-3">
         <span className="text-muted-foreground">{label}</span>
-        <span className={`font-medium text-foreground text-right ${valueClassName}`}>{value}</span>
+        <div className={`flex items-center gap-2 font-medium text-foreground text-right ${valueClassName}`}>
+            {value}
+        </div>
     </div>
 );
 
@@ -176,7 +178,15 @@ export function UserData() {
                 <Section title={t('userdata.sections.account.title')}>
                     <DetailRow label={t('userdata.sections.account.name')} value={profile.fullName}/>
                     <DetailRow label={t('userdata.sections.account.email')} value={profile.email}/>
-                    <DetailRow label={t('userdata.sections.account.status')} value={t('userdata.sections.account.verified')} valueClassName="text-green-500"/>
+                    <DetailRow
+                        label={t('userdata.sections.account.status')}
+                        value={
+                            <>
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                {t('userdata.sections.account.verified')}
+                            </>
+                        }
+                    />
                 </Section>
 
                 <Section title={t('userdata.sections.preferences.title')}>
