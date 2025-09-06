@@ -155,7 +155,7 @@ export function About() {
           <ul className="bg-white shadow-lg rounded-2xl divide-y">
             <li className="p-4 flex justify-between"><span>Help Center</span><Link href="/help" className="text-indigo-600 hover:underline">Visit →</Link></li>
             <li className="p-4 flex justify-between"><span>Contact</span><a href="https://docs.google.com/forms/d/e/1FAIpQLSc-FH5ANa1HRR9sE6OUSRD8HVsZw6JNGWdbwK-5jrUywLnNbQ/viewform?usp=dialog" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">Contact Us →</a></li>
-            <li className="p-4 flex justify-between"><span>Report an Issue</span><Link href="#" className="text-indigo-600 hover:underline">Create ticket →</Link></li>
+            <li className="p-4 flex justify-between"><span>Report an Issue</span><a href="https://docs.google.com/forms/d/e/1FAIpQLSc-FH5ANa1HRR9sE6OUSRD8HVsZw6JNGWdbwK-5jrUywLnNbQ/viewform?usp=dialog" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">Create ticket →</a></li>
           </ul>
         </section>
       </div>
