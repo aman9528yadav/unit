@@ -83,10 +83,10 @@ const getUserKey = (key: string, email: string | null) => {
 
 // Offline parser to replace the AI flow
 export const offlineParseConversionQuery = (query: string, allUnits: Unit[], categories: ConversionCategory[]): ParseConversionQueryOutput | null => {
-    const normalizedQuery = query.trim().replace(/\s+/g, ' ').toLowerCase();
+    const normalizedQuery = query.trim().toLowerCase();
 
     // Regex to capture value, from unit (can have spaces), and to unit (can have spaces)
-    const regex = /^([0-9.,]+)\s*([a-zA-Z\s²°/]+?)\s+(?:to|in|as)\s+([a-zA-Z\s²°/]+)$/i;
+    const regex = /^([0-9.,\s]+)\s*([a-z\s²°/]+?)\s+(?:to|in|as)\s+([a-z\s²°/]+)$/i;
     const match = normalizedQuery.match(regex);
 
     if (!match) return null;
@@ -99,8 +99,11 @@ export const offlineParseConversionQuery = (query: string, allUnits: Unit[], cat
     const sortedUnits = [...allUnits].sort((a, b) => b.name.length - a.name.length);
 
     const findUnit = (unitStr: string): Unit | undefined => {
-        const lowerUnitStr = unitStr.trim().toLowerCase();
-        return sortedUnits.find(u => u.name.toLowerCase() === lowerUnitStr || u.symbol.toLowerCase() === lowerUnitStr);
+        const lowerUnitStr = unitStr.trim().toLowerCase().replace(/\s/g, '');
+        return sortedUnits.find(u => 
+            u.name.toLowerCase().replace(/\s/g, '') === lowerUnitStr || 
+            u.symbol.toLowerCase().replace(/\s/g, '') === lowerUnitStr
+        );
     };
 
     const fromUnit = findUnit(fromUnitStr);
@@ -464,7 +467,7 @@ export function Converter() {
 
 
  const handleSearch = () => {
-    if (searchQuery.trim() === "" || isSearching) {
+    if (isSearching) {
         return;
     }
 
@@ -491,7 +494,7 @@ export function Converter() {
                 }
             }
         } else {
-            // Only show toast if the query looks like a conversion attempt
+             // Only show toast if the query looks like a conversion attempt
             if (searchQuery.match(/^\d/) && searchQuery.match(/to|in|as/i)) {
                  toast({ title: t('converter.toast.invalidSearch'), description: t('converter.toast.queryError'), variant: "destructive" });
             }
@@ -707,7 +710,7 @@ export function Converter() {
     }
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+ const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
 
@@ -717,47 +720,55 @@ export function Converter() {
     }
 
     const newSuggestions: string[] = [];
-    const queryLower = query.toLowerCase();
+    const lowerQuery = query.toLowerCase();
 
     // Regex to find a number and some text
-    const valueUnitRegex = /^([0-9.,\s]+)?(.*)/i;
+    const valueUnitRegex = /^([0-9.,\s]+)?(.+)/i;
     const match = query.match(valueUnitRegex);
     
+    let numericPart: string | undefined = undefined;
+    let textPart = '';
+
     if (match) {
-        const numericPart = (match[1] || '1').trim();
-        let textPart = (match[2] || '').trim();
-        
-        const toSeparator = " to ";
-        const toIndex = textPart.indexOf(toSeparator);
-
-        if (toIndex !== -1) {
-           const fromPart = textPart.substring(0, toIndex).trim();
-           
-           const fromUnit = allUnits.find(u => u.name.toLowerCase() === fromPart || u.symbol.toLowerCase() === fromPart);
-
-           if (fromUnit) {
-               const category = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit.symbol));
-               if (category) {
-                   category.units.forEach(unit => {
-                       if (unit.symbol !== fromUnit.symbol) {
-                           newSuggestions.push(`${numericPart} ${fromUnit.name} to ${unit.name}`);
-                       }
-                   });
-               }
-           }
-        } else if (textPart) {
-            allUnits.forEach(unit => {
-                const unitNameLower = unit.name.toLowerCase();
-                const unitSymbolLower = unit.symbol.toLowerCase();
-                if (unitNameLower.startsWith(textPart) || unitSymbolLower.startsWith(textPart)) {
-                    newSuggestions.push(`${numericPart} ${unit.name}`);
-                }
-            });
-        }
+        numericPart = (match[1] || '').trim();
+        textPart = (match[2] || '').trim().replace(/\s/g, ''); // ignore spacing
+    } else {
+        textPart = query.trim().toLowerCase().replace(/\s/g, '');
     }
+    
+    const toSeparator = "to";
+    const toIndex = textPart.toLowerCase().indexOf(toSeparator);
+
+    if (toIndex !== -1 && textPart.endsWith(toSeparator)) {
+       const fromPart = textPart.substring(0, toIndex).trim();
+       
+       const fromUnit = allUnits.find(u => u.name.toLowerCase().replace(/\s/g, '') === fromPart || u.symbol.toLowerCase().replace(/\s/g, '') === fromPart);
+
+       if (fromUnit) {
+           const category = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit.symbol));
+           if (category) {
+               category.units.forEach(unit => {
+                   if (unit.symbol !== fromUnit.symbol) {
+                       newSuggestions.push(`${numericPart || '1'} ${fromUnit.name} to ${unit.name}`);
+                   }
+               });
+           }
+       }
+    } else if (textPart) {
+        const textPartLower = textPart.toLowerCase().replace(/\s/g, '');
+        allUnits.forEach(unit => {
+            const unitNameLower = unit.name.toLowerCase().replace(/\s/g, '');
+            const unitSymbolLower = unit.symbol.toLowerCase().replace(/\s/g, '');
+            if (unitNameLower.includes(textPartLower) || unitSymbolLower.includes(textPartLower)) {
+                newSuggestions.push(`${numericPart || '1'} ${unit.name} (${unit.symbol})`);
+            }
+        });
+    }
+
 
     setSuggestions([...new Set(newSuggestions)].slice(0, 5));
 };
+
   
   const handleSuggestionClick = (suggestion: string) => {
     setSearchQuery(suggestion);
