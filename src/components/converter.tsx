@@ -709,11 +709,6 @@ export function Converter() {
       handleCategoryChange(categoryName);
     }
   };
-  
-  const adjustValue = (amount: number) => {
-    setInputValue(prev => String(Number(prev) + amount));
-  };
-
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-4">
@@ -756,14 +751,33 @@ export function Converter() {
        </div>
         <Card>
             <CardHeader>
-                <div className="flex justify-between items-center">
-                    <CardTitle className="flex items-center gap-2"><Scale/>{t('converter.quickConvert')}</CardTitle>
-                </div>
+                <CardTitle className="flex items-center gap-2">Quick Convert</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-                <div className="flex flex-col md:flex-row gap-4">
-                    <div className="flex-1">
-                       <Label>{t('converter.category')}</Label>
+                <div className="grid grid-cols-2 gap-4">
+                     <div>
+                        <Label className="flex items-center gap-2 mb-2"><Globe size={16}/>{t('converter.region')}</Label>
+                        <Select value={region} onValueChange={handleRegionChange}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Region"/>
+                            </SelectTrigger>
+                            <SelectContent>
+                                {regions.map(r => {
+                                    const isLocked = isPremiumFeatureLocked && PREMIUM_REGIONS.includes(r);
+                                    return (
+                                        <SelectItem key={r} value={r} disabled={isLocked}>
+                                            <div className="flex items-center gap-2">
+                                                {isLocked && <Lock className="w-3 h-3" />}
+                                                {r}
+                                            </div>
+                                        </SelectItem>
+                                    )
+                                })}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div>
+                       <Label className="flex items-center gap-2 mb-2"><LayoutGrid size={16}/>{t('converter.category')}</Label>
                        <TooltipProvider>
                            <DropdownMenu>
                                <DropdownMenuTrigger asChild>
@@ -806,103 +820,72 @@ export function Converter() {
                            </DropdownMenu>
                        </TooltipProvider>
                     </div>
-                    <div className="flex-1">
-                        <Label>{t('converter.region')}</Label>
-                        <Select value={region} onValueChange={handleRegionChange}>
-                            <SelectTrigger>
-                                <Globe size={16} className="mr-2"/>
-                                <SelectValue placeholder="Select Region"/>
-                            </SelectTrigger>
-                            <SelectContent>
-                                {regions.map(r => {
-                                    const isLocked = isPremiumFeatureLocked && PREMIUM_REGIONS.includes(r);
-                                    return (
-                                        <SelectItem key={r} value={r} disabled={isLocked}>
-                                            <div className="flex items-center gap-2">
-                                                {isLocked && <Lock className="w-3 h-3" />}
-                                                {r}
-                                            </div>
-                                        </SelectItem>
-                                    )
-                                })}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="value">{t('converter.from')}</Label>
+                  <Input
+                      id="value"
+                      type="text"
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      className="mt-2"
+                      placeholder="0"
+                  />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
-                    <div className="flex-1">
-                        <Label>{t('converter.from')}</Label>
-                        <Select value={fromUnit} onValueChange={setFromUnit}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="From" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {currentUnits.map(unit => <SelectItem key={unit.symbol} value={unit.symbol}>{t(`units.${unit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: unit.name })} ({unit.symbol})</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
+                    <Select value={fromUnit} onValueChange={setFromUnit}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="From" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {currentUnits.map(unit => <SelectItem key={unit.symbol} value={unit.symbol}>{t(`units.${unit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: unit.name })} ({unit.symbol})</SelectItem>)}
+                        </SelectContent>
+                    </Select>
 
-                    <Button variant="outline" size="icon" className="self-end rounded-full" onClick={handleSwapUnits}>
-                    <ArrowRightLeft className="w-5 h-5" />
+                    <Button variant="outline" size="icon" className="self-center rounded-full" onClick={handleSwapUnits}>
+                        <ArrowRightLeft className="w-5 h-5" />
                     </Button>
 
-                    <div className="flex-1">
-                        <Label>{t('converter.to')}</Label>
-                        <Select value={toUnit} onValueChange={setToUnit}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="To" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {currentUnits.map(unit => <SelectItem key={unit.symbol} value={unit.symbol}>{t(`units.${unit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: unit.name })} ({unit.symbol})</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    <Select value={toUnit} onValueChange={setToUnit}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="To" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {currentUnits.map(unit => <SelectItem key={unit.symbol} value={unit.symbol}>{t(`units.${unit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: unit.name })} ({unit.symbol})</SelectItem>)}
+                        </SelectContent>
+                    </Select>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="bg-secondary/50 p-4 flex flex-col justify-between border-2 border-primary/50">
-                         <div>
-                            <Label htmlFor="value" className="text-muted-foreground">{fromUnitInfo?.name}</Label>
-                             <div className="flex items-baseline gap-2">
-                                <Input
-                                    id="value"
-                                    type="text"
-                                    value={inputValue}
-                                    onChange={(e) => setInputValue(e.target.value)}
-                                    className="text-3xl font-bold p-0 h-auto bg-transparent border-none shadow-none focus-visible:ring-0 flex-1"
-                                    placeholder="0"
-                                />
-                                <span className="text-xl font-semibold text-muted-foreground">{fromUnitInfo?.symbol}</span>
-                                <div className="flex flex-col gap-1">
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => adjustValue(1)}><Plus size={16}/></Button>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => adjustValue(-1)}><Minus size={16}/></Button>
-                                </div>
-                            </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{t('converter.enterValue')}</p>
-                    </Card>
-                     <Card className="bg-secondary/50 p-4 flex flex-col justify-between border-2 border-primary/50">
-                        <div>
-                            <Label className="text-muted-foreground">{toUnitInfo?.name}</Label>
-                            <p className="text-3xl font-bold text-primary truncate h-10 flex items-baseline gap-2">
-                               <span>{outputValue || t('converter.resultPlaceholder')}</span>
-                               <span className="text-xl font-semibold text-primary/80">{toUnitInfo?.symbol}</span>
-                            </p>
-                        </div>
-                         <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="icon" onClick={handleCopy} disabled={!outputValue}><Copy size={16}/></Button>
-                            <Button variant="ghost" size="icon" onClick={handleToggleFavorite} disabled={!outputValue}>
-                                <Star size={16} className={cn(isFavorite && "fill-yellow-400 text-yellow-400")}/>
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => setIsGraphVisible(v => !v)} disabled={!outputValue || selectedCategory.name === 'Temperature'}>
-                                <BarChart2 size={16} />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={handleShareClick}>
-                                <Share2 size={16} />
-                            </Button>
-                         </div>
-                    </Card>
+                <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+                    {fromUnitInfo?.info && <div className="flex items-center gap-2 bg-secondary p-2 rounded-md"><Info size={14}/> {fromUnitInfo.info}</div>}
+                    {toUnitInfo?.info && <div className="flex items-center gap-2 bg-secondary p-2 rounded-md"><Info size={14}/> {toUnitInfo.info}</div>}
+                </div>
+
+                <div className="bg-secondary p-4 rounded-lg flex justify-between items-center">
+                    <span className="text-2xl font-bold">{outputValue || "0.00"}</span>
+                     <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={handleCopy} disabled={!outputValue}><Copy size={16}/></Button>
+                        <Button variant="ghost" size="icon" onClick={handleToggleFavorite} disabled={!outputValue}>
+                            <Star size={16} className={cn(isFavorite && "fill-yellow-400 text-yellow-400")}/>
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={handleShareClick}>
+                            <Share2 size={16} />
+                        </Button>
+                     </div>
+                </div>
+                
+                <div className="flex flex-col md:flex-row justify-between items-center mt-2 gap-4">
+                    {!autoConvert && (
+                        <Button onClick={handleConvertClick} className="w-full">
+                            <Zap className="mr-2 h-4 w-4"/>
+                            {t('converter.convertButton')}
+                        </Button>
+                    )}
+                    <Button variant="outline" onClick={() => setIsGraphVisible(v => !v)} className="w-full" disabled={!outputValue || selectedCategory.name === 'Temperature'}>
+                        <BarChart2 size={16} className="mr-2" /> Compare All
+                    </Button>
                 </div>
                  {isGraphVisible && chartData.length > 0 && (
                      <div className="h-48 w-full">
@@ -925,22 +908,6 @@ export function Converter() {
                         </ResponsiveContainer>
                     </div>
                 )}
-                
-                <div className="flex flex-col md:flex-row justify-between items-center mt-2 gap-4">
-                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Info size={16}/>
-                        <p>{t('converter.tip')}</p>
-                   </div>
-                    <div className="flex items-center gap-2 w-full md:w-auto">
-                         {!autoConvert && (
-                            <Button onClick={handleConvertClick} className="w-full">
-                                <Zap className="mr-2 h-4 w-4"/>
-                                {t('converter.convertButton')}
-                            </Button>
-                        )}
-                        <Button variant="outline" onClick={() => router.push('/history')} className="w-full">{t('converter.viewHistory')}</Button>
-                    </div>
-                </div>
             </CardContent>
         </Card>
 
@@ -1095,4 +1062,5 @@ ConversionImage.displayName = 'ConversionImage';
     
 
     
+
 
