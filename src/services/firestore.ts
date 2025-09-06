@@ -110,10 +110,7 @@ export function listenToGlobalMaintenanceMode(
         const isEnabled = docSnap.exists() ? docSnap.data().isEnabled || false : false;
         setIsMaintenanceMode(isEnabled);
         
-        const isDevPage = window.location.pathname.startsWith('/dev');
-        if (isEnabled && !isDevPage) {
-            window.location.href = "https://maintenance-page-wit-d5gt.bolt.host/";
-        }
+        // This logic is now moved to the layout to handle route-based redirection.
 
     }, (error) => {
         console.error("Error listening to maintenance mode:", error);

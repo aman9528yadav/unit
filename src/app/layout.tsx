@@ -51,6 +51,13 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
         };
     }, []);
 
+    useEffect(() => {
+        if (isMaintenanceMode === true && !pathname.startsWith('/dev')) {
+            window.location.href = "https://maintenance-page-wit-d5gt.bolt.host/";
+        }
+    }, [isMaintenanceMode, pathname]);
+
+
     if (isMaintenanceMode === null) {
         return (
             <div className="flex flex-col min-h-screen items-center justify-center">
