@@ -1,10 +1,10 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Newspaper, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export function News() {
   const router = useRouter();
@@ -25,12 +25,14 @@ export function News() {
             <div className="p-4 bg-primary/10 rounded-full">
                 <Newspaper className="w-16 h-16 text-primary" />
             </div>
-            <h1 className="text-4xl font-bold">Feature Coming Soon</h1>
+            <h1 className="text-4xl font-bold">News & Updates</h1>
             <p className="text-muted-foreground max-w-md">
-                We're working hard to bring you the latest news and updates directly within the app. Stay tuned!
+                Stay up-to-date with the latest news, announcements, and articles from our team.
             </p>
-            <Button onClick={() => router.push('/')} className="mt-4">
-                Go to Dashboard
+            <Button asChild className="mt-4">
+                <Link href="https://sutradhaar1.42web.io/">
+                    Read News
+                </Link>
             </Button>
         </motion.div>
     </main>
