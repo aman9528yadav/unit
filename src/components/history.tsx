@@ -220,13 +220,8 @@ export function History() {
             </div>
 
             <div className="bg-card p-4 rounded-lg">
-                <div className="grid grid-cols-[1fr,2fr,auto] text-muted-foreground text-sm font-semibold mb-2 px-2">
-                    <span>When</span>
-                    <span>Conversion</span>
-                    <span className="text-right">Action</span>
-                </div>
                 {filteredItems.length > 0 ? (
-                  <div className="flex flex-col gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {filteredItems.map((item, index) => (
                          <HistoryItem key={`${item.timestamp}-${index}`} item={item} onRestore={handleRestore} onDelete={() => setItemToDelete(`${item.conversion}|${item.categoryName}|${item.timestamp}`)} t={t}/>
                     ))}
@@ -266,40 +261,25 @@ function HistoryItem({ item, onRestore, onDelete, t }: { item: HistoryItemData; 
     const category = conversionCategories.find(c => c.name === item.categoryName);
     const Icon = category?.icon || Power;
 
-    const formatWhen = (timestamp: string) => {
+    const formatTimestamp = (timestamp: string) => {
         const date = parseISO(timestamp);
-        if (isToday(date)) {
-            return `Today, ${format(date, 'HH:mm')}`;
-        }
-        if (isYesterday(date)) {
-            return `Yesterday, ${format(date, 'HH:mm')}`;
-        }
-         if (isThisWeek(date, { weekStartsOn: 1 })) {
-            return `${format(date, 'EEEE')}, ${format(date, 'HH:mm')}`;
-        }
-        return format(date, 'd MMM, HH:mm');
-    }
+        return formatDistanceToNow(date, { addSuffix: true });
+    };
 
     return (
-        <div className="grid grid-cols-[1fr,2fr,auto] items-center p-2 rounded-lg hover:bg-secondary group">
-            <div className="flex flex-col">
-                <span className="font-semibold text-foreground text-sm">{formatDistanceToNow(parseISO(item.timestamp), { addSuffix: true })}</span>
-                <span className="text-xs">{formatWhen(item.timestamp)}</span>
+        <div className="bg-secondary p-3 rounded-lg group relative">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                <Icon size={14}/> 
+                <span>{t(`categories.${item.categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: item.categoryName })}</span>
+                <span>•</span>
+                <span>{formatTimestamp(item.timestamp)}</span>
             </div>
-            <div className="flex items-center gap-3">
-                 <div className="p-2 bg-primary/10 text-primary rounded-full">
-                    <Icon/>
-                </div>
-                <div>
-                    <p className="font-semibold text-foreground">{item.value} {item.from} → {item.result} {item.to}</p>
-                    <p className="text-xs">From {item.fromName} to {item.toName}</p>
-                </div>
-            </div>
-             <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                 <Button size="sm" variant="ghost" onClick={() => onRestore(fullHistoryString)}>
-                    <RotateCcw className="mr-2 h-4 w-4"/> Use
+            <p className="font-semibold text-foreground">{item.conversion}</p>
+            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-2 right-2">
+                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onRestore(fullHistoryString)}>
+                    <RotateCcw className="h-4 w-4"/>
                 </Button>
-                <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={onDelete}>
+                <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive h-7 w-7" onClick={onDelete}>
                     <Trash2 className="h-4 w-4"/>
                 </Button>
             </div>
