@@ -120,7 +120,6 @@ export function About() {
           <h2 className="text-3xl font-bold text-gray-800 mb-10">Credits</h2>
           <div className="flex flex-wrap justify-center gap-8">
             <div className="flex flex-col items-center">
-              <Image src="https://static.wixstatic.com/media/711349_94e35fdf55844b5f94a5470845f82ae8~mv2.jpg/v1/fill/w_403,h_405,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/IMG-20241205-WA0001.jpg" alt="Aman Yadav" width={96} height={96} data-ai-hint="man portrait" className="w-24 h-24 rounded-full shadow-md object-cover ring-4 ring-indigo-400" />
               <h3 className="mt-3 text-lg font-semibold text-indigo-600">Aman Yadav</h3>
               <p className="text-gray-600 text-sm">Founder & Engineer</p>
             </div>
