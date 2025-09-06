@@ -67,6 +67,8 @@ import { cn } from "@/lib/utils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { AboutCard } from "./about-card";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
+import { Label } from "./ui/label";
+import { Checkbox } from "./ui/checkbox";
 
 
 interface Note {
@@ -248,6 +250,8 @@ export function Dashboard() {
   const [streakData, setStreakData] = useState<StreakData>({ currentStreak: 0, bestStreak: 0, daysNotOpened: 0 });
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [showMoreTools, setShowMoreTools] = useState(false);
+  const [showBetaDialog, setShowBetaDialog] = useState(false);
+  const [doNotShowAgain, setDoNotShowAgain] = useState(false);
   const router = useRouter();
 
 
@@ -261,6 +265,11 @@ export function Dashboard() {
 
   useEffect(() => {
     setIsClient(true);
+    const hasSeenDialog = localStorage.getItem('hasSeenBetaDialog');
+    if (!hasSeenDialog) {
+        setShowBetaDialog(true);
+    }
+    
     const storedProfile = localStorage.getItem("userProfile");
     const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
     
@@ -296,6 +305,12 @@ export function Dashboard() {
     }
   };
   
+  const handleBetaDialogClose = () => {
+      if (doNotShowAgain) {
+          localStorage.setItem('hasSeenBetaDialog', 'true');
+      }
+      setShowBetaDialog(false);
+  };
     const quickTools = [
       { label: t('dashboard.tools.converter'), icon: Sigma, href: "/converter", color: "text-blue-400" },
       { label: t('dashboard.tools.calculator'), icon: Calculator, href: "/calculator", color: "text-orange-400" },
@@ -522,6 +537,31 @@ export function Dashboard() {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+    
+    <AlertDialog open={showBetaDialog} onOpenChange={setShowBetaDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader className="items-center text-center">
+            <div className="p-3 bg-primary/10 rounded-full mb-4 w-fit">
+              <Info className="w-8 h-8 text-primary" />
+            </div>
+            <AlertDialogTitle className="text-2xl">Welcome to Sutradhaar Beta!</AlertDialogTitle>
+            <AlertDialogDescription className="max-w-md">
+              Thank you for trying out the beta version. The app is currently in Phase 1 of testing. If you encounter any issues or have feedback, please don't hesitate to contact me. I apologize for any inconvenience.
+              <br/><br/>
+              - Aman
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex items-center space-x-2 my-4 justify-center">
+            <Checkbox id="dont-show-again" checked={doNotShowAgain} onCheckedChange={(checked) => setDoNotShowAgain(checked as boolean)} />
+            <Label htmlFor="dont-show-again" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              Don't show this message again
+            </Label>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleBetaDialogClose}>Got it!</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     <section>
         <AboutCard />
@@ -529,5 +569,3 @@ export function Dashboard() {
     </div>
   );
 }
-
-    
