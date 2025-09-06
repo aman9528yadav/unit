@@ -153,8 +153,8 @@ export function About() {
           <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Support</h2>
           <ul className="bg-white shadow-lg rounded-2xl divide-y">
             <li className="p-4 flex justify-between"><span>Help Center</span><Link href="/how-to-use" className="text-indigo-600 hover:underline">Visit →</Link></li>
-            <li className="p-4 flex justify-between"><span>Contact</span><a href="https://docs.google.com/forms/d/e/1FAIpQLSc-FH5ANa1HRR9sE6OUSRD8HVsZw6JNGWdbwK-5jrUywLnNbQ/viewform?usp=dialog" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">Contact Us →</a></li>
-            <li className="p-4 flex justify-between"><span>Report an Issue</span><a href="https://docs.google.com/forms/d/e/1FAIpQLSc-FH5ANa1HRR9sE6OUSRD8HVsZw6JNGWdbwK-5jrUywLnNbQ/viewform?usp=dialog" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">Create ticket →</a></li>
+            <li className="p-4 flex justify-between"><span>Contact</span><a href="https://aman9528.wixstudio.com/my-site-3" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">Contact Us →</a></li>
+            <li className="p-4 flex justify-between"><span>Report an Issue</span><a href="https://aman9528.wixstudio.com/my-site-3" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">Create ticket →</a></li>
           </ul>
         </section>
       </div>

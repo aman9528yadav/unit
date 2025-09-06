@@ -57,7 +57,7 @@ export const getDefaultFaqs = (t: (key: string, params?: any) => string): FAQ[] 
     {
         id: uuidv4(),
         question: t('help.faqs.q7.question'),
-        answer: `${t('help.faqs.q7.answer')} <a href="mailto:amanyadavyadav9458@gmail.com" class="text-accent hover:underline">amanyadavyadav9458@gmail.com</a>.`
+        answer: `${t('help.faqs.q7.answer')} <a href="https://aman9528.wixstudio.com/my-site-3" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Contact Us</a>.`
     }
 ];
 
