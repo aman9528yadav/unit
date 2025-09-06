@@ -2,33 +2,37 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Newspaper } from "lucide-react";
+import { Newspaper, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 export function News() {
   const router = useRouter();
 
   return (
-    <div className="flex flex-col h-screen w-full bg-background">
-      <header className="flex items-center gap-4 p-4 border-b sticky top-0 bg-background/80 backdrop-blur-sm z-10">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft />
-        </Button>
-        <div className="flex items-center gap-2">
-            <div className="p-2 bg-green-500/10 text-green-500 rounded-lg">
-                <Newspaper />
+    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 text-center">
+        <header className="absolute top-0 left-0 w-full p-4 flex items-center">
+            <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                <ArrowLeft />
+            </Button>
+        </header>
+        <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="flex flex-col items-center gap-6"
+        >
+            <div className="p-4 bg-primary/10 rounded-full">
+                <Newspaper className="w-16 h-16 text-primary" />
             </div>
-            <h1 className="text-xl font-bold">News</h1>
-        </div>
-      </header>
-      <main className="flex-grow">
-        <iframe
-          src="https://sutradhaar1.42web.io"
-          className="w-full h-full border-0"
-          title="News"
-          sandbox="allow-scripts allow-same-origin"
-        ></iframe>
-      </main>
-    </div>
+            <h1 className="text-4xl font-bold">Feature Coming Soon</h1>
+            <p className="text-muted-foreground max-w-md">
+                We're working hard to bring you the latest news and updates directly within the app. Stay tuned!
+            </p>
+            <Button onClick={() => router.push('/')} className="mt-4">
+                Go to Dashboard
+            </Button>
+        </motion.div>
+    </main>
   );
 }
