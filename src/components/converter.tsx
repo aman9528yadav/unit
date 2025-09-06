@@ -860,7 +860,7 @@ export function Converter() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="bg-secondary/50 p-4 flex flex-col justify-between border-primary/50 border">
+                    <Card className="bg-secondary/50 p-4 flex flex-col justify-between border-primary/50 border-2">
                          <div>
                             <Label htmlFor="value" className="text-muted-foreground">{fromUnitInfo?.name}</Label>
                              <div className="flex items-baseline gap-2">
