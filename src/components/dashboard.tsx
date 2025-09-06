@@ -549,9 +549,11 @@ export function Dashboard() {
             >
               <Rocket className="w-8 h-8 text-primary" />
             </motion.div>
-            <AlertDialogTitle className="text-2xl">Welcome to the Beta!</AlertDialogTitle>
-            <AlertDialogDescription className="max-w-md">
-                Thanks for testing Sutradhaar! This app is a work in progress. Your feedback is valuable.
+            <AlertDialogTitle className="text-2xl">Welcome to Sutradhaar Beta!</AlertDialogTitle>
+            <AlertDialogDescription className="max-w-md whitespace-pre-wrap text-center">
+              Thank you for trying out the beta version. The app is currently in Phase 1 of testing. If you encounter any issues or have feedback, please don't hesitate to contact me. I apologize for any inconvenience.
+              <br/><br/>
+              - Aman
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex items-center space-x-2 my-4 justify-center">
