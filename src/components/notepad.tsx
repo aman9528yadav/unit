@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format, formatDistanceToNow } from 'date-fns';
+import { enUS, hi } from 'date-fns/locale';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
+import { useLanguage } from '@/context/language-context';
 
 
 export interface Note {
@@ -74,6 +76,8 @@ export function Notepad() {
     const [isSearchVisible, setIsSearchVisible] = useState(false);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
+    const { language, t } = useLanguage();
+    const dateLocale = language === 'hi' ? hi : enUS;
 
     const { toast } = useToast();
     const router = useRouter();
@@ -137,13 +141,13 @@ export function Notepad() {
             note.id === noteId ? { ...note, deletedAt: new Date().toISOString() } : note
         );
         updateNotes(updatedNotes);
-        toast({ title: "Note moved to Recycle Bin." });
+        toast({ title: t('notepad.toast.movedToTrash') });
     };
     
     const handlePermanentDelete = (noteId: string) => {
         const updatedNotes = notes.filter(note => note.id !== noteId);
         updateNotes(updatedNotes);
-        toast({ title: "Note permanently deleted." });
+        toast({ title: t('notepad.toast.permanentlyDeleted') });
     };
 
     const handleRestore = (noteId: string) => {
@@ -151,7 +155,7 @@ export function Notepad() {
             note.id === noteId ? { ...note, deletedAt: null } : note
         );
         updateNotes(updatedNotes);
-        toast({ title: "Note restored." });
+        toast({ title: t('notepad.toast.restored') });
     };
 
     const handleToggleFavorite = (noteId: string) => {
@@ -164,13 +168,13 @@ export function Notepad() {
     const handleRestoreAll = () => {
         const updatedNotes = notes.map(note => note.deletedAt ? { ...note, deletedAt: null } : note);
         updateNotes(updatedNotes);
-        toast({ title: "All notes restored." });
+        toast({ title: t('notepad.toast.allRestored') });
     };
 
     const handleEmptyTrash = () => {
         const updatedNotes = notes.filter(note => !note.deletedAt);
         updateNotes(updatedNotes);
-        toast({ title: "Recycle Bin emptied." });
+        toast({ title: t('notepad.toast.trashEmptied') });
         setShowEmptyTrashDialog(false);
     };
 
@@ -202,24 +206,24 @@ export function Notepad() {
 
     const getHeading = () => {
         switch(view) {
-            case 'all': return 'All Notes';
-            case 'favorites': return 'Favorites';
-            case 'trash': return 'Recycle Bin';
-            case 'category': return activeCategory || 'Category';
-            default: return 'All Notes';
+            case 'all': return t('notepad.headings.all');
+            case 'favorites': return t('notepad.headings.favorites');
+            case 'trash': return t('notepad.headings.trash');
+            case 'category': return activeCategory || t('notepad.headings.category');
+            default: return t('notepad.headings.all');
         }
     };
     
     const getEmptyState = () => {
         if (debouncedSearchQuery && sortedNotes.length === 0) {
-            return { title: 'No results found', message: `No notes matched your search for "${debouncedSearchQuery}".` };
+            return { title: t('notepad.empty.search.title'), message: t('notepad.empty.search.message', {query: debouncedSearchQuery}) };
         }
         switch(view) {
-            case 'all': return { title: 'No Notes Yet', message: 'Click the button to create your first note.' };
-            case 'favorites': return { title: 'No Favorites', message: 'Mark a note as favorite to see it here.' };
-            case 'trash': return { title: 'Recycle Bin is Empty', message: 'Deleted notes will appear here.' };
-            case 'category': return { title: `No notes in ${activeCategory}`, message: 'Add a note to this category to see it here.' };
-            default: return { title: 'No Notes', message: ''};
+            case 'all': return { title: t('notepad.empty.all.title'), message: t('notepad.empty.all.message') };
+            case 'favorites': return { title: t('notepad.empty.favorites.title'), message: t('notepad.empty.favorites.message') };
+            case 'trash': return { title: t('notepad.empty.trash.title'), message: t('notepad.empty.trash.message') };
+            case 'category': return { title: t('notepad.empty.category.title', {category: activeCategory}), message: t('notepad.empty.category.message') };
+            default: return { title: t('notepad.empty.default.title'), message: ''};
         }
     }
 
@@ -240,10 +244,10 @@ export function Notepad() {
              <div className="w-full max-w-md mx-auto flex flex-col p-4">
                 <header className="flex items-center justify-between">
                    <div className="w-10 h-10"></div>
-                    <h1 className="text-xl font-bold">All notes</h1>
+                    <h1 className="text-xl font-bold">{t('notepad.headings.all')}</h1>
                     <div className="w-10 h-10"></div>
                 </header>
-                <div className="text-center p-8 text-muted-foreground">Loading notes...</div>
+                <div className="text-center p-8 text-muted-foreground">{t('notepad.loading')}</div>
             </div>
         )
     }
@@ -262,7 +266,7 @@ export function Notepad() {
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search notes..."
+                                placeholder={t('notepad.searchPlaceholder')}
                                 className="w-full bg-transparent border-none focus:ring-0"
                                 autoFocus
                             />
@@ -271,7 +275,7 @@ export function Notepad() {
                     ) : (
                         <>
                             <h1 className="text-2xl font-bold">{getHeading()}</h1>
-                            <p className="text-sm text-muted-foreground">{sortedNotes.length} notes</p>
+                            <p className="text-sm text-muted-foreground">{t('notepad.noteCount', {count: sortedNotes.length})}</p>
                         </>
                     )}
                 </div>
@@ -288,17 +292,17 @@ export function Notepad() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                            <DropdownMenuLabel>View as</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t('notepad.menu.viewAs')}</DropdownMenuLabel>
                             <DropdownMenuRadioGroup value={layout} onValueChange={(v) => setLayout(v as LayoutView)}>
-                            <DropdownMenuRadioItem value="list"><List className="mr-2"/> List</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="card"><LayoutGrid className="mr-2"/> Card</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="list"><List className="mr-2"/> {t('notepad.menu.list')}</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="card"><LayoutGrid className="mr-2"/> {t('notepad.menu.card')}</DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t('notepad.menu.sortBy')}</DropdownMenuLabel>
                             <DropdownMenuRadioGroup value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
-                            <DropdownMenuRadioItem value="updatedAt">Date Modified</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="createdAt">Date Created</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="title">Title</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="updatedAt">{t('notepad.menu.dateModified')}</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="createdAt">{t('notepad.menu.dateCreated')}</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="title">{t('notepad.menu.title')}</DropdownMenuRadioItem>
                             </DropdownMenuRadioGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -309,20 +313,20 @@ export function Notepad() {
                 <Tabs value={view === 'category' ? 'all' : view} onValueChange={handleTabChange} className="w-full">
                     <div className="flex justify-between items-center">
                         <TabsList>
-                            <TabsTrigger value="all">All</TabsTrigger>
-                            <TabsTrigger value="favorites">Favorites</TabsTrigger>
-                            <TabsTrigger value="trash">Trash</TabsTrigger>
+                            <TabsTrigger value="all">{t('notepad.tabs.all')}</TabsTrigger>
+                            <TabsTrigger value="favorites">{t('notepad.tabs.favorites')}</TabsTrigger>
+                            <TabsTrigger value="trash">{t('notepad.tabs.trash')}</TabsTrigger>
                         </TabsList>
 
                         {categories.length > 0 && (
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline">
-                                        Categories <ChevronDown className="ml-2 h-4 w-4" />
+                                        {t('notepad.categories.button')} <ChevronDown className="ml-2 h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <DropdownMenuLabel>Filter by Category</DropdownMenuLabel>
+                                    <DropdownMenuLabel>{t('notepad.categories.filter')}</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     {categories.map(cat => (
                                         <DropdownMenuItem key={cat} onClick={() => handleCategoryClick(cat)}>
@@ -343,10 +347,10 @@ export function Notepad() {
                     {view === 'trash' && sortedNotes.length > 0 && (
                         <div className="flex justify-end gap-2 mb-4">
                             <Button variant="outline" onClick={handleRestoreAll}>
-                                <RotateCcw className="mr-2 h-4 w-4" /> Restore All
+                                <RotateCcw className="mr-2 h-4 w-4" /> {t('notepad.trashActions.restoreAll')}
                             </Button>
                             <Button variant="destructive" onClick={() => setShowEmptyTrashDialog(true)}>
-                                <ShieldX className="mr-2 h-4 w-4" /> Delete All
+                                <ShieldX className="mr-2 h-4 w-4" /> {t('notepad.trashActions.deleteAll')}
                             </Button>
                         </div>
                     )}
@@ -356,35 +360,35 @@ export function Notepad() {
                                 <li key={note.id} className={layout === 'card' ? "bg-card p-4 rounded-lg cursor-pointer group" : "bg-card p-2 rounded-lg cursor-pointer group hover:bg-background"}>
                                     <div onClick={() => router.push(`/notes/edit/${note.id}`)}>
                                         <div className="flex items-center justify-between">
-                                            <h2 className="font-semibold truncate">{note.title || 'Untitled Note'}</h2>
+                                            <h2 className="font-semibold truncate">{note.title || t('notepad.untitled')}</h2>
                                             {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
                                         </div>
                                          {note.attachment && layout === 'card' && (
                                             <div className="relative w-full h-32 my-2 rounded-md overflow-hidden">
-                                                <Image src={note.attachment} alt="Note attachment" layout="fill" objectFit="cover" />
+                                                <Image src={note.attachment} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="cover" />
                                             </div>
                                         )}
                                         <div className="flex gap-2">
                                             {note.attachment && layout === 'list' && (
                                                 <div className="relative w-16 h-16 my-1 rounded-md overflow-hidden flex-shrink-0">
-                                                    <Image src={note.attachment} alt="Note attachment" layout="fill" objectFit="cover" />
+                                                    <Image src={note.attachment} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="cover" />
                                                 </div>
                                             )}
-                                            <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: note.content || 'No content' }} />
+                                            <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: note.content || t('notepad.noContent') }} />
                                         </div>
                                         <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
-                                            <span>{format(new Date(note.updatedAt), "d MMM yyyy, h:mm a")}</span>
+                                            <span>{format(new Date(note.updatedAt), "d MMM yyyy, h:mm a", { locale: dateLocale })}</span>
                                             {note.category && <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full">{note.category}</span>}
                                         </div>
                                          {note.deletedAt && (
-                                            <p className="text-xs text-destructive mt-1">In bin for {formatDistanceToNow(new Date(note.deletedAt))}</p>
+                                            <p className="text-xs text-destructive mt-1">{t('notepad.inTrash', { time: formatDistanceToNow(new Date(note.deletedAt), { locale: dateLocale }) })}</p>
                                          )}
                                     </div>
                                     <div className="flex items-center justify-end gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         {view === 'trash' ? (
                                             <>
-                                                <Button size="sm" variant="ghost" onClick={() => handleRestore(note.id)}><RotateCcw size={16} /> Restore</Button>
-                                                <Button size="sm" variant="destructive" onClick={() => setNoteToDelete(note.id)}><Trash2 size={16} /> Delete</Button>
+                                                <Button size="sm" variant="ghost" onClick={() => handleRestore(note.id)}><RotateCcw size={16} /> {t('notepad.actions.restore')}</Button>
+                                                <Button size="sm" variant="destructive" onClick={() => setNoteToDelete(note.id)}><Trash2 size={16} /> {t('notepad.actions.delete')}</Button>
                                             </>
                                         ) : (
                                             <>
@@ -415,18 +419,18 @@ export function Notepad() {
             <AlertDialog open={!!noteToDelete}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogTitle>{t('notepad.dialog.permanentDelete.title')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will permanently delete the note. This action cannot be undone.
+                            {t('notepad.dialog.permanentDelete.description')}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setNoteToDelete(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel onClick={() => setNoteToDelete(null)}>{t('notepad.dialog.cancel')}</AlertDialogCancel>
                         <AlertDialogAction onClick={() => {
                             if(noteToDelete) handlePermanentDelete(noteToDelete);
                             setNoteToDelete(null);
                         }}>
-                            Delete Permanently
+                            {t('notepad.dialog.permanentDelete.confirm')}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -434,15 +438,15 @@ export function Notepad() {
             <AlertDialog open={showEmptyTrashDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure you want to empty the trash?</AlertDialogTitle>
+                        <AlertDialogTitle>{t('notepad.dialog.emptyTrash.title')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will permanently delete all notes in the recycle bin. This action cannot be undone.
+                            {t('notepad.dialog.emptyTrash.description')}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setShowEmptyTrashDialog(false)}>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel onClick={() => setShowEmptyTrashDialog(false)}>{t('notepad.dialog.cancel')}</AlertDialogCancel>
                         <AlertDialogAction onClick={handleEmptyTrash}>
-                            Delete All
+                            {t('notepad.dialog.emptyTrash.confirm')}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -450,3 +454,5 @@ export function Notepad() {
         </div>
     );
 }
+
+    

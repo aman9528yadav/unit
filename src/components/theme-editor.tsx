@@ -9,6 +9,7 @@ import { useTheme, type CustomTheme } from '@/context/theme-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/context/language-context';
 
 const themeProperties: { id: keyof CustomTheme['colors'], name: string }[] = [
     { id: 'background', name: 'Background' },
@@ -32,6 +33,7 @@ export function ThemeEditor() {
     const [localTheme, setLocalTheme] = useState<CustomTheme['colors']>({});
     const { toast } = useToast();
     const router = useRouter();
+    const { t } = useLanguage();
 
     useEffect(() => {
         setLocalTheme(customTheme?.colors || {});
@@ -45,7 +47,7 @@ export function ThemeEditor() {
 
     const handleReset = () => {
         resetCustomTheme();
-        toast({ title: 'Theme Reset', description: 'Custom colors have been reset to default.' });
+        toast({ title: t('themeEditor.toast.reset.title'), description: t('themeEditor.toast.reset.description') });
     };
 
     return (
@@ -55,7 +57,7 @@ export function ThemeEditor() {
                     <Button variant="ghost" size="icon" onClick={() => router.back()}>
                         <ArrowLeft />
                     </Button>
-                    <h1 className="text-xl font-bold">Theme Editor</h1>
+                    <h1 className="text-xl font-bold">{t('themeEditor.title')}</h1>
                 </div>
                 <Button variant="ghost" size="icon" onClick={handleReset}>
                     <RefreshCw />
@@ -67,12 +69,12 @@ export function ThemeEditor() {
                     <div className="bg-card p-4 rounded-xl">
                         <div className="flex items-center gap-3 mb-4">
                            <Palette className="text-primary"/>
-                           <h2 className="text-lg font-bold">Customize Colors</h2>
+                           <h2 className="text-lg font-bold">{t('themeEditor.customizeColors')}</h2>
                         </div>
                         <div className="grid grid-cols-1 gap-4">
                             {themeProperties.map(({ id, name }) => (
                                 <div key={id} className="flex items-center justify-between">
-                                    <label htmlFor={id} className="font-medium capitalize">{name}</label>
+                                    <label htmlFor={id} className="font-medium capitalize">{t(`themeEditor.properties.${name.toLowerCase().replace(/\s/g, '')}`)}</label>
                                     <div className="flex items-center gap-2 border border-border rounded-md p-1">
                                         <input
                                             type="color"
@@ -92,3 +94,5 @@ export function ThemeEditor() {
         </div>
     );
 }
+
+    

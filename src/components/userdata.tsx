@@ -12,6 +12,7 @@ import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { getAllTimeCalculations } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { useLanguage } from "@/context/language-context";
 
 
 interface UserProfile {
@@ -54,6 +55,7 @@ export function UserData() {
     const [progress, setProgress] = useState(0);
     const router = useRouter();
     const { toast } = useToast();
+    const { t } = useLanguage();
 
     const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 
@@ -100,11 +102,11 @@ export function UserData() {
      const handleLogout = () => {
         auth.signOut().then(() => {
             localStorage.removeItem("userProfile");
-            toast({ title: "Logged Out", description: "You have been successfully logged out." });
+            toast({ title: t('profile.toast.logout.title'), description: t('profile.toast.logout.description') });
             router.push("/logout");
         }).catch((error) => {
             console.error("Logout Error:", error);
-            toast({ title: "Logout Failed", description: "An error occurred while logging out.", variant: "destructive" });
+            toast({ title: t('profile.toast.logoutFailed.title'), description: t('profile.toast.logoutFailed.description'), variant: "destructive" });
         });
     };
     
@@ -121,10 +123,10 @@ export function UserData() {
                     <div className="p-2 bg-primary/10 rounded-lg text-primary">
                         <User/>
                     </div>
-                    <h1 className="text-xl font-bold">Profile</h1>
+                    <h1 className="text-xl font-bold">{t('userdata.title')}</h1>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" asChild><Link href="/help"><HelpCircle className="mr-2 h-4 w-4"/> Help</Link></Button>
+                    <Button variant="outline" size="sm" asChild><Link href="/help"><HelpCircle className="mr-2 h-4 w-4"/> {t('userdata.help')}</Link></Button>
                      <Link href="/">
                         <Button variant="ghost" size="icon"><X/></Button>
                     </Link>
@@ -145,7 +147,7 @@ export function UserData() {
                 </div>
                 <div className="flex items-center gap-2">
                     <h2 className="text-2xl font-bold">{profile.fullName}</h2>
-                    <Badge variant={userRole === 'Owner' ? 'default' : userRole === 'Premium Member' ? 'secondary' : 'outline'}>{userRole}</Badge>
+                    <Badge variant={userRole === 'Owner' ? 'default' : userRole === 'Premium Member' ? 'secondary' : 'outline'}>{t(`userdata.roles.${userRole.toLowerCase().replace(' ', '')}`)}</Badge>
                 </div>
                 <p className="text-muted-foreground text-sm">{profile.email}</p>
             </div>
@@ -154,8 +156,8 @@ export function UserData() {
                 <div className="mt-6">
                     <div className="flex justify-between items-end mb-2">
                          <div className="text-sm">
-                            <p className="font-semibold text-foreground">Premium Progress</p>
-                            <p className="text-xs text-muted-foreground">{totalCalculations.toLocaleString()} / {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} ops</p>
+                            <p className="font-semibold text-foreground">{t('userdata.premium.title')}</p>
+                            <p className="text-xs text-muted-foreground">{totalCalculations.toLocaleString()} / {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} {t('userdata.premium.ops')}</p>
                         </div>
                         <span className="text-sm font-bold text-primary">{Math.floor(progress)}%</span>
                     </div>
@@ -163,7 +165,7 @@ export function UserData() {
                     <Button asChild variant="link" size="sm" className="p-0 h-auto mt-2 text-primary">
                         <Link href="/help">
                             <Info className="mr-1 h-3 w-3"/>
-                            Learn more about Premium benefits
+                            {t('userdata.premium.learnMore')}
                         </Link>
                     </Button>
                 </div>
@@ -171,26 +173,28 @@ export function UserData() {
 
 
             <main className="w-full mt-2">
-                <Section title="Account">
-                    <DetailRow label="Name" value={profile.fullName}/>
-                    <DetailRow label="Email" value={profile.email}/>
-                    <DetailRow label="Status" value="Verified" valueClassName="text-green-500"/>
+                <Section title={t('userdata.sections.account.title')}>
+                    <DetailRow label={t('userdata.sections.account.name')} value={profile.fullName}/>
+                    <DetailRow label={t('userdata.sections.account.email')} value={profile.email}/>
+                    <DetailRow label={t('userdata.sections.account.status')} value={t('userdata.sections.account.verified')} valueClassName="text-green-500"/>
                 </Section>
 
-                <Section title="Preferences">
-                    <DetailRow label="Default Region" value={settings?.defaultRegion || '...'}/>
-                    <DetailRow label="Theme" value={settings?.theme || '...'}/>
-                    <DetailRow label="Save History" value={settings?.saveHistory ? "Enabled" : "Disabled"}/>
-                    <DetailRow label="Auto-Convert" value={settings?.autoConvert ? "Enabled" : "Disabled"}/>
+                <Section title={t('userdata.sections.preferences.title')}>
+                    <DetailRow label={t('userdata.sections.preferences.region')} value={settings?.defaultRegion || '...'}/>
+                    <DetailRow label={t('userdata.sections.preferences.theme')} value={t(`userdata.sections.preferences.themes.${settings?.theme.toLowerCase() || '...'}`)}/>
+                    <DetailRow label={t('userdata.sections.preferences.saveHistory')} value={settings?.saveHistory ? t('userdata.sections.preferences.enabled') : t('userdata.sections.preferences.disabled')}/>
+                    <DetailRow label={t('userdata.sections.preferences.autoConvert')} value={settings?.autoConvert ? t('userdata.sections.preferences.enabled') : t('userdata.sections.preferences.disabled')}/>
                 </Section>
             </main>
 
             <footer className="mt-8 pt-6 border-t flex justify-end items-center gap-4">
-                <Button variant="outline" onClick={handleLogout}><LogOut className="mr-2 h-4 w-4"/> Log out</Button>
+                <Button variant="outline" onClick={handleLogout}><LogOut className="mr-2 h-4 w-4"/> {t('userdata.logout')}</Button>
                 <Link href="/settings">
-                    <Button><Settings className="mr-2 h-4 w-4"/> Manage Settings</Button>
+                    <Button><Settings className="mr-2 h-4 w-4"/> {t('userdata.manageSettings')}</Button>
                 </Link>
             </footer>
         </div>
     );
 }
+
+    

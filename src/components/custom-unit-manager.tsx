@@ -27,6 +27,7 @@ import { conversionCategories as baseConversionCategories } from '@/lib/conversi
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/context/language-context';
 
 const getUserKey = (baseKey: string, email: string | null) => `${email || 'guest'}_${baseKey}`;
 
@@ -68,6 +69,7 @@ export function CustomUnitManager() {
     const [editingUnit, setEditingUnit] = useState<CustomUnit | null>(null);
     const { toast } = useToast();
     const router = useRouter();
+    const { t } = useLanguage();
 
     useEffect(() => {
         setIsClient(true);
@@ -149,7 +151,7 @@ export function CustomUnitManager() {
 
     const handleAddUnit = () => {
         if (!newUnit.name || !newUnit.symbol || !newUnit.category || !newUnit.factor) {
-            toast({ title: "Incomplete Information", description: "Please fill out all fields to add a unit.", variant: "destructive" });
+            toast({ title: t('customUnitManager.toast.incompleteUnit.title'), description: t('customUnitManager.toast.incompleteUnit.description'), variant: "destructive" });
             return;
         }
 
@@ -157,7 +159,7 @@ export function CustomUnitManager() {
         const updatedUnits = [...units, newCustomUnit];
         updateStoredUnits(updatedUnits);
 
-        toast({ title: "Unit Added!", description: `Successfully added ${newUnit.name}.` });
+        toast({ title: t('customUnitManager.toast.unitAdded.title'), description: t('customUnitManager.toast.unitAdded.description', { name: newUnit.name }) });
         setNewUnit({ name: '', symbol: '', category: '', factor: 1 });
         setIsAddUnitDialogOpen(false);
     };
@@ -173,7 +175,7 @@ export function CustomUnitManager() {
         const updatedUnits = units.map(u => (u.id === editingUnit.id ? { ...editingUnit, factor: Number(editingUnit.factor) } : u));
         updateStoredUnits(updatedUnits);
 
-        toast({ title: "Unit Updated!", description: `Successfully updated ${editingUnit.name}.` });
+        toast({ title: t('customUnitManager.toast.unitUpdated.title'), description: t('customUnitManager.toast.unitUpdated.description', { name: editingUnit.name }) });
         setIsEditDialogOpen(false);
         setEditingUnit(null);
     };
@@ -181,12 +183,12 @@ export function CustomUnitManager() {
     const handleDeleteUnit = (unitId: string) => {
         const updatedUnits = units.filter(u => u.id !== unitId);
         updateStoredUnits(updatedUnits);
-        toast({ title: "Unit Removed", description: "The custom unit has been deleted." });
+        toast({ title: t('customUnitManager.toast.unitRemoved.title'), description: t('customUnitManager.toast.unitRemoved.description') });
     };
     
     const handleAddCategory = () => {
         if (!newCategory.name || !newCategory.baseUnitName || !newCategory.baseUnitSymbol) {
-            toast({ title: "Incomplete Information", description: "Please fill out all fields to add a category.", variant: "destructive" });
+            toast({ title: t('customUnitManager.toast.incompleteCategory.title'), description: t('customUnitManager.toast.incompleteCategory.description'), variant: "destructive" });
             return;
         }
 
@@ -194,7 +196,7 @@ export function CustomUnitManager() {
         const updatedCategories = [...categories, newCustomCategory];
         updateStoredCategories(updatedCategories);
 
-        toast({ title: "Category Added!", description: `Successfully added the "${newCategory.name}" category.` });
+        toast({ title: t('customUnitManager.toast.categoryAdded.title'), description: t('customUnitManager.toast.categoryAdded.description', { name: newCategory.name }) });
         setNewCategory({ name: '', baseUnitName: '', baseUnitSymbol: '' });
         setIsAddCategoryDialogOpen(false);
     };
@@ -209,7 +211,7 @@ export function CustomUnitManager() {
 
         const updatedCategories = categories.filter(c => c.id !== categoryId);
         updateStoredCategories(updatedCategories);
-        toast({ title: "Category Removed", description: `The "${categoryToDelete.name}" category and its units have been deleted.` });
+        toast({ title: t('customUnitManager.toast.categoryRemoved.title'), description: t('customUnitManager.toast.categoryRemoved.description', { name: categoryToDelete.name }) });
     };
 
     if (!isClient) {
@@ -223,7 +225,7 @@ export function CustomUnitManager() {
                     <Button variant="ghost" size="icon" onClick={() => router.back()}>
                         <ArrowLeft />
                     </Button>
-                    <h1 className="text-xl font-bold">Manage Custom Data</h1>
+                    <h1 className="text-xl font-bold">{t('customUnitManager.title')}</h1>
                 </div>
                 <div className='flex gap-2'>
                     <Dialog open={isAddCategoryDialogOpen} onOpenChange={setIsAddCategoryDialogOpen}>
@@ -232,25 +234,25 @@ export function CustomUnitManager() {
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Add New Category</DialogTitle>
-                                <DialogDescription>Create a new category for conversions. All other units in this category will be relative to the base unit you define here.</DialogDescription>
+                                <DialogTitle>{t('customUnitManager.categoryDialog.title')}</DialogTitle>
+                                <DialogDescription>{t('customUnitManager.categoryDialog.description')}</DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="cat-name" className="text-right">Category Name</Label>
-                                    <Input id="cat-name" placeholder="e.g., Pressure" className="col-span-3" value={newCategory.name} onChange={(e) => handleCategoryInputChange('name', e.target.value)} />
+                                    <Label htmlFor="cat-name" className="text-right">{t('customUnitManager.categoryDialog.name')}</Label>
+                                    <Input id="cat-name" placeholder={t('customUnitManager.categoryDialog.namePlaceholder')} className="col-span-3" value={newCategory.name} onChange={(e) => handleCategoryInputChange('name', e.target.value)} />
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="base-unit-name" className="text-right">Base Unit Name</Label>
-                                    <Input id="base-unit-name" placeholder="e.g., Pascal" className="col-span-3" value={newCategory.baseUnitName} onChange={(e) => handleCategoryInputChange('baseUnitName', e.target.value)} />
+                                    <Label htmlFor="base-unit-name" className="text-right">{t('customUnitManager.categoryDialog.baseUnitName')}</Label>
+                                    <Input id="base-unit-name" placeholder={t('customUnitManager.categoryDialog.baseUnitNamePlaceholder')} className="col-span-3" value={newCategory.baseUnitName} onChange={(e) => handleCategoryInputChange('baseUnitName', e.target.value)} />
                                 </div>
                                  <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="base-unit-symbol" className="text-right">Base Unit Symbol</Label>
-                                    <Input id="base-unit-symbol" placeholder="e.g., Pa" className="col-span-3" value={newCategory.baseUnitSymbol} onChange={(e) => handleCategoryInputChange('baseUnitSymbol', e.target.value)} />
+                                    <Label htmlFor="base-unit-symbol" className="text-right">{t('customUnitManager.categoryDialog.baseUnitSymbol')}</Label>
+                                    <Input id="base-unit-symbol" placeholder={t('customUnitManager.categoryDialog.baseUnitSymbolPlaceholder')} className="col-span-3" value={newCategory.baseUnitSymbol} onChange={(e) => handleCategoryInputChange('baseUnitSymbol', e.target.value)} />
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button type="submit" onClick={handleAddCategory}>Add Category</Button>
+                                <Button type="submit" onClick={handleAddCategory}>{t('customUnitManager.categoryDialog.addButton')}</Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
@@ -262,47 +264,47 @@ export function CustomUnitManager() {
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Add New Custom Unit</DialogTitle>
+                                <DialogTitle>{t('customUnitManager.unitDialog.title')}</DialogTitle>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="name" className="text-right">Name</Label>
-                                    <Input id="name" placeholder="e.g., Furlong" className="col-span-3" value={newUnit.name} onChange={(e) => handleInputChange('name', e.target.value)} />
+                                    <Label htmlFor="name" className="text-right">{t('customUnitManager.unitDialog.name')}</Label>
+                                    <Input id="name" placeholder={t('customUnitManager.unitDialog.namePlaceholder')} className="col-span-3" value={newUnit.name} onChange={(e) => handleInputChange('name', e.target.value)} />
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="symbol" className="text-right">Symbol</Label>
-                                    <Input id="symbol" placeholder="e.g., fur" className="col-span-3" value={newUnit.symbol} onChange={(e) => handleInputChange('symbol', e.target.value)} />
+                                    <Label htmlFor="symbol" className="text-right">{t('customUnitManager.unitDialog.symbol')}</Label>
+                                    <Input id="symbol" placeholder={t('customUnitManager.unitDialog.symbolPlaceholder')} className="col-span-3" value={newUnit.symbol} onChange={(e) => handleInputChange('symbol', e.target.value)} />
                                 </div>
                                  <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="category" className="text-right">Category</Label>
+                                    <Label htmlFor="category" className="text-right">{t('customUnitManager.unitDialog.category')}</Label>
                                      <Select value={newUnit.category} onValueChange={(value) => handleInputChange('category', value)}>
                                         <SelectTrigger className="col-span-3">
-                                            <SelectValue placeholder="Select a category" />
+                                            <SelectValue placeholder={t('customUnitManager.unitDialog.categoryPlaceholder')} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {allCategories.map(cat => (
-                                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                                <SelectItem key={cat} value={cat}>{t(`categories.${cat.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat })}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
                                 </div>
                                  <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="factor" className="text-right">Factor</Label>
-                                    <Input id="factor" type="number" placeholder="e.g., 201.168" className="col-span-3" value={newUnit.factor} onChange={(e) => handleInputChange('factor', e.target.value)} />
+                                    <Label htmlFor="factor" className="text-right">{t('customUnitManager.unitDialog.factor')}</Label>
+                                    <Input id="factor" type="number" placeholder={t('customUnitManager.unitDialog.factorPlaceholder')} className="col-span-3" value={newUnit.factor} onChange={(e) => handleInputChange('factor', e.target.value)} />
                                 </div>
                                 {baseUnitForNewUnit && (
                                      <div className="grid grid-cols-4 items-center gap-4">
                                         <div className="col-start-2 col-span-3 flex items-start gap-2 text-sm text-muted-foreground bg-secondary p-2 rounded-md">
                                             <Info size={16} className="text-accent flex-shrink-0 mt-0.5" />
                                             <span>
-                                                Factor is relative to the base unit: <strong>{baseUnitForNewUnit.name} ({baseUnitForNewUnit.symbol})</strong>.
+                                                {t('customUnitManager.unitDialog.factorDescription')} <strong>{t(`units.${baseUnitForNewUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: baseUnitForNewUnit.name })} ({baseUnitForNewUnit.symbol})</strong>.
                                             </span>
                                         </div>
                                     </div>
                                 )}
                             </div>
                             <DialogFooter>
-                                <Button type="submit" onClick={handleAddUnit}>Add Unit</Button>
+                                <Button type="submit" onClick={handleAddUnit}>{t('customUnitManager.unitDialog.addButton')}</Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
@@ -311,11 +313,11 @@ export function CustomUnitManager() {
 
             <div className="flex-grow space-y-6">
                 <div>
-                    <h2 className="text-lg font-semibold mb-2 flex items-center gap-2"><Tag /> Custom Units</h2>
+                    <h2 className="text-lg font-semibold mb-2 flex items-center gap-2"><Tag /> {t('customUnitManager.sections.units.title')}</h2>
                     {units.length === 0 ? (
                         <div className="text-center text-muted-foreground mt-8 flex flex-col items-center gap-4 bg-card p-6 rounded-lg">
-                            <p>You haven't added any custom units yet.</p>
-                            <p>Click the '+' button to add your first one.</p>
+                            <p>{t('customUnitManager.sections.units.empty.line1')}</p>
+                            <p>{t('customUnitManager.sections.units.empty.line2')}</p>
                         </div>
                     ) : (
                         <div className="space-y-2">
@@ -323,7 +325,7 @@ export function CustomUnitManager() {
                                 <div key={unit.id} className="bg-card p-4 rounded-lg flex justify-between items-center">
                                     <div>
                                         <p className="font-bold">{unit.name} ({unit.symbol})</p>
-                                        <p className="text-sm text-muted-foreground">{unit.category} (1 {unit.symbol} = {unit.factor} x base unit)</p>
+                                        <p className="text-sm text-muted-foreground">{t('customUnitManager.sections.units.unitDetails', { category: unit.category, factor: unit.factor })}</p>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Button variant="ghost" size="icon" onClick={() => handleEditUnit(unit)}>
@@ -339,11 +341,11 @@ export function CustomUnitManager() {
                     )}
                 </div>
                  <div>
-                    <h2 className="text-lg font-semibold mb-2 flex items-center gap-2"><FolderPlus /> Custom Categories</h2>
+                    <h2 className="text-lg font-semibold mb-2 flex items-center gap-2"><FolderPlus /> {t('customUnitManager.sections.categories.title')}</h2>
                     {categories.length === 0 ? (
                         <div className="text-center text-muted-foreground mt-8 flex flex-col items-center gap-4 bg-card p-6 rounded-lg">
-                             <p>You haven't added any custom categories yet.</p>
-                             <p>Click the folder icon above to create one.</p>
+                             <p>{t('customUnitManager.sections.categories.empty.line1')}</p>
+                             <p>{t('customUnitManager.sections.categories.empty.line2')}</p>
                         </div>
                     ) : (
                         <div className="space-y-2">
@@ -351,7 +353,7 @@ export function CustomUnitManager() {
                                 <div key={cat.id} className="bg-card p-4 rounded-lg flex justify-between items-center">
                                     <div>
                                         <p className="font-bold">{cat.name}</p>
-                                        <p className="text-sm text-muted-foreground">Base Unit: {cat.baseUnitName} ({cat.baseUnitSymbol})</p>
+                                        <p className="text-sm text-muted-foreground">{t('customUnitManager.sections.categories.categoryDetails', { name: cat.baseUnitName, symbol: cat.baseUnitSymbol })}</p>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(cat.id)}>
@@ -369,43 +371,45 @@ export function CustomUnitManager() {
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Edit Custom Unit</DialogTitle>
+                        <DialogTitle>{t('customUnitManager.editDialog.title')}</DialogTitle>
                     </DialogHeader>
                     {editingUnit && (
                         <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="edit-name" className="text-right">Name</Label>
+                                <Label htmlFor="edit-name" className="text-right">{t('customUnitManager.unitDialog.name')}</Label>
                                 <Input id="edit-name" className="col-span-3" value={editingUnit.name} onChange={(e) => handleEditInputChange('name', e.target.value)} />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="edit-symbol" className="text-right">Symbol</Label>
+                                <Label htmlFor="edit-symbol" className="text-right">{t('customUnitManager.unitDialog.symbol')}</Label>
                                 <Input id="edit-symbol" className="col-span-3" value={editingUnit.symbol} onChange={(e) => handleEditInputChange('symbol', e.target.value)} />
                             </div>
                              <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="edit-category" className="text-right">Category</Label>
+                                <Label htmlFor="edit-category" className="text-right">{t('customUnitManager.unitDialog.category')}</Label>
                                  <Select value={editingUnit.category} onValueChange={(value) => handleEditInputChange('category', value)}>
                                     <SelectTrigger className="col-span-3">
-                                        <SelectValue placeholder="Select a category" />
+                                        <SelectValue placeholder={t('customUnitManager.unitDialog.categoryPlaceholder')} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {allCategories.map(cat => (
-                                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                            <SelectItem key={cat} value={cat}>{t(`categories.${cat.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat })}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
                              <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="edit-factor" className="text-right">Factor</Label>
+                                <Label htmlFor="edit-factor" className="text-right">{t('customUnitManager.unitDialog.factor')}</Label>
                                 <Input id="edit-factor" type="number" className="col-span-3" value={editingUnit.factor} onChange={(e) => handleEditInputChange('factor', e.target.value)} />
                             </div>
                         </div>
                     )}
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-                        <Button type="submit" onClick={handleUpdateUnit}>Save Changes</Button>
+                        <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>{t('customUnitManager.editDialog.cancel')}</Button>
+                        <Button type="submit" onClick={handleUpdateUnit}>{t('customUnitManager.editDialog.save')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
     );
 }
+
+    

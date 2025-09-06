@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { useLanguage } from '@/context/language-context';
 
 
 const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
@@ -50,6 +51,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const [isDirty, setIsDirty] = useState(false);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+    const { t } = useLanguage();
 
 
     const router = useRouter();
@@ -86,12 +88,12 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     setCategory(noteToEdit.category || '');
                     setAttachment(noteToEdit.attachment || null);
                 } else {
-                    toast({ title: "Note not found", variant: "destructive" });
+                    toast({ title: t('noteEditor.toast.notFound'), variant: "destructive" });
                     router.push('/notes');
                 }
             }
         }
-    }, [noteId, isNewNote, router, toast, notesKey]);
+    }, [noteId, isNewNote, router, toast, notesKey, t]);
 
     useEffect(() => {
         if (editorRef.current && content && !contentSetRef.current) {
@@ -168,7 +170,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             const reader = new FileReader();
             reader.onloadend = () => {
                 setAttachment(reader.result as string);
-                toast({ title: "Image attached successfully!"});
+                toast({ title: t('noteEditor.toast.imageAttached')});
                 setIsDirty(true);
             };
             reader.readAsDataURL(file);
@@ -177,12 +179,12 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
     const handleRemoveImage = () => {
         setAttachment(null);
-        toast({ title: "Image removed."});
+        toast({ title: t('noteEditor.toast.imageRemoved')});
         setIsDirty(true);
     }
     
     const showComingSoonToast = () => {
-        toast({ title: "Feature Coming Soon!", description: "This functionality is currently under development."});
+        toast({ title: t('noteEditor.toast.comingSoon.title'), description: t('noteEditor.toast.comingSoon.description')});
     }
     
     const handleApplyCustomFontSize = () => {
@@ -190,7 +192,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         if(!isNaN(size) && size > 0){
             applyStyle('fontSize', `${size}px`);
         } else {
-            toast({ title: "Invalid Font Size", variant: "destructive"});
+            toast({ title: t('noteEditor.toast.invalidFontSize'), variant: "destructive"});
         }
     }
 
@@ -201,7 +203,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             document.execCommand('insertText', false, lastCalc);
             setIsDirty(true);
         } else {
-            toast({ title: "No calculation found", description: "Perform a calculation in the calculator first."});
+            toast({ title: t('noteEditor.toast.noCalculation.title'), description: t('noteEditor.toast.noCalculation.description')});
         }
     };
 
@@ -212,7 +214,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             document.execCommand('insertText', false, lastConv);
             setIsDirty(true);
         } else {
-            toast({ title: "No conversion found", description: "Perform a conversion in the converter first."});
+            toast({ title: t('noteEditor.toast.noConversion.title'), description: t('noteEditor.toast.noConversion.description')});
         }
     };
 
@@ -221,8 +223,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
          const currentContent = editorRef.current?.innerHTML || '';
         if (!title.trim() && !currentContent.trim()) {
             toast({
-                title: "Cannot save empty note",
-                description: "Please add a title or some content.",
+                title: t('noteEditor.toast.emptyNote.title'),
+                description: t('noteEditor.toast.emptyNote.description'),
                 variant: "destructive"
             });
             return;
@@ -264,8 +266,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         setIsDirty(false);
 
         toast({
-            title: "Note Saved!",
-            description: "Your note has been saved successfully.",
+            title: t('noteEditor.toast.saved.title'),
+            description: t('noteEditor.toast.saved.description'),
         });
         router.push('/notes');
     };
@@ -282,7 +284,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         );
         localStorage.setItem(notesKey, JSON.stringify(updatedNotes));
         setIsDirty(false);
-        toast({ title: "Note moved to Recycle Bin." });
+        toast({ title: t('notepad.toast.movedToTrash') });
         router.push('/notes');
     };
 
@@ -315,13 +317,13 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 <Input
                     value={title}
                     onChange={(e) => { setTitle(e.target.value); setIsDirty(true); }}
-                    placeholder="Write title here"
+                    placeholder={t('noteEditor.placeholders.title')}
                     className="w-full bg-card border-border h-12 text-lg font-bold focus-visible:ring-1 focus-visible:ring-ring mb-2"
                 />
                  <Input
                     value={category}
                     onChange={(e) => { setCategory(e.target.value); setIsDirty(true); }}
-                    placeholder="Write category"
+                    placeholder={t('noteEditor.placeholders.category')}
                     className="w-full bg-card border-border h-12 text-base focus-visible:ring-1 focus-visible:ring-ring"
                 />
             </div>
@@ -344,13 +346,13 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                             <DropdownMenuItem onSelect={() => handleFormatBlock('h1')}>
-                                <Heading1 className="mr-2 h-4 w-4" /> Heading 1
+                                <Heading1 className="mr-2 h-4 w-4" /> {t('noteEditor.formatting.heading1')}
                             </DropdownMenuItem>
                              <DropdownMenuItem onSelect={() => handleFormatBlock('h2')}>
-                                <Heading2 className="mr-2 h-4 w-4" /> Heading 2
+                                <Heading2 className="mr-2 h-4 w-4" /> {t('noteEditor.formatting.heading2')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => handleFormatBlock('p')}>
-                                <Pilcrow className="mr-2 h-4 w-4" /> Paragraph
+                                <Pilcrow className="mr-2 h-4 w-4" /> {t('noteEditor.formatting.paragraph')}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -365,7 +367,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                                         placeholder="16"
                                      />
                                      <span>px</span>
-                                     <Button size="sm" onClick={handleApplyCustomFontSize}>Apply</Button>
+                                     <Button size="sm" onClick={handleApplyCustomFontSize}>{t('noteEditor.formatting.apply')}</Button>
                                 </div>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -381,14 +383,14 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                                     <div className="w-4 h-4 rounded-full mr-2 border" style={{ backgroundColor: item.color === 'inherit' ? 'transparent' : item.color, color: item.color }} >
                                        {item.color !== 'inherit' && <Circle className='w-full h-full'/>}
                                     </div>
-                                    {item.name}
+                                    {t(`noteEditor.colors.${item.name.toLowerCase()}`)}
                                 </DropdownMenuItem>
                             ))}
                             <DropdownMenuSeparator/>
                             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                 <label htmlFor="customColor" className="flex items-center gap-2 cursor-pointer">
                                     <div className="w-4 h-4 rounded-full mr-2 border" style={{ backgroundColor: 'transparent' }} />
-                                    Custom
+                                    {t('noteEditor.colors.custom')}
                                     <input 
                                         id="customColor"
                                         ref={colorInputRef}
@@ -408,7 +410,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 </div>
                 {attachment && (
                     <div className="relative w-full h-48 group">
-                        <Image src={attachment} alt="Note attachment" layout="fill" objectFit="contain" className="rounded-md" />
+                        <Image src={attachment} alt={t('noteEditor.attachmentAlt')} layout="fill" objectFit="contain" className="rounded-md" />
                         <Button variant="destructive" size="icon" className="absolute top-2 right-2 w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={handleRemoveImage}>
                            <X size={16}/>
                         </Button>
@@ -420,7 +422,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     onInput={() => {
                         setIsDirty(true);
                     }}
-                    data-placeholder="Type your message"
+                    data-placeholder={t('noteEditor.placeholders.content')}
                     className="w-full h-full flex-grow bg-transparent border-none resize-none focus-visible:outline-none text-base p-0 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
                     style={{ direction: 'ltr' }}
                 />
@@ -434,13 +436,13 @@ export function NoteEditor({ noteId }: { noteId: string }) {
              <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>You have unsaved changes!</AlertDialogTitle>
+                        <AlertDialogTitle>{t('noteEditor.unsavedDialog.title')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to leave? Your changes will be discarded.
+                            {t('noteEditor.unsavedDialog.description')}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t('noteEditor.unsavedDialog.cancel')}</AlertDialogCancel>
                         <AlertDialogAction
                             variant="destructive"
                             onClick={() => {
@@ -448,7 +450,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                                 router.back();
                             }}
                         >
-                            Discard Changes
+                            {t('noteEditor.unsavedDialog.confirm')}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -456,3 +458,5 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
+
+    

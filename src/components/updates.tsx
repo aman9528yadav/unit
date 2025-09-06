@@ -7,13 +7,17 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Gift, Zap, Rocket, Timer } from "lucide-react";
 import { format, intervalToDuration, differenceInDays } from "date-fns";
 import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/context/language-context';
 
-const updates = [
+const UPDATE_TIMER_STORAGE_KEY = "nextUpdateTime";
+const UPDATE_TEXT_STORAGE_KEY = "nextUpdateText";
+
+const getUpdates = (t: (key: string) => string) => [
   {
     version: "v2.1.0",
     date: "2024-08-15T10:00:00Z",
-    title: "Time Utilities & Pomodoro Timer",
-    description: "Introducing a new suite of time management tools, including a Pomodoro timer, stopwatch, and various date calculators to boost your productivity.",
+    title: t('updates.items.timeTools.title'),
+    description: t('updates.items.timeTools.description'),
     icon: Zap,
     bgColor: "bg-green-500/10",
     textColor: "text-green-400"
@@ -21,8 +25,8 @@ const updates = [
   {
     version: "v2.0.0",
     date: "2024-07-20T09:00:00Z",
-    title: "Custom Units & Categories",
-    description: "You can now create your own custom units and even new conversion categories directly from the settings page for ultimate personalization.",
+    title: t('updates.items.customUnits.title'),
+    description: t('updates.items.customUnits.description'),
     icon: Gift,
     bgColor: "bg-blue-500/10",
     textColor: "text-blue-400"
@@ -30,16 +34,13 @@ const updates = [
   {
     version: "v1.0.0",
     date: "2024-06-01T12:00:00Z",
-    title: "Initial Launch",
-    description: "Welcome to UniConvert! The initial version includes a robust unit converter, a scientific calculator, and a notepad for all your needs.",
+    title: t('updates.items.initialLaunch.title'),
+    description: t('updates.items.initialLaunch.description'),
     icon: Rocket,
     bgColor: "bg-purple-500/10",
     textColor: "text-purple-400"
   },
 ];
-
-const UPDATE_TIMER_STORAGE_KEY = "nextUpdateTime";
-const UPDATE_TEXT_STORAGE_KEY = "nextUpdateText";
 
 
 export function Updates() {
@@ -48,6 +49,9 @@ export function Updates() {
   const [updateText, setUpdateText] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
+  const { t } = useLanguage();
+
+  const updates = getUpdates(t);
 
   useEffect(() => {
     setIsClient(true);
@@ -122,36 +126,36 @@ export function Updates() {
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
           <ArrowLeft />
         </Button>
-        <h1 className="text-xl font-bold">What's New</h1>
+        <h1 className="text-xl font-bold">{t('updates.title')}</h1>
       </header>
 
       {isClient && timeLeft && (
         <div className="bg-card p-6 rounded-xl text-center">
             <div className='flex items-center justify-center gap-2 mb-4'>
                 <Timer className="text-accent" />
-                <h2 className="text-lg font-bold text-foreground">Next Update In</h2>
+                <h2 className="text-lg font-bold text-foreground">{t('updates.countdown.title')}</h2>
             </div>
             <div className="grid grid-cols-4 gap-2">
                 <div className='bg-background p-3 rounded-lg'>
                     <p className="text-3xl font-bold">{timeLeft.totalDays}</p>
-                    <p className="text-xs text-muted-foreground">Days</p>
+                    <p className="text-xs text-muted-foreground">{t('updates.countdown.days')}</p>
                 </div>
                 <div className='bg-background p-3 rounded-lg'>
                     <p className="text-3xl font-bold">{String(timeLeft.hours || 0).padStart(2, '0')}</p>
-                    <p className="text-xs text-muted-foreground">Hours</p>
+                    <p className="text-xs text-muted-foreground">{t('updates.countdown.hours')}</p>
                 </div>
                  <div className='bg-background p-3 rounded-lg'>
                     <p className="text-3xl font-bold">{String(timeLeft.minutes || 0).padStart(2, '0')}</p>
-                    <p className="text-xs text-muted-foreground">Minutes</p>
+                    <p className="text-xs text-muted-foreground">{t('updates.countdown.minutes')}</p>
                 </div>
                  <div className='bg-background p-3 rounded-lg'>
                     <p className="text-3xl font-bold">{String(timeLeft.seconds || 0).padStart(2, '0')}</p>
-                    <p className="text-xs text-muted-foreground">Seconds</p>
+                    <p className="text-xs text-muted-foreground">{t('updates.countdown.seconds')}</p>
                 </div>
             </div>
              {updateText && (
                 <div className="mt-4 text-left p-4 bg-secondary rounded-lg">
-                    <h3 className="font-semibold mb-2 text-foreground">What to expect:</h3>
+                    <h3 className="font-semibold mb-2 text-foreground">{t('updates.countdown.expect')}</h3>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">{updateText}</p>
                 </div>
             )}
@@ -180,3 +184,5 @@ export function Updates() {
     </div>
   );
 }
+
+    

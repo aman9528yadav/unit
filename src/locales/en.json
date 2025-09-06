@@ -154,24 +154,11 @@
     },
     "settings": {
         "title": "Settings",
-        "general": {
-            "title": "General",
+        "account": {
+            "title": "Account",
             "editProfile": {
                 "label": "Edit Profile",
                 "description": "Manage your personal information"
-            },
-            "notifications": {
-                "label": "Notifications",
-                "description_on": "Enabled",
-                "description_off": "Disabled"
-            },
-            "language": {
-                "label": "Language",
-                "description": "Set your preferred language"
-            },
-            "developer": {
-                "label": "Developer",
-                "description": "Access developer tools"
             }
         },
         "appearance": {
@@ -190,6 +177,22 @@
                 "custom": "Custom"
             },
             "premiumTooltip": "Unlock Premium to use custom themes."
+        },
+        "general": {
+            "title": "General",
+            "notifications": {
+                "label": "Notifications",
+                "description_on": "Enabled",
+                "description_off": "Disabled"
+            },
+            "language": {
+                "label": "Language",
+                "description": "Set your preferred language"
+            },
+            "developer": {
+                "label": "Developer",
+                "description": "Access developer tools"
+            }
         },
         "unitConverter": {
             "title": "Unit Converter",
@@ -236,6 +239,16 @@
                 "description": "This action cannot be undone. This will permanently delete all app data, including your settings, history, and notes, and log you out.",
                 "cancel": "Cancel",
                 "confirm": "Yes, Clear Everything"
+            },
+            "toast": {
+                "saved": {
+                    "title": "Settings Saved",
+                    "description": "Your preferences have been updated."
+                },
+                "cleared": {
+                    "title": "Data Cleared",
+                    "description": "All app data has been wiped. You will be logged out."
+                }
             }
         }
     },
@@ -396,6 +409,693 @@
             "pickTargetDate": "Pick a target date",
             "timeRemaining": "Time Remaining",
             "countdownMessage": "Please select a future date to start the countdown."
+        }
+    },
+    "notepad": {
+        "headings": {
+            "all": "All Notes",
+            "favorites": "Favorites",
+            "trash": "Recycle Bin",
+            "category": "Category"
+        },
+        "loading": "Loading notes...",
+        "searchPlaceholder": "Search notes...",
+        "noteCount": "{{count}} notes",
+        "untitled": "Untitled Note",
+        "attachmentAlt": "Note attachment",
+        "noContent": "No content",
+        "inTrash": "In bin for {{time}}",
+        "actions": {
+            "restore": "Restore",
+            "delete": "Delete"
+        },
+        "tabs": {
+            "all": "All",
+            "favorites": "Favorites",
+            "trash": "Trash"
+        },
+        "categories": {
+            "button": "Categories",
+            "filter": "Filter by Category"
+        },
+        "menu": {
+            "viewAs": "View as",
+            "list": "List",
+            "card": "Card",
+            "sortBy": "Sort by",
+            "dateModified": "Date Modified",
+            "dateCreated": "Date Created",
+            "title": "Title"
+        },
+        "trashActions": {
+            "restoreAll": "Restore All",
+            "deleteAll": "Delete All"
+        },
+        "empty": {
+            "search": {
+                "title": "No results found",
+                "message": "No notes matched your search for \"{{query}}\"."
+            },
+            "all": {
+                "title": "No Notes Yet",
+                "message": "Click the button to create your first note."
+            },
+            "favorites": {
+                "title": "No Favorites",
+                "message": "Mark a note as favorite to see it here."
+            },
+            "trash": {
+                "title": "Recycle Bin is Empty",
+                "message": "Deleted notes will appear here."
+            },
+            "category": {
+                "title": "No notes in {{category}}",
+                "message": "Add a note to this category to see it here."
+            },
+            "default": {
+                "title": "No Notes"
+            }
+        },
+        "dialog": {
+            "permanentDelete": {
+                "title": "Are you sure?",
+                "description": "This will permanently delete the note. This action cannot be undone.",
+                "confirm": "Delete Permanently"
+            },
+            "emptyTrash": {
+                "title": "Are you sure you want to empty the trash?",
+                "description": "This will permanently delete all notes in the recycle bin. This action cannot be undone.",
+                "confirm": "Delete All"
+            },
+            "cancel": "Cancel"
+        },
+        "toast": {
+            "movedToTrash": "Note moved to Recycle Bin.",
+            "permanentlyDeleted": "Note permanently deleted.",
+            "restored": "Note restored.",
+            "allRestored": "All notes restored.",
+            "trashEmptied": "Recycle Bin emptied."
+        }
+    },
+    "noteEditor": {
+        "placeholders": {
+            "title": "Write title here",
+            "category": "Write category",
+            "content": "Type your message"
+        },
+        "attachmentAlt": "Note attachment",
+        "formatting": {
+            "heading1": "Heading 1",
+            "heading2": "Heading 2",
+            "paragraph": "Paragraph",
+            "apply": "Apply"
+        },
+        "colors": {
+            "default": "Default",
+            "black": "Black",
+            "red": "Red",
+            "green": "Green",
+            "blue": "Blue",
+            "purple": "Purple",
+            "custom": "Custom"
+        },
+        "unsavedDialog": {
+            "title": "You have unsaved changes!",
+            "description": "Are you sure you want to leave? Your changes will be discarded.",
+            "cancel": "Cancel",
+            "confirm": "Discard Changes"
+        },
+        "toast": {
+            "notFound": "Note not found",
+            "imageAttached": "Image attached successfully!",
+            "imageRemoved": "Image removed.",
+            "comingSoon": {
+                "title": "Feature Coming Soon!",
+                "description": "This functionality is currently under development."
+            },
+            "invalidFontSize": "Invalid Font Size",
+            "noCalculation": {
+                "title": "No calculation found",
+                "description": "Perform a calculation in the calculator first."
+            },
+            "noConversion": {
+                "title": "No conversion found",
+                "description": "Perform a conversion in the converter first."
+            },
+            "emptyNote": {
+                "title": "Cannot save empty note",
+                "description": "Please add a title or some content."
+            },
+            "saved": {
+                "title": "Note Saved!",
+                "description": "Your note has been saved successfully."
+            }
+        }
+    },
+    "customUnitManager": {
+        "title": "Manage Custom Data",
+        "categoryDialog": {
+            "title": "Add New Category",
+            "description": "Create a new category for conversions. All other units in this category will be relative to the base unit you define here.",
+            "name": "Category Name",
+            "namePlaceholder": "e.g., Pressure",
+            "baseUnitName": "Base Unit Name",
+            "baseUnitNamePlaceholder": "e.g., Pascal",
+            "baseUnitSymbol": "Base Unit Symbol",
+            "baseUnitSymbolPlaceholder": "e.g., Pa",
+            "addButton": "Add Category"
+        },
+        "unitDialog": {
+            "title": "Add New Custom Unit",
+            "name": "Name",
+            "namePlaceholder": "e.g., Furlong",
+            "symbol": "Symbol",
+            "symbolPlaceholder": "e.g., fur",
+            "category": "Category",
+            "categoryPlaceholder": "Select a category",
+            "factor": "Factor",
+            "factorPlaceholder": "e.g., 201.168",
+            "factorDescription": "Factor is relative to the base unit:",
+            "addButton": "Add Unit"
+        },
+        "editDialog": {
+            "title": "Edit Custom Unit",
+            "cancel": "Cancel",
+            "save": "Save Changes"
+        },
+        "sections": {
+            "units": {
+                "title": "Custom Units",
+                "empty": {
+                    "line1": "You haven't added any custom units yet.",
+                    "line2": "Click the '+' button to add your first one."
+                },
+                "unitDetails": "{{category}} (1 {{symbol}} = {{factor}} x base unit)"
+            },
+            "categories": {
+                "title": "Custom Categories",
+                "empty": {
+                    "line1": "You haven't added any custom categories yet.",
+                    "line2": "Click the folder icon above to create one."
+                },
+                "categoryDetails": "Base Unit: {{name}} ({{symbol}})"
+            }
+        },
+        "toast": {
+            "incompleteUnit": {
+                "title": "Incomplete Information",
+                "description": "Please fill out all fields to add a unit."
+            },
+            "unitAdded": {
+                "title": "Unit Added!",
+                "description": "Successfully added {{name}}."
+            },
+            "unitUpdated": {
+                "title": "Unit Updated!",
+                "description": "Successfully updated {{name}}."
+            },
+            "unitRemoved": {
+                "title": "Unit Removed",
+                "description": "The custom unit has been deleted."
+            },
+            "incompleteCategory": {
+                "title": "Incomplete Information",
+                "description": "Please fill out all fields to add a category."
+            },
+            "categoryAdded": {
+                "title": "Category Added!",
+                "description": "Successfully added the \"{{name}}\" category."
+            },
+            "categoryRemoved": {
+                "title": "Category Removed",
+                "description": "The \"{{name}}\" category and its units have been deleted."
+            }
+        }
+    },
+    "themeEditor": {
+        "title": "Theme Editor",
+        "customizeColors": "Customize Colors",
+        "properties": {
+            "background": "Background",
+            "foreground": "Foreground",
+            "primary": "Primary",
+            "primaryforeground": "Primary Foreground",
+            "secondary": "Secondary",
+            "secondaryforeground": "Secondary Foreground",
+            "accent": "Accent",
+            "accentforeground": "Accent Foreground",
+            "card": "Card",
+            "cardforeground": "Card Foreground",
+            "border": "Border",
+            "input": "Input",
+            "ring": "Ring"
+        },
+        "toast": {
+            "reset": {
+                "title": "Theme Reset",
+                "description": "Custom colors have been reset to default."
+            }
+        }
+    },
+    "profile": {
+        "title": "My Profile",
+        "birthday": "Birthday",
+        "menu": {
+            "favorites": "Favorite",
+            "whatsNew": "What's New",
+            "privacy": "Privacy Policy",
+            "settings": "Settings",
+            "help": "Help",
+            "about": "About",
+            "logout": "Logout",
+            "developer": "Developer"
+        },
+        "toast": {
+            "logout": {
+                "title": "Logged Out",
+                "description": "You have been successfully logged out."
+            },
+            "logoutFailed": {
+                "title": "Logout Failed",
+                "description": "An error occurred while logging out."
+            }
+        }
+    },
+    "profileEdit": {
+        "title": "Edit Profile",
+        "tabs": {
+            "account": "Account",
+            "security": "Security"
+        },
+        "account": {
+            "title": "Account Information",
+            "description": "Make changes to your personal details here. Click save when you're done.",
+            "fullName": "Full Name",
+            "email": "Email",
+            "dob": "Date of Birth",
+            "pickDate": "Pick a date",
+            "saving": "Saving...",
+            "save": "Save Changes"
+        },
+        "security": {
+            "title": "Password",
+            "description": "Change your password here. After saving, you'll be logged out.",
+            "currentPassword": "Current Password",
+            "newPassword": "New Password",
+            "confirmPassword": "Confirm New Password",
+            "updating": "Updating...",
+            "update": "Update Password"
+        },
+        "toast": {
+            "imageReady": {
+                "title": "Image ready",
+                "description": "Click 'Save Changes' to apply."
+            },
+            "nameRequired": "Full name is required",
+            "profileUpdated": {
+                "title": "Profile Updated",
+                "description": "Your personal information has been updated."
+            },
+            "updateFailed": {
+                "title": "Update Failed",
+                "description": "Could not update your profile."
+            },
+            "passwordFieldsRequired": "Please fill all password fields",
+            "passwordsNoMatch": "New passwords do not match",
+            "passwordTooShort": {
+                "title": "Password Too Short",
+                "description": "New password must be at least 6 characters."
+            },
+            "passwordChanged": {
+                "title": "Password Changed",
+                "description": "Your password has been updated successfully."
+            },
+            "passwordChangeFailed": {
+                "title": "Password Change Failed",
+                "description": "The current password you entered is incorrect."
+            },
+            "incorrectPassword": {
+                "title": "Incorrect Password",
+                "description": "The current password you entered is incorrect."
+            }
+        }
+    },
+    "photoEditor": {
+        "title": "Change Profile Photo",
+        "previewAlt": "Profile Preview",
+        "zoom": "Zoom",
+        "upload": "Upload",
+        "takePhoto": "Take Photo",
+        "remove": "Remove",
+        "defaults": "Or choose from defaults",
+        "defaultAlt": "Default avatar",
+        "supportInfo": "Supported: JPG, PNG up to 5MB. Your photo is visible across Sutradhaar.",
+        "capture": "Capture photo",
+        "back": "Back to editor",
+        "reset": "Reset",
+        "cancel": "Cancel",
+        "save": "Save",
+        "cameraAlert": {
+            "title": "Camera Access Required",
+            "description": "Please allow camera access to use this feature."
+        },
+        "toast": {
+            "cameraDenied": {
+                "title": "Camera Access Denied",
+                "description": "Please enable camera permissions in your browser settings."
+            },
+            "fileTooLarge": {
+                "title": "File too large",
+                "description": "Please upload an image smaller than 5MB."
+            }
+        }
+    },
+    "welcome": {
+        "skip": "Skip",
+        "tabs": {
+            "login": "Login",
+            "signup": "Sign Up"
+        },
+        "title": "Login to Sutradhaar",
+        "description": "Access your unit converter dashboard",
+        "info": "Use your email or username to sign in.",
+        "emailLabel": "Email or Username",
+        "emailPlaceholder": "name@example.com",
+        "passwordLabel": "Password",
+        "forgotPassword": "Forgot Password?",
+        "loggingIn": "Logging In...",
+        "loginButton": "Login",
+        "noAccount": "Don't have an account?",
+        "signupLink": "Sign Up",
+        "toast": {
+            "loginFailed": {
+                "title": "Login Failed",
+                "missingFields": "Please enter both email and password.",
+                "notVerified": "Please verify your email address before logging in. Check your inbox for the verification link.",
+                "invalidCredentials": "Invalid email or password. Please try again."
+            }
+        }
+    },
+    "signup": {
+        "tabs": {
+            "login": "Login",
+            "signup": "Sign Up"
+        },
+        "title": "Create your Sutradhaar Account",
+        "description": "Start converting with a personalized workspace",
+        "labels": {
+            "fullName": "Full Name",
+            "username": "Username",
+            "email": "Email",
+            "password": "Password",
+            "confirmPassword": "Confirm Password"
+        },
+        "placeholders": {
+            "fullName": "Aman Yadav",
+            "username": "e.g. aman_y",
+            "email": "you@domain.com",
+            "password": "Create a strong password",
+            "confirmPassword": "Re-enter your password"
+        },
+        "skip": "Skip for now",
+        "signingUp": "Signing Up...",
+        "signupButton": "Sign Up",
+        "haveAccount": "Already have an account?",
+        "loginLink": "Login",
+        "verify": {
+            "title": "Verify Your Email",
+            "description": "A verification link has been sent to {{email}}. Please check your inbox and click the link to activate your account.",
+            "redirectMessage": "Once verified, you will be automatically redirected.",
+            "sending": "Sending...",
+            "resend": "Resend Email",
+            "resendTimer": "Resend in {{time}}s",
+            "wrongEmail": "Wrong email?",
+            "goBack": "Go back"
+        },
+        "toast": {
+            "verified": {
+                "title": "Email Verified!",
+                "description": "Your account is active. You will be redirected."
+            },
+            "resent": {
+                "title": "Verification Email Sent",
+                "description": "A new verification link has been sent to your email address."
+            },
+            "error": {
+                "title": "Error",
+                "description": "Failed to resend verification email."
+            },
+            "requiredFields": "Please fill all required fields",
+            "passwordsNoMatch": "Passwords do not match",
+            "passwordTooShort": {
+                "title": "Password too short",
+                "description": "Password must be at least 8 characters."
+            },
+            "signupFailed": {
+                "title": "Sign-up Failed",
+                "default": "An unexpected error occurred. Please try again.",
+                "emailInUse": "This email address is already in use. Please log in or use a different email.",
+                "weakPassword": "The password is too weak. Please choose a stronger password (at least 8 characters)."
+            }
+        }
+    },
+    "forgotPassword": {
+        "title": "Forgot Password",
+        "description": "No problem! Enter your email below and we'll send you a link to reset it.",
+        "emailLabel": "Email",
+        "sending": "Sending Link...",
+        "sendButton": "Send Reset Link",
+        "success": {
+            "title": "Check Your Email",
+            "description": "A password reset link has been sent to {{email}}. You will be redirected to the login page shortly.",
+            "backButton": "Back to Login Now"
+        },
+        "toast": {
+            "emailRequired": {
+                "title": "Email required",
+                "description": "Please enter your email address."
+            },
+            "requestFailed": {
+                "title": "Request Failed",
+                "default": "An unexpected error occurred. Please try again.",
+                "userNotFound": "No account found with this email address."
+            }
+        }
+    },
+    "about": {
+        "title": "About Sutradhaar",
+        "breadcrumbs": "Settings / About",
+        "appInfo": {
+            "title": "App Information",
+            "description": "Details about Sutradhaar unit converter.",
+            "version": "Version",
+            "build": "Build",
+            "release": "Release Channel",
+            "license": "License"
+        },
+        "credits": {
+            "title": "Credits",
+            "description": "People behind Sutradhaar.",
+            "roles": {
+                "founder": "Founder & Engineer",
+                "product": "Product Designer",
+                "qa": "QA & Support"
+            }
+        },
+        "legal": {
+            "title": "Legal",
+            "description": "Terms, policies, and open source libraries.",
+            "terms": "Terms of Service",
+            "privacy": "Privacy Policy",
+            "openSource": "Open Source Notices"
+        },
+        "support": {
+            "title": "Support",
+            "description": "Get help, contact us, or report issues.",
+            "helpCenter": "Help Center",
+            "contact": "Contact",
+            "reportIssue": "Report an Issue"
+        },
+        "actions": {
+            "open": "Open document",
+            "view": "View libraries",
+            "visit": "Visit",
+            "create": "Create ticket"
+        },
+        "footer": {
+            "docs": "Docs",
+            "support": "Get Support"
+        }
+    },
+    "help": {
+        "title": "Help & Support",
+        "heading": "Frequently Asked Questions",
+        "faqs": {
+            "q1": {
+                "question": "How do I use the Unit Converter?",
+                "answer": {
+                    "p1": "The unit converter is designed for ease of use. You can either use the AI-powered search bar (e.g., \"10kg to lbs\") or manually select the category and units.",
+                    "li1": "Use the dropdowns to select the conversion category (e.g., Length, Weight).",
+                    "li2": "Enter the value you want to convert.",
+                    "li3": "Select the 'from' and 'to' units.",
+                    "li4": "The result will be displayed automatically if 'Auto Convert' is enabled in settings, or after you click the 'Convert' button."
+                }
+            },
+            "q2": {
+                "question": "What are the benefits of being a Premium Member?",
+                "answer": {
+                    "p1": "Becoming a Premium Member unlocks exclusive features to enhance your experience. You can achieve Premium status by completing {{ops}} operations (conversions or calculations) within the app.",
+                    "p2": "Premium benefits include:",
+                    "li1": {
+                        "strong": "Custom Themes",
+                        "text": "Personalize the app's appearance by creating and applying your own color schemes in the Theme Editor."
+                    },
+                    "li2": {
+                        "strong": "Custom Units",
+                        "text": "Add your own unique units and even create entirely new conversion categories tailored to your needs."
+                    },
+                    "p3": "You can track your progress towards becoming a Premium Member on your profile page."
+                }
+            },
+            "q3": {
+                "question": "How does the Notepad work?",
+                "answer": {
+                    "p1": "The notepad allows you to create and manage notes. Notes are automatically saved to your account if you are logged in.",
+                    "li1": "Click the floating 'Edit' button to create a new note.",
+                    "li2": "Use the toolbar to format your text, attach images, and insert previous calculations or conversions.",
+                    "li3": "You can favorite notes, assign categories, and move them to the recycle bin."
+                }
+            },
+            "q4": {
+                "question": "How do I add custom units?",
+                "answer": {
+                    "p1": "You can add your own units or even create new categories by going to {{settings}}. This allows you to tailor the converter to your specific needs, such as converting between fictional currencies or unique project measurements. Note: This is a Premium feature.",
+                    "settingsPath": "Settings > Custom Unit"
+                }
+            },
+            "q5": {
+                "question": "How do I reset my password?",
+                "answer": "You can reset your password by going to the login page and clicking on the \"Forgot Password\" link. An email will be sent to you with instructions."
+            },
+            "q6": {
+                "question": "How do I update my profile?",
+                "answer": "You can update your profile information, including your name and profile picture, by navigating to the \"My Profile\" page and clicking the pencil icon."
+            },
+            "q7": {
+                "question": "Contact Us",
+                "answer": "If you have any other questions or need further assistance, please feel free to contact our support team at"
+            }
+        }
+    },
+    "updates": {
+        "title": "What's New",
+        "countdown": {
+            "title": "Next Update In",
+            "days": "Days",
+            "hours": "Hours",
+            "minutes": "Minutes",
+            "seconds": "Seconds",
+            "expect": "What to expect:"
+        },
+        "items": {
+            "timeTools": {
+                "title": "Time Utilities & Pomodoro Timer",
+                "description": "Introducing a new suite of time management tools, including a Pomodoro timer, stopwatch, and various date calculators to boost your productivity."
+            },
+            "customUnits": {
+                "title": "Custom Units & Categories",
+                "description": "You can now create your own custom units and even new conversion categories directly from the settings page for ultimate personalization."
+            },
+            "initialLaunch": {
+                "title": "Initial Launch",
+                "description": "Welcome to UniConvert! The initial version includes a robust unit converter, a scientific calculator, and a notepad for all your needs."
+            }
+        }
+    },
+    "userdata": {
+        "title": "Profile",
+        "help": "Help",
+        "roles": {
+            "member": "Member",
+            "premiummember": "Premium Member",
+            "owner": "Owner"
+        },
+        "premium": {
+            "title": "Premium Progress",
+            "ops": "ops",
+            "learnMore": "Learn more about Premium benefits"
+        },
+        "sections": {
+            "account": {
+                "title": "ACCOUNT",
+                "name": "Name",
+                "email": "Email",
+                "status": "Status",
+                "verified": "Verified"
+            },
+            "preferences": {
+                "title": "PREFERENCES",
+                "region": "Default Region",
+                "theme": "Theme",
+                "themes": {
+                    "light": "Light",
+                    "dark": "Dark",
+                    "custom": "Custom",
+                    "system": "System"
+                },
+                "saveHistory": "Save History",
+                "autoConvert": "Auto-Convert",
+                "enabled": "Enabled",
+                "disabled": "Disabled"
+            }
+        },
+        "logout": "Log out",
+        "manageSettings": "Manage Settings"
+    },
+    "notifications": {
+        "title": "Notifications",
+        "markAllRead": "Mark all as read",
+        "clearAll": "Clear All",
+        "noNotifications": "You have no notifications.",
+        "disabled": {
+            "message": "Notifications are currently disabled.",
+            "button": "Enable Notifications"
+        },
+        "toast": {
+            "cleared": "All notifications cleared.",
+            "markedAllRead": "All notifications marked as read."
+        }
+    },
+    "globalSearch": {
+        "placeholder": "Search tools, history, notes...",
+        "prompt": "Search for anything in your app.",
+        "noResults": "No results found for \"{{query}}\".",
+        "results": {
+            "conversion": {
+                "title": "Convert",
+                "description": "Switch to converter for this calculation."
+            },
+            "note": {
+                "untitled": "Untitled Note"
+            }
+        },
+        "settings": {
+            "general": {
+                "title": "General Settings",
+                "description": "Edit profile, notifications, language, theme."
+            },
+            "customUnits": {
+                "title": "Custom Units",
+                "description": "Manage custom units and categories."
+            },
+            "theme": {
+                "title": "Theme Editor",
+                "description": "Customize the application theme colors."
+            },
+            "developer": {
+                "title": "Developer Panel",
+                "description": "Access tools for debugging and testing."
+            }
         }
     }
 }

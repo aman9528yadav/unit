@@ -156,7 +156,7 @@ export function Settings() {
 
     
     if (userRole === 'Member' && selectedTheme === 'custom') {
-        toast({ title: "Premium Feature", description: "Unlock Premium to apply custom themes.", variant: "destructive" });
+        toast({ title: t('settings.appearance.premiumTooltip'), variant: "destructive" });
         setTheme('light'); // Revert to default
     } else {
         setTheme(selectedTheme);
@@ -173,12 +173,12 @@ export function Settings() {
     window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: selectedTheme }));
 
 
-    toast({ title: "Settings Saved", description: "Your preferences have been updated."});
+    toast({ title: t('settings.data.toast.saved.title'), description: t('settings.data.toast.saved.description')});
   };
 
   const handleClearData = () => {
     localStorage.clear();
-    toast({ title: "Data Cleared", description: "All app data has been wiped. You will be logged out." });
+    toast({ title: t('settings.data.toast.cleared.title'), description: t('settings.data.toast.cleared.description') });
     setTimeout(() => {
       router.push('/welcome');
     }, 1500);
@@ -199,12 +199,12 @@ export function Settings() {
         </header>
 
         <div className="flex flex-col gap-6">
-             <Section title="Account">
+             <Section title={t('settings.account.title')}>
                 <SettingRow
                     isLink
                     href="/profile/edit"
-                    label={t('settings.general.editProfile.label')}
-                    description={t('settings.general.editProfile.description')}
+                    label={t('settings.account.editProfile.label')}
+                    description={t('settings.account.editProfile.description')}
                     control={<User />}
                 />
             </Section>
@@ -389,3 +389,5 @@ export function Settings() {
     </div>
   );
 }
+
+    

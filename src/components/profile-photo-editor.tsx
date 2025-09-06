@@ -10,6 +10,7 @@ import { Upload, Camera, Trash2, RotateCcw, X, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertTitle, AlertDescription } from "./ui/alert";
 import { Label } from "./ui/label";
+import { useLanguage } from "@/context/language-context";
 
 
 const defaultAvatars = [
@@ -32,6 +33,7 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
     const [zoom, setZoom] = useState(1);
     const [mode, setMode] = useState<"edit" | "camera">("edit");
     const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+    const { t } = useLanguage();
     
     const webcamRef = useRef<Webcam>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,11 +54,11 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
         setHasCameraPermission(false);
         toast({
           variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings.',
+          title: t('photoEditor.toast.cameraDenied.title'),
+          description: t('photoEditor.toast.cameraDenied.description'),
         });
       }
-    }, [toast]);
+    }, [toast, t]);
 
     useEffect(() => {
         if (mode === "camera") {
@@ -69,7 +71,7 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
              if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                toast({ title: "File too large", description: "Please upload an image smaller than 5MB.", variant: "destructive" });
+                toast({ title: t('photoEditor.toast.fileTooLarge.title'), description: t('photoEditor.toast.fileTooLarge.description'), variant: "destructive" });
                 return;
             }
             const reader = new FileReader();
@@ -95,7 +97,7 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
     return (
         <div className="w-full max-w-2xl mx-auto bg-card rounded-2xl shadow-lg border p-6">
             <header className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold">Change Profile Photo</h2>
+                <h2 className="text-xl font-bold">{t('photoEditor.title')}</h2>
                 <Button variant="ghost" size="icon" onClick={onClose}><X /></Button>
             </header>
 
@@ -104,12 +106,12 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
                     <div className="flex flex-col items-center gap-4">
                         <div className="w-48 h-48 rounded-full overflow-hidden flex items-center justify-center bg-muted">
                            <Avatar className="w-full h-full">
-                                <AvatarImage src={image ?? undefined} alt="Profile Preview" style={{ transform: `scale(${zoom})` }} />
+                                <AvatarImage src={image ?? undefined} alt={t('photoEditor.previewAlt')} style={{ transform: `scale(${zoom})` }} />
                                 <AvatarFallback className="text-6xl"><User/></AvatarFallback>
                            </Avatar>
                         </div>
                         <div className="w-full">
-                            <Label htmlFor="zoom">Zoom</Label>
+                            <Label htmlFor="zoom">{t('photoEditor.zoom')}</Label>
                             <Slider
                                 id="zoom"
                                 min={1}
@@ -123,29 +125,29 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
                     <div className="space-y-4">
                         <div className="flex items-center gap-2">
                              <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
-                                <Upload className="mr-2 h-4 w-4"/> Upload
+                                <Upload className="mr-2 h-4 w-4"/> {t('photoEditor.upload')}
                              </Button>
                              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/jpeg, image/png" className="hidden" />
                              <Button variant="outline" className="w-full" onClick={() => setMode("camera")}>
-                                <Camera className="mr-2 h-4 w-4"/> Take Photo
+                                <Camera className="mr-2 h-4 w-4"/> {t('photoEditor.takePhoto')}
                              </Button>
                              <Button variant="outline" className="w-full" onClick={() => setImage(null)}>
-                                <Trash2 className="mr-2 h-4 w-4"/> Remove
+                                <Trash2 className="mr-2 h-4 w-4"/> {t('photoEditor.remove')}
                              </Button>
                         </div>
                         <div>
-                            <p className="text-sm font-medium mb-2">Or choose from defaults</p>
+                            <p className="text-sm font-medium mb-2">{t('photoEditor.defaults')}</p>
                             <div className="flex gap-2">
                                 {defaultAvatars.map(avatar => (
                                      <Avatar key={avatar.src} className="w-12 h-12 cursor-pointer hover:ring-2 ring-primary" onClick={() => setImage(avatar.src)}>
-                                        <AvatarImage src={avatar.src} alt="Default avatar" data-ai-hint={avatar.hint} />
+                                        <AvatarImage src={avatar.src} alt={t('photoEditor.defaultAlt')} data-ai-hint={avatar.hint} />
                                         <AvatarFallback />
                                     </Avatar>
                                 ))}
                             </div>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            Supported: JPG, PNG up to 5MB. Your photo is visible across Sutradhaar.
+                            {t('photoEditor.supportInfo')}
                         </p>
                     </div>
                 </div>
@@ -162,26 +164,28 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
                     </div>
                     {hasCameraPermission === false && (
                          <Alert variant="destructive">
-                            <AlertTitle>Camera Access Required</AlertTitle>
+                            <AlertTitle>{t('photoEditor.cameraAlert.title')}</AlertTitle>
                             <AlertDescription>
-                                Please allow camera access to use this feature.
+                                {t('photoEditor.cameraAlert.description')}
                             </AlertDescription>
                         </Alert>
                     )}
                     <div className="flex gap-4">
-                        <Button onClick={capture} disabled={!hasCameraPermission}>Capture photo</Button>
-                        <Button variant="outline" onClick={() => setMode("edit")}>Back to editor</Button>
+                        <Button onClick={capture} disabled={!hasCameraPermission}>{t('photoEditor.capture')}</Button>
+                        <Button variant="outline" onClick={() => setMode("edit")}>{t('photoEditor.back')}</Button>
                     </div>
                 </div>
             )}
             
             <footer className="mt-8 pt-6 border-t flex justify-between items-center gap-4">
-                <Button variant="ghost" onClick={() => setImage(currentImage)}><RotateCcw className="mr-2 h-4 w-4"/> Reset</Button>
+                <Button variant="ghost" onClick={() => setImage(currentImage)}><RotateCcw className="mr-2 h-4 w-4"/> {t('photoEditor.reset')}</Button>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={onClose}>Cancel</Button>
-                    <Button onClick={handleSave}>Save</Button>
+                    <Button variant="outline" onClick={onClose}>{t('photoEditor.cancel')}</Button>
+                    <Button onClick={handleSave}>{t('photoEditor.save')}</Button>
                 </div>
             </footer>
         </div>
     );
 }
+
+    

@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 import { ProfilePhotoEditor } from "./profile-photo-editor";
+import { useLanguage } from "@/context/language-context";
 
 
 export function ProfileEditForm() {
@@ -32,6 +33,7 @@ export function ProfileEditForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
+  const { t } = useLanguage();
 
 
   const { toast } = useToast();
@@ -59,13 +61,13 @@ export function ProfileEditForm() {
   const handlePhotoSave = (newImage: string | null) => {
     setProfile(prev => ({ ...prev, profileImage: newImage || '' }));
     setIsPhotoEditorOpen(false);
-    toast({ title: "Image ready", description: "Click 'Save Changes' to apply." });
+    toast({ title: t('profileEdit.toast.imageReady.title'), description: t('profileEdit.toast.imageReady.description') });
   };
 
 
   const handleSaveChanges = async () => {
     if (!profile.fullName) {
-      toast({ title: "Full name is required", variant: "destructive" });
+      toast({ title: t('profileEdit.toast.nameRequired'), variant: "destructive" });
       return;
     }
     setIsSubmitting(true);
@@ -84,12 +86,12 @@ export function ProfileEditForm() {
         localStorage.setItem("userProfile", JSON.stringify(updatedProfile));
         window.dispatchEvent(new StorageEvent('storage', { key: 'userProfile', newValue: JSON.stringify(updatedProfile) }));
         
-        toast({ title: "Profile Updated", description: "Your personal information has been updated." });
+        toast({ title: t('profileEdit.toast.profileUpdated.title'), description: t('profileEdit.toast.profileUpdated.description') });
         router.push("/profile/success");
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast({ title: "Update Failed", description: "Could not update your profile.", variant: "destructive" });
+      toast({ title: t('profileEdit.toast.updateFailed.title'), description: t('profileEdit.toast.updateFailed.description'), variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -97,15 +99,15 @@ export function ProfileEditForm() {
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      toast({ title: "Please fill all password fields", variant: "destructive" });
+      toast({ title: t('profileEdit.toast.passwordFieldsRequired'), variant: "destructive" });
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast({ title: "New passwords do not match", variant: "destructive" });
+      toast({ title: t('profileEdit.toast.passwordsNoMatch'), variant: "destructive" });
       return;
     }
     if (newPassword.length < 6) {
-        toast({ title: "Password Too Short", description: "New password must be at least 6 characters.", variant: "destructive" });
+        toast({ title: t('profileEdit.toast.passwordTooShort.title'), description: t('profileEdit.toast.passwordTooShort.description'), variant: "destructive" });
         return;
     }
 
@@ -116,17 +118,17 @@ export function ProfileEditForm() {
       try {
         await reauthenticateWithCredential(user, credential);
         await updatePassword(user, newPassword);
-        toast({ title: "Password Changed", description: "Your password has been updated successfully." });
+        toast({ title: t('profileEdit.toast.passwordChanged.title'), description: t('profileEdit.toast.passwordChanged.description') });
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
       } catch (error: any) {
         console.error("Password change error:", error);
-        let title = "Password Change Failed";
-        let description = "The current password you entered is incorrect.";
+        let title = t('profileEdit.toast.passwordChangeFailed.title');
+        let description = t('profileEdit.toast.passwordChangeFailed.description');
         if (error.code === 'auth/wrong-password') {
-            title = "Incorrect Password";
-            description = "The current password you entered is incorrect.";
+            title = t('profileEdit.toast.incorrectPassword.title');
+            description = t('profileEdit.toast.incorrectPassword.description');
         }
         toast({ title, description, variant: "destructive" });
       } finally {
@@ -146,14 +148,14 @@ export function ProfileEditForm() {
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
           <ArrowLeft />
         </Button>
-        <h1 className="text-xl font-bold">Edit Profile</h1>
+        <h1 className="text-xl font-bold">{t('profileEdit.title')}</h1>
       </header>
 
       <Dialog open={isPhotoEditorOpen} onOpenChange={setIsPhotoEditorOpen}>
         <Tabs defaultValue="account" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="account">Account</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="account">{t('profileEdit.tabs.account')}</TabsTrigger>
+            <TabsTrigger value="security">{t('profileEdit.tabs.security')}</TabsTrigger>
           </TabsList>
           <TabsContent value="account">
             <Card>
@@ -173,25 +175,25 @@ export function ProfileEditForm() {
                         </div>
                     </div>
                   </DialogTrigger>
-                <CardTitle>Account Information</CardTitle>
-                <CardDescription>Make changes to your personal details here. Click save when you're done.</CardDescription>
+                <CardTitle>{t('profileEdit.account.title')}</CardTitle>
+                <CardDescription>{t('profileEdit.account.description')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="fullName">Full Name</Label>
+                  <Label htmlFor="fullName">{t('profileEdit.account.fullName')}</Label>
                   <Input id="fullName" name="fullName" value={profile.fullName} onChange={handleInputChange} />
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('profileEdit.account.email')}</Label>
                   <Input id="email" type="email" value={profile.email} disabled />
                 </div>
                 <div>
-                  <Label htmlFor="dob">Date of Birth</Label>
+                  <Label htmlFor="dob">{t('profileEdit.account.dob')}</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant={"outline"} className="w-full justify-start text-left font-normal">
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {profile.dob ? format(new Date(profile.dob), "PPP") : <span>Pick a date</span>}
+                        {profile.dob ? format(new Date(profile.dob), "PPP") : <span>{t('profileEdit.account.pickDate')}</span>}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -208,7 +210,7 @@ export function ProfileEditForm() {
                   </Popover>
                 </div>
                 <Button onClick={handleSaveChanges} className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? "Saving..." : "Save Changes"}
+                  {isSubmitting ? t('profileEdit.account.saving') : t('profileEdit.account.save')}
                 </Button>
               </CardContent>
             </Card>
@@ -216,27 +218,27 @@ export function ProfileEditForm() {
           <TabsContent value="security">
             <Card>
               <CardHeader>
-                <CardTitle>Password</CardTitle>
-                <CardDescription>Change your password here. After saving, you'll be logged out.</CardDescription>
+                <CardTitle>{t('profileEdit.security.title')}</CardTitle>
+                <CardDescription>{t('profileEdit.security.description')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="relative">
-                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <Label htmlFor="currentPassword">{t('profileEdit.security.currentPassword')}</Label>
                   <Input id="currentPassword" type={showCurrentPassword ? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
                   <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowCurrentPassword(!showCurrentPassword)}><IconEye show={showCurrentPassword} /></Button>
                 </div>
                 <div className="relative">
-                  <Label htmlFor="newPassword">New Password</Label>
+                  <Label htmlFor="newPassword">{t('profileEdit.security.newPassword')}</Label>
                   <Input id="newPassword" type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                   <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowNewPassword(!showNewPassword)}><IconEye show={showNewPassword} /></Button>
                 </div>
                 <div className="relative">
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Label htmlFor="confirmPassword">{t('profileEdit.security.confirmPassword')}</Label>
                   <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                   <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowConfirmPassword(!showConfirmPassword)}><IconEye show={showConfirmPassword} /></Button>
                 </div>
                 <Button onClick={handleChangePassword} variant="secondary" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? "Updating..." : "Update Password"}
+                  {isSubmitting ? t('profileEdit.security.updating') : t('profileEdit.security.update')}
                 </Button>
               </CardContent>
             </Card>

@@ -17,6 +17,7 @@ import { getNotificationsWithReadStatus, markAsRead, removeAllNotifications, typ
 import { listenToGlobalNotifications } from "@/services/firestore";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/context/language-context";
 
 const getUserKey = (key: string, email: string | null) => `${email || 'guest'}_${key}`;
 
@@ -32,6 +33,7 @@ export function Notifications() {
   const [profile, setProfile] = useState<{ email: string } | null>(null);
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     setIsClient(true);
@@ -86,7 +88,7 @@ export function Notifications() {
       removeAllNotifications();
       // Optimistically update UI
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      toast({ title: "All notifications cleared." });
+      toast({ title: t('notifications.toast.cleared') });
   }
 
   const handleMarkAllAsRead = () => {
@@ -97,7 +99,7 @@ export function Notifications() {
     });
     // Optimistically update UI
     setNotifications(prev => prev.map(n => ({...n, read: true})));
-    toast({ title: "All notifications marked as read."});
+    toast({ title: t('notifications.toast.markedAllRead')});
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -125,20 +127,20 @@ export function Notifications() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex justify-between items-center p-2">
-            <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
+            <DropdownMenuLabel className="p-0">{t('notifications.title')}</DropdownMenuLabel>
              {areNotificationsEnabled && unreadCount > 0 && (
-                <Button variant="link" size="sm" onClick={handleMarkAllAsRead} className="h-auto p-0">Mark all as read</Button>
+                <Button variant="link" size="sm" onClick={handleMarkAllAsRead} className="h-auto p-0">{t('notifications.markAllRead')}</Button>
              )}
         </div>
         <DropdownMenuSeparator />
         {!areNotificationsEnabled ? (
             <div className="p-4 text-center text-sm text-muted-foreground flex flex-col items-center gap-4">
                 <Bell className="w-10 h-10"/>
-                <p>Notifications are currently disabled.</p>
+                <p>{t('notifications.disabled.message')}</p>
                 <Button asChild>
                     <Link href="/settings">
                         <Settings className="mr-2"/>
-                        Enable Notifications
+                        {t('notifications.disabled.button')}
                     </Link>
                 </Button>
             </div>
@@ -162,15 +164,17 @@ export function Notifications() {
             ))}
              <DropdownMenuSeparator />
              <DropdownMenuItem onSelect={handleRemoveAll} className="flex items-center justify-center gap-2 text-muted-foreground">
-                <Trash2 className="w-4 h-4"/> Clear All
+                <Trash2 className="w-4 h-4"/> {t('notifications.clearAll')}
              </DropdownMenuItem>
           </>
         ) : (
              <DropdownMenuItem className="text-center text-muted-foreground" disabled>
-                You have no notifications.
+                {t('notifications.noNotifications')}
             </DropdownMenuItem>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
+
+    

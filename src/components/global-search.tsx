@@ -13,6 +13,7 @@ import { FAQ, FAQ_STORAGE_KEY } from './help';
 import { conversionCategories as baseConversionCategories, Unit, ConversionCategory } from '@/lib/conversions';
 import { offlineParseConversionQuery } from './converter';
 import { CustomCategory, CustomUnit } from './custom-unit-manager';
+import { useLanguage } from '@/context/language-context';
 
 
 interface SearchResult {
@@ -22,13 +23,6 @@ interface SearchResult {
   id: string;
   href: string;
 }
-
-const SETTINGS_PAGES: Omit<SearchResult, 'id' | 'type'>[] = [
-  { title: 'General Settings', description: 'Edit profile, notifications, language, theme.', href: '/settings' },
-  { title: 'Custom Units', description: 'Manage custom units and categories.', href: '/settings/custom-units' },
-  { title: 'Theme Editor', description: 'Customize the application theme colors.', href: '/settings/theme' },
-  { title: 'Developer Panel', description: 'Access tools for debugging and testing.', href: '/dev' },
-];
 
 const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
 
@@ -40,6 +34,14 @@ export function GlobalSearch() {
   const debouncedQuery = useDebounce(query, 300);
   const router = useRouter();
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const { t } = useLanguage();
+
+  const SETTINGS_PAGES: Omit<SearchResult, 'id' | 'type'>[] = [
+    { title: t('globalSearch.settings.general.title'), description: t('globalSearch.settings.general.description'), href: '/settings' },
+    { title: t('globalSearch.settings.customUnits.title'), description: t('globalSearch.settings.customUnits.description'), href: '/settings/custom-units' },
+    { title: t('globalSearch.settings.theme.title'), description: t('globalSearch.settings.theme.description'), href: '/settings/theme' },
+    { title: t('globalSearch.settings.developer.title'), description: t('globalSearch.settings.developer.description'), href: '/dev' },
+  ];
   
   const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
   const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
@@ -111,8 +113,8 @@ export function GlobalSearch() {
     if (parsedConversion) {
       allResults.push({
         type: 'Conversion',
-        title: `Convert: ${debouncedQuery}`,
-        description: `Switch to converter for this calculation.`,
+        title: `${t('globalSearch.results.conversion.title')}: ${debouncedQuery}`,
+        description: t('globalSearch.results.conversion.description'),
         id: 'conversion-result',
         href: '/converter',
       });
@@ -128,7 +130,7 @@ export function GlobalSearch() {
         .filter(n => !n.deletedAt && (n.title.toLowerCase().includes(lowerQuery) || n.content.toLowerCase().includes(lowerQuery)))
         .forEach(n => allResults.push({
           type: 'Note',
-          title: n.title || 'Untitled Note',
+          title: n.title || t('globalSearch.results.note.untitled'),
           description: n.content.replace(/<[^>]*>?/gm, '').substring(0, 100),
           id: n.id,
           href: `/notes/edit/${n.id}`,
@@ -170,7 +172,7 @@ export function GlobalSearch() {
       .forEach(p => allResults.push({ ...p, id: p.href, type: 'Setting' }));
 
     setResults(allResults);
-  }, [debouncedQuery, profile, allUnits, conversionCategories]);
+  }, [debouncedQuery, profile, allUnits, conversionCategories, t, SETTINGS_PAGES]);
 
   useEffect(() => {
     search();
@@ -211,7 +213,7 @@ export function GlobalSearch() {
         <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input 
-                placeholder="Search tools, history, notes..." 
+                placeholder={t('globalSearch.placeholder')}
                 className="pl-10 h-11 rounded-lg bg-secondary border-border text-foreground placeholder-muted-foreground w-full" 
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -241,9 +243,9 @@ export function GlobalSearch() {
                         ))}
                     </ul>
                 ) : debouncedQuery ? (
-                    <p className="text-center text-muted-foreground py-8">No results found for "{debouncedQuery}".</p>
+                    <p className="text-center text-muted-foreground py-8">{t('globalSearch.noResults', { query: debouncedQuery })}</p>
                 ) : (
-                    <p className="text-center text-muted-foreground py-8">Search for anything in your app.</p>
+                    <p className="text-center text-muted-foreground py-8">{t('globalSearch.prompt')}</p>
                 )}
             </div>
         </div>
@@ -251,3 +253,5 @@ export function GlobalSearch() {
     </div>
   );
 }
+
+    

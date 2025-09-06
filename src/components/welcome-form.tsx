@@ -13,6 +13,7 @@ import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, User }
 import { Eye, EyeOff, Info, ArrowRight, Play } from "lucide-react";
 import { logUserEvent } from "@/services/firestore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLanguage } from "@/context/language-context";
 
 
 const handleSuccessfulLogin = async (user: User) => {
@@ -45,10 +46,11 @@ export function WelcomeForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const { t } = useLanguage();
 
   const handleLogin = async () => {
     if (!email || !password) {
-        toast({ title: "Login Failed", description: "Please enter both email and password.", variant: "destructive" });
+        toast({ title: t('welcome.toast.loginFailed.title'), description: t('welcome.toast.loginFailed.missingFields'), variant: "destructive" });
         return;
     }
     setIsSubmitting(true);
@@ -58,8 +60,8 @@ export function WelcomeForm() {
 
       if (!user.emailVerified) {
          toast({ 
-           title: "Login Failed", 
-           description: "Please verify your email address before logging in. Check your inbox for the verification link.", 
+           title: t('welcome.toast.loginFailed.title'), 
+           description: t('welcome.toast.loginFailed.notVerified'), 
            variant: "destructive" 
          });
          setIsSubmitting(false);
@@ -70,7 +72,7 @@ export function WelcomeForm() {
       router.push("/profile/success");
 
     } catch (error: any) {
-       toast({ title: "Login Failed", description: "Invalid email or password. Please try again.", variant: "destructive" });
+       toast({ title: t('welcome.toast.loginFailed.title'), description: t('welcome.toast.loginFailed.invalidCredentials'), variant: "destructive" });
     } finally {
         setIsSubmitting(false);
     }
@@ -91,34 +93,34 @@ export function WelcomeForm() {
                 Sutradhaar
             </h1>
             <Button variant="outline" onClick={handleSkip}>
-                <Play className="mr-2 h-4 w-4 rotate-180"/> Skip
+                <Play className="mr-2 h-4 w-4 rotate-180"/> {t('welcome.skip')}
             </Button>
         </header>
 
         <div className="bg-card p-6 rounded-2xl border-2 border-primary/20 mt-4">
               <div className="grid grid-cols-2 bg-muted p-1 rounded-lg mb-6">
-                <Button variant="ghost" className="data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:shadow-sm" data-active="true">Login</Button>
-                <Button variant="ghost" className="data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:shadow-sm" onClick={() => router.push('/signup')}>Sign Up</Button>
+                <Button variant="ghost" className="data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:shadow-sm" data-active="true">{t('welcome.tabs.login')}</Button>
+                <Button variant="ghost" className="data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:shadow-sm" onClick={() => router.push('/signup')}>{t('welcome.tabs.signup')}</Button>
             </div>
              <div className="text-left mb-6">
-                <h2 className="text-2xl font-bold">Login to Sutradhaar</h2>
+                <h2 className="text-2xl font-bold">{t('welcome.title')}</h2>
                 <p className="text-muted-foreground mt-1 text-sm">
-                   Access your unit converter dashboard
+                   {t('welcome.description')}
                 </p>
             </div>
 
             <div className="bg-primary/10 text-primary-foreground p-3 rounded-lg mb-6 flex items-center gap-3 text-sm">
                 <Info className="text-primary"/>
-                <span className="text-primary font-medium">Use your email or username to sign in.</span>
+                <span className="text-primary font-medium">{t('welcome.info')}</span>
             </div>
 
             <div className="space-y-4">
                 <div>
-                    <Label htmlFor="email">Email or Username</Label>
-                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-background mt-1" placeholder="name@example.com" />
+                    <Label htmlFor="email">{t('welcome.emailLabel')}</Label>
+                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-background mt-1" placeholder={t('welcome.emailPlaceholder')} />
                 </div>
                 <div className="relative">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{t('welcome.passwordLabel')}</Label>
                     <Input 
                     id="password" 
                     type={showPassword ? "text" : "password"} 
@@ -138,18 +140,20 @@ export function WelcomeForm() {
             </div>
 
             <div className="flex justify-between items-center mt-6">
-                <Link href="/forgot-password" className="text-sm text-primary hover:underline">Forgot Password?</Link>
+                <Link href="/forgot-password" className="text-sm text-primary hover:underline">{t('welcome.forgotPassword')}</Link>
                  <Button onClick={handleLogin} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
-                    {isSubmitting ? 'Logging In...' : 'Login'} <ArrowRight className="ml-2 h-4 w-4"/>
+                    {isSubmitting ? t('welcome.loggingIn') : t('welcome.loginButton')} <ArrowRight className="ml-2 h-4 w-4"/>
                 </Button>
             </div>
              <p className="text-center text-sm text-muted-foreground mt-8">
-                Don't have an account?{" "}
+                {t('welcome.noAccount')}{" "}
                 <Link href="/signup" className="font-semibold text-primary hover:underline">
-                Sign Up
+                {t('welcome.signupLink')}
                 </Link>
             </p>
         </div>
     </div>
   );
 }
+
+    

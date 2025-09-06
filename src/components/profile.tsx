@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useLanguage } from "@/context/language-context";
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 
@@ -48,6 +49,7 @@ export function Profile() {
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   useEffect(() => {
     setIsClient(true);
@@ -75,26 +77,26 @@ export function Profile() {
   const handleLogout = () => {
     auth.signOut().then(() => {
         localStorage.removeItem("userProfile");
-        toast({ title: "Logged Out", description: "You have been successfully logged out." });
+        toast({ title: t('profile.toast.logout.title'), description: t('profile.toast.logout.description') });
         router.push("/logout");
     }).catch((error) => {
         console.error("Logout Error:", error);
-        toast({ title: "Logout Failed", description: "An error occurred while logging out.", variant: "destructive" });
+        toast({ title: t('profile.toast.logoutFailed.title'), description: t('profile.toast.logoutFailed.description'), variant: "destructive" });
     });
   };
 
   const menuItems = [
-    { icon: Star, text: "Favorite", href: "/history" },
-    { icon: Gift, text: "What's New", href: "/updates" },
-    { icon: Lock, text: "Privacy Policy", href: "/privacy-policy" },
-    { icon: Settings, text: "Settings", href: "/settings" },
-    { icon: HelpCircle, text: "Help", href: "/help" },
-    { icon: Info, text: "About", href: "/about" },
-    { icon: LogOut, text: "Logout", onClick: handleLogout }
+    { icon: Star, text: t('profile.menu.favorites'), href: "/history" },
+    { icon: Gift, text: t('profile.menu.whatsNew'), href: "/updates" },
+    { icon: Lock, text: t('profile.menu.privacy'), href: "/privacy-policy" },
+    { icon: Settings, text: t('profile.menu.settings'), href: "/settings" },
+    { icon: HelpCircle, text: t('profile.menu.help'), href: "/help" },
+    { icon: Info, text: t('profile.menu.about'), href: "/about" },
+    { icon: LogOut, text: t('profile.menu.logout'), onClick: handleLogout }
   ];
 
   if (profile.email === DEVELOPER_EMAIL) {
-    menuItems.splice(5, 0, { icon: Code, text: "Developer", href: "/dev" });
+    menuItems.splice(5, 0, { icon: Code, text: t('profile.menu.developer'), href: "/dev" });
   }
 
 
@@ -111,7 +113,7 @@ export function Profile() {
               <ArrowLeft />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">My Profile</h1>
+          <h1 className="text-xl font-bold">{t('profile.title')}</h1>
         </header>
 
         <div className="flex flex-col items-center text-center gap-2 mt-2">
@@ -130,7 +132,7 @@ export function Profile() {
             </div>
           <h2 className="text-2xl font-bold mt-2">{profile.fullName}</h2>
           <p className="text-sm">{profile.email}</p>
-          <p className="text-sm">Birthday: {profile.birthday}</p>
+          <p className="text-sm">{t('profile.birthday')}: {profile.birthday}</p>
         </div>
       </div>
 
@@ -158,3 +160,5 @@ export function Profile() {
     </div>
   );
 }
+
+    

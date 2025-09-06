@@ -7,6 +7,7 @@ import { ArrowLeft, Book, MessageSquare, Code, FileText, Shield, Info, Users, Gi
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/context/language-context";
 
 
 const appInfo = {
@@ -37,18 +38,6 @@ const credits = [
     },
 ];
 
-const legalLinks = [
-    { text: "Terms of Service", action: "Open document", href: "/#" },
-    { text: "Privacy Policy", action: "Open document", href: "/privacy-policy" },
-    { text: "Open Source Notices", action: "View libraries", href: "/#" },
-];
-
-const supportLinks = [
-    { text: "Help Center", action: "Visit", href: "/help" },
-    { text: "Contact", action: "support@sutradhaar.app", href: "mailto:support@sutradhaar.app" },
-    { text: "Report an Issue", action: "Create ticket", href: "/#" },
-];
-
 const Section = ({ title, description, children, icon: Icon }: { title: string, description: string, children: React.ReactNode, icon: React.ElementType }) => (
     <div className="bg-card p-6 rounded-xl">
         <div className="flex items-center gap-3 mb-4">
@@ -64,6 +53,20 @@ const Section = ({ title, description, children, icon: Icon }: { title: string, 
 
 export function About() {
     const router = useRouter();
+    const { t } = useLanguage();
+
+    const legalLinks = [
+        { text: t('about.legal.terms'), action: t('about.actions.open'), href: "/#" },
+        { text: t('about.legal.privacy'), action: t('about.actions.open'), href: "/privacy-policy" },
+        { text: t('about.legal.openSource'), action: t('about.actions.view'), href: "/#" },
+    ];
+
+    const supportLinks = [
+        { text: t('about.support.helpCenter'), action: t('about.actions.visit'), href: "/help" },
+        { text: t('about.support.contact'), action: "support@sutradhaar.app", href: "mailto:support@sutradhaar.app" },
+        { text: t('about.support.reportIssue'), action: t('about.actions.create'), href: "/#" },
+    ];
+
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 p-4 sm:p-6">
       <header className="flex items-center justify-between">
@@ -71,29 +74,29 @@ export function About() {
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
                 <ArrowLeft />
             </Button>
-            <h1 className="text-xl font-bold">About Sutradhaar</h1>
+            <h1 className="text-xl font-bold">{t('about.title')}</h1>
         </div>
-        <p className="text-sm text-muted-foreground">Settings / About</p>
+        <p className="text-sm text-muted-foreground">{t('about.breadcrumbs')}</p>
       </header>
 
-      <Section title="App Information" description="Details about Sutradhaar unit converter." icon={Info}>
+      <Section title={t('about.appInfo.title')} description={t('about.appInfo.description')} icon={Info}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <InfoCard label="Version" value={appInfo.version} />
-              <InfoCard label="Build" value={appInfo.build} />
-              <InfoCard label="Release Channel" value={<Badge variant="outline">{appInfo.releaseChannel}</Badge>} />
-              <InfoCard label="License" value={appInfo.license} />
+              <InfoCard label={t('about.appInfo.version')} value={appInfo.version} />
+              <InfoCard label={t('about.appInfo.build')} value={appInfo.build} />
+              <InfoCard label={t('about.appInfo.release')} value={<Badge variant="outline">{appInfo.releaseChannel}</Badge>} />
+              <InfoCard label={t('about.appInfo.license')} value={appInfo.license} />
           </div>
       </Section>
       
-      <Section title="Credits" description="People behind Sutradhaar." icon={Users}>
+      <Section title={t('about.credits.title')} description={t('about.credits.description')} icon={Users}>
          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {credits.map(person => (
-                <CreditCard key={person.name} {...person} />
+                <CreditCard key={person.name} name={person.name} role={t(`about.credits.roles.${person.role.split(' ')[0].toLowerCase()}`)} avatar={person.avatar} dataAiHint={person.dataAiHint} />
             ))}
          </div>
       </Section>
 
-      <Section title="Legal" description="Terms, policies, and open source libraries." icon={Shield}>
+      <Section title={t('about.legal.title')} description={t('about.legal.description')} icon={Shield}>
         <div className="space-y-2">
             {legalLinks.map(link => (
                 <LinkCard key={link.text} text={link.text} action={link.action} href={link.href} />
@@ -101,7 +104,7 @@ export function About() {
         </div>
       </Section>
 
-      <Section title="Support" description="Get help, contact us, or report issues." icon={MessageSquare}>
+      <Section title={t('about.support.title')} description={t('about.support.description')} icon={MessageSquare}>
         <div className="space-y-2">
             {supportLinks.map(link => (
                  <LinkCard key={link.text} text={link.text} action={link.action} href={link.href} />
@@ -110,8 +113,8 @@ export function About() {
       </Section>
 
       <footer className="flex justify-end items-center gap-4 mt-4">
-        <Button variant="outline"><Book className="mr-2 h-4 w-4"/> Docs</Button>
-        <Button><MessageSquare className="mr-2 h-4 w-4"/> Get Support</Button>
+        <Button variant="outline"><Book className="mr-2 h-4 w-4"/> {t('about.footer.docs')}</Button>
+        <Button><MessageSquare className="mr-2 h-4 w-4"/> {t('about.footer.support')}</Button>
       </footer>
     </div>
   );
@@ -144,3 +147,5 @@ const LinkCard = ({ text, action, href }: { text: string, action: string, href: 
         </div>
     </Link>
 )
+
+    
