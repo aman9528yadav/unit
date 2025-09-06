@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import './globals.css';
@@ -7,7 +8,7 @@ import { LanguageProvider } from '@/context/language-context';
 import { ThemeProvider } from '@/context/theme-context';
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { listenToGlobalMaintenanceMode } from '@/services/firestore';
+import { listenToGlobalMaintenanceMode, syncOfflineData } from '@/services/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function AppFooter() {
@@ -32,7 +33,23 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenanceMode, pathname, router);
-        return () => unsubscribe();
+        
+        const handleOnline = () => {
+          console.log('App is online, attempting to sync data.');
+          syncOfflineData();
+        };
+
+        window.addEventListener('online', handleOnline);
+
+        // Initial check
+        if (navigator.onLine) {
+            handleOnline();
+        }
+
+        return () => {
+            unsubscribe();
+            window.removeEventListener('online', handleOnline);
+        };
     }, [pathname, router]);
 
     if (isMaintenanceMode === null) {

@@ -26,11 +26,6 @@ export type DailyData = {
 }
 
 const getDataForDays = async (storageKey: string, email: string | null): Promise<DailyData> => {
-    if (!email) {
-        // Fallback to localStorage for guest users
-        const storedData = localStorage.getItem(`guest_${storageKey}`);
-        return storedData ? JSON.parse(storedData) : {};
-    }
     const userData = await getUserData(email);
     return userData?.[storageKey] || {};
 };
@@ -79,25 +74,36 @@ const incrementTodaysCount = async (storageKey: string) => {
     const email = storedProfile ? JSON.parse(storedProfile).email : null;
     const today = getTodayString();
     
+    // Get the current local data to increment it.
     const data = await getDataForDays(storageKey, email);
-    data[today] = (data[today] || 0) + 1;
-
-    if (email) {
-        await updateUserData(email, { [storageKey]: data });
-    } else {
-        localStorage.setItem(`guest_${storageKey}`, JSON.stringify(data));
-        window.dispatchEvent(new StorageEvent('storage', { key: `guest_${storageKey}`, newValue: JSON.stringify(data) }));
-    }
+    const currentCount = data[today] || 0;
+    
+    // The data to update is just the increment for today.
+    // The sync logic will handle adding this to Firestore's value.
+    const updateData = {
+        [storageKey]: {
+            [today]: 1 // We just update by 1
+        }
+    };
+    
+    await updateUserData(email, updateData);
 };
+
 
 const getAllTimeData = async (storageKey: string, email: string | null): Promise<number> => {
     const data = await getDataForDays(storageKey, email);
     return Object.values(data).reduce((total, count) => total + count, 0);
 };
 
+const getTodaysData = async (storageKey: string, email: string | null): Promise<number> => {
+    const data = await getDataForDays(storageKey, email);
+    return data[getTodayString()] || 0;
+};
+
+
 // --- General Calculations ---
 export const incrementTodaysCalculations = () => incrementTodaysCount(CALCULATION_STORAGE_KEY);
-export const getTodaysCalculations = (email: string | null): Promise<number> => getDataForDays(CALCULATION_STORAGE_KEY, email).then(data => data[getTodayString()] || 0);
+export const getTodaysCalculations = (email: string | null): Promise<number> => getTodaysData(CALCULATION_STORAGE_KEY, email);
 export const getWeeklyCalculations = (email: string | null) => getWeeklyData(CALCULATION_STORAGE_KEY, email);
 export const getMonthlyCalculations = (email: string | null) => getMonthlyData(CALCULATION_STORAGE_KEY, email);
 export const getAllTimeCalculations = (email: string | null): Promise<number> => getAllTimeData(CALCULATION_STORAGE_KEY, email);
