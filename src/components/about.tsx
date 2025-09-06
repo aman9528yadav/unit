@@ -72,7 +72,7 @@ export function About() {
 
         {/* App Info Section */}
         <section className="mt-12 grid md:grid-cols-2 gap-8 w-full">
-          <div className="bg-white shadow-lg rounded-2xl p-8 hover:shadow-xl transition">
+          <div className="bg-white shadow-lg rounded-2xl p-6 hover:shadow-xl transition">
             <h2 className="text-2xl font-bold text-indigo-600 mb-4">App Information</h2>
             <ul className="text-gray-600 leading-relaxed space-y-2">
               <li><strong>Version:</strong> Beta 1.0.0</li>
@@ -82,7 +82,7 @@ export function About() {
             </ul>
           </div>
 
-          <div className="bg-white shadow-lg rounded-2xl p-8 hover:shadow-xl transition">
+          <div className="bg-white shadow-lg rounded-2xl p-6 hover:shadow-xl transition">
             <h2 className="text-2xl font-bold text-indigo-600 mb-4">Release Plan</h2>
             <ul className="text-gray-600 leading-relaxed space-y-2">
               <li>📝 <strong>Planning:</strong> 12 May 2025</li>
@@ -129,7 +129,7 @@ export function About() {
         {/* About Owner Section */}
         <section className="mt-16 w-full text-center">
           <h2 className="text-3xl font-bold text-gray-800 mb-6">About the Owner</h2>
-          <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div className="bg-white rounded-2xl shadow-lg p-6">
             <p className="text-gray-600 leading-relaxed text-lg">
               Hi, I'm <span className="font-semibold text-indigo-600">Aman Yadav</span>, the founder and engineer behind Sutradhaar.
               My vision with this project is to create a simple yet powerful productivity tool that helps people save time,
