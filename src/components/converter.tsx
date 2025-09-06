@@ -663,9 +663,8 @@ export function Converter() {
     }
   };
 
-  const formatTimestamp = (timestamp: string) => {
-    const date = parseISO(timestamp);
-    return formatDistanceToNow(date, { addSuffix: true });
+  const formatTimestamp = (timestamp: Date) => {
+    return formatDistanceToNow(timestamp, { addSuffix: true });
   }
 
   const handleCopy = () => {
