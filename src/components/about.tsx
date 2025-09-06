@@ -75,9 +75,9 @@ export function About() {
           <div className="bg-white shadow-lg rounded-2xl p-8 hover:shadow-xl transition">
             <h2 className="text-2xl font-bold text-indigo-600 mb-4">App Information</h2>
             <ul className="text-gray-600 leading-relaxed space-y-2">
-              <li><strong>Version:</strong> 1.4.2</li>
+              <li><strong>Version:</strong> Beta 1.0.0</li>
               <li><strong>Build:</strong> 2025.09.01</li>
-              <li><strong>Release Channel:</strong> Beta 1</li>
+              <li><strong>Release Channel:</strong> Beta</li>
               <li><strong>License:</strong> MIT</li>
             </ul>
           </div>

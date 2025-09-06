@@ -27,7 +27,7 @@ export function AboutCard() {
                         value={
                             <div className="flex items-center gap-2">
                                 <span>Sutradhaar • Unit Converter</span>
-                                <Badge variant="outline">v1.0.0</Badge>
+                                <Badge variant="outline">Beta 1.0.0</Badge>
                             </div>
                         }
                     />
