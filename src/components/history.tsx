@@ -42,10 +42,8 @@ interface HistoryItemData {
   timestamp: string;
   value: string;
   from: string;
-  fromName: string;
   result: string;
   to: string;
-  toName: string;
 }
 
 export function History() {
@@ -73,20 +71,14 @@ export function History() {
     const result = convParts[3];
     const toSymbol = convParts[4];
     
-    const category = conversionCategories.find(c => c.name === categoryName);
-    const fromUnit = category?.units.find(u => u.symbol === fromSymbol);
-    const toUnit = category?.units.find(u => u.symbol === toSymbol);
-  
     return {
       conversion,
       categoryName,
       timestamp,
       value,
       from: fromSymbol,
-      fromName: fromUnit ? t(`units.${fromUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: fromUnit.name }) : fromSymbol,
       result,
       to: toSymbol,
-      toName: toUnit ? t(`units.${toUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: toUnit.name }) : toSymbol,
     };
   };
 
@@ -148,11 +140,18 @@ export function History() {
       });
     
   const filteredItems = itemsToDisplay.map(parseHistoryString).filter(parsed => {
+    const category = conversionCategories.find(c => c.name === parsed.categoryName);
+    const fromUnit = category?.units.find(u => u.symbol === parsed.from);
+    const toUnit = category?.units.find(u => u.symbol === parsed.to);
+
+    const fromName = fromUnit ? t(`units.${fromUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: fromUnit.name }) : parsed.from;
+    const toName = toUnit ? t(`units.${toUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: toUnit.name }) : parsed.to;
+    
     const searchMatch = !debouncedSearch || 
            parsed.conversion.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
            parsed.categoryName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-           parsed.fromName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-           parsed.toName.toLowerCase().includes(debouncedSearch.toLowerCase());
+           fromName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+           toName.toLowerCase().includes(debouncedSearch.toLowerCase());
     
     const categoryMatch = categoryFilter === "All" || parsed.categoryName === categoryFilter;
 
@@ -263,6 +262,14 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
     const Icon = category?.icon || Power;
     const locale = language === 'hi' ? hi : enUS;
 
+    const fromUnit = category?.units.find(u => u.symbol === item.from);
+    const toUnit = category?.units.find(u => u.symbol === item.to);
+    
+    const fromName = fromUnit ? t(`units.${fromUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: fromUnit.name }) : item.from;
+    const toName = toUnit ? t(`units.${toUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: toUnit.name }) : item.to;
+    
+    const translatedConversion = `${item.value} ${fromName} → ${item.result} ${toName}`;
+
     const formatTimestamp = (timestamp: string) => {
         const date = parseISO(timestamp);
         return formatDistanceToNow(date, { addSuffix: true, locale: locale });
@@ -276,7 +283,7 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
                 <span>•</span>
                 <span>{formatTimestamp(item.timestamp)}</span>
             </div>
-            <p className="font-semibold text-foreground">{item.conversion}</p>
+            <p className="font-semibold text-foreground">{translatedConversion}</p>
             <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-2 right-2">
                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onRestore(fullHistoryString)}>
                     <RotateCcw className="h-4 w-4"/>

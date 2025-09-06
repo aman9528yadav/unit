@@ -44,7 +44,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveCont
 import { cn } from "@/lib/utils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns";
+import { formatDistanceToNow, isToday, isYesterday, format, parseISO } from "date-fns";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -190,7 +190,7 @@ export function Converter() {
   const [favorites, setFavorites] = React.useState<string[]>([]);
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [region, setRegion] = React.useState<Region>('International');
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
   const [isGraphVisible, setIsGraphVisible] = useState(false);
   const [showRecentHistory, setShowRecentHistory] = useState(true);
@@ -312,19 +312,28 @@ export function Converter() {
   }
   
   const parseHistoryString = (item: string) => {
-      const parts = item.split('|');
-      const conversion = parts[0] || '';
-      const categoryName = parts[1] || '';
-      const timestamp = parts[2] ? new Date(parts[2]) : new Date();
+    const parts = item.split('|');
+    const conversion = parts[0] || '';
+    const categoryName = parts[1] || '';
+    const timestamp = parts[2] ? new Date(parts[2]) : new Date();
 
-      const convParts = conversion.split(' ');
-      const value = convParts[0];
-      const from = convParts[1];
-      const result = convParts[3];
-      const to = convParts[4];
-      
-      return { conversion, categoryName, timestamp, value, from, result, to };
-  }
+    const convParts = conversion.split(' ');
+    const value = convParts[0];
+    const fromSymbol = convParts[1];
+    const result = convParts[3];
+    const toSymbol = convParts[4];
+    
+    const category = conversionCategories.find(c => c.name === categoryName);
+    const fromUnit = category?.units.find(u => u.symbol === fromSymbol);
+    const toUnit = category?.units.find(u => u.symbol === toSymbol);
+
+    const fromName = fromUnit ? t(`units.${fromUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: fromUnit.name }) : fromSymbol;
+    const toName = toUnit ? t(`units.${toUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: toUnit.name }) : toSymbol;
+    
+    const translatedConversion = `${value} ${fromName} → ${result} ${toName}`;
+
+    return { conversion: translatedConversion, categoryName, timestamp, value, from: fromSymbol, result, to: toSymbol };
+  };
 
 
   React.useEffect(() => {
@@ -655,7 +664,7 @@ export function Converter() {
   };
 
   const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
+    const date = parseISO(timestamp);
     return formatDistanceToNow(date, { addSuffix: true });
   }
 
@@ -729,7 +738,7 @@ export function Converter() {
                                       <ChevronDown className="h-4 w-4 opacity-50" />
                                    </Button>
                                </DropdownMenuTrigger>
-                               <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                               <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 p-2">
                                        {conversionCategories.map(cat => {
                                            const isLocked = isPremiumFeatureLocked && PREMIUM_CATEGORIES.includes(cat.name);
