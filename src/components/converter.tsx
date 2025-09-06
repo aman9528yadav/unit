@@ -596,11 +596,6 @@ export function Converter() {
   };
 
   const handleShare = async () => {
-    if (isPremiumFeatureLocked) {
-        setShowPremiumLockDialog(true);
-      return;
-    }
-    
     const numValue = parseFloat(inputValue);
     if (isNaN(numValue) || !outputValue) {
       toast({ title: t('converter.toast.nothingToShare'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
@@ -622,6 +617,13 @@ export function Converter() {
     } else {
       toast({ title: t('converter.toast.notSupported'), description: t('converter.toast.webShareApi'), variant: "destructive" });
     }
+  };
+  
+   const handleShareClick = () => {
+    if (isPremiumFeatureLocked) {
+      setShowPremiumLockDialog(true);
+    }
+    // If not locked, the DialogTrigger will open the dialog.
   };
 
   const handleExportAsTxt = () => {
@@ -868,40 +870,34 @@ export function Converter() {
                                     <BarChart2 size={16} />
                                 </Button>
                                 <TooltipProvider>
-                                  <Dialog>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <div onClick={(e) => { if (isPremiumFeatureLocked) e.preventDefault(); }}>
-                                                <DialogTrigger asChild>
-                                                    <Button variant="ghost" size="icon" onClick={isPremiumFeatureLocked ? handleShare : undefined}>
-                                                        <Share2 size={16} />
+                                    <Dialog>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon" onClick={handleShareClick}>
+                                                    <Share2 size={16} />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            {isPremiumFeatureLocked && <TooltipContent><p>{t('converter.toast.premiumShare')}</p></TooltipContent>}
+                                        </Tooltip>
+                                        {!isPremiumFeatureLocked && (
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>{t('converter.export.title')}</DialogTitle>
+                                                </DialogHeader>
+                                                <div className="flex flex-col gap-4">
+                                                    <Button onClick={handleShare}>
+                                                        <Share2 className="mr-2 h-4 w-4" /> {t('converter.export.shareSystem')}
                                                     </Button>
-                                                </DialogTrigger>
-                                            </div>
-                                        </TooltipTrigger>
-                                        {isPremiumFeatureLocked && (
-                                            <TooltipContent>
-                                                <p>{t('converter.toast.premiumShare')}</p>
-                                            </TooltipContent>
+                                                    <Button onClick={handleExportAsTxt} variant="secondary">
+                                                        <FileText className="mr-2 h-4 w-4" /> {t('converter.export.asTXT')}
+                                                    </Button>
+                                                    <Button onClick={handleExportAsImage} variant="secondary">
+                                                        <ImageIcon className="mr-2 h-4 w-4" /> {t('converter.export.asImage')}
+                                                    </Button>
+                                                </div>
+                                            </DialogContent>
                                         )}
-                                    </Tooltip>
-                                    <DialogContent>
-                                      <DialogHeader>
-                                          <DialogTitle>{t('converter.export.title')}</DialogTitle>
-                                      </DialogHeader>
-                                      <div className="flex flex-col gap-4">
-                                          <Button onClick={handleShare}>
-                                          <Share2 className="mr-2 h-4 w-4" /> {t('converter.export.shareSystem')}
-                                          </Button>
-                                          <Button onClick={handleExportAsTxt} variant="secondary">
-                                          <FileText className="mr-2 h-4 w-4" /> {t('converter.export.asTXT')}
-                                          </Button>
-                                          <Button onClick={handleExportAsImage} variant="secondary">
-                                          <ImageIcon className="mr-2 h-4 w-4" /> {t('converter.export.asImage')}
-                                          </Button>
-                                      </div>
-                                    </DialogContent>
-                                  </Dialog>
+                                    </Dialog>
                                 </TooltipProvider>
                              </div>
                         </CardContent>
