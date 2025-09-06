@@ -754,6 +754,17 @@ export function Converter() {
                 <CardTitle className="flex items-center gap-2">Quick Convert</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
+                <div className="flex items-center gap-2">
+                    <Input
+                        placeholder={t('converter.searchPlaceholder')}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    />
+                    <Button onClick={handleSearch} disabled={isSearching}>
+                        {isSearching ? <Loader2 className="animate-spin"/> : <Search />}
+                    </Button>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                      <div>
                         <Label className="flex items-center gap-2 mb-2"><Globe size={16}/>{t('converter.region')}</Label>
@@ -1058,3 +1069,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
