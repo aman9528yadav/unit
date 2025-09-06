@@ -629,8 +629,9 @@ export function Converter() {
    const handleShareClick = () => {
     if (isPremiumFeatureLocked) {
       setShowPremiumLockDialog(true);
+      return;
     }
-    // If not locked, the DialogTrigger will open the dialog.
+    // If not locked, the DialogTrigger below will handle opening.
   };
 
   const handleExportAsTxt = () => {
@@ -880,7 +881,7 @@ export function Converter() {
                         </div>
                         <p className="text-xs text-muted-foreground">{t('converter.enterValue')}</p>
                     </Card>
-                     <Card className="bg-secondary/50 p-4 flex flex-col justify-between">
+                     <Card className="bg-secondary/50 p-4 flex flex-col justify-between border-primary/50 border-2">
                         <div>
                             <Label className="text-muted-foreground">{toUnitInfo?.name}</Label>
                             <p className="text-3xl font-bold text-primary truncate h-10 flex items-baseline gap-2">
