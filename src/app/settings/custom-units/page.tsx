@@ -5,40 +5,25 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CustomUnitManager } from "@/components/custom-unit-manager";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getAllTimeCalculations } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
+import { useUserData } from "@/context/user-data-context";
 
-const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
-const PREMIUM_MEMBER_THRESHOLD = 8000;
-
-type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 export default function CustomUnitsPage() {
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const { userRole, isLoading, profile } = useUserData();
 
   useEffect(() => {
     setIsClient(true);
-    const storedProfile = localStorage.getItem("userProfile");
-    if (storedProfile) {
-        const parsedProfile = JSON.parse(storedProfile);
-        getAllTimeCalculations(parsedProfile.email).then(calculations => {
-            if (parsedProfile.email === DEVELOPER_EMAIL) {
-                setUserRole('Owner');
-            } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
-                setUserRole('Premium Member');
-            } else {
-                setUserRole('Member');
-            }
-        });
-    } else {
-      router.replace('/welcome');
+    // Redirect if not logged in after loading
+    if (!isLoading && !profile) {
+         router.replace('/welcome');
     }
-  }, [router]);
+  }, [isLoading, profile, router]);
 
-  if (!isClient || !userRole) {
+  if (!isClient || isLoading) {
     return (
       <main className="flex min-h-screen w-full flex-col items-center bg-background p-6">
         <div className="w-full max-w-md mx-auto flex flex-col gap-6">
@@ -98,5 +83,3 @@ export default function CustomUnitsPage() {
     </main>
   );
 }
-
-    

@@ -22,17 +22,14 @@ import { auth } from "@/lib/firebase";
 import { Region } from "@/lib/conversions";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
-import { getAllTimeCalculations } from "@/lib/utils";
+import { useUserData } from "@/context/user-data-context";
 
 
 export type CalculatorMode = 'basic' | 'scientific';
-type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 const getUserKey = (key: string, email: string | null) => `${email || 'guest'}_${key}`;
 
 const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
-const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
-const PREMIUM_MEMBER_THRESHOLD = 8000;
 
 const Section = ({ title, children, description }: { title: string, children: React.ReactNode, description?: string }) => (
     <Card>
@@ -70,11 +67,10 @@ const SettingRow = ({ label, description, control, isLink = false, href, childre
 
 
 export function Settings() {
-  const [profile, setProfile] = useState<{ email: string } | null>(null);
+  const { profile, userRole } = useUserData();
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
-  const [userRole, setUserRole] = useState<UserRole>('Member');
 
 
   // Settings states
@@ -95,25 +91,9 @@ export function Settings() {
 
   useEffect(() => {
     setIsClient(true);
-    const storedProfile = localStorage.getItem('userProfile');
-    if (storedProfile) {
-      const parsedProfile = JSON.parse(storedProfile);
-      setProfile(parsedProfile);
-      loadSettings(parsedProfile.email);
-
-      const calculations = getAllTimeCalculations(parsedProfile.email);
-      if (parsedProfile.email === DEVELOPER_EMAIL) {
-          setUserRole('Owner');
-      } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
-          setUserRole('Premium Member');
-      } else {
-          setUserRole('Member');
-      }
-
-    } else {
-      loadSettings(null);
-    }
-  }, []);
+    const email = profile?.email || null;
+    loadSettings(email);
+  }, [profile]);
   
   useEffect(() => {
     setSelectedTheme(theme);
@@ -270,7 +250,7 @@ export function Settings() {
                         </Select>
                     }
                 />
-                {profile?.email === DEVELOPER_EMAIL && (
+                {profile?.email === "amanyadavyadav9458@gmail.com" && (
                   <SettingRow
                       isLink
                       href="/dev"
@@ -389,5 +369,3 @@ export function Settings() {
     </div>
   );
 }
-
-    
