@@ -97,17 +97,17 @@ export function About() {
           <h2 className="text-3xl font-bold text-center text-gray-800 mb-10">
             Feature & Roadmap
           </h2>
-          <div className="flex flex-wrap justify-center gap-8">
+          <div className="grid grid-cols-2 gap-4">
             {features.map((step, idx) => (
               <div
                 key={idx}
-                className="relative bg-white w-64 p-6 rounded-2xl shadow-md hover:shadow-xl transition group border-t-4 border-indigo-400"
+                className="relative bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition group border-t-2 border-indigo-400"
               >
-                <div className="text-4xl mb-3">{step.icon}</div>
-                <h3 className="text-lg font-bold text-indigo-600 mb-2 group-hover:text-purple-600">
+                <div className="text-3xl mb-2">{step.icon}</div>
+                <h3 className="text-md font-bold text-indigo-600 mb-1 group-hover:text-purple-600">
                   {step.title}
                 </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{step.desc}</p>
+                <p className="text-gray-600 text-xs leading-relaxed">{step.desc}</p>
               </div>
             ))}
           </div>
