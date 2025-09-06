@@ -100,7 +100,7 @@ export function Updates() {
     if (savedText) {
         setUpdateText(savedText);
     } else {
-        setUpdateText(null);
+        setUpdateText("General improvements and bug fixes.");
     }
 
     if (savedDate) {
