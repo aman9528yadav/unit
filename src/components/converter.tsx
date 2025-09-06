@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -38,7 +37,6 @@ import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flo
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useSearchParams, useRouter } from "next/navigation";
-import { incrementTodaysCalculations, getAllTimeCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { CustomUnit, CustomCategory } from "./custom-unit-manager";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -54,25 +52,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useUserData } from "@/context/user-data-context";
 
 
-const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
-const PREMIUM_MEMBER_THRESHOLD = 8000;
-type UserRole = 'Member' | 'Premium Member' | 'Owner';
-
-
-const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
 const PREMIUM_REGIONS = ['Japan', 'Korea', 'China', 'Middle East'];
+const regions: Region[] = ['International', 'India', ...PREMIUM_REGIONS];
 
 
 const PREMIUM_CATEGORIES = ['Pressure', 'Energy', 'Currency', 'Fuel Economy'];
-
-interface UserProfile {
-    fullName: string;
-    email: string;
-    profileImage?: string;
-    [key:string]: any;
-}
 
 const getUserKey = (key: string, email: string | null) => {
     if (typeof window === 'undefined') return key;
@@ -137,6 +124,7 @@ export function Converter() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { profile, userRole, incrementTodaysCalculations } = useUserData();
 
   const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
   const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
@@ -216,11 +204,9 @@ export function Converter() {
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isSearching, startSearchTransition] = React.useTransition();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [autoConvert, setAutoConvert] = useState(true);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
-  const [userRole, setUserRole] = useState<UserRole>('Member');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
@@ -239,8 +225,7 @@ export function Converter() {
 
 
   React.useEffect(() => {
-    const storedProfileData = localStorage.getItem("userProfile");
-    const userEmail = storedProfileData ? JSON.parse(storedProfileData).email : null;
+    const userEmail = profile?.email || null;
 
     const storedHistory = localStorage.getItem("conversionHistory");
     const storedFavorites = localStorage.getItem("favoriteConversions");
@@ -251,20 +236,7 @@ export function Converter() {
 
     if (storedHistory) setHistory(JSON.parse(storedHistory));
     if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
-    if (storedProfileData) {
-        const parsedProfile = JSON.parse(storedProfileData);
-        setProfile(parsedProfile);
-        const calculations = getAllTimeCalculations(parsedProfile.email);
-        if (parsedProfile.email === DEVELOPER_EMAIL) {
-            setUserRole('Owner');
-        } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
-            setUserRole('Premium Member');
-        } else {
-            setUserRole('Member');
-        }
-    } else {
-        setUserRole('Member');
-    }
+
     if (savedAutoConvert !== null) setAutoConvert(JSON.parse(savedAutoConvert));
     if (savedCustomUnits) setCustomUnits(JSON.parse(savedCustomUnits));
     if (savedCustomCategories) setCustomCategories(JSON.parse(savedCustomCategories));
@@ -431,7 +403,7 @@ export function Converter() {
         localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
         return newHistory;
     });
-  }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name, profile?.email]);
+  }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name, profile?.email, incrementTodaysCalculations]);
 
 
   React.useEffect(() => {
@@ -1173,3 +1145,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
