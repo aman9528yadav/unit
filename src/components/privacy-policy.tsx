@@ -55,7 +55,7 @@ export function PrivacyPolicy() {
         </p>
 
         <h2 className="text-lg font-semibold text-foreground pt-4">5. Contact Us</h2>
-        <p>If you have questions or comments about this Privacy Policy, please contact us at: <a href="mailto:privacy@sutradhaar.app" className="text-primary hover:underline">privacy@sutradhaar.app</a></p>
+        <p>If you have questions or comments about this Privacy Policy, please contact us at: <a href="mailto:amanyadavyadav9458@gmail.com" className="text-primary hover:underline">amanyadavyadav9458@gmail.com</a></p>
       </div>
     </div>
   );

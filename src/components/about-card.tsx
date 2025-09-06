@@ -40,7 +40,7 @@ export function AboutCard() {
                         value={
                             <div className="flex items-center gap-2">
                                 <Button asChild variant="outline" size="sm">
-                                    <a href="mailto:support@sutradhaar.app">
+                                    <a href="mailto:amanyadavyadav9458@gmail.com">
                                         <Mail className="mr-2 h-3 w-3"/> Email
                                     </a>
                                 </Button>
