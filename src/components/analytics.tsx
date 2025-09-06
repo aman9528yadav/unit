@@ -35,7 +35,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getWeeklyCalculations, getTodaysCalculations, getAllTimeCalculations } from "@/lib/utils";
+import { getWeeklyCalculations, getMonthlyCalculations, getTodaysCalculations, getAllTimeCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { useRouter } from "next/navigation";
 
@@ -58,15 +58,21 @@ const timeTrackingData = [
 export function Analytics() {
   const [isClient, setIsClient] = useState(false);
   const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string; value: number}[]>([]);
+  const [monthlyCalculations, setMonthlyCalculations] = useState<{name: string; value: number}[]>([]);
   const { t } = useLanguage();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState('weekly');
+  const [toolFilter, setToolFilter] = useState('all');
 
    useEffect(() => {
     setIsClient(true);
     const storedProfile = localStorage.getItem("userProfile");
     const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
     setWeeklyCalculations(getWeeklyCalculations(userEmail));
+    setMonthlyCalculations(getMonthlyCalculations(userEmail));
   }, []);
+
+  const chartData = activeTab === 'weekly' ? weeklyCalculations : monthlyCalculations;
 
   if (!isClient) {
       return null; // Or return a skeleton loader
@@ -97,14 +103,14 @@ export function Analytics() {
                         <CardDescription>Visualize your productivity over time.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                         <Tabs defaultValue="weekly">
+                         <Tabs value={activeTab} onValueChange={setActiveTab}>
                             <div className="flex justify-between items-center mb-4">
                                 <TabsList>
                                     <TabsTrigger value="weekly">Weekly</TabsTrigger>
                                     <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                                    <TabsTrigger value="custom">Custom Range</TabsTrigger>
+                                    <TabsTrigger value="custom" disabled>Custom Range</TabsTrigger>
                                 </TabsList>
-                                <Select defaultValue="all">
+                                <Select value={toolFilter} onValueChange={setToolFilter}>
                                     <SelectTrigger className="w-40">
                                         <SelectValue placeholder="Filter Tool"/>
                                     </SelectTrigger>
@@ -118,7 +124,29 @@ export function Analytics() {
                             <TabsContent value="weekly">
                                  <div className="h-80 w-full">
                                       <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={weeklyCalculations} margin={{ left: 0, right: 10, top: 10, bottom: 0 }}>
+                                        <AreaChart data={chartData} margin={{ left: 0, right: 10, top: 10, bottom: 0 }}>
+                                          <defs>
+                                            <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+                                              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                                              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                                            </linearGradient>
+                                          </defs>
+                                          <CartesianGrid vertical={false} strokeOpacity={0.1} stroke="hsl(var(--border))" />
+                                          <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                                          <YAxis allowDecimals={false} width={28} tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                                          <Tooltip
+                                            cursor={{ strokeDasharray: '3 3', fill: 'hsl(var(--muted))' }}
+                                            contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))" }} 
+                                          />
+                                          <Area type="monotone" dataKey="value" strokeWidth={2} stroke="hsl(var(--primary))" fill="url(#fill)" />
+                                        </AreaChart>
+                                      </ResponsiveContainer>
+                                </div>
+                            </TabsContent>
+                             <TabsContent value="monthly">
+                                 <div className="h-80 w-full">
+                                      <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={chartData} margin={{ left: 0, right: 10, top: 10, bottom: 0 }}>
                                           <defs>
                                             <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
                                               <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />

@@ -1,7 +1,7 @@
 
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { eachDayOfInterval, subDays, format } from 'date-fns';
+import { eachDayOfInterval, subDays, format, getMonth, getYear } from 'date-fns';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -47,6 +47,33 @@ export function getAllTimeCalculations(email: string | null): number {
         return 0;
     }
 }
+
+export function getMonthlyCalculations(email: string | null): { name: string; value: number }[] {
+    if (typeof window === 'undefined') return [];
+
+    const storedData = localStorage.getItem(getUserKey(CALCULATION_STORAGE_KEY, email));
+    const data: DailyCalculationData = storedData ? JSON.parse(storedData) : {};
+
+    const monthlyTotals: { [month: string]: number } = {};
+
+    for (const dateStr in data) {
+        const [year, month] = dateStr.split('-');
+        const monthKey = `${year}-${month}`; // e.g., "2024-07"
+        if (!monthlyTotals[monthKey]) {
+            monthlyTotals[monthKey] = 0;
+        }
+        monthlyTotals[monthKey] += data[dateStr];
+    }
+
+    return Object.entries(monthlyTotals)
+        .map(([monthKey, value]) => {
+            const [year, month] = monthKey.split('-');
+            const date = new Date(Number(year), Number(month) - 1);
+            return { name: format(date, 'MMM yyyy'), value };
+        })
+        .sort((a, b) => new Date(a.name).getTime() - new Date(b.name).getTime()); // Sort by month
+}
+
 
 export function getWeeklyCalculations(email: string | null): { name: string; value: number }[] {
   if (typeof window === 'undefined') {
@@ -125,4 +152,3 @@ export function incrementTodaysCalculations() {
     newValue: JSON.stringify(data),
   }));
 }
-
