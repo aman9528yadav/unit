@@ -1,7 +1,7 @@
 
 
 import { format, differenceInCalendarDays, subDays, parseISO } from 'date-fns';
-import { getUserData, updateUserData } from '@/services/firestore';
+import { updateUserData } from '@/services/firestore';
 
 const STREAK_STORAGE_KEY_BASE = 'userVisitHistory';
 
@@ -12,29 +12,15 @@ export interface StreakData {
     daysNotOpened: number;
 }
 
-const getVisits = async (email: string | null): Promise<string[]> => {
-    const userData = await getUserData(email);
-    return userData?.[STREAK_STORAGE_KEY_BASE] || [];
-};
-
-const setVisits = async (visits: string[], email: string | null) => {
-    await updateUserData(email, { [STREAK_STORAGE_KEY_BASE]: visits });
-};
-
 export const recordVisit = async (email?: string | null) => {
-    const visits = await getVisits(email);
     const today = format(new Date(), 'yyyy-MM-dd');
-    
-    if (!visits.includes(today)) {
-        const updatedVisits = [...new Set([...visits, today])];
-        await setVisits(updatedVisits, email);
-    }
+    const update = { [STREAK_STORAGE_KEY_BASE]: [today] };
+    await updateUserData(email, update);
 };
 
 
-export const getStreakData = async (email?: string | null): Promise<StreakData> => {
-    const visits = await getVisits(email);
-    if (visits.length === 0) {
+export const getStreakData = async (email: string | null, visits: string[] | undefined): Promise<StreakData> => {
+    if (!visits || visits.length === 0) {
         return { currentStreak: 0, bestStreak: 0, daysNotOpened: 0 };
     }
 

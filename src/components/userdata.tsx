@@ -11,9 +11,9 @@ import { User, Upload, LogOut, Settings, HelpCircle, X, Pencil, TrendingUp, Info
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { getAllTimeCalculations } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/context/language-context";
+import { useUserData } from "@/context/user-data-context";
 
 
 interface UserProfile {
@@ -50,42 +50,24 @@ const Section = ({ title, children }: { title: string, children: React.ReactNode
 )
 
 export function UserData() {
-    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const { profile, allTimeCalculations, userRole } = useUserData();
     const [settings, setSettings] = useState<UserSettings | null>(null);
     const [isClient, setIsClient] = useState(false);
-    const [userRole, setUserRole] = useState<'Member' | 'Premium Member' | 'Owner'>('Member');
-    const [totalCalculations, setTotalCalculations] = useState(0);
     const [progress, setProgress] = useState(0);
     const router = useRouter();
     const { toast } = useToast();
     const { t } = useLanguage();
 
-    const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 
     useEffect(() => {
         setIsClient(true);
-        const userProfileData = localStorage.getItem("userProfile");
-        if (userProfileData) {
-            const parsedProfile = JSON.parse(userProfileData);
-            setProfile(parsedProfile);
-            loadSettings(parsedProfile.email);
-            
-            getAllTimeCalculations(parsedProfile.email).then(calculations => {
-                setTotalCalculations(calculations);
-                setProgress((calculations / PREMIUM_MEMBER_THRESHOLD) * 100);
-
-                if (parsedProfile.email === DEVELOPER_EMAIL) {
-                    setUserRole('Owner');
-                } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
-                    setUserRole('Premium Member');
-                } else {
-                    setUserRole('Member');
-                }
-            });
-        } else {
+        if (profile) {
+            loadSettings(profile.email);
+            setProgress((allTimeCalculations / PREMIUM_MEMBER_THRESHOLD) * 100);
+        } else if (typeof window !== 'undefined' && !localStorage.getItem('userProfile')) {
             router.push('/welcome');
         }
-    }, [router]);
+    }, [router, profile, allTimeCalculations]);
 
     const loadSettings = (email: string | null) => {
         const getUserKey = (key: string, userEmail: string | null) => `${userEmail || 'guest'}_${key}`;
@@ -161,7 +143,7 @@ export function UserData() {
                     <div className="flex justify-between items-end mb-2">
                          <div className="text-sm">
                             <p className="font-semibold text-foreground">{t('userdata.premium.title')}</p>
-                            <p className="text-xs text-muted-foreground">{totalCalculations.toLocaleString()} / {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} {t('userdata.premium.ops')}</p>
+                            <p className="text-xs text-muted-foreground">{allTimeCalculations.toLocaleString()} / {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} {t('userdata.premium.ops')}</p>
                         </div>
                         <span className="text-sm font-bold text-primary">{Math.floor(progress)}%</span>
                     </div>
@@ -208,5 +190,3 @@ export function UserData() {
         </div>
     );
 }
-
-    

@@ -6,15 +6,13 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Clock, RefreshCw, Trash2, Delete, Divide, X, Minus, Plus, Equal, Sigma, RotateCcw, CalculatorIcon, Home, User, Lock } from 'lucide-react';
-import { getAllTimeCalculations } from '@/lib/utils';
 import type { CalculatorMode } from './settings';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useRouter } from 'next/navigation';
+import { useUserData } from '@/context/user-data-context';
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 const PREMIUM_MEMBER_THRESHOLD = 8000;
-
-type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 const buttonClasses = {
   gray: "bg-muted hover:bg-muted/80 text-foreground",
@@ -42,14 +40,6 @@ const CalculatorButton = ({
   </Button>
 );
 
-interface UserProfile {
-    fullName: string;
-    email: string;
-    profileImage?: string;
-    [key:string]: any;
-}
-
-
 export function Calculator() {
   const [expression, setExpression] = useState('');
   const [result, setResult] = useState('');
@@ -57,11 +47,10 @@ export function Calculator() {
   const [mode, setMode] = useState<CalculatorMode>('scientific');
   const [angleMode, setAngleMode] = useState<'deg' | 'rad'>('deg');
   const [isClient, setIsClient] = useState(false);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const router = useRouter();
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const { userRole, profile, incrementTodaysCalculations } = useUserData();
 
   
   // A simple and safe expression evaluator
@@ -105,31 +94,8 @@ export function Calculator() {
 
   useEffect(() => {
     setIsClient(true);
-
-    const checkUserRole = async (email: string) => {
-        const calculations = await getAllTimeCalculations(email);
-        if (email === DEVELOPER_EMAIL) {
-            return 'Owner';
-        } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
-            return 'Premium Member';
-        } else {
-            return 'Member';
-        }
-    };
     
-    const storedProfileData = localStorage.getItem("userProfile");
-    if (storedProfileData) {
-        const parsedProfile = JSON.parse(storedProfileData);
-        setProfile(parsedProfile);
-        checkUserRole(parsedProfile.email).then(role => {
-            setUserRole(role);
-            if (role === 'Member') {
-                setMode('basic');
-                localStorage.setItem('calculatorMode', 'basic');
-            }
-        });
-    } else {
-        setUserRole('Member');
+    if (userRole === 'Member') {
         setMode('basic');
         localStorage.setItem('calculatorMode', 'basic');
     }
@@ -140,7 +106,6 @@ export function Calculator() {
     if (savedMode && userRole !== 'Member') setMode(savedMode);
     if (soundEnabled !== null) setIsSoundEnabled(JSON.parse(soundEnabled));
     
-
     const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'calculatorSoundEnabled') {
             setIsSoundEnabled(e.newValue === null ? true : JSON.parse(e.newValue));
@@ -355,7 +320,7 @@ const BasicLayout = () => (
                           <p className="text-muted-foreground">
                               This is a Premium feature. Complete 8,000 operations to unlock the scientific calculator!
                           </p>
-                          <Button onClick={() => router.push('/userdata')} className="mt-4">
+                          <Button onClick={() => router.push('/profile')} className="mt-4">
                               Check Your Progress
                           </Button>
                       </div>

@@ -37,9 +37,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getWeeklyCalculations, getMonthlyCalculations, getTodaysCalculations, getAllTimeCalculations, getWeeklyNotes, getMonthlyNotes, getAllTimeNotes } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { useRouter } from "next/navigation";
+import { useUserData } from "@/context/user-data-context";
 
 
 const timeTrackingData = [
@@ -52,12 +52,7 @@ const timeTrackingData = [
 
 export function Analytics() {
   const [isClient, setIsClient] = useState(false);
-  const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string; value: number}[]>([]);
-  const [monthlyCalculations, setMonthlyCalculations] = useState<{name: string; value: number}[]>([]);
-  const [weeklyNotes, setWeeklyNotes] = useState<{name: string; value: number}[]>([]);
-  const [monthlyNotes, setMonthlyNotes] = useState<{name: string; value: number}[]>([]);
-  const [allTimeCalcs, setAllTimeCalcs] = useState(0);
-  const [allTimeNotes, setAllTimeNotes] = useState(0);
+  const { allTimeCalculations, allTimeNotes, weeklyCalculations, weeklyNotes, monthlyCalculations, monthlyNotes } = useUserData();
 
   const { t } = useLanguage();
   const router = useRouter();
@@ -66,14 +61,6 @@ export function Analytics() {
 
    useEffect(() => {
     setIsClient(true);
-    const storedProfile = localStorage.getItem("userProfile");
-    const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
-    getWeeklyCalculations(userEmail).then(setWeeklyCalculations);
-    getMonthlyCalculations(userEmail).then(setMonthlyCalculations);
-    getWeeklyNotes(userEmail).then(setWeeklyNotes);
-    getMonthlyNotes(userEmail).then(setMonthlyNotes);
-    getAllTimeCalculations(userEmail).then(setAllTimeCalcs);
-    getAllTimeNotes(userEmail).then(setAllTimeNotes);
   }, []);
 
   const getChartData = () => {
@@ -92,7 +79,7 @@ export function Analytics() {
       { name: "Date Calc", icon: Timer, count: 42, lastUsed: "Sep 5, 2025", trend: 5 },
       { name: "Smart Search", icon: Search, count: 35, lastUsed: "Sep 4, 2025", trend: -2 },
       { name: "Notes", icon: NotebookPen, count: allTimeNotes, lastUsed: "Sep 3, 2025", trend: allTimeNotes > 20 ? 8 : 1 },
-      { name: "Calculator/Converter", icon: CalculatorIcon, count: allTimeCalcs, lastUsed: "Sep 5, 2025", trend: allTimeCalcs > 50 ? 3 : -1 },
+      { name: "Calculator/Converter", icon: CalculatorIcon, count: allTimeCalculations, lastUsed: "Sep 5, 2025", trend: allTimeCalculations > 50 ? 3 : -1 },
   ];
 
 
@@ -170,7 +157,7 @@ export function Analytics() {
                              <TabsContent value="monthly">
                                  <div className="h-80 w-full">
                                       <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={chartData} margin={{ left: 0, right: 10, top: 10, bottom: 0 }}>
+                                        <AreaChart data={monthlyNotes} margin={{ left: 0, right: 10, top: 10, bottom: 0 }}>
                                           <defs>
                                             <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
                                               <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />

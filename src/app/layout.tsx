@@ -12,6 +12,7 @@ import { listenToGlobalMaintenanceMode, syncOfflineData } from '@/services/fires
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { UserDataProvider } from '@/context/user-data-context';
 
 function AppFooter() {
     const pathname = usePathname();
@@ -94,29 +95,31 @@ export default function RootLayout({
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <html lang="en" suppressHydrationWarning>
-          <head>
-            <title>UniConvert</title>
-            <meta name="description" content="A straightforward unit converter app for various measurements." />
-            <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
-            <meta name="manifest" content="/manifest.json" />
-            <link rel="preconnect" href="https://fonts.googleapis.com" />
-            <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-            <link rel="apple-touch-icon" href="/icon-192x192.png" />
-          </head>
-          <body className="font-body antialiased">
-            <MaintenanceRedirect>
-              <div className="flex flex-col min-h-screen">
-                  <main className="flex-grow">
-                      {children}
-                  </main>
-                  <AppFooter />
-              </div>
-            </MaintenanceRedirect>
-            <Toaster />
-          </body>
-        </html>
+        <UserDataProvider>
+            <html lang="en" suppressHydrationWarning>
+            <head>
+                <title>UniConvert</title>
+                <meta name="description" content="A straightforward unit converter app for various measurements." />
+                <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
+                <meta name="manifest" content="/manifest.json" />
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+                <link rel="apple-touch-icon" href="/icon-192x192.png" />
+            </head>
+            <body className="font-body antialiased">
+                <MaintenanceRedirect>
+                <div className="flex flex-col min-h-screen">
+                    <main className="flex-grow">
+                        {children}
+                    </main>
+                    <AppFooter />
+                </div>
+                </MaintenanceRedirect>
+                <Toaster />
+            </body>
+            </html>
+        </UserDataProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

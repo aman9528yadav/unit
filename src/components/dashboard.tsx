@@ -71,6 +71,7 @@ import { AboutCard } from "./about-card";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import { Label } from "./ui/label";
 import { Checkbox } from "./ui/checkbox";
+import { useUserData } from "@/context/user-data-context";
 
 
 interface Note {
@@ -243,13 +244,8 @@ const ThemeToggle = ({ isDark, onChange }: { isDark: boolean; onChange: (isDark:
 export function Dashboard() {
   const { theme, setTheme } = useTheme();
   const { t } = useLanguage();
+  const { profile, todayCalculations, allTimeCalculations, allTimeNotes, streakData, weeklyCalculations } = useUserData();
   const [isClient, setIsClient] = useState(false);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [todayCalculations, setTodayCalculations] = useState(0);
-  const [allTimeCalculations, setAllTimeCalculations] = useState(0);
-  const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string; value: number}[]>([]);
-  const [savedNotesCount, setSavedNotesCount] = useState(0);
-  const [streakData, setStreakData] = useState<StreakData>({ currentStreak: 0, bestStreak: 0, daysNotOpened: 0 });
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [showMoreTools, setShowMoreTools] = useState(false);
   const [showBetaDialog, setShowBetaDialog] = useState(false);
@@ -257,43 +253,13 @@ export function Dashboard() {
   const router = useRouter();
 
 
-  const updateStats = useCallback(async (email: string | null) => {
-    try {
-        const [today, weekly, allTime, notes, streak] = await Promise.all([
-            getTodaysCalculations(email),
-            getWeeklyCalculations(email),
-            getAllTimeCalculations(email),
-            getAllTimeNotes(email),
-            getStreakData(email)
-        ]);
-        setTodayCalculations(today);
-        setWeeklyCalculations(weekly);
-        setAllTimeCalculations(allTime);
-        setSavedNotesCount(notes);
-        setStreakData(streak);
-    } catch (error) {
-        console.error("Failed to update stats:", error);
-    }
-  }, []);
-
   useEffect(() => {
     setIsClient(true);
     const hasSeenDialog = localStorage.getItem('hasSeenBetaDialog');
     if (!hasSeenDialog) {
         setShowBetaDialog(true);
     }
-    
-    const storedProfile = localStorage.getItem("userProfile");
-    
-    if(storedProfile) {
-        const parsedProfile = JSON.parse(storedProfile);
-        setProfile(parsedProfile);
-        recordVisit(parsedProfile.email); // Record visit for streak tracking
-        updateStats(parsedProfile.email);
-    } else {
-        updateStats(null); // Load guest data
-    }
-  }, [updateStats]);
+  }, []);
   
   const handleThemeChange = (isDark: boolean) => {
       setTheme(isDark ? 'dark' : 'light');
@@ -425,7 +391,7 @@ export function Dashboard() {
       <section className="grid grid-cols-2 gap-4">
         <Stat icon={Calculator} label={t('dashboard.todayOps')} value={String(todayCalculations)} />
         <Stat icon={Flame} label={t('dashboard.currentStreak')} value={`${streakData.currentStreak} ${t('dashboard.days')}`} />
-        <Stat icon={NotebookPen} label={t('dashboard.savedNotes')} value={String(savedNotesCount)} />
+        <Stat icon={NotebookPen} label={t('dashboard.savedNotes')} value={String(allTimeNotes)} />
         <Stat icon={History} label={t('dashboard.allTimeOps')} value={String(allTimeCalculations)} />
       </section>
 
