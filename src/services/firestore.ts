@@ -2,8 +2,9 @@
 
 "use client";
 
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, Timestamp, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { db, rtdb } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp, onSnapshot as onFirestoreSnapshot, query, orderBy, Timestamp, doc, setDoc as setFirestoreDoc, getDoc as getFirestoreDoc, updateDoc } from 'firebase/firestore';
+import { ref, set as setRealtimeDb, onValue } from "firebase/database";
 import type { AppNotification } from '@/lib/notifications';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
@@ -60,7 +61,7 @@ export async function sendGlobalNotification(notification: { title: string, desc
 export function listenToGlobalNotifications(callback: (notifications: Omit<AppNotification, 'read'>[]) => void) {
     const q = query(collection(db, "notifications"), orderBy("createdAt", "desc"));
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const unsubscribe = onFirestoreSnapshot(q, (querySnapshot) => {
         const notifications: Omit<AppNotification, 'read'>[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
@@ -83,13 +84,13 @@ export function listenToGlobalNotifications(callback: (notifications: Omit<AppNo
 }
 
 /**
- * Sets the global maintenance mode status in Firestore.
+ * Sets the global maintenance mode status in Firebase Realtime Database.
  * @param isEnabled - Boolean indicating if maintenance mode should be on or off.
  */
 export async function setGlobalMaintenanceMode(isEnabled: boolean) {
     try {
-        const maintenanceRef = doc(db, 'settings', 'maintenance');
-        await setDoc(maintenanceRef, { isEnabled: isEnabled });
+        const maintenanceRef = ref(rtdb, 'settings/maintenance');
+        await setRealtimeDb(maintenanceRef, { isEnabled: isEnabled });
     } catch (error) {
         console.error("Error setting maintenance mode:", error);
         throw error;
@@ -97,21 +98,19 @@ export async function setGlobalMaintenanceMode(isEnabled: boolean) {
 }
 
 /**
- * Sets up a real-time listener for the global maintenance mode status.
+ * Sets up a real-time listener for the global maintenance mode status from Realtime Database.
  * @param setIsMaintenanceMode - State setter to update the component's view of the maintenance status.
  * @returns The unsubscribe function for the listener.
  */
 export function listenToGlobalMaintenanceMode(
   setIsMaintenanceMode: (status: boolean) => void,
 ) {
-    const maintenanceRef = doc(db, 'settings', 'maintenance');
-
-    const unsubscribe = onSnapshot(maintenanceRef, (docSnap) => {
-        const isEnabled = docSnap.exists() ? docSnap.data().isEnabled || false : false;
+    const maintenanceRef = ref(rtdb, 'settings/maintenance');
+    
+    const unsubscribe = onValue(maintenanceRef, (snapshot) => {
+        const data = snapshot.val();
+        const isEnabled = data?.isEnabled || false;
         setIsMaintenanceMode(isEnabled);
-        
-        // This logic is now moved to the layout to handle route-based redirection.
-
     }, (error) => {
         console.error("Error listening to maintenance mode:", error);
         setIsMaintenanceMode(false); // Default to off on error
@@ -119,6 +118,7 @@ export function listenToGlobalMaintenanceMode(
 
     return unsubscribe;
 }
+
 
 const mergeData = (onlineData: any, localData: any) => {
     const merged = { ...onlineData };
@@ -160,9 +160,9 @@ export async function syncOfflineData() {
         try {
             console.log(`Syncing data for ${email}...`);
             const userDocRef = doc(db, 'users', email);
-            const onlineData = (await getDoc(userDocRef)).data() || {};
+            const onlineData = (await getFirestoreDoc(userDocRef)).data() || {};
             const dataToSync = mergeData(onlineData, updatesByUser[email]);
-            await setDoc(userDocRef, dataToSync);
+            await setFirestoreDoc(userDocRef, dataToSync);
             console.log(`Sync successful for ${email}.`);
         } catch (error) {
             console.error(`Failed to sync data for ${email}:`, error);
@@ -190,7 +190,7 @@ export async function getUserData(email: string | null) {
     if (isOnline && email) {
         try {
             const userDocRef = doc(db, 'users', email);
-            const docSnap = await getDoc(userDocRef);
+            const docSnap = await getFirestoreDoc(userDocRef);
             if (docSnap.exists()) {
                 onlineData = docSnap.data();
             }
@@ -221,7 +221,7 @@ export async function updateUserData(email: string | null, data: { [key: string]
         await syncOfflineData();
         try {
             const userDocRef = doc(db, 'users', email);
-            await setDoc(userDocRef, data, { merge: true });
+            await setFirestoreDoc(userDocRef, data, { merge: true });
         } catch (error) {
             console.error("Error updating user data:", error);
             // If online update fails, save to offline queue as a fallback
@@ -242,6 +242,3 @@ export async function updateUserData(email: string | null, data: { [key: string]
     const newLocalData = mergeData(currentLocalData, data);
     localStorage.setItem(localDataKey, JSON.stringify(newLocalData));
 }
-
-
-    

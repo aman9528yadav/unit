@@ -340,5 +340,3 @@ export function DevPanel() {
         </div>
     );
 }
-
-    

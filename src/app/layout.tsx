@@ -10,6 +10,7 @@ import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { listenToGlobalMaintenanceMode, syncOfflineData } from '@/services/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useRouter } from 'next/navigation';
 
 function AppFooter() {
     const pathname = usePathname();
@@ -29,6 +30,7 @@ function AppFooter() {
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean | null>(null);
     const pathname = usePathname();
+    const router = useRouter();
 
     useEffect(() => {
         const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenanceMode);
@@ -53,9 +55,9 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (isMaintenanceMode === true && !pathname.startsWith('/dev')) {
-            window.location.href = "https://maintenance-page-wit-d5gt.bolt.host/";
+             router.replace("/maintenance");
         }
-    }, [isMaintenanceMode, pathname]);
+    }, [isMaintenanceMode, pathname, router]);
 
 
     if (isMaintenanceMode === null) {
@@ -116,5 +118,3 @@ export default function RootLayout({
     </ThemeProvider>
   );
 }
-
-    
