@@ -10,7 +10,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
     // Cache pages and static assets
     {
       urlPattern: /^https?.*/,
-      handler: 'StaleWhileRevalidate',
+      handler: 'NetworkFirst',
       options: {
         cacheName: 'pages-and-assets',
         expiration: {
@@ -66,6 +66,18 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'static.wixstatic.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'plus.unsplash.com',
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
   experimental: {
@@ -75,4 +87,6 @@ const nextConfig: NextConfig = {
   }
 };
 
-export default withPWA(nextConfig);
+const exportConfig = process.env.NODE_ENV === 'production' ? withPWA(nextConfig) : nextConfig;
+
+export default exportConfig;
