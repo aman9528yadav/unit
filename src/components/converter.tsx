@@ -52,6 +52,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { useDebounce } from "@/hooks/use-debounce";
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -185,6 +186,7 @@ export function Converter() {
   const [fromUnit, setFromUnit] = React.useState<string>(conversionCategories[0].units[0].symbol);
   const [toUnit, setToUnit] = React.useState<string>(conversionCategories[0].units[1].symbol);
   const [inputValue, setInputValue] = React.useState<string>("1");
+  const debouncedInputValue = useDebounce(inputValue, 300);
   const [outputValue, setOutputValue] = React.useState<string>("");
   const [history, setHistory] = React.useState<string[]>([]);
   const [favorites, setFavorites] = React.useState<string[]>([]);
@@ -429,10 +431,16 @@ export function Converter() {
   
   // Perform conversion whenever inputs change if auto-convert is on
   useEffect(() => {
+    const parsed = offlineParseConversionQuery(debouncedInputValue, allUnits, conversionCategories);
+    if(parsed) {
+        restoreFromParsedQuery(parsed);
+        return;
+    }
+
     if (autoConvert) {
       performConversion(inputValue, fromUnit, toUnit);
     }
-  }, [inputValue, fromUnit, toUnit, autoConvert, performConversion]);
+  }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion]);
 
   // Update favorite status whenever output or favorites list change
   React.useEffect(() => {
@@ -823,7 +831,7 @@ export function Converter() {
                             <Label htmlFor="value" className="text-muted-foreground">{t('converter.value')}</Label>
                             <Input
                                 id="value"
-                                type="number"
+                                type="text"
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
                                 className="text-2xl font-bold p-0 h-auto bg-transparent border-none shadow-none focus-visible:ring-0"
