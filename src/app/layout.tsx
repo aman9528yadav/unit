@@ -34,11 +34,7 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
-        const unsubscribe = listenToGlobalMaintenanceMode(
-            setIsMaintenanceMode, 
-            router,
-            pathname
-        );
+        const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenanceMode);
         
         const handleOnline = () => {
           console.log('App is online, attempting to sync data.');
@@ -56,7 +52,15 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
             unsubscribe();
             window.removeEventListener('online', handleOnline);
         };
-    }, [router, pathname]);
+    }, []);
+
+    useEffect(() => {
+        if (isMaintenanceMode === null) return;
+
+        if (isMaintenanceMode && !pathname.startsWith('/dev') && pathname !== '/maintenance') {
+            router.replace('/maintenance');
+        }
+    }, [isMaintenanceMode, pathname, router]);
 
 
     if (isMaintenanceMode === null) {

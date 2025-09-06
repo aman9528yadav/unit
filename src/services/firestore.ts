@@ -100,14 +100,10 @@ export async function setGlobalMaintenanceMode(isEnabled: boolean) {
 /**
  * Sets up a real-time listener for the global maintenance mode status from Realtime Database.
  * @param setIsMaintenanceMode - State setter to update the component's view of the maintenance status.
- * @param router - The Next.js router instance for navigation.
- * @param pathname - The current route's pathname.
  * @returns The unsubscribe function for the listener.
  */
 export function listenToGlobalMaintenanceMode(
-  setIsMaintenanceMode: (status: boolean) => void,
-  router: AppRouterInstance,
-  pathname: string
+  setIsMaintenanceMode: (status: boolean) => void
 ) {
     const maintenanceRef = ref(rtdb, 'settings/maintenance');
     
@@ -115,11 +111,6 @@ export function listenToGlobalMaintenanceMode(
         const data = snapshot.val();
         const isEnabled = data?.isEnabled || false;
         setIsMaintenanceMode(isEnabled);
-        
-        // Handle redirection
-        if (isEnabled && !pathname.startsWith('/dev') && pathname !== '/maintenance') {
-            router.replace("/maintenance");
-        }
     }, (error) => {
         console.error("Error listening to maintenance mode:", error);
         setIsMaintenanceMode(false); // Default to off on error
@@ -159,13 +150,15 @@ export async function syncOfflineData() {
     // Group updates by user (email)
     const updatesByUser: { [email: string]: any } = {};
     for (const { email, data } of queue) {
-        if (!updatesByUser[email]) {
-            updatesByUser[email] = {};
+        const userKey = email || 'guest';
+        if (!updatesByUser[userKey]) {
+            updatesByUser[userKey] = {};
         }
-        updatesByUser[email] = mergeData(updatesByUser[email], data);
+        updatesByUser[userKey] = mergeData(updatesByUser[userKey], data);
     }
     
     for (const email of Object.keys(updatesByUser)) {
+        if (email === 'guest') continue; // Don't sync guest data to firestore
         try {
             console.log(`Syncing data for ${email}...`);
             const userDocRef = doc(db, 'users', email);
@@ -192,7 +185,7 @@ export async function syncOfflineData() {
  * @returns The user data object or null if it doesn't exist.
  */
 export async function getUserData(email: string | null) {
-    const isOnline = navigator.onLine;
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : false;
     let onlineData = {};
     
     // Get online data if connected and user is logged in
@@ -211,7 +204,7 @@ export async function getUserData(email: string | null) {
 
     // Get local data (for guests or offline users)
     const localDataKey = `localUserData_${email || 'guest'}`;
-    const localData = JSON.parse(localStorage.getItem(localDataKey) || '{}');
+    const localData = typeof localStorage !== 'undefined' ? JSON.parse(localStorage.getItem(localDataKey) || '{}') : {};
 
     return mergeData(onlineData, localData);
 }
@@ -223,7 +216,7 @@ export async function getUserData(email: string | null) {
  * @param data - The data object to merge with existing data.
  */
 export async function updateUserData(email: string | null, data: { [key: string]: any }) {
-    const isOnline = navigator.onLine;
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : false;
 
     if (email && isOnline) {
         // Sync any pending changes first
@@ -247,7 +240,9 @@ export async function updateUserData(email: string | null, data: { [key: string]
 
     // Always update local data for immediate UI feedback and for guests
     const localDataKey = `localUserData_${email || 'guest'}`;
-    const currentLocalData = JSON.parse(localStorage.getItem(localDataKey) || '{}');
+    const currentLocalData = typeof localStorage !== 'undefined' ? JSON.parse(localStorage.getItem(localDataKey) || '{}') : {};
     const newLocalData = mergeData(currentLocalData, data);
-    localStorage.setItem(localDataKey, JSON.stringify(newLocalData));
+     if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(localDataKey, JSON.stringify(newLocalData));
+    }
 }

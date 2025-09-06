@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -318,17 +319,6 @@ export function DevPanel() {
                                     id="maintenance-mode"
                                     checked={isMaintenanceMode}
                                     onCheckedChange={handleMaintenanceModeToggle}
-                                />
-                            </div>
-                            <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                <div>
-                                    <Label htmlFor="new-toggle">New Toggle</Label>
-                                    <p className='text-xs text-muted-foreground'>Placeholder for a new feature.</p>
-                                </div>
-                                <Switch
-                                    id="new-toggle"
-                                    checked={newToggleState}
-                                    onCheckedChange={setNewToggleState}
                                 />
                             </div>
                         </CardContent>
