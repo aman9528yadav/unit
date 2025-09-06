@@ -63,6 +63,7 @@ import { useLanguage } from "@/context/language-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { cn } from "@/lib/utils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
+import { AboutCard } from "./about-card";
 
 
 interface Note {
@@ -290,7 +291,6 @@ export function Dashboard() {
         { label: t('dashboard.tools.favorites'), icon: Star, href: '/history', color: 'text-yellow-500' },
         { label: t('dashboard.tools.timer'), icon: Timer, href: '/time', color: 'text-red-500' },
         { label: t('dashboard.tools.stopwatch'), icon: Hourglass, href: '/time', color: 'text-indigo-500' },
-        { label: t('profile.menu.about'), icon: Info, href: "/about", color: "text-purple-400" },
     ];
 
     const toolsToShow = showMoreTools ? [...quickTools, ...moreTools] : quickTools;
@@ -418,6 +418,10 @@ export function Dashboard() {
             </div>
           </CardContent>
         </Card>
+      </section>
+
+      <section>
+        <AboutCard />
       </section>
 
       <section>
