@@ -101,8 +101,8 @@ export function Analytics() {
                             <div className="flex justify-between items-center mb-4">
                                 <TabsList>
                                     <TabsTrigger value="weekly">Weekly</TabsTrigger>
-                                    <TabsTrigger value="monthly" disabled>Monthly</TabsTrigger>
-                                    <TabsTrigger value="custom" disabled>Custom Range</TabsTrigger>
+                                    <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                                    <TabsTrigger value="custom">Custom Range</TabsTrigger>
                                 </TabsList>
                                 <Select defaultValue="all">
                                     <SelectTrigger className="w-40">
@@ -110,8 +110,8 @@ export function Analytics() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">All Tools</SelectItem>
-                                        <SelectItem value="calc" disabled>Calculator</SelectItem>
-                                        <SelectItem value="notes" disabled>Notes</SelectItem>
+                                        <SelectItem value="calc">Calculator</SelectItem>
+                                        <SelectItem value="notes">Notes</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
