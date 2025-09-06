@@ -4,7 +4,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BarChart, Calendar, Lightbulb, Code, Sparkles, Globe, Wrench, Rocket, FileText, Shield, LifeBuoy, Flag } from "lucide-react";
+import { ArrowLeft, BarChart, Calendar, Lightbulb, Code, Sparkles, Globe, Wrench, Rocket, FileText, Shield, LifeBuoy, Flag, Info, FileClock } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export function About() {
@@ -84,6 +84,22 @@ export function About() {
           </p>
         </section>
 
+        {/* Action Buttons Section */}
+        <section className="mt-12 w-full grid grid-cols-2 gap-4">
+            <Button asChild size="lg" variant="outline">
+                <Link href="/updates">
+                    <FileClock className="mr-2 h-5 w-5" />
+                    Updates
+                </Link>
+            </Button>
+             <Button asChild size="lg" variant="outline">
+                <Link href="/how-to-use">
+                    <Info className="mr-2 h-5 w-5" />
+                    How to Use
+                </Link>
+            </Button>
+        </section>
+
         {/* App Info Section */}
         <section className="mt-12 grid md:grid-cols-2 gap-8 w-full">
           <div className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-xl transition">
@@ -145,6 +161,14 @@ export function About() {
           <h2 className="text-3xl font-bold text-gray-800 mb-10">Credits</h2>
           <div className="flex flex-wrap justify-center gap-8">
             <div className="flex flex-col items-center">
+              <Image 
+                src="https://picsum.photos/200/200"
+                alt="Aman Yadav"
+                width={120}
+                height={120}
+                className="rounded-full object-cover border-4 border-white shadow-lg"
+                data-ai-hint="man portrait"
+              />
               <h3 className="mt-3 text-lg font-semibold text-indigo-600">Aman Yadav</h3>
               <p className="text-gray-600 text-sm">Founder & Engineer</p>
             </div>
