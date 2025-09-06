@@ -34,6 +34,7 @@ export function About() {
       title: "Add Updates",
       desc: "Regular feature enhancements and improvements after launch.",
       icon: <Sparkles className="w-8 h-8 text-indigo-500" />,
+      href: "/updates"
     },
     {
       title: "Make a Website",
@@ -66,8 +67,8 @@ export function About() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-indigo-100 flex flex-col items-center px-6 py-12 w-full">
-      <div className="w-full max-w-lg mx-auto">
+    <div className="w-full max-w-lg mx-auto flex flex-col items-center px-6 py-12">
+      <div className="w-full">
         <header className="w-full mb-12">
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft />
@@ -113,18 +114,29 @@ export function About() {
             Feature & Roadmap
           </h2>
           <div className="grid grid-cols-2 gap-4">
-            {features.map((step, idx) => (
-              <div
-                key={idx}
-                className="relative bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition group border-t-2 border-indigo-400"
-              >
-                <div className="text-3xl mb-2">{step.icon}</div>
-                <h3 className="text-md font-bold text-indigo-600 mb-1 group-hover:text-purple-600">
-                  {step.title}
-                </h3>
-                <p className="text-gray-600 text-xs leading-relaxed">{step.desc}</p>
-              </div>
-            ))}
+            {features.map((step, idx) => {
+              const cardContent = (
+                <div
+                  className="relative bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition group border-t-2 border-indigo-400"
+                >
+                  <div className="text-3xl mb-2">{step.icon}</div>
+                  <h3 className="text-md font-bold text-indigo-600 mb-1 group-hover:text-purple-600">
+                    {step.title}
+                  </h3>
+                  <p className="text-gray-600 text-xs leading-relaxed">{step.desc}</p>
+                </div>
+              );
+
+              if (step.href) {
+                return (
+                  <Link href={step.href} key={idx}>
+                    {cardContent}
+                  </Link>
+                );
+              }
+
+              return <div key={idx}>{cardContent}</div>;
+            })}
           </div>
         </section>
 
