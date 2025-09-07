@@ -60,7 +60,7 @@ import { listenToNextUpdateInfo, NextUpdateInfo } from "@/services/firestore";
 import { getStreakData, recordVisit } from "@/lib/streak";
 
 
-const ToolButton = ({ icon: Icon, label, href, color, newTab }: any) => {
+const ToolButton = ({ icon: Icon, label, href, color }: any) => {
     const content = (
         <div className="group aspect-square rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex flex-col items-center justify-center gap-2 shadow-sm text-center">
             <div className={cn("size-12 grid place-items-center rounded-full bg-secondary", color)}>
@@ -71,7 +71,7 @@ const ToolButton = ({ icon: Icon, label, href, color, newTab }: any) => {
     );
     if (href) {
         return (
-            <Link href={href} target={newTab ? "_blank" : "_self"} rel={newTab ? "noopener noreferrer" : ""}>
+            <Link href={href}>
                 {content}
             </Link>
         );
