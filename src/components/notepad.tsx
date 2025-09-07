@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -343,8 +342,8 @@ export function Notepad() {
                     {sortedNotes.length > 0 ? (
                         <ul className={layout === 'list' ? "space-y-2" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
                             {sortedNotes.map(note => (
-                                <li key={note.id} className={layout === 'card' ? "bg-card p-4 rounded-lg cursor-pointer group" : "bg-card p-2 rounded-lg cursor-pointer group hover:bg-background"}>
-                                    <div onClick={() => router.push(`/notes/edit/${note.id}`)}>
+                                <li key={note.id} className={layout === 'card' ? "bg-card p-4 rounded-lg group" : "bg-card p-2 rounded-lg group hover:bg-background"}>
+                                    <Link href={`/notes/view/${note.id}`} className="cursor-pointer">
                                         <div className="flex items-center justify-between">
                                             <h2 className="font-semibold truncate">{note.title || t('notepad.untitled')}</h2>
                                             {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
@@ -369,7 +368,7 @@ export function Notepad() {
                                          {note.deletedAt && (
                                             <p className="text-xs text-destructive mt-1">{t('notepad.inTrash', { time: formatDistanceToNow(new Date(note.deletedAt), { locale: dateLocale }) })}</p>
                                          )}
-                                    </div>
+                                    </Link>
                                     <div className="flex items-center justify-end gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         {view === 'trash' ? (
                                             <>
