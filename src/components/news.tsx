@@ -4,38 +4,44 @@
 import { Button } from "@/components/ui/button";
 import { Newspaper, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import Link from "next/link";
+import { useState } from "react";
+import { Skeleton } from "./ui/skeleton";
 
 export function News() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const newsUrl = "https://sutradhaar1.42web.io/";
 
   return (
-    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 text-center">
-        <header className="absolute top-0 left-0 w-full p-4 flex items-center">
+    <div className="w-full h-screen flex flex-col bg-background">
+        <header className="flex items-center gap-4 p-4 border-b flex-shrink-0">
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
                 <ArrowLeft />
             </Button>
-        </header>
-        <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="flex flex-col items-center gap-6"
-        >
-            <div className="p-4 bg-primary/10 rounded-full">
-                <Newspaper className="w-16 h-16 text-primary" />
+             <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                    <Newspaper size={20}/>
+                </div>
+                <h1 className="text-xl font-bold">News & Updates</h1>
             </div>
-            <h1 className="text-4xl font-bold">News & Updates</h1>
-            <p className="text-muted-foreground max-w-md">
-                Stay up-to-date with the latest news, announcements, and articles from our team.
-            </p>
-            <Button asChild className="mt-4">
-                <Link href="https://sutradhaar1.42web.io/">
-                    Read News
-                </Link>
-            </Button>
-        </motion.div>
-    </main>
+        </header>
+        <main className="flex-grow relative">
+            {isLoading && (
+                <div className="absolute inset-0 flex flex-col gap-4 p-4">
+                   <Skeleton className="w-1/3 h-8" />
+                   <Skeleton className="w-full h-4" />
+                   <Skeleton className="w-full h-4" />
+                   <Skeleton className="w-2/3 h-4" />
+                   <Skeleton className="w-full h-48 mt-4" />
+                </div>
+            )}
+            <iframe
+                src={newsUrl}
+                title="News & Updates"
+                className="w-full h-full border-none"
+                onLoad={() => setIsLoading(false)}
+            />
+        </main>
+    </div>
   );
 }
