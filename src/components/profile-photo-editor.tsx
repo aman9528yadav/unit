@@ -93,11 +93,9 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
         }
     };
 
-    const handleSave = async () => {
-        const user = auth.currentUser;
-        if (user) {
-            await updateProfile(user, { photoURL: image });
-        }
+    const handleSave = () => {
+        // The onSave callback will handle saving to the Realtime Database.
+        // We no longer update the Firebase Auth profile photoURL here to avoid the length limit error.
         onSave(image);
     };
 
