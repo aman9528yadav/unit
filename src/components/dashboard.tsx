@@ -78,11 +78,15 @@ const ToolButton = ({ icon: Icon, label, href, color, target, onClick }: any) =>
       return <div onClick={onClick} className="cursor-pointer">{content}</div>;
     }
     
-    return (
-      <Link href={href} target={target}>
-        {content}
-      </Link>
-    );
+    if (href) {
+        return (
+            <Link href={href} target={target}>
+                {content}
+            </Link>
+        );
+    }
+    
+    return <div className="cursor-pointer">{content}</div>;
 };
 
 
@@ -319,11 +323,17 @@ export function Dashboard() {
   const [featureDialogContent, setFeatureDialogContent] = useState({ title: '', description: '' });
   const router = useRouter();
 
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<{
+      todaysOps: number;
+      totalOps: number;
+      savedNotes: number;
+      weeklyActivity: DailyActivity[];
+      currentStreak: number;
+  }>({
       todaysOps: 0,
       totalOps: 0,
       savedNotes: 0,
-      weeklyActivity: [] as DailyActivity[],
+      weeklyActivity: [],
       currentStreak: 0,
   });
 
@@ -501,7 +511,7 @@ export function Dashboard() {
       },
     };
 
-    const formattedChartData = stats.weeklyActivity.map(item => ({
+    const formattedChartData = (stats.weeklyActivity || []).map(item => ({
         ...item,
         date: format(new Date(item.date), "EEE")
     }))
