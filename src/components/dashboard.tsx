@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
@@ -32,7 +31,8 @@ import {
   ChevronDown,
   Info,
   Newspaper,
-  Rocket
+  Rocket,
+  History
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -207,6 +207,7 @@ export function Dashboard() {
       { label: t('dashboard.tools.calculator'), icon: Calculator, href: "/calculator", color: "text-orange-400" },
       { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
       { label: 'News', icon: Newspaper, href: '/news', color: 'text-green-400' },
+      { label: 'History', icon: History, href: '/history', color: 'text-purple-400' },
       { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
     ];
     
@@ -427,5 +428,3 @@ export function Dashboard() {
     </div>
   );
 }
-
-    
