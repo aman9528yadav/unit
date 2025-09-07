@@ -413,7 +413,7 @@ export function Dashboard() {
       { label: t('dashboard.tools.calculator'), icon: Calculator, href: "/calculator", color: "text-orange-400" },
       { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
       { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
-      { label: 'News', icon: Newspaper, href: "/news", color: 'text-green-400' },
+      { label: 'News & Updates', icon: Newspaper, onClick: () => openFeatureDialog("News & Updates", "Check out the latest news, updates, and announcements about the app."), color: 'text-green-400' },
       { label: 'AI Search', icon: Wand2, onClick: () => openFeatureDialog("AI Smart Search (Coming Soon)", "A powerful new search experience that understands natural language to find notes, perform conversions, and navigate the app faster than ever."), color: 'text-indigo-400' },
     ];
     
@@ -540,6 +540,9 @@ export function Dashboard() {
       <section>
           <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-foreground">Statistics</h2>
+              <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
+                    <Link href="/analytics">View Analytics</Link>
+                </Button>
           </div>
           <div className="grid grid-cols-2 gap-4">
              <StatCard title={t('dashboard.todayOps')} value={stats.todaysOps} icon={TrendingUp} color="text-green-500 bg-green-500/10" />
