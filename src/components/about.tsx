@@ -20,7 +20,7 @@ const defaultAppInfo: AppInfo = {
 
 const defaultOwnerInfo: OwnerInfo = {
     name: 'Aman Yadav',
-    imageUrl: 'https://picsum.photos/200/200',
+    imageUrl: '/aman.jpeg',
 };
 
 const defaultReleasePlan: ReleasePlanItem[] = [
@@ -386,3 +386,5 @@ export function About() {
     </motion.div>
   );
 }
+
+    
