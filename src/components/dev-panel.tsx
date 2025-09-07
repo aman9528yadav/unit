@@ -13,8 +13,9 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
-import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo } from '@/services/firestore';
+import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo } from '@/services/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { intervalToDuration, differenceInDays } from 'date-fns';
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -38,7 +39,8 @@ export function DevPanel() {
     const [maintenanceText, setMaintenanceText] = useState('');
     const [maintenanceType, setMaintenanceType] = useState('Security');
     const [customMaintenanceTitle, setCustomMaintenanceTitle] = useState('');
-    
+    const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+
     // State for Updates Tab
     const [updateDuration, setUpdateDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const [updateText, setUpdateText] = useState('');
@@ -46,7 +48,6 @@ export function DevPanel() {
     // Shared State
     const [notificationTitle, setNotificationTitle] = useState('');
     const [notificationDescription, setNotificationDescription] = useState('');
-    const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
     
     const router = useRouter();
     const { toast } = useToast();
@@ -67,7 +68,8 @@ export function DevPanel() {
      useEffect(() => {
         if (!isAuthorized || !isAuthenticated) return;
         
-        const unsubMaintenance = listenToGlobalMaintenanceMode(setIsMaintenanceMode);
+        const unsubMaintenanceMode = listenToGlobalMaintenanceMode(setIsMaintenanceMode);
+
         const unsubUpdateInfo = listenToUpdateInfo((info) => {
             setMaintenanceText(info.updateText || '');
             setMaintenanceType(info.maintenanceType || 'Security');
@@ -76,12 +78,12 @@ export function DevPanel() {
                 const target = new Date(info.targetDate);
                 const now = new Date();
                 if (target > now) {
-                    const diff = target.getTime() - now.getTime();
+                    const duration = intervalToDuration({ start: now, end: target });
                     setMaintenanceDuration({
-                        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-                        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-                        minutes: Math.floor((diff / 1000 / 60) % 60),
-                        seconds: Math.floor((diff / 1000) % 60),
+                        days: duration.days || 0,
+                        hours: duration.hours || 0,
+                        minutes: duration.minutes || 0,
+                        seconds: duration.seconds || 0,
                     });
                 } else {
                     setMaintenanceDuration({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -91,9 +93,31 @@ export function DevPanel() {
             }
         });
 
+        const unsubNextUpdateInfo = listenToNextUpdateInfo((info) => {
+            setUpdateText(info.updateText || '');
+            if (info.targetDate) {
+                const target = new Date(info.targetDate);
+                const now = new Date();
+                 if (target > now) {
+                    const duration = intervalToDuration({ start: now, end: target });
+                    setUpdateDuration({
+                        days: duration.days || 0,
+                        hours: duration.hours || 0,
+                        minutes: duration.minutes || 0,
+                        seconds: duration.seconds || 0,
+                    });
+                } else {
+                    setUpdateDuration({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+                }
+            } else {
+                setUpdateDuration({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+            }
+        });
+
         return () => {
-            unsubMaintenance();
+            unsubMaintenanceMode();
             unsubUpdateInfo();
+            unsubNextUpdateInfo();
         };
     }, [isAuthorized, isAuthenticated]);
     
