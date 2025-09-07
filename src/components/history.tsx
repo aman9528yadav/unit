@@ -83,24 +83,25 @@ export function History() {
       to: toSymbol,
     };
   };
+  
+  const loadData = () => {
+      const storedHistory = localStorage.getItem("conversionHistory");
+      const storedFavorites = localStorage.getItem("favoriteConversions");
+      if (storedHistory) setHistory(JSON.parse(storedHistory));
+      if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
+  };
+
 
   useEffect(() => {
     setIsClient(true);
+    loadData();
     
     const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'conversionHistory') {
-            setHistory(JSON.parse(e.newValue || '[]'));
-        }
-         if (e.key === 'favoriteConversions') {
-            setFavorites(JSON.parse(e.newValue || '[]'));
+        if (e.key === 'conversionHistory' || e.key === 'favoriteConversions') {
+            loadData();
         }
     };
     
-    const storedHistory = localStorage.getItem("conversionHistory");
-    const storedFavorites = localStorage.getItem("favoriteConversions");
-    if (storedHistory) setHistory(JSON.parse(storedHistory));
-    if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
-
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
 
@@ -112,34 +113,31 @@ export function History() {
   };
   
   const handleClearAll = () => {
-    if (activeTab === 'history') {
-        setHistory([]);
-        localStorage.removeItem("conversionHistory");
-    }
-    setFavorites([]);
-    localStorage.removeItem("favoriteConversions");
+      const targetKey = activeTab === 'history' ? 'conversionHistory' : 'favoriteConversions';
+      localStorage.removeItem(targetKey);
+      window.dispatchEvent(new StorageEvent('storage', { key: targetKey, newValue: '[]' }));
   };
 
   const handleDeleteItem = (itemString: string) => {
     // Remove from history
-    const newHistory = history.filter(h => h !== itemString);
-    setHistory(newHistory);
+    const currentHistory = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+    const newHistory = currentHistory.filter((h: string) => h !== itemString);
     localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
 
     // Also remove from favorites if it's there
-    const newFavorites = favorites.filter(fav => !fav.startsWith(itemString.split('|')[0]));
-    setFavorites(newFavorites);
+    const currentFavorites = JSON.parse(localStorage.getItem('favoriteConversions') || '[]');
+    const newFavorites = currentFavorites.filter((fav: string) => !fav.startsWith(itemString.split('|')[0]));
     localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
+    
+    window.dispatchEvent(new StorageEvent('storage', { key: 'conversionHistory', newValue: JSON.stringify(newHistory) }));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'favoriteConversions', newValue: JSON.stringify(newFavorites) }));
     
     setItemToDelete(null);
   };
   
   const itemsToDisplay = activeTab === 'history' 
     ? history 
-    : history.filter(item => {
-        const conversionPart = item.split('|')[0];
-        return favorites.some(fav => fav.startsWith(conversionPart));
-      });
+    : favorites;
     
   const filteredItems = itemsToDisplay.map(parseHistoryString).filter(parsed => {
     const category = conversionCategories.find(c => c.name === parsed.categoryName);
@@ -298,6 +296,3 @@ function HistoryItem({ item, onRestore, onDelete, t, language, activeTab }: { it
         </div>
     )
 }
-    
-
-    

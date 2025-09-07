@@ -240,14 +240,12 @@ export function Converter() {
     const storedProfileData = localStorage.getItem("userProfile");
     const userEmail = storedProfileData ? JSON.parse(storedProfileData).email : null;
 
-    const storedHistory = localStorage.getItem("conversionHistory");
     const storedFavorites = localStorage.getItem("favoriteConversions");
     const savedAutoConvert = localStorage.getItem(getUserKey('autoConvert', userEmail));
     const savedCustomUnits = localStorage.getItem(getUserKey('customUnits', userEmail));
     const savedCustomCategories = localStorage.getItem(getUserKey('customCategories', userEmail));
     const savedDefaultRegion = localStorage.getItem(getUserKey('defaultRegion', userEmail));
 
-    if (storedHistory) setHistory(JSON.parse(storedHistory));
     if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
     if (storedProfileData) {
         const parsedProfile = JSON.parse(storedProfileData);
@@ -289,9 +287,6 @@ export function Converter() {
         }
         if (e.key === getUserKey('defaultRegion', userEmail) && e.newValue && regions.includes(e.newValue as Region)) {
             setRegion(e.newValue as Region);
-        }
-        if (e.key === 'conversionHistory') {
-            setHistory(JSON.parse(e.newValue || '[]'));
         }
     };
 
@@ -356,6 +351,39 @@ export function Converter() {
   }, [selectedCategory, region, currentUnits]);
 
 
+ const handleSaveToHistory = React.useCallback(() => {
+    // This logic is now completely self-contained.
+    const currentUserEmail = JSON.parse(localStorage.getItem('userProfile') || '{}').email || null;
+    const shouldSave = JSON.parse(localStorage.getItem(getUserKey('saveConversionHistory', currentUserEmail)) ?? 'true');
+    
+    if (!shouldSave) return;
+    
+    const numValue = parseFloat(inputValue);
+    if (isNaN(numValue) || !outputValue) return;
+
+    const result = parseFloat(outputValue.replace(/,/g, ''));
+    if (isNaN(result)) return;
+
+    const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
+    
+    const currentHistory = JSON.parse(localStorage.getItem("conversionHistory") || '[]');
+    
+    // Only add if it's not an exact duplicate of the most recent entry.
+    // This is the key fix for the auto-convert spam issue.
+    if (currentHistory.length === 0 || currentHistory[0] !== conversionString) {
+      const newHistory = [conversionString, ...currentHistory];
+      localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
+      localStorage.setItem("lastConversion", conversionString);
+      
+      // Manually dispatch a storage event so this tab and other tabs can react.
+      window.dispatchEvent(new StorageEvent('storage', {
+          key: 'conversionHistory',
+          newValue: JSON.stringify(newHistory),
+      }));
+    }
+  }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name]);
+
+
  const performConversion = React.useCallback(async (value: string | number, from: string, to: string) => {
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
     setIsGraphVisible(false);
@@ -403,29 +431,6 @@ export function Converter() {
 }, [region, conversionCategories]);
 
   
-  const handleSaveToHistory = React.useCallback(() => {
-    const saveConversionHistory = JSON.parse(localStorage.getItem(getUserKey('saveConversionHistory', profile?.email || null)) || 'true');
-    if (!saveConversionHistory) return;
-
-    const numValue = parseFloat(inputValue);
-    const result = parseFloat(outputValue.replace(/,/g, ''));
-    if (isNaN(numValue) || isNaN(result) || outputValue === '') return;
-
-    const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
-    localStorage.setItem('lastConversion', conversionString);
-    
-    setHistory(prevHistory => {
-        const conversionPart = conversionString.split('|')[0];
-        if (prevHistory.some(h => h.startsWith(conversionPart))) {
-            return prevHistory;
-        }
-        const newHistory = [conversionString, ...prevHistory];
-        localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
-        return newHistory;
-    });
-  }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name, profile?.email]);
-
-
   React.useEffect(() => {
     if (outputValue) {
         handleSaveToHistory();
@@ -1165,5 +1170,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
