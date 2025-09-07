@@ -5,14 +5,10 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Clock, RefreshCw, Trash2, Delete, Divide, X, Minus, Plus, Equal, Sigma, RotateCcw, CalculatorIcon, Home, User, Lock } from 'lucide-react';
-import type { CalculatorMode } from './settings';
+import { RefreshCw, Delete, Divide, X, Minus, Plus, Equal, Sigma, CalculatorIcon, Home, User } from 'lucide-react';
+import type { CalculatorMode } from '../settings';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useRouter } from 'next/navigation';
-import { useUserData } from '@/context/user-data-context';
-
-const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
-const PREMIUM_MEMBER_THRESHOLD = 8000;
 
 const buttonClasses = {
   gray: "bg-muted hover:bg-muted/80 text-foreground",
@@ -43,14 +39,13 @@ const CalculatorButton = ({
 export function Calculator() {
   const [expression, setExpression] = useState('');
   const [result, setResult] = useState('');
-  const [history, setHistory] = useState<string[]>([]);
   const [mode, setMode] = useState<CalculatorMode>('scientific');
   const [angleMode, setAngleMode] = useState<'deg' | 'rad'>('deg');
   const [isClient, setIsClient] = useState(false);
+  const [profile, setProfile] = useState<{fullName: string, profileImage?: string} | null>(null);
   const router = useRouter();
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const { userRole, profile, incrementTodaysCalculations } = useUserData();
 
   
   // A simple and safe expression evaluator
@@ -94,16 +89,16 @@ export function Calculator() {
 
   useEffect(() => {
     setIsClient(true);
-    
-    if (userRole === 'Member') {
-        setMode('basic');
-        localStorage.setItem('calculatorMode', 'basic');
+    const storedProfile = localStorage.getItem('userProfile');
+    if (storedProfile) {
+        setProfile(JSON.parse(storedProfile));
     }
+    
 
     const savedMode = localStorage.getItem('calculatorMode') as CalculatorMode;
     const soundEnabled = localStorage.getItem('calculatorSoundEnabled');
     
-    if (savedMode && userRole !== 'Member') setMode(savedMode);
+    if (savedMode) setMode(savedMode);
     if (soundEnabled !== null) setIsSoundEnabled(JSON.parse(soundEnabled));
     
     const handleStorageChange = (e: StorageEvent) => {
@@ -117,7 +112,7 @@ export function Calculator() {
     return () => {
         window.removeEventListener('storage', handleStorageChange);
     };
-  }, [isClient, userRole]);
+  }, [isClient]);
   
   const playSound = () => {
     if (isSoundEnabled && audioRef.current) {
@@ -174,24 +169,11 @@ export function Calculator() {
       const formattedResult = evalResult.toLocaleString(undefined, { maximumFractionDigits: 10, useGrouping: true });
       setResult(formattedResult);
       
-      const saveCalcHistory = JSON.parse(localStorage.getItem('saveCalcHistory') || 'true');
-      if (saveCalcHistory) {
-        const newHistoryEntry = `${expression} = ${formattedResult}`;
-        setHistory(prev => [newHistoryEntry, ...prev.filter(h => h !== newHistoryEntry)]);
-      }
-
       localStorage.setItem('lastCalculation', `${expression} = ${formattedResult}`); // Save for note editor
-      incrementTodaysCalculations();
     } catch (error) {
       console.error(error)
       setResult('Error');
     }
-  };
-
-  const handleRestore = (item: string) => {
-    const expressionToRestore = item.split(' = ')[0];
-    setExpression(expressionToRestore);
-    setResult('');
   };
   
   if (!isClient) {
@@ -307,48 +289,15 @@ const BasicLayout = () => (
 
             {/* Buttons */}
              <div className="min-h-[460px] md:min-h-[520px]">
-                {mode === 'scientific' && userRole !== 'Member' ? (
+                {mode === 'scientific' ? (
                   <ScientificLayout />
                 ) : (
-                  <>
-                    {userRole === 'Member' && mode === 'scientific' && (
-                       <div className="w-full h-full flex flex-col items-center justify-center text-center gap-4 bg-secondary p-8 rounded-2xl">
-                          <div className="p-4 bg-primary/10 rounded-full mb-4">
-                            <Lock className="w-10 h-10 text-primary" />
-                          </div>
-                          <h1 className="text-2xl font-bold">Scientific Mode Locked</h1>
-                          <p className="text-muted-foreground">
-                              This is a Premium feature. Complete 8,000 operations to unlock the scientific calculator!
-                          </p>
-                          <Button onClick={() => router.push('/profile')} className="mt-4">
-                              Check Your Progress
-                          </Button>
-                      </div>
-                    )}
-                     <BasicLayout />
-                  </>
+                  <BasicLayout />
                 )}
             </div>
         </div>
-         {history.length > 0 && (
-          <div className="bg-card p-4 rounded-xl flex flex-col gap-3">
-              <div className="flex justify-between items-center">
-                <h3 className="font-bold text-lg flex items-center gap-2"><Clock size={20} /> History</h3>
-                <RefreshCw size={18} className="text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => setHistory([])}/>
-              </div>
-              <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                  {history.slice(0, 5).map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-2 rounded hover:bg-background group">
-                        <span>{item}</span>
-                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <RotateCcw size={16} className="cursor-pointer hover:text-foreground" onClick={() => handleRestore(item)} />
-                            <Trash2 size={16} className="cursor-pointer hover:text-foreground" onClick={() => setHistory(h => h.filter((_, i) => i !== index))} />
-                        </div>
-                      </div>
-                  ))}
-              </div>
-          </div>
-      )}
     </div>
   );
 }
+
+    

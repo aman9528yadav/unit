@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { getStreakData, StreakData } from "@/lib/streak";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
@@ -85,7 +84,6 @@ export function Profile() {
   };
 
   const menuItems = [
-    { icon: Star, text: t('profile.menu.favorites'), href: "/history?tab=favorites" },
     { icon: Gift, text: t('profile.menu.whatsNew'), href: "/updates" },
     { icon: Lock, text: t('profile.menu.privacy'), href: "/privacy-policy" },
     { icon: Settings, text: t('profile.menu.settings'), href: "/settings" },

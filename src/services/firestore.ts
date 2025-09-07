@@ -6,7 +6,6 @@ import { db, rtdb } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot as onFirestoreSnapshot, query, orderBy, Timestamp, doc, setDoc as setFirestoreDoc, getDoc as getFirestoreDoc, updateDoc } from 'firebase/firestore';
 import { ref, set as setRealtimeDb, onValue } from "firebase/database";
 import type { AppNotification } from '@/lib/notifications';
-import type { DailyData } from '@/lib/utils';
 
 
 const OFFLINE_QUEUE_KEY = 'firestoreOfflineQueue';
@@ -17,12 +16,6 @@ export interface UserEvent {
     type: 'login' | 'signup';
 }
 
-export interface UserData {
-    dailyCalculations?: DailyData;
-    dailyNotes?: DailyData;
-    userVisitHistory?: string[];
-    [key: string]: any;
-}
 
 export interface UpdateInfo {
     targetDate: string | null;
@@ -168,139 +161,8 @@ export function listenToUpdateInfo(callback: (info: UpdateInfo) => void) {
     return unsubscribe;
 }
 
-
-const mergeData = (onlineData: any, localData: any) => {
-    const merged = { ...onlineData };
-    for (const key in localData) {
-        if (typeof localData[key] === 'object' && localData[key] !== null && !Array.isArray(localData[key])) {
-             // For objects like dailyCalculations
-            merged[key] = { ...(onlineData[key] || {}), ...localData[key] };
-             for(const date in localData[key]) {
-                 merged[key][date] = (onlineData[key]?.[date] || 0) + localData[key][date];
-             }
-        } else if (Array.isArray(localData[key])) {
-            // For arrays like userVisitHistory
-            merged[key] = [...new Set([...(onlineData[key] || []), ...localData[key]])];
-        } else {
-            merged[key] = localData[key];
-        }
-    }
-    return merged;
-};
-
-export async function syncOfflineData() {
-    console.log("Attempting to sync offline data...");
-    const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
-    if (queue.length === 0) {
-        console.log("No offline data to sync.");
-        return;
-    }
-
-    // Group updates by user (email)
-    const updatesByUser: { [email: string]: any } = {};
-    for (const { email, data } of queue) {
-        const userKey = email || 'guest';
-        if (!updatesByUser[userKey]) {
-            updatesByUser[userKey] = {};
-        }
-        updatesByUser[userKey] = mergeData(updatesByUser[userKey], data);
-    }
-    
-    for (const email of Object.keys(updatesByUser)) {
-        if (email === 'guest') continue; // Don't sync guest data to firestore
-        try {
-            console.log(`Syncing data for ${email}...`);
-            const userDocRef = doc(db, 'users', email);
-            const onlineSnap = await getFirestoreDoc(userDocRef);
-            const onlineData = onlineSnap.data() || {};
-            const dataToSync = mergeData(onlineData, updatesByUser[email]);
-            await setFirestoreDoc(userDocRef, dataToSync);
-            console.log(`Sync successful for ${email}.`);
-        } catch (error) {
-            console.error(`Failed to sync data for ${email}:`, error);
-            // If it fails, we leave the data in the queue to be retried later.
-            return;
-        }
-    }
-
-    console.log("Clearing offline queue.");
-    localStorage.removeItem(OFFLINE_QUEUE_KEY);
-}
-
-
-/**
- * Sets up a real-time listener for a user's data document.
- * @param email - The user's email, used as the document ID.
- * @param callback - Function to be called with the user data.
- * @returns The unsubscribe function.
- */
-export function listenToUserData(email: string | null, callback: (data: UserData | null) => void) {
-    if (!email) {
-        // For guest users, we just read from local storage and don't set up a listener.
-        const localData = JSON.parse(localStorage.getItem(`localUserData_guest`) || '{}');
-        callback(localData);
-        return () => {}; // Return an empty unsubscribe function
-    }
-
-    const userDocRef = doc(db, "users", email);
-    const unsubscribe = onFirestoreSnapshot(userDocRef, (doc) => {
-        if (doc.exists()) {
-            callback(doc.data() as UserData);
-        } else {
-            callback(null); // Or an empty object {}
-        }
-    }, (error) => {
-        console.error("Error listening to user data:", error);
-        callback(null);
-    });
-
-    return unsubscribe;
-}
-
-/**
- * Creates or updates a user's data document in Firestore.
- * Handles offline storage by queueing updates.
- * @param email - The user's email, used as the document ID.
- * @param data - The data object to merge with existing data.
- */
-export async function updateUserData(email: string | null, data: { [key: string]: any }) {
-    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : false;
-
-    if (email && isOnline) {
-        await syncOfflineData(); // Sync any pending changes first
-        try {
-            const userDocRef = doc(db, 'users', email);
-            
-            // This special logic handles incrementing a value in a map
-            const updates: { [key: string]: any } = {};
-            for (const key in data) {
-                 if (typeof data[key] === 'object' && !Array.isArray(data[key]) && data[key] !== null) {
-                    for (const subKey in data[key]) {
-                       updates[`${key}.${subKey}`] = (await getFirestoreDoc(userDocRef).then(d => d.data()?.[key]?.[subKey] || 0)) + data[key][subKey];
-                    }
-                } else {
-                     updates[key] = data[key];
-                }
-            }
-
-            await setFirestoreDoc(userDocRef, updates, { merge: true });
-        } catch (error) {
-            console.error("Error updating user data:", error);
-            const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
-            queue.push({ email, data, timestamp: Date.now() });
-            localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
-        }
-    } else if (email) {
-        const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
-        queue.push({ email, data, timestamp: Date.now() });
-        localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
-    }
-
-    // Always update local data for immediate UI feedback and for guests
-    const localDataKey = `localUserData_${email || 'guest'}`;
-    const currentLocalData = typeof localStorage !== 'undefined' ? JSON.parse(localStorage.getItem(localDataKey) || '{}') : {};
-    const newLocalData = mergeData(currentLocalData, data);
-     if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(localDataKey, JSON.stringify(newLocalData));
-    }
+export function syncOfflineData() {
+    // This function is kept for future use if online sync is re-enabled.
+    // For now, it does nothing as all data is local.
+    console.log("Data is local-only. Sync function is disabled.");
 }

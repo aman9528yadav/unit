@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -52,7 +53,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useUserData } from "@/context/user-data-context";
 
 
 const PREMIUM_REGIONS = ['Japan', 'Korea', 'China', 'Middle East'];
@@ -124,7 +124,7 @@ export function Converter() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { profile, userRole, incrementTodaysCalculations } = useUserData();
+  const [profile, setProfile] = useState<{fullName: string, email: string, profileImage?: string} | null>(null);
 
   const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
   const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
@@ -223,6 +223,12 @@ export function Converter() {
   const fromUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === fromUnit), [currentUnits, fromUnit]);
   const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit), [currentUnits, toUnit]);
 
+  useEffect(() => {
+      const storedProfile = localStorage.getItem('userProfile');
+      if (storedProfile) {
+          setProfile(JSON.parse(storedProfile));
+      }
+  }, []);
 
   React.useEffect(() => {
     const userEmail = profile?.email || null;
@@ -398,12 +404,11 @@ export function Converter() {
         if (prevHistory.some(h => h.startsWith(conversionPart))) {
             return prevHistory;
         }
-        incrementTodaysCalculations();
         const newHistory = [conversionString, ...prevHistory];
         localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
         return newHistory;
     });
-  }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name, profile?.email, incrementTodaysCalculations]);
+  }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name, profile?.email]);
 
 
   React.useEffect(() => {
@@ -483,11 +488,7 @@ export function Converter() {
   };
 
   const handleRegionChange = (newRegion: string) => {
-    if (isPremiumFeatureLocked && PREMIUM_REGIONS.includes(newRegion)) {
-        setShowPremiumLockDialog(true);
-    } else {
-        setRegion(newRegion as Region);
-    }
+    setRegion(newRegion as Region);
   }
 
   const handleSwapUnits = () => {
@@ -600,11 +601,7 @@ export function Converter() {
   };
   
    const handleShareClick = () => {
-    if (isPremiumFeatureLocked) {
-      setShowPremiumLockDialog(true);
-    } else {
       setShowShareDialog(true);
-    }
   };
 
   const handleExportAsTxt = () => {
@@ -670,16 +667,8 @@ export function Converter() {
     }
   };
   
-  const isPremiumFeatureLocked = userRole === 'Member';
-
   const handleCategorySelect = (e: React.MouseEvent, categoryName: string) => {
-    const isLocked = isPremiumFeatureLocked && PREMIUM_CATEGORIES.includes(categoryName);
-    if (isLocked) {
-      e.preventDefault();
-      setShowPremiumLockDialog(true);
-    } else {
       handleCategoryChange(categoryName);
-    }
   };
 
  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -850,7 +839,7 @@ export function Converter() {
                             </SelectTrigger>
                             <SelectContent>
                                 {regions.map(r => {
-                                    const isLocked = isPremiumFeatureLocked && PREMIUM_REGIONS.includes(r);
+                                    const isLocked = false;
                                     return (
                                         <SelectItem key={r} value={r} disabled={isLocked}>
                                             <div className="flex items-center gap-2">
@@ -879,7 +868,7 @@ export function Converter() {
                                <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 p-2">
                                        {conversionCategories.map(cat => {
-                                           const isLocked = isPremiumFeatureLocked && PREMIUM_CATEGORIES.includes(cat.name);
+                                           const isLocked = false;
                                            const categoryItem = (
                                                <DropdownMenuItem
                                                    key={cat.name}
@@ -1145,5 +1134,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    

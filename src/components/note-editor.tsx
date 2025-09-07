@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { useLanguage } from '@/context/language-context';
-import { incrementTodaysNotes } from '@/lib/utils';
 
 
 const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
@@ -265,7 +264,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         }
 
         localStorage.setItem(notesKey, JSON.stringify(notes));
-        incrementTodaysNotes();
         setIsDirty(false);
 
         toast({

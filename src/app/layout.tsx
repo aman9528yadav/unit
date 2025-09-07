@@ -12,7 +12,6 @@ import { listenToGlobalMaintenanceMode, syncOfflineData } from '@/services/fires
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
-import { UserDataProvider } from '@/context/user-data-context';
 
 function AppFooter() {
     const pathname = usePathname();
@@ -99,7 +98,6 @@ export default function RootLayout({
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <UserDataProvider>
             <html lang="en" suppressHydrationWarning>
             <head>
                 <title>UniConvert</title>
@@ -123,7 +121,6 @@ export default function RootLayout({
                 <Toaster />
             </body>
             </html>
-        </UserDataProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

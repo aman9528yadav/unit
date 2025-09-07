@@ -1,11 +1,12 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, History, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music } from "lucide-react";
+import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { useTheme } from "@/context/theme-context";
 import {
@@ -22,7 +23,6 @@ import { auth } from "@/lib/firebase";
 import { Region } from "@/lib/conversions";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
-import { useUserData } from "@/context/user-data-context";
 
 
 export type CalculatorMode = 'basic' | 'scientific';
@@ -67,7 +67,7 @@ const SettingRow = ({ label, description, control, isLink = false, href, childre
 
 
 export function Settings() {
-  const { profile, userRole } = useUserData();
+  const [profile, setProfile] = useState<{email: string} | null>(null);
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -83,7 +83,6 @@ export function Settings() {
   const [defaultRegion, setDefaultRegion] = useState<Region>('International');
 
   const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>('scientific');
-  const [saveCalcHistory, setSaveCalcHistory] = useState(true);
   const [calculatorSound, setCalculatorSound] = useState(true);
   
   // Local state for theme selector
@@ -91,9 +90,11 @@ export function Settings() {
 
   useEffect(() => {
     setIsClient(true);
-    const email = profile?.email || null;
+    const storedProfile = localStorage.getItem('userProfile');
+    const email = storedProfile ? JSON.parse(storedProfile).email : null;
+    setProfile(storedProfile ? JSON.parse(storedProfile) : null);
     loadSettings(email);
-  }, [profile]);
+  }, []);
   
   useEffect(() => {
     setSelectedTheme(theme);
@@ -117,9 +118,6 @@ export function Settings() {
     const calcMode = localStorage.getItem('calculatorMode') as CalculatorMode;
     if (calcMode) setCalculatorMode(calcMode);
 
-    const saveCalc = localStorage.getItem('saveCalcHistory');
-    setSaveCalcHistory(saveCalc === null ? true : JSON.parse(saveCalc));
-
     const calcSound = localStorage.getItem('calculatorSoundEnabled');
     setCalculatorSound(calcSound === null ? true : JSON.parse(calcSound));
   };
@@ -131,16 +129,8 @@ export function Settings() {
     localStorage.setItem(getUserKey('saveConversionHistory', userKey), JSON.stringify(saveConversionHistory));
     localStorage.setItem(getUserKey('defaultRegion', userKey), defaultRegion);
     localStorage.setItem('calculatorMode', calculatorMode);
-    localStorage.setItem('saveCalcHistory', JSON.stringify(saveCalcHistory));
     localStorage.setItem('calculatorSoundEnabled', JSON.stringify(calculatorSound));
-
-    
-    if (userRole === 'Member' && selectedTheme === 'custom') {
-        toast({ title: t('settings.appearance.premiumTooltip'), variant: "destructive" });
-        setTheme('light'); // Revert to default
-    } else {
-        setTheme(selectedTheme);
-    }
+    setTheme(selectedTheme);
     
     // Dispatch storage events to notify other components/tabs
     window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('notificationsEnabled', userKey), newValue: JSON.stringify(notificationsEnabled) }));
@@ -148,7 +138,6 @@ export function Settings() {
     window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('saveConversionHistory', userKey), newValue: JSON.stringify(saveConversionHistory) }));
     window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('defaultRegion', userKey), newValue: defaultRegion }));
     window.dispatchEvent(new StorageEvent('storage', { key: 'calculatorMode', newValue: calculatorMode }));
-    window.dispatchEvent(new StorageEvent('storage', { key: 'saveCalcHistory', newValue: JSON.stringify(saveCalcHistory) }));
     window.dispatchEvent(new StorageEvent('storage', { key: 'calculatorSoundEnabled', newValue: JSON.stringify(calculatorSound) }));
     window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: selectedTheme }));
 
@@ -166,8 +155,6 @@ export function Settings() {
 
 
   if (!isClient) return null;
-
-  const isPremiumFeatureLocked = userRole === 'Member';
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-6 p-4 sm:p-6">
@@ -200,17 +187,9 @@ export function Settings() {
                                     <SelectItem value="light">{t('settings.appearance.themes.light')}</SelectItem>
                                     <SelectItem value="dark">{t('settings.appearance.themes.dark')}</SelectItem>
                                     {customTheme && (
-                                        <Tooltip delayDuration={100}>
-                                            <TooltipTrigger asChild>
-                                                <div>
-                                                    <SelectItem value="custom" disabled={isPremiumFeatureLocked}>
-                                                        {isPremiumFeatureLocked && <Lock className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2"/>}
-                                                        {t('settings.appearance.themes.custom')}
-                                                    </SelectItem>
-                                                </div>
-                                            </TooltipTrigger>
-                                            {isPremiumFeatureLocked && <TooltipContent><p>{t('settings.appearance.premiumTooltip')}</p></TooltipContent>}
-                                        </Tooltip>
+                                        <SelectItem value="custom">
+                                            {t('settings.appearance.themes.custom')}
+                                        </SelectItem>
                                     )}
                                 </SelectContent>
                             </Select>
@@ -223,7 +202,6 @@ export function Settings() {
                         description={t('settings.appearance.customizeTheme.description')}
                         control={
                              <div className="flex items-center gap-2">
-                                {isPremiumFeatureLocked && <Lock className="w-4 h-4 text-amber-500" />}
                                 <Palette />
                             </div>
                         }
@@ -289,7 +267,6 @@ export function Settings() {
                     description={t('settings.unitConverter.customUnit.description')}
                     control={
                         <div className="flex items-center gap-2">
-                            {isPremiumFeatureLocked && <Lock className="w-4 h-4 text-amber-500" />}
                             <LayoutGrid />
                         </div>
                     }
@@ -306,32 +283,16 @@ export function Settings() {
                         label={t('settings.calculator.mode.label')}
                         description={t('settings.calculator.mode.description')}
                         control={
-                            <Select value={calculatorMode} onValueChange={(v) => setCalculatorMode(v as CalculatorMode)} disabled={isPremiumFeatureLocked}>
+                            <Select value={calculatorMode} onValueChange={(v) => setCalculatorMode(v as CalculatorMode)}>
                                 <SelectTrigger className="w-32">
-                                    {isPremiumFeatureLocked && <Lock className="w-4 h-4 text-amber-500 mr-2"/>}
                                     <SelectValue/>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="basic">{t('settings.calculator.modes.basic')}</SelectItem>
-                                     <Tooltip delayDuration={100}>
-                                        <TooltipTrigger asChild>
-                                            <div>
-                                                <SelectItem value="scientific" disabled={isPremiumFeatureLocked}>
-                                                    {isPremiumFeatureLocked && <Lock className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2"/>}
-                                                    {t('settings.calculator.modes.scientific')}
-                                                </SelectItem>
-                                            </div>
-                                        </TooltipTrigger>
-                                        {isPremiumFeatureLocked && <TooltipContent><p>{t('settings.calculator.premiumTooltip')}</p></TooltipContent>}
-                                    </Tooltip>
+                                    <SelectItem value="scientific">{t('settings.calculator.modes.scientific')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         }
-                    />
-                      <SettingRow
-                        label={t('settings.calculator.saveHistory.label')}
-                        description={t('settings.calculator.saveHistory.description')}
-                        control={<Switch checked={saveCalcHistory} onCheckedChange={setSaveCalcHistory} />}
                     />
                      <SettingRow
                         label={t('settings.calculator.keypressSound.label')}
@@ -369,3 +330,5 @@ export function Settings() {
     </div>
   );
 }
+
+    

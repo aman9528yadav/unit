@@ -13,7 +13,6 @@ import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/context/language-context";
-import { useUserData } from "@/context/user-data-context";
 
 
 interface UserProfile {
@@ -28,8 +27,6 @@ interface UserSettings {
     saveHistory: boolean;
     autoConvert: boolean;
 }
-
-const PREMIUM_MEMBER_THRESHOLD = 8000;
 
 const DetailRow = ({ label, value, valueClassName }: { label: string, value: React.ReactNode, valueClassName?: string }) => (
     <div className="flex justify-between items-center py-3">
@@ -50,10 +47,9 @@ const Section = ({ title, children }: { title: string, children: React.ReactNode
 )
 
 export function UserData() {
-    const { profile, allTimeCalculations, userRole } = useUserData();
+    const [profile, setProfile] = useState<UserProfile | null>(null);
     const [settings, setSettings] = useState<UserSettings | null>(null);
     const [isClient, setIsClient] = useState(false);
-    const [progress, setProgress] = useState(0);
     const router = useRouter();
     const { toast } = useToast();
     const { t } = useLanguage();
@@ -61,13 +57,15 @@ export function UserData() {
 
     useEffect(() => {
         setIsClient(true);
+        const storedProfile = localStorage.getItem('userProfile');
         if (profile) {
             loadSettings(profile.email);
-            setProgress((allTimeCalculations / PREMIUM_MEMBER_THRESHOLD) * 100);
-        } else if (typeof window !== 'undefined' && !localStorage.getItem('userProfile')) {
+        } else if (typeof window !== 'undefined' && !storedProfile) {
             router.push('/welcome');
+        } else if (storedProfile){
+            setProfile(JSON.parse(storedProfile));
         }
-    }, [router, profile, allTimeCalculations]);
+    }, [router, profile]);
 
     const loadSettings = (email: string | null) => {
         const getUserKey = (key: string, userEmail: string | null) => `${userEmail || 'guest'}_${key}`;
@@ -133,30 +131,9 @@ export function UserData() {
                 </div>
                 <div className="flex items-center gap-2">
                     <h2 className="text-2xl font-bold">{profile.fullName}</h2>
-                    <Badge variant={userRole === 'Owner' ? 'default' : userRole === 'Premium Member' ? 'secondary' : 'outline'}>{t(`userdata.roles.${userRole.toLowerCase().replace(' ', '')}`)}</Badge>
                 </div>
                 <p className="text-muted-foreground text-sm">{profile.email}</p>
             </div>
-            
-            {userRole !== 'Owner' && userRole !== 'Premium Member' && (
-                <div className="mt-6">
-                    <div className="flex justify-between items-end mb-2">
-                         <div className="text-sm">
-                            <p className="font-semibold text-foreground">{t('userdata.premium.title')}</p>
-                            <p className="text-xs text-muted-foreground">{allTimeCalculations.toLocaleString()} / {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} {t('userdata.premium.ops')}</p>
-                        </div>
-                        <span className="text-sm font-bold text-primary">{Math.floor(progress)}%</span>
-                    </div>
-                    <Progress value={progress} />
-                    <Button asChild variant="link" size="sm" className="p-0 h-auto mt-2 text-primary">
-                        <Link href="/help">
-                            <Info className="mr-1 h-3 w-3"/>
-                            {t('userdata.premium.learnMore')}
-                        </Link>
-                    </Button>
-                </div>
-            )}
-
 
             <main className="w-full mt-2">
                 <Section title={t('userdata.sections.account.title')}>
