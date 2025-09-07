@@ -4,11 +4,9 @@
 
 import { format, eachDayOfInterval, subDays } from 'date-fns';
 import { updateUserData, getUserData } from '@/services/firestore';
-import { NOTES_STORAGE_KEY_BASE, type Note } from '@/components/notepad';
+import { type Note } from '@/components/notepad';
 import { ref, runTransaction } from 'firebase/database';
 import { rtdb } from '@/lib/firebase';
-
-const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
 
 const incrementStat = async (field: 'totalConversions' | 'totalCalculations' | 'totalDateCalculations') => {
     const userEmail = typeof window !== 'undefined' ? (localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null) : null;
@@ -17,13 +15,37 @@ const incrementStat = async (field: 'totalConversions' | 'totalCalculations' | '
     const today = format(new Date(), 'yyyy-MM-dd');
     const sanitizedEmail = userEmail.replace(/[.#$[\]]/g, '_');
     
-    // Construct paths for total and daily stats
-    const totalStatRef = ref(rtdb, `users/${sanitizedEmail}/${field}`);
-    const dailyStatRef = ref(rtdb, `users/${sanitizedEmail}/dailyStats/${today}/${field}`);
+    // Use a transaction to safely increment both total and daily counts
+    const userRef = ref(rtdb, `users/${sanitizedEmail}`);
+    await runTransaction(userRef, (currentUserData) => {
+        if (currentUserData) {
+            // Increment total count
+            currentUserData[field] = (currentUserData[field] || 0) + 1;
+            
+            // Initialize dailyStats if it doesn't exist
+            if (!currentUserData.dailyStats) {
+                currentUserData.dailyStats = {};
+            }
+            // Initialize today's stats if it doesn't exist
+            if (!currentUserData.dailyStats[today]) {
+                currentUserData.dailyStats[today] = {};
+            }
+            // Increment today's count
+            currentUserData.dailyStats[today][field] = (currentUserData.dailyStats[today][field] || 0) + 1;
 
-    // Use transactions to safely increment both counts
-    await runTransaction(totalStatRef, (currentValue) => (currentValue || 0) + 1);
-    await runTransaction(dailyStatRef, (currentValue) => (currentValue || 0) + 1);
+        } else {
+             // If user data doesn't exist, create it
+            currentUserData = {
+                [field]: 1,
+                dailyStats: {
+                    [today]: {
+                        [field]: 1
+                    }
+                }
+            };
+        }
+        return currentUserData;
+    });
 };
 
 
@@ -74,14 +96,12 @@ export const processUserDataForStats = (userData: any, email: string | null): {
     const todaysOps = (todaysDailyStats.totalConversions || 0) + (todaysDailyStats.totalCalculations || 0) + (todaysDailyStats.totalDateCalculations || 0);
     const totalOps = totalConversions + totalCalculations + totalDateCalculations;
 
-    // Get note stats from localStorage (remains local)
-    const notesKey = getUserNotesKey(email);
-    const notesData = typeof window !== 'undefined' ? localStorage.getItem(notesKey) : null;
-    const notes: Note[] = notesData ? JSON.parse(notesData) : [];
+    // Get note stats from user data
+    const notes: Note[] = userData.notes || [];
     const savedNotes = notes.filter(note => !note.deletedAt).length;
     const recycledNotes = notes.filter(note => !!note.deletedAt).length;
 
-    // Get favorite stats from localStorage (remains local)
+    // Get favorite stats from localStorage (remains local for now, can be migrated)
     const favoritesData = typeof window !== 'undefined' ? localStorage.getItem('favoriteConversions') : null;
     const favoriteConversions = favoritesData ? JSON.parse(favoritesData).length : 0;
 
