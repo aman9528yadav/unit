@@ -29,7 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Share2, Globe, LayoutGrid, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, User, Lock, ChevronDown, Sparkles, LogIn, Scale, Power, History } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Share2, Globe, LayoutGrid, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, User, Lock, ChevronDown, Sparkles, LogIn, Scale, Power, History, Star } from "lucide-react";
 import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow.ts";
 import { useToast } from "@/hooks/use-toast";
@@ -208,6 +208,9 @@ export function Converter() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [isFavorite, setIsFavorite] = useState(false);
+
   const imageExportRef = React.useRef<HTMLDivElement>(null);
 
   const currentUnits = React.useMemo(() => {
@@ -219,6 +222,13 @@ export function Converter() {
 
   const fromUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === fromUnit), [currentUnits, fromUnit]);
   const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit), [currentUnits, toUnit]);
+  
+  const loadFavorites = useCallback(() => {
+    const storedFavorites = localStorage.getItem("favoriteConversions");
+    if (storedFavorites) {
+        setFavorites(JSON.parse(storedFavorites));
+    }
+  }, []);
 
   React.useEffect(() => {
     const storedProfileData = localStorage.getItem("userProfile");
@@ -242,6 +252,7 @@ export function Converter() {
     };
     
     loadSettings();
+    loadFavorites();
 
     const itemToRestore = localStorage.getItem("restoreConversion");
     if (itemToRestore) {
@@ -257,6 +268,9 @@ export function Converter() {
         if (e.key === getUserKey('customUnits', userEmail) || e.key === getUserKey('customCategories', userEmail) || e.key === getUserKey('defaultRegion', userEmail)) {
            loadSettings();
         }
+         if (e.key === 'favoriteConversions') {
+            loadFavorites();
+        }
     };
     
     window.addEventListener('storage', handleStorageChange);
@@ -264,25 +278,42 @@ export function Converter() {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [profile?.email, allUnits, conversionCategories]);
+  }, [profile?.email, allUnits, conversionCategories, loadFavorites]);
+  
+  const getFullHistoryString = (input: string, from: string, to: string, result: string, category: string): string => {
+    return `${input} ${from} → ${result} ${to}|${category}|${new Date().toISOString()}`;
+  };
+
+  const handleSaveToHistory = (input: string, from: string, to: string, result: string, category: string) => {
+    const historyString = getFullHistoryString(input, from, to, result, category);
+
+    const storedHistory = localStorage.getItem('conversionHistory');
+    const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
+    const newHistory = [historyString, ...currentHistory];
+
+    localStorage.setItem('conversionHistory', JSON.stringify(newHistory));
+    localStorage.setItem('lastConversion', historyString);
+    
+    window.dispatchEvent(new StorageEvent('storage', { key: 'conversionHistory', newValue: JSON.stringify(newHistory) }));
+  };
   
  const performConversion = () => {
     const numValue = parseFloat(inputValue);
     if (isNaN(numValue) || !fromUnit || !toUnit) {
       setOutputValue("");
-      return;
+      return null;
     }
 
     const categoryToUse = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit) && c.units.some(u => u.symbol === toUnit));
     if (!categoryToUse) {
       setOutputValue("");
-      return;
+      return null;
     }
 
     const result = categoryToUse.convert(numValue, fromUnit, toUnit, region) as number;
     if (result === undefined || isNaN(result)) {
       setOutputValue("");
-      return;
+      return null;
     }
     
     const formattedResult = result.toLocaleString(undefined, {
@@ -341,7 +372,11 @@ export function Converter() {
   };
 
   const handleConvertClick = () => {
-    performConversion();
+    const conversionResult = performConversion();
+    if (conversionResult) {
+      const { formattedResult, categoryToUse } = conversionResult;
+      handleSaveToHistory(inputValue, fromUnit, toUnit, formattedResult, categoryToUse.name);
+    }
   };
   
   const restoreFromParsedQuery = (parsedQuery: ParseConversionQueryOutput) => {
@@ -475,6 +510,34 @@ export function Converter() {
       handleCategoryChange(categoryName);
     }
   };
+
+  const handleToggleFavorite = () => {
+    if (!outputValue) return;
+
+    const currentConversionString = getFullHistoryString(inputValue, fromUnit, toUnit, outputValue, selectedCategory.name);
+
+    const newFavorites = favorites.includes(currentConversionString)
+      ? favorites.filter(fav => fav !== currentConversionString)
+      : [...favorites, currentConversionString];
+
+    setFavorites(newFavorites);
+    localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
+    
+    if (favorites.includes(currentConversionString)) {
+        toast({ title: t('converter.toast.favRemoved') });
+    } else {
+        toast({ title: t('converter.toast.favAdded') });
+    }
+  };
+
+  useEffect(() => {
+    if (!outputValue) {
+        setIsFavorite(false);
+        return;
+    }
+    const currentConversionString = getFullHistoryString(inputValue, fromUnit, toUnit, outputValue, selectedCategory.name);
+    setIsFavorite(favorites.includes(currentConversionString));
+  }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory, favorites]);
 
  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
@@ -745,6 +808,9 @@ export function Converter() {
                 <div className="bg-secondary p-4 rounded-lg flex justify-between items-center">
                     <span className="text-2xl font-bold">{outputValue || "0.00"}</span>
                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={handleToggleFavorite} disabled={!outputValue}>
+                            <Star className={cn("w-5 h-5", isFavorite && "text-yellow-400 fill-yellow-400")} />
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={handleCopy} disabled={!outputValue}><Copy size={16}/></Button>
                         <Button variant="ghost" size="icon" onClick={handleShareClick}>
                             <Share2 size={16} />
