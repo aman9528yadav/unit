@@ -49,7 +49,11 @@ export function ProfileEditForm() {
     setIsClient(true);
     const storedProfile = localStorage.getItem("userProfile");
     if (storedProfile) {
-      setProfile(JSON.parse(storedProfile));
+      const parsedProfile = JSON.parse(storedProfile);
+      setProfile({
+        ...parsedProfile,
+        dob: parsedProfile.dob || '', // Ensure dob is not undefined
+      });
     }
   }, []);
 
@@ -257,3 +261,5 @@ export function ProfileEditForm() {
 function IconEye({ show }: {show: boolean}) {
   return show ? <EyeOff /> : <Eye />;
 }
+
+    

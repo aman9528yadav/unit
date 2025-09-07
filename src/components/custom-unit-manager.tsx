@@ -277,7 +277,7 @@ export function CustomUnitManager() {
                                 </div>
                                  <div className="grid grid-cols-4 items-center gap-4">
                                     <Label htmlFor="category" className="text-right">{t('customUnitManager.unitDialog.category')}</Label>
-                                     <Select value={newUnit.category} onValueChange={(value) => handleInputChange('category', value)}>
+                                     <Select value={newUnit.category} onValueChange={(value) => handleInputChange('category', value || '')}>
                                         <SelectTrigger className="col-span-3">
                                             <SelectValue placeholder={t('customUnitManager.unitDialog.categoryPlaceholder')} />
                                         </SelectTrigger>
