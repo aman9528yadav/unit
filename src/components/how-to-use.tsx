@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -9,14 +10,13 @@ import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import { useLanguage } from "@/context/language-context";
 import { 
-    listenToFaqsFromRtdb, 
     listenToHowToUseFeaturesFromRtdb, 
     HowToUseFeature, 
-    HowToUseCategory, 
-    defaultFeatures,
+    HowToUseCategory,
     listenToCustomHowToUseCategoriesFromRtdb,
     CustomHowToUseCategory,
     FAQ,
+    listenToFaqsFromRtdb,
     defaultFaqs
 } from "@/services/firestore";
 
@@ -55,7 +55,7 @@ export function HowToUse() {
         setFaqs(faqsFromDb.length > 0 ? faqsFromDb : defaultFaqs);
     });
     const unsubscribeFeatures = listenToHowToUseFeaturesFromRtdb((featuresFromDb) => {
-        setFeatures(featuresFromDb.length > 0 ? featuresFromDb : defaultFeatures);
+        setFeatures(featuresFromDb);
     });
     const unsubscribeCategories = listenToCustomHowToUseCategoriesFromRtdb((cats) => {
         setCustomCategories(cats || []);
@@ -95,12 +95,15 @@ export function HowToUse() {
       'customization',
     ];
     const customOrder = customCategories.map(c => c.id).filter(Boolean);
-    return [...defaultOrder, ...customOrder];
+    const combined = [...defaultOrder, ...customOrder];
+    // Ensure uniqueness
+    return [...new Set(combined)];
   }, [customCategories]);
 
-  // Helper to convert a string to PascalCase
+
+  // Helper to convert a string to PascalCase for icon lookup
   const toPascalCase = (str: string) => {
-    if (!str) return '';
+    if (!str) return 'Zap'; // Default icon
     return str.replace(/(^\w|-\w)/g, (c) => c.replace('-', '').toUpperCase());
   };
 
@@ -128,7 +131,7 @@ export function HowToUse() {
                              return (
                                 <FeatureCard 
                                     key={feature.id}
-                                    icon={<Icon />}
+                                    icon={<Icon color={feature.iconColor} />}
                                     title={feature.title}
                                     description={feature.description}
                                 />

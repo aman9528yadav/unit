@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { db, rtdb } from '@/lib/firebase';
@@ -17,6 +18,7 @@ export interface HowToUseFeature {
     title: string;
     description: string;
     icon: string;
+    iconColor?: string;
     category: HowToUseCategory | string;
 }
 
@@ -24,7 +26,6 @@ export interface CustomHowToUseCategory {
     id: string;
     name: string;
 }
-
 
 export const defaultFeatures: HowToUseFeature[] = [
      {
@@ -121,6 +122,8 @@ export function listenToHowToUseFeaturesFromRtdb(callback: (features: HowToUseFe
         if (data && Array.isArray(data) && data.length > 0) {
             callback(data);
         } else {
+            // If no data in DB, initialize with default
+            setHowToUseFeaturesInRtdb(defaultFeatures);
             callback(defaultFeatures);
         }
     }, (error) => {
@@ -170,7 +173,7 @@ export function listenToFaqsFromRtdb(callback: (faqs: FAQ[]) => void) {
     const faqsRef = ref(rtdb, 'app-content/faqs');
     return onValue(faqsRef, (snapshot) => {
         const data = snapshot.val();
-        if (data) {
+        if (data && Array.isArray(data) && data.length > 0) {
             callback(data);
         } else {
             callback(defaultFaqs);
