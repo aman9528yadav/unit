@@ -18,16 +18,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import type { Feature } from '../how-to-use';
 import { useRouter } from 'next/navigation';
-import { setHowToUseFeaturesInRtdb, listenToHowToUseFeaturesFromRtdb } from '@/services/firestore';
+import { setHowToUseFeaturesInRtdb, listenToHowToUseFeaturesFromRtdb, HowToUseFeature, defaultFeatures } from '@/services/firestore';
 
 
 export function HowToUseEditor() {
-    const [features, setFeatures] = useState<Feature[] | null>(null);
+    const [features, setFeatures] = useState<HowToUseFeature[] | null>(null);
     const [isClient, setIsClient] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [editingFeature, setEditingFeature] = useState<Feature | null>(null);
+    const [editingFeature, setEditingFeature] = useState<HowToUseFeature | null>(null);
     
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -54,7 +53,7 @@ export function HowToUseEditor() {
         }
     };
     
-    const handleOpenDialog = (feature: Feature | null = null) => {
+    const handleOpenDialog = (feature: HowToUseFeature | null = null) => {
         setEditingFeature(feature);
         if (feature) {
             setTitle(feature.title);
@@ -78,7 +77,7 @@ export function HowToUseEditor() {
         if (editingFeature) {
             updatedFeatures = features.map(f => f.id === editingFeature.id ? { ...f, title, description, icon } : f);
         } else {
-            const newFeature: Feature = { id: uuidv4(), title, description, icon };
+            const newFeature: HowToUseFeature = { id: uuidv4(), title, description, icon };
             updatedFeatures = [...features, newFeature];
         }
         

@@ -7,13 +7,40 @@ import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'fireba
 import { ref, set as setRealtimeDb, onValue, remove as removeRealtimeDb, get, update } from "firebase/database";
 import type { AppNotification } from '@/lib/notifications';
 import { FAQ, defaultFaqs } from '@/components/help';
-import { HowToUseFeature, defaultFeatures } from '@/components/how-to-use-editor';
 import { merge } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 
-// --- Santize email for RTDB path ---
-const sanitizeEmail = (email: string) => email.replace(/[.#$[\]]/g, '_');
 
 // --- HOW TO USE PAGE ---
+export interface HowToUseFeature {
+    id: string;
+    title: string;
+    description: string;
+    icon: string;
+}
+
+export const defaultFeatures: HowToUseFeature[] = [
+    {
+      id: uuidv4(),
+      title: 'Converter',
+      description: 'Use the smart search or manual inputs to convert units across various categories.',
+      icon: 'Sigma',
+    },
+    {
+      id: uuidv4(),
+      title: 'Calculator',
+      description: 'Perform basic and scientific calculations with a clean and simple interface.',
+      icon: 'Calculator',
+    },
+    {
+      id: uuidv4(),
+      title: 'Notepad',
+      description: 'Jot down notes, format text, and even attach images. Your notes are saved to your account.',
+      icon: 'NotebookText',
+    },
+];
+
+
 export async function setHowToUseFeaturesInRtdb(features: HowToUseFeature[]) {
     try {
         const featuresRef = ref(rtdb, 'app-content/howToUseFeatures');
@@ -38,6 +65,10 @@ export function listenToHowToUseFeaturesFromRtdb(callback: (features: HowToUseFe
         callback(defaultFeatures);
     });
 }
+
+
+// --- Santize email for RTDB path ---
+const sanitizeEmail = (email: string) => email.replace(/[.#$[\]]/g, '_');
 
 
 // --- HELP/FAQ PAGE ---
@@ -195,5 +226,51 @@ export async function updateUserData(email: string | null, data: { [key: string]
     } catch (error) {
         console.error("Error updating user data in RTDB:", error);
         // We could add an offline queue here again if needed, but for now, we'll fail silently.
+    }
+}
+
+// --- OFFLINE DATA SYNC ---
+const OFFLINE_QUEUE_KEY = 'offlineQueue';
+
+/**
+ * Queues a data update to be sent to Firestore when the app is back online.
+ * @param email - The user's email.
+ * @param data - The data object to update.
+ */
+function queueUpdate(email: string, data: { [key: string]: any }) {
+    const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
+    queue.push({ email, data, timestamp: new Date().toISOString() });
+    localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+}
+
+
+/**
+ * Syncs any queued offline data with Firestore.
+ */
+export async function syncOfflineData() {
+    const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
+    if (queue.length === 0) return;
+
+    const updatesByEmail: { [email: string]: any } = {};
+
+    // Group updates by email to reduce Firestore writes
+    for (const item of queue) {
+        if (!updatesByEmail[item.email]) {
+            updatesByEmail[item.email] = {};
+        }
+        // Deep merge updates for the same user
+        updatesByEmail[item.email] = merge(updatesByEmail[item.email], item.data);
+    }
+    
+    try {
+        for (const email in updatesByEmail) {
+             const userRef = doc(db, 'users', email);
+             await setDoc(userRef, updatesByEmail[email], { merge: true });
+        }
+        // Clear the queue only after successful sync
+        localStorage.removeItem(OFFLINE_QUEUE_KEY);
+        console.log('Offline data synced successfully.');
+    } catch (error) {
+        console.error('Error syncing offline data:', error);
     }
 }
