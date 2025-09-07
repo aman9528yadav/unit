@@ -303,28 +303,12 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
                         <RotateCcw className="h-4 w-4"/>
                     </Button>
                  }
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button size="icon" variant="destructive" className="h-7 w-7">
-                            <Trash2 className="h-4 w-4"/>
-                        </Button>
-                    </AlertDialogTrigger>
-                     <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>{t('history.dialog.deleteTitle')}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {t('history.dialog.deleteDescription')}
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>{t('history.dialog.cancel')}</AlertDialogCancel>
-                        <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90">
-                            {t('history.dialog.deleteConfirm')}
-                        </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+                <Button size="icon" variant="destructive" className="h-7 w-7" onClick={onDelete}>
+                    <Trash2 className="h-4 w-4"/>
+                </Button>
             </div>
         </div>
     )
 }
+
+    
