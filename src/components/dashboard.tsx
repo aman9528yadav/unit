@@ -538,6 +538,9 @@ export function Dashboard() {
       <UpdateBanner />
 
       <section>
+          <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-foreground">Statistics</h2>
+          </div>
           <div className="grid grid-cols-2 gap-4">
              <StatCard title={t('dashboard.todayOps')} value={stats.todaysOps} icon={TrendingUp} color="text-green-500 bg-green-500/10" />
              <StatCard title={t('dashboard.currentStreak')} value={stats.currentStreak} icon={Flame} color="text-orange-500 bg-orange-500/10" unit={t('dashboard.days')} />
@@ -711,3 +714,5 @@ export function Dashboard() {
     </motion.div>
   );
 }
+
+    
