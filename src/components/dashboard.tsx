@@ -74,15 +74,21 @@ const ToolButton = ({ icon: Icon, label, href, color, target, onClick }: any) =>
         </motion.div>
     );
 
+    const isInternalLink = href && href.startsWith('/');
+
     if (onClick) {
-      return <div onClick={onClick} className="cursor-pointer">{content}</div>;
+        return <div onClick={onClick} className="cursor-pointer">{content}</div>;
     }
-    
+
+    if (isInternalLink) {
+        return <Link href={href}>{content}</Link>;
+    }
+
     if (href) {
         return (
-            <Link href={href} target={target}>
+            <a href={href} target={target || '_blank'} rel="noopener noreferrer">
                 {content}
-            </Link>
+            </a>
         );
     }
     
@@ -327,13 +333,13 @@ export function Dashboard() {
       todaysOps: number;
       totalOps: number;
       savedNotes: number;
-      weeklyActivity: DailyActivity[];
+      activity: DailyActivity[];
       currentStreak: number;
   }>({
       todaysOps: 0,
       totalOps: 0,
       savedNotes: 0,
-      weeklyActivity: [],
+      activity: [],
       currentStreak: 0,
   });
 
@@ -511,7 +517,7 @@ export function Dashboard() {
       },
     };
 
-    const formattedChartData = (stats.weeklyActivity || []).map(item => ({
+    const formattedChartData = (stats.activity || []).map(item => ({
         ...item,
         date: format(new Date(item.date), "EEE")
     }))
