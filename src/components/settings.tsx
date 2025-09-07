@@ -49,7 +49,7 @@ const Section = ({ title, children, description }: { title: string, children: Re
     </Card>
 );
 
-const SettingRow = ({ label, description, control, isLink = false, href, children, isLocked = false, onLockClick }: { label: string, description?: string, control?: React.ReactNode, isLink?: boolean, href?: string, children?: React.ReactNode, isLocked?: boolean, onLockClick?: () => void }) => {
+const SettingRow = ({ label, description, control, isLink = false, href, children, isLocked = false, onLockClick }: { label:string, description?:string, control?:React.ReactNode, isLink?:boolean, href?:string, children?:React.ReactNode, isLocked?:boolean, onLockClick?:()=>void }) => {
     const content = (
         <div className="flex justify-between items-center py-3">
             <div className="flex-1 pr-4">
@@ -141,11 +141,12 @@ export function Settings() {
     const storedProfile = localStorage.getItem('userProfile');
     const email = storedProfile ? JSON.parse(storedProfile).email : null;
     setProfile(storedProfile ? JSON.parse(storedProfile) : null);
-    updateUserRole(email);
-
+    
     if (email) {
+        updateUserRole(email);
         const unsub = listenToUserData(email, (data) => {
-            const userSettings = data?.settings || {};
+            if (!data) return;
+            const userSettings = data.settings || {};
             setNotificationsEnabled(userSettings.notificationsEnabled ?? true);
             setSaveConversionHistory(userSettings.saveConversionHistory ?? true);
             if (userSettings.defaultRegion && regions.includes(userSettings.defaultRegion)) {
@@ -193,6 +194,8 @@ export function Settings() {
         }
         return;
     }
+    
+    setTheme(selectedTheme as any);
 
     const settingsToSave = {
         language,
@@ -270,35 +273,42 @@ export function Settings() {
             </Section>
             <TooltipProvider>
                 <Section title={t('settings.appearance.title')}>
-                     <div className="p-4 grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {themes.map(themeItem => (
-                            <div 
-                                key={themeItem.value} 
-                                onClick={() => {
-                                    if(themeItem.isLocked) {
-                                        setShowPremiumLockDialog(true);
-                                    } else {
-                                        setSelectedTheme(themeItem.value as any)
-                                    }
-                                }}
-                                className={cn(
-                                    "relative rounded-lg border-2 cursor-pointer aspect-[3/4]",
-                                    selectedTheme === themeItem.value ? 'border-primary' : 'border-border'
-                                )}
-                            >
-                                <div className="absolute inset-0 overflow-hidden rounded-md">
-                                    <ThemePreview theme={themeItem.value} />
-                                </div>
-                                 {themeItem.isLocked && (
-                                     <div className="absolute inset-0 bg-background/60 flex items-center justify-center rounded-md">
-                                        <Lock className="w-6 h-6 text-foreground" />
-                                    </div>
-                                 )}
-                                <div className="absolute bottom-0 w-full p-1.5 bg-background/50 backdrop-blur-sm text-center">
-                                    <p className="text-xs font-semibold">{themeItem.name}</p>
+                    <div className="p-4 space-y-4">
+                        <div className="grid grid-cols-2 gap-4 items-end">
+                            <div>
+                                <Label>{t('settings.appearance.themeMode.label')}</Label>
+                                <Select
+                                    value={selectedTheme}
+                                    onValueChange={(v) => {
+                                        const themeItem = themes.find(t => t.value === v);
+                                        if (themeItem?.isLocked) {
+                                            setShowPremiumLockDialog(true);
+                                        } else {
+                                            setSelectedTheme(v);
+                                        }
+                                    }}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a theme" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {themes.map((themeItem) => (
+                                            <SelectItem key={themeItem.value} value={themeItem.value} disabled={themeItem.isLocked}>
+                                                <div className="flex items-center gap-2">
+                                                    {themeItem.isLocked && <Lock className="w-3 h-3"/>}
+                                                    {themeItem.name}
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="mx-auto w-[150px] h-[200px] bg-gray-800 rounded-lg p-1.5 border-2 border-gray-900 shadow-lg overflow-hidden">
+                                <div className="w-full h-full rounded-md overflow-hidden">
+                                    <ThemePreview theme={selectedTheme} />
                                 </div>
                             </div>
-                        ))}
+                        </div>
                     </div>
                      <SettingRow
                         isLink
@@ -455,5 +465,3 @@ export function Settings() {
     </div>
   );
 }
-
-    
