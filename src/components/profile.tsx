@@ -27,6 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useLanguage } from "@/context/language-context";
 import { getStats } from "@/lib/stats";
 import { Badge } from "./ui/badge";
+import { motion } from "framer-motion";
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 const PREMIUM_MEMBER_THRESHOLD = 8000;
@@ -131,7 +132,12 @@ export function Profile() {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto text-foreground flex flex-col">
+    <motion.div 
+        className="w-full max-w-md mx-auto text-foreground flex flex-col"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       <div className="bg-primary/80 text-primary-foreground pb-8 rounded-b-3xl">
         <header className="p-4 flex items-center gap-4">
           <Link href="/">
@@ -169,13 +175,17 @@ export function Profile() {
         <ul className="space-y-2">
           {menuItems.map((item, index) => {
              const content = (
-                <div className="flex items-center p-3 rounded-lg hover:bg-card transition-colors">
+                <motion.div 
+                    className="flex items-center p-3 rounded-lg hover:bg-card transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                >
                   <div className="p-2 bg-primary/10 rounded-full">
                     <item.icon className="w-5 h-5 text-primary" />
                   </div>
                   <span className="ml-4 font-medium">{item.text}</span>
                   <ChevronRight className="ml-auto w-5 h-5 text-muted-foreground" />
-                </div>
+                </motion.div>
               );
 
             return (
@@ -186,6 +196,6 @@ export function Profile() {
           })}
         </ul>
       </nav>
-    </div>
+    </motion.div>
   );
 }

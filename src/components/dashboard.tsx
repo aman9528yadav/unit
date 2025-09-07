@@ -60,14 +60,18 @@ import { listenToNextUpdateInfo, NextUpdateInfo } from "@/services/firestore";
 import { getStreakData, recordVisit } from "@/lib/streak";
 
 
-const ToolButton = ({ icon: Icon, label, href, color, target }: any) => {
+const ToolButton = ({ icon: Icon, label, href, color, target, onClick }: any) => {
     const content = (
-        <div className="group aspect-square rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex flex-col items-center justify-center gap-2 shadow-sm text-center">
+        <motion.div 
+            className="group aspect-square rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex flex-col items-center justify-center gap-2 shadow-sm text-center"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+        >
             <div className={cn("size-12 grid place-items-center rounded-full bg-secondary", color)}>
                 <Icon className="size-6" />
             </div>
             <p className="font-semibold text-foreground text-sm">{label}</p>
-        </div>
+        </motion.div>
     );
 
     if (href) {
@@ -77,7 +81,7 @@ const ToolButton = ({ icon: Icon, label, href, color, target }: any) => {
             </Link>
         );
     }
-    return <div onClick={href}>{content}</div>;
+    return <div onClick={onClick} className="cursor-pointer">{content}</div>;
 };
 
 
@@ -310,6 +314,8 @@ export function Dashboard() {
   const [showMoreTools, setShowMoreTools] = useState(false);
   const [showBetaDialog, setShowBetaDialog] = useState(false);
   const [doNotShowAgain, setDoNotShowAgain] = useState(false);
+  const [showFeatureDialog, setShowFeatureDialog] = useState(false);
+  const [featureDialogContent, setFeatureDialogContent] = useState({ title: '', description: '' });
   const router = useRouter();
 
   const [stats, setStats] = useState({
@@ -379,13 +385,19 @@ export function Dashboard() {
       }
       setShowBetaDialog(false);
   };
+
+  const openFeatureDialog = (title: string, description: string) => {
+    setFeatureDialogContent({ title, description });
+    setShowFeatureDialog(true);
+  };
+
     const quickTools = [
       { label: t('dashboard.tools.converter'), icon: Sigma, href: "/converter", color: "text-blue-400" },
       { label: t('dashboard.tools.calculator'), icon: Calculator, href: "/calculator", color: "text-orange-400" },
       { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
       { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
-      { label: 'Updates', icon: Newspaper, href: '/updates', color: 'text-green-400' },
-      { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
+      { label: 'News', icon: Newspaper, onClick: () => openFeatureDialog("News & Updates", "Get the latest news, announcements, and updates about the app, all in one place."), color: 'text-green-400' },
+      { label: 'AI Search', icon: Wand2, onClick: () => openFeatureDialog("AI Smart Search (Coming Soon)", "A powerful new search experience that understands natural language to find notes, perform conversions, and navigate the app faster than ever."), color: 'text-indigo-400' },
     ];
     
     const moreTools = [
@@ -393,6 +405,7 @@ export function Dashboard() {
         { label: t('dashboard.tools.dateCalc'), icon: Calendar, href: "/time?tab=date-diff", color: "text-green-400" },
         { label: t('dashboard.tools.timer'), icon: Timer, href: '/time?tab=timer', color: 'text-red-500' },
         { label: t('dashboard.tools.stopwatch'), icon: Hourglass, href: '/time?tab=stopwatch', color: 'text-indigo-500' },
+        { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
     ];
 
     const allTools = [...quickTools, ...moreTools];
@@ -497,7 +510,12 @@ export function Dashboard() {
   }
 
   return (
-    <div className="w-full max-w-lg mx-auto flex flex-col gap-8 py-8">
+    <motion.div 
+        className="w-full max-w-lg mx-auto flex flex-col gap-8 py-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       <Header name={profile?.fullName || t('dashboard.guest')} onProfileClick={handleProfileClick} profileImage={profile?.profileImage} />
       
       <UpdateBanner />
@@ -652,10 +670,27 @@ export function Dashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      <AlertDialog open={showFeatureDialog} onOpenChange={setShowFeatureDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader className="items-center text-center">
+            <div className="p-3 bg-primary/10 rounded-full mb-4 w-fit">
+              <Sparkles className="w-8 h-8 text-primary" />
+            </div>
+            <AlertDialogTitle className="text-2xl">{featureDialogContent.title}</AlertDialogTitle>
+            <AlertDialogDescription className="max-w-xs">
+              {featureDialogContent.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowFeatureDialog(false)}>Got it!</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     <section>
         <AboutCard />
       </section>
-    </div>
+    </motion.div>
   );
 }

@@ -89,7 +89,12 @@ export function About() {
 
 
   return (
-    <div className="w-full max-w-lg mx-auto flex flex-col items-center px-6 py-12">
+    <motion.div 
+        className="w-full max-w-lg mx-auto flex flex-col items-center px-6 py-12"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       <div className="w-full">
         <header className="w-full mb-12">
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
@@ -164,15 +169,16 @@ export function About() {
           <div className="grid grid-cols-2 gap-4">
             {features.map((step, idx) => {
               const cardContent = (
-                <div
+                <motion.div
                   className="relative bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition group border-t-2 border-indigo-400"
+                  whileHover={{ scale: 1.03 }}
                 >
                   <div className="text-3xl mb-2">{step.icon}</div>
                   <h3 className="text-md font-bold text-indigo-600 mb-1 group-hover:text-purple-600">
                     {step.title}
                   </h3>
                   <p className="text-gray-600 text-xs leading-relaxed">{step.desc}</p>
-                </div>
+                </motion.div>
               );
 
               if (step.href) {
@@ -263,10 +269,13 @@ export function About() {
             <div className="grid grid-cols-3 gap-4">
               {legalLinks.map(link => (
                 <Link href={link.href} key={link.title}>
-                   <div className="bg-white shadow-lg rounded-2xl p-4 h-24 flex flex-col items-center justify-center hover:shadow-xl transition text-center group">
+                   <motion.div 
+                        className="bg-white shadow-lg rounded-2xl p-4 h-24 flex flex-col items-center justify-center hover:shadow-xl transition text-center group"
+                        whileHover={{ scale: 1.05 }}
+                    >
                       <div className="text-indigo-500 mb-2 group-hover:scale-110 transition-transform">{link.icon}</div>
                       <p className="text-sm font-semibold text-gray-700">{link.title}</p>
-                   </div>
+                   </motion.div>
                 </Link>
               ))}
             </div>
@@ -278,15 +287,18 @@ export function About() {
             <div className="grid grid-cols-3 gap-4">
                {supportLinks.map(link => (
                 <a href={link.href} key={link.title} target="_blank" rel="noopener noreferrer">
-                   <div className="bg-white shadow-lg rounded-2xl p-4 h-24 flex flex-col items-center justify-center hover:shadow-xl transition text-center group">
+                   <motion.div 
+                        className="bg-white shadow-lg rounded-2xl p-4 h-24 flex flex-col items-center justify-center hover:shadow-xl transition text-center group"
+                        whileHover={{ scale: 1.05 }}
+                    >
                        <div className="text-indigo-500 mb-2 group-hover:scale-110 transition-transform">{link.icon}</div>
                       <p className="text-sm font-semibold text-gray-700">{link.title}</p>
-                   </div>
+                   </motion.div>
                 </a>
               ))}
             </div>
         </section>
       </div>
-    </div>
+    </motion.div>
   );
 }
