@@ -335,26 +335,21 @@ export function Converter() {
 
 
  const handleSaveToHistory = React.useCallback((numValue: number, from: string, to: string, result: number, categoryName: string) => {
-    const saveConversionHistory = JSON.parse(localStorage.getItem(getUserKey('saveConversionHistory', profile?.email || null)) || 'true');
-    if (!saveConversionHistory) return;
-
     if (isNaN(numValue) || isNaN(result)) return;
-
-    const conversionString = getFullHistoryString(numValue, from, to, result, categoryName);
-    localStorage.setItem('lastConversion', conversionString);
 
     const historyKey = "conversionHistory";
     const currentHistory = JSON.parse(localStorage.getItem(historyKey) || '[]');
+    const newHistoryString = getFullHistoryString(numValue, from, to, result, categoryName);
     
-    // Prevent adding duplicate of the very last entry, which helps with auto-convert
-    if (currentHistory.length > 0 && currentHistory[0].split('|')[0] === conversionString.split('|')[0]) {
+    // Prevent adding duplicate of the very last entry
+    if (currentHistory.length > 0 && currentHistory[0] === newHistoryString) {
         return;
     }
 
-    const newHistory = [conversionString, ...currentHistory];
+    const newHistory = [newHistoryString, ...currentHistory];
     localStorage.setItem(historyKey, JSON.stringify(newHistory));
     window.dispatchEvent(new StorageEvent('storage', { key: historyKey, newValue: JSON.stringify(newHistory) }));
-}, [profile?.email]);
+}, []);
 
 
  const performConversion = React.useCallback(async (value: string | number, from: string, to: string) => {
@@ -1140,5 +1135,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
