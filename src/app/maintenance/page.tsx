@@ -17,8 +17,8 @@ const CountdownBox = ({ value, label }: { value: number; label: string }) => (
     </div>
 );
 
-const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementType, title: string, description: string }) => (
-    <Card className="bg-card/50 backdrop-blur-sm border-primary/20 text-center flex-1">
+const FeatureCard = ({ icon: Icon, title, description, className }: { icon: React.ElementType, title: string, description: string, className?: string }) => (
+    <Card className={`bg-card/50 backdrop-blur-sm border-primary/20 text-center flex-1 ${className}`}>
         <CardHeader className="items-center pb-2">
             <div className="p-3 bg-primary/10 rounded-full text-primary">
                 <Icon className="w-6 h-6" />
@@ -44,6 +44,7 @@ export default function MaintenancePage() {
   const [updateText, setUpdateText] = useState<string | null>(null);
   const [maintenanceType, setMaintenanceType] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<Duration & { totalDays?: number } | null>(null);
+  const [timerFinished, setTimerFinished] = useState(false);
 
   useEffect(() => {
     const unsubscribe = listenToUpdateInfo((info: UpdateInfo) => {
@@ -51,11 +52,14 @@ export default function MaintenancePage() {
             const date = new Date(info.targetDate);
             if (!isNaN(date.getTime()) && date > new Date()) {
                 setTargetDate(date);
+                setTimerFinished(false);
             } else {
                 setTargetDate(null);
+                 if (info.targetDate) setTimerFinished(true);
             }
         } else {
             setTargetDate(null);
+            setTimerFinished(false);
         }
         setUpdateText(info.updateText || "General improvements and bug fixes.");
         setMaintenanceType(info.maintenanceType || "Performance");
@@ -78,7 +82,7 @@ export default function MaintenancePage() {
         setTimeLeft({ ...duration, totalDays });
       } else {
         setTimeLeft(null);
-        setTargetDate(null);
+        setTimerFinished(true);
         clearInterval(timer);
       }
     }, 1000);
@@ -107,6 +111,16 @@ export default function MaintenancePage() {
               {updateText}
             </p>
         </div>
+        
+        <div className="w-full max-w-sm">
+            <FeatureCard 
+                icon={typeDetails.icon}
+                title={typeDetails.title}
+                description={typeDetails.description}
+                className="bg-secondary"
+            />
+        </div>
+
 
         {timeLeft && (
             <div className="flex gap-2 sm:gap-4">
@@ -116,17 +130,18 @@ export default function MaintenancePage() {
                 <CountdownBox value={timeLeft.seconds ?? 0} label="SECONDS"/>
             </div>
         )}
+
+        {timerFinished && (
+            <div className="bg-green-100 border border-green-200 text-green-800 p-4 rounded-lg">
+                <p className="font-semibold">Maintenance done! We will be back in a few minutes.</p>
+            </div>
+        )}
         
         <div className="w-full flex flex-col md:flex-row gap-4 mt-4">
             <FeatureCard 
                 icon={Hourglass}
                 title="Minimal Downtime"
                 description="We're working as quickly as possible to restore service"
-            />
-             <FeatureCard 
-                icon={typeDetails.icon}
-                title={typeDetails.title}
-                description={typeDetails.description}
             />
              <FeatureCard 
                 icon={Zap}
