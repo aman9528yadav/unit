@@ -68,6 +68,7 @@ export function History() {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { language, t } = useLanguage();
+  const [categoryFilter, setCategoryFilter] = useState<string>("All");
 
   const loadData = useCallback(() => {
     const storedConvHistory: string[] = JSON.parse(localStorage.getItem("conversionHistory") || '[]');
@@ -167,7 +168,6 @@ export function History() {
 
 
   const availableCategories = ['All', ...new Set(conversionHistory.map(item => item.categoryName).filter(Boolean as any))];
-  const [categoryFilter, setCategoryFilter] = useState<string>("All");
 
   return (
       <div className="w-full max-w-2xl mx-auto flex flex-col gap-4">
