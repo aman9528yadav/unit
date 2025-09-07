@@ -61,6 +61,10 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
         if (isMaintenanceMode && !pathname.startsWith('/dev') && pathname !== '/maintenance') {
             router.replace('/maintenance');
         }
+
+        if (!isMaintenanceMode && pathname === '/maintenance') {
+            router.replace('/');
+        }
     }, [isMaintenanceMode, pathname, router]);
 
 
@@ -78,7 +82,7 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
         return <>{children}</>;
     }
     
-    // If in maintenance, we are redirecting, so render nothing.
+    // If in maintenance, and not on the maintenance page yet, we are redirecting, so render nothing.
     if (isMaintenanceMode && pathname !== '/maintenance') {
         return null; 
     }
