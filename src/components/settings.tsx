@@ -233,6 +233,7 @@ export function Settings() {
     }
     toast({ title: t('settings.data.toast.cleared.title'), description: t('settings.data.toast.cleared.description') });
     setTimeout(() => {
+      auth.signOut();
       router.push('/welcome');
     }, 1500);
   };
