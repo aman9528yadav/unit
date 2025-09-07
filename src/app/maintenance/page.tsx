@@ -99,7 +99,7 @@ export default function MaintenancePage() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="flex flex-col items-center gap-8 w-full max-w-4xl"
+        className="flex flex-col items-center gap-8 w-full max-w-lg"
       >
         <div className="p-4 bg-primary/10 rounded-full">
             <Wrench className="w-10 h-10 text-primary" />
@@ -153,15 +153,10 @@ export default function MaintenancePage() {
         </div>
 
         <div className="text-center mt-8">
-            <p className="text-muted-foreground">Need immediate assistance?</p>
+            <p className="text-muted-foreground">Need immediate assistance? Contact Aman at:</p>
             <a href="mailto:amanyadavyadav9458@gmail.com" className="text-primary hover:underline">
-                Contact us at amanyadavyadav9458@gmail.com
+                amanyadavyadav9458@gmail.com
             </a>
-            <div className="mt-6">
-                <Button asChild variant="secondary">
-                     <Link href="/dev">Admin Login</Link>
-                </Button>
-            </div>
         </div>
 
       </motion.div>
