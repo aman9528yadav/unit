@@ -50,6 +50,8 @@ export interface Note {
     attachment: string | null;
 }
 
+export const NOTES_STORAGE_KEY_BASE = 'notes';
+
 interface UserProfile {
     fullName: string;
     email: string;
@@ -438,4 +440,3 @@ export function Notepad() {
         </div>
     );
 }
-
