@@ -70,6 +70,20 @@
             "confirm": "लॉगिन करने के लिए आगे बढ़ें"
         }
     },
+    "analytics": {
+        "title": "एनालिटिक्स",
+        "totalOps": "कुल संचालन",
+        "conversions": "रूपांतरण",
+        "calculator": "कैलकुलेटर ऑप्स",
+        "dateCalcs": "दिनांक गणना",
+        "activityChart": "गतिविधि चार्ट",
+        "last7Days": "पिछले 7 दिनों में आपकी गतिविधि।",
+        "thisMonth": "इस महीने के लिए आपकी गतिविधि।",
+        "weekly": "साप्ताहिक",
+        "monthly": "मासिक",
+        "bar": "बार",
+        "line": "लाइन"
+    },
     "converter": {
         "welcome": "कन्वर्टर में आपका स्वागत है",
         "tabs": {
@@ -730,7 +744,7 @@
             "passwordsNoMatch": "नए पासवर्ड मेल नहीं खाते",
             "passwordTooShort": {
                 "title": "पासवर्ड बहुत छोटा है",
-                "description": "नया पासवर्ड कम से कम 6 वर्णों का होना चाहिए।"
+                "description": "पासवर्ड कम से कम 6 वर्णों का होना चाहिए।"
             },
             "passwordChanged": {
                 "title": "पासवर्ड बदल गया",
@@ -859,7 +873,7 @@
             },
             "signupFailed": {
                 "title": "साइन-अप विफल",
-                "default": "एक अप्रत्याशित त्रुटि हुई। कृपया पुनः प्रयास करें।",
+                "default": "एक अप्रत्याशक्षित त्रुटि हुई। कृपया पुनः प्रयास करें।",
                 "emailInUse": "यह ईमेल पता पहले से उपयोग में है। कृपया लॉग इन करें या किसी भिन्न ईमेल का उपयोग करें।",
                 "weakPassword": "पासवर्ड बहुत कमजोर है। कृपया एक मजबूत पासवर्ड चुनें।"
             }
@@ -1038,41 +1052,41 @@
         "title": "प्रोफ़ाइल",
         "help": "मदद",
         "roles": {
-            "member": "सदस्य",
-            "premiummember": "प्रीमियम सदस्य",
-            "owner": "मालिक"
+            "member": "Member",
+            "premiummember": "Premium Member",
+            "owner": "Owner"
         },
         "premium": {
-            "title": "प्रीमियम प्रगति",
-            "ops": "ऑप्स",
-            "learnMore": "प्रीमियम लाभों के बारे में और जानें"
+            "title": "Premium Progress",
+            "ops": "ops",
+            "learnMore": "Learn more about Premium benefits"
         },
         "sections": {
             "account": {
-                "title": "खाता",
-                "name": "नाम",
-                "email": "ईमेल",
-                "status": "स्थिति",
-                "verified": "सत्यापित"
+                "title": "ACCOUNT",
+                "name": "Name",
+                "email": "Email",
+                "status": "Status",
+                "verified": "Verified"
             },
             "preferences": {
-                "title": "प्राथमिकताएँ",
-                "region": "डिफ़ॉल्ट क्षेत्र",
-                "theme": "थीम",
+                "title": "PREFERENCES",
+                "region": "Default Region",
+                "theme": "Theme",
                 "themes": {
-                    "light": "लाइट",
-                    "dark": "डार्क",
-                    "custom": "कस्टम",
-                    "system": "सिस्टम"
+                    "light": "Light",
+                    "dark": "Dark",
+                    "custom": "Custom",
+                    "system": "System"
                 },
-                "saveHistory": "इतिहास सहेजें",
-                "autoConvert": "ऑटो-कन्वर्ट",
-                "enabled": "सक्षम",
-                "disabled": "अक्षम"
+                "saveHistory": "Save History",
+                "autoConvert": "Auto-Convert",
+                "enabled": "Enabled",
+                "disabled": "Disabled"
             }
         },
-        "logout": "लॉग आउट",
-        "manageSettings": "सेटिंग्स प्रबंधित करें"
+        "logout": "Log out",
+        "manageSettings": "Manage Settings"
     },
     "notifications": {
         "title": "सूचनाएं",
@@ -1091,7 +1105,7 @@
     "globalSearch": {
         "placeholder": "उपकरण, इतिहास, नोट्स खोजें...",
         "prompt": "अपने ऐप में कुछ भी खोजें।",
-        "noResults": "\"{{query}}\" के लिए कोई परिणाम नहीं मिला।",
+        "noResults": "कोई परिणाम नहीं मिला \"{{query}}\".",
         "results": {
             "conversion": {
                 "title": "कन्वर्ट",

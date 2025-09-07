@@ -1,7 +1,7 @@
 
 "use client";
 
-import { format } from 'date-fns';
+import { format, startOfWeek, startOfMonth } from 'date-fns';
 import { updateUserData, getUserData } from '@/services/firestore';
 import { NOTES_STORAGE_KEY_BASE, type Note } from '@/components/notepad';
 
@@ -54,6 +54,10 @@ export const getStats = async (email: string | null): Promise<{
     totalOps: number;
     savedNotes: number;
     weeklyActivity: DailyActivity[];
+    monthlyActivity: DailyActivity[];
+    totalConversions: number;
+    totalCalculations: number;
+    totalDateCalculations: number;
 }> => {
     const userData = await getUserData(email);
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -62,8 +66,12 @@ export const getStats = async (email: string | null): Promise<{
     const dailyCalculations = userData.dailyCalculations || {};
     const dailyDateCalculations = userData.dailyDateCalculations || {};
 
+    const totalConversions = userData.totalConversions || 0;
+    const totalCalculations = userData.totalCalculations || 0;
+    const totalDateCalculations = userData.totalDateCalculations || 0;
+
     const todaysOps = (dailyConversions[today] || 0) + (dailyCalculations[today] || 0) + (dailyDateCalculations[today] || 0);
-    const totalOps = (userData.totalConversions || 0) + (userData.totalCalculations || 0) + (userData.totalDateCalculations || 0);
+    const totalOps = totalConversions + totalCalculations + totalDateCalculations;
 
     const notesKey = getUserNotesKey(email);
     const notesData = typeof window !== 'undefined' ? localStorage.getItem(notesKey) : null;
@@ -90,5 +98,38 @@ export const getStats = async (email: string | null): Promise<{
         });
     }
 
-    return { todaysOps, totalOps, savedNotes, weeklyActivity };
+    // Prepare monthly activity
+    const monthlyActivity: DailyActivity[] = [];
+    const now = new Date();
+    const firstDayOfMonth = startOfMonth(now);
+    const daysInMonth = now.getDate();
+
+    for (let i = 0; i < daysInMonth; i++) {
+        const date = new Date(firstDayOfMonth);
+        date.setDate(date.getDate() + i);
+        const dateString = format(date, 'yyyy-MM-dd');
+
+        const conversions = dailyConversions[dateString] || 0;
+        const calculations = dailyCalculations[dateString] || 0;
+        const dateCalcs = dailyDateCalculations[dateString] || 0;
+
+        monthlyActivity.push({
+            date: dateString,
+            conversions,
+            calculations,
+            dateCalculations: dateCalcs,
+            total: conversions + calculations + dateCalcs
+        });
+    }
+
+    return { 
+        todaysOps, 
+        totalOps, 
+        savedNotes, 
+        weeklyActivity,
+        monthlyActivity,
+        totalConversions,
+        totalCalculations,
+        totalDateCalculations
+    };
 };

@@ -70,6 +70,20 @@
             "confirm": "Continue to Login"
         }
     },
+    "analytics": {
+        "title": "Analytics",
+        "totalOps": "Total Operations",
+        "conversions": "Conversions",
+        "calculator": "Calculator Ops",
+        "dateCalcs": "Date Calcs",
+        "activityChart": "Activity Chart",
+        "last7Days": "Your activity over the last 7 days.",
+        "thisMonth": "Your activity for this month.",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "bar": "Bar",
+        "line": "Line"
+    },
     "converter": {
         "welcome": "Welcome to the Converter",
         "tabs": {

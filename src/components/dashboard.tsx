@@ -39,7 +39,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { GlobalSearch } from "./global-search";
@@ -491,7 +491,7 @@ export function Dashboard() {
       <UpdateBanner />
 
       <section>
-          <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
              <StatCard title={t('dashboard.todayOps')} value={stats.todaysOps} icon={TrendingUp} color="text-green-500 bg-green-500/10" />
              <StatCard title={t('dashboard.currentStreak')} value={stats.currentStreak} icon={Flame} color="text-orange-500 bg-orange-500/10" unit={t('dashboard.days')} />
              <StatCard title={t('dashboard.savedNotes')} value={stats.savedNotes} icon={NotebookPen} color="text-yellow-500 bg-yellow-500/10" />
@@ -524,8 +524,14 @@ export function Dashboard() {
       
       <section>
          <Card>
-            <CardHeader>
-                <CardTitle>Weekly Report</CardTitle>
+            <CardHeader className="flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Weekly Report</CardTitle>
+                    <CardDescription>Your activity over the last 7 days.</CardDescription>
+                </div>
+                <Button asChild variant="outline" size="sm">
+                    <Link href="/analytics">View Analytics</Link>
+                </Button>
             </CardHeader>
             <CardContent>
                 <ChartContainer config={chartConfig} className="h-48 w-full">
