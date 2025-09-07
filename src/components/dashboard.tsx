@@ -98,7 +98,7 @@ const ToolButton = ({ icon: Icon, label, href, color, target, onClick }: any) =>
 
 const UpdateCard = ({ update }: any) => (
     <Card className="bg-card border-border shadow-sm hover:bg-secondary transition-colors w-[240px] flex-shrink-0 flex flex-col p-4">
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 flex-1">
           <div className={cn("size-10 grid place-items-center rounded-lg", update.bgColor, update.color)}>
             <update.icon className="size-5" />
           </div>
@@ -297,18 +297,13 @@ function UpdateBanner() {
                     </Link>
                 </div>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
+            <CardContent>
                 <div className="flex gap-2 sm:gap-4 justify-center">
                     <CountdownBox value={timeLeft.days ?? 0} label="Days" />
                     <CountdownBox value={timeLeft.hours ?? 0} label="Hours" />
                     <CountdownBox value={timeLeft.minutes ?? 0} label="Minutes" />
                     <CountdownBox value={timeLeft.seconds ?? 0} label="Seconds" />
                 </div>
-                 {updateInfo.updateText && (
-                    <p className="text-center text-sm text-muted-foreground">
-                        {updateInfo.updateText}
-                    </p>
-                )}
             </CardContent>
         </Card>
     );
@@ -715,3 +710,5 @@ export function Dashboard() {
     </motion.div>
   );
 }
+
+    
