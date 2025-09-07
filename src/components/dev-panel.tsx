@@ -13,7 +13,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
-import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo } from '@/services/firestore';
+import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo } from '@/services/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 
@@ -66,9 +66,33 @@ export function DevPanel() {
      useEffect(() => {
         if (!isAuthorized || !isAuthenticated) return;
         
-        const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenanceMode);
+        const unsubMaintenance = listenToGlobalMaintenanceMode(setIsMaintenanceMode);
+        const unsubUpdateInfo = listenToUpdateInfo((info) => {
+            setMaintenanceText(info.updateText || '');
+            setMaintenanceType(info.maintenanceType || 'Security');
+            if (info.targetDate) {
+                const target = new Date(info.targetDate);
+                const now = new Date();
+                if (target > now) {
+                    const diff = target.getTime() - now.getTime();
+                    setMaintenanceDuration({
+                        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+                        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+                        minutes: Math.floor((diff / 1000 / 60) % 60),
+                        seconds: Math.floor((diff / 1000) % 60),
+                    });
+                } else {
+                    setMaintenanceDuration({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+                }
+            } else {
+                 setMaintenanceDuration({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+            }
+        });
 
-        return () => unsubscribe();
+        return () => {
+            unsubMaintenance();
+            unsubUpdateInfo();
+        };
     }, [isAuthorized, isAuthenticated]);
     
     const handlePasswordSubmit = () => {
