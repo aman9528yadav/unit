@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Delete, Divide, X, Minus, Plus, Equal, Sigma, CalculatorIcon, Home, User, History, Trash2, Lock } from 'lucide-react';
 import type { CalculatorMode } from '../settings';
-import { Avatar, AvatarFallback } from './ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { incrementCalculationCount, getStats } from '@/lib/stats';
@@ -47,7 +47,7 @@ export function Calculator() {
   const [mode, setMode] = useState<CalculatorMode>('basic');
   const [angleMode, setAngleMode] = useState<'deg' | 'rad'>('deg');
   const [isClient, setIsClient] = useState(false);
-  const [profile, setProfile] = useState<{fullName: string} | null>(null);
+  const [profile, setProfile] = useState<{fullName: string, email: string, profileImage?: string} | null>(null);
   const router = useRouter();
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);

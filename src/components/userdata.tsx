@@ -5,7 +5,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { User, Upload, LogOut, Settings, HelpCircle, X, Pencil, TrendingUp, Info, CheckCircle, Crown, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/context/language-context";
 import { getStats } from "@/lib/stats";
+import { ProfilePhotoEditor } from "./profile-photo-editor";
 
 
 interface UserProfile {
@@ -56,6 +57,7 @@ export function UserData() {
     const [userRole, setUserRole] = useState<UserRole>('Member');
     const [stats, setStats] = useState({ totalOps: 0 });
     const [isClient, setIsClient] = useState(false);
+    const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
     const { t } = useLanguage();
@@ -105,6 +107,17 @@ export function UserData() {
             autoConvert: autoConvertRaw === null ? true : JSON.parse(autoConvertRaw),
         });
     };
+    
+    const handleSavePhoto = (newImage: string | null) => {
+        if (profile) {
+            const updatedProfile = { ...profile, profileImage: newImage || '' };
+            setProfile(updatedProfile);
+            localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+            window.dispatchEvent(new StorageEvent('storage', { key: 'userProfile', newValue: JSON.stringify(updatedProfile)}));
+            toast({ title: t('profileEdit.toast.profileUpdated.title') });
+        }
+        setIsPhotoEditorOpen(false);
+    };
 
      const handleLogout = () => {
         auth.signOut().then(() => {
@@ -120,6 +133,16 @@ export function UserData() {
     if (!isClient || !profile) {
         // You can return a loading skeleton here
         return null;
+    }
+    
+    if (isPhotoEditorOpen) {
+        return (
+            <ProfilePhotoEditor
+                currentImage={profile.profileImage || ''}
+                onSave={handleSavePhoto}
+                onClose={() => setIsPhotoEditorOpen(false)}
+            />
+        );
     }
 
 
@@ -153,12 +176,11 @@ export function UserData() {
              <div className="flex flex-col items-center text-center">
                  <div className="relative">
                     <Avatar className="w-28 h-28 mb-4">
+                        <AvatarImage src={profile.profileImage} alt={profile.fullName}/>
                         <AvatarFallback>{profile.fullName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                     </Avatar>
-                    <Button asChild size="icon" className="absolute bottom-4 right-0 rounded-full">
-                        <Link href="/profile/edit">
-                            <Pencil className="h-4 w-4" />
-                        </Link>
+                    <Button size="icon" className="absolute bottom-4 right-0 rounded-full" onClick={() => setIsPhotoEditorOpen(true)}>
+                        <Pencil className="h-4 w-4" />
                     </Button>
                 </div>
                 <div className="flex items-center gap-2">
@@ -178,9 +200,11 @@ export function UserData() {
                         <p className="text-sm font-bold">{stats.totalOps.toLocaleString()} / {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} {t('userdata.premium.ops')}</p>
                     </div>
                     <Progress value={progress} />
-                    <p className="text-xs text-center text-muted-foreground mt-2">
-                        {t('userdata.premium.learnMore')}
-                    </p>
+                     <Link href="/help">
+                        <p className="text-xs text-center text-muted-foreground mt-2 hover:underline cursor-pointer">
+                            {t('userdata.premium.learnMore')}
+                        </p>
+                    </Link>
                 </div>
             )}
 
