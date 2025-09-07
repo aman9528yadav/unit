@@ -222,15 +222,16 @@ export function DevPanel() {
             </header>
 
             <Tabs defaultValue="maintenance" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="maintenance"><Timer /></TabsTrigger>
+                    <TabsTrigger value="updates"><ServerCog /></TabsTrigger>
                     <TabsTrigger value="broadcast"><Send /></TabsTrigger>
                     <TabsTrigger value="data"><Trash2 /></TabsTrigger>
                 </TabsList>
                 <TabsContent value="maintenance" className="mt-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><Timer /> Maintenance & Updates</CardTitle>
+                            <CardTitle className="flex items-center gap-2"><Timer /> Maintenance</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                              <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
@@ -281,6 +282,76 @@ export function DevPanel() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="maintenanceType" className="flex items-center gap-2"><Wrench /> Maintenance Type</Label>
+                                <Select value={maintenanceType} onValueChange={setMaintenanceType}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Security">Security</SelectItem>
+                                        <SelectItem value="Feature Update">Feature Update</SelectItem>
+                                        <SelectItem value="Bug Fixes">Bug Fixes</SelectItem>
+                                        <SelectItem value="Performance">Performance</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                             <Button onClick={handleSaveDetails} className="w-full">Save Details</Button>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="updates" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><ServerCog /> Updates</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <div>
+                                    <Label htmlFor="maintenance-mode-updates">Enable Maintenance Mode</Label>
+                                    <p className='text-xs text-muted-foreground'>Redirects all users to maintenance site.</p>
+                                </div>
+                                <Switch
+                                    id="maintenance-mode-updates"
+                                    checked={isMaintenanceMode}
+                                    onCheckedChange={handleMaintenanceModeToggle}
+                                />
+                            </div>
+                            <div>
+                                <Label>Set Countdown Duration</Label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="days-updates" className="text-xs">Days</Label>
+                                        <Input id="days-updates" type="number" value={duration.days} onChange={(e) => handleDurationChange('days', e.target.value)} placeholder="0" />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="hours-updates" className="text-xs">Hours</Label>
+                                        <Input id="hours-updates" type="number" value={duration.hours} onChange={(e) => handleDurationChange('hours', e.target.value)} placeholder="0" />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="minutes-updates" className="text-xs">Minutes</Label>
+                                        <Input id="minutes-updates" type="number" value={duration.minutes} onChange={(e) => handleDurationChange('minutes', e.target.value)} placeholder="0" />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="seconds-updates" className="text-xs">Seconds</Label>
+                                        <Input id="seconds-updates" type="number" value={duration.seconds} onChange={(e) => handleDurationChange('seconds', e.target.value)} placeholder="0" />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 mt-2">
+                                    <Button onClick={handleSetTimer} className="w-full">Set Timer</Button>
+                                    <Button onClick={handleClearTimer} variant="destructive" className="w-full">Clear Timer</Button>
+                                </div>
+                            </div>
+                             <div className="pt-4 space-y-2">
+                                <Label htmlFor="updateText-updates" className="flex items-center gap-2"><NotebookText /> Upcoming Feature Details</Label>
+                                <Textarea 
+                                    id="updateText-updates"
+                                    value={updateText}
+                                    onChange={(e) => setUpdateText(e.target.value)}
+                                    placeholder="Describe what's coming in the next update..."
+                                    rows={3}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="maintenanceType-updates" className="flex items-center gap-2"><Wrench /> Maintenance Type</Label>
                                 <Select value={maintenanceType} onValueChange={setMaintenanceType}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a type" />
