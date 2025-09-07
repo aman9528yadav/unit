@@ -289,6 +289,36 @@ export function Converter() {
       unsub();
     };
   }, [allUnits, conversionCategories]);
+
+    useEffect(() => {
+        const performConversion = () => {
+            const numValue = parseFloat(inputValue);
+            if (isNaN(numValue) || !fromUnit || !toUnit) {
+                setOutputValue("");
+                return;
+            }
+
+            const categoryToUse = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit) && c.units.some(u => u.symbol === toUnit));
+            if (!categoryToUse) {
+                setOutputValue("");
+                return;
+            }
+
+            const result = categoryToUse.convert(numValue, fromUnit, toUnit, region) as number;
+            if (result === undefined || isNaN(result)) {
+                setOutputValue("");
+                return;
+            }
+            
+            const formattedResult = result.toLocaleString(undefined, {
+                maximumFractionDigits: 5,
+                useGrouping: false,
+            });
+            
+            setOutputValue(formattedResult);
+        };
+        performConversion();
+    }, [inputValue, fromUnit, toUnit, region, conversionCategories]);
   
   const getFullHistoryString = (input: string, from: string, to: string, result: string, category: string): string => {
     return `${input} ${from} → ${result} ${to}|${category}|${new Date().toISOString()}`;
@@ -305,34 +335,6 @@ export function Converter() {
     window.dispatchEvent(new StorageEvent('storage', { key: 'lastConversion', newValue: historyString }));
   };
   
- const performConversion = () => {
-    const numValue = parseFloat(inputValue);
-    if (isNaN(numValue) || !fromUnit || !toUnit) {
-      setOutputValue("");
-      return null;
-    }
-
-    const categoryToUse = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit) && c.units.some(u => u.symbol === toUnit));
-    if (!categoryToUse) {
-      setOutputValue("");
-      return null;
-    }
-
-    const result = categoryToUse.convert(numValue, fromUnit, toUnit, region) as number;
-    if (result === undefined || isNaN(result)) {
-      setOutputValue("");
-      return null;
-    }
-    
-    const formattedResult = result.toLocaleString(undefined, {
-      maximumFractionDigits: 5,
-      useGrouping: false,
-    });
-    
-    setOutputValue(formattedResult);
-    return { formattedResult, categoryToUse };
-  };
-
  const handleSearch = () => {
     if (isSearching) return;
     startSearchTransition(() => {
@@ -384,12 +386,10 @@ export function Converter() {
   };
 
   const handleConvertClick = () => {
-    const conversionResult = performConversion();
-    if (conversionResult) {
-      const { formattedResult, categoryToUse } = conversionResult;
-      incrementConversionCount();
-      updateUserRole(profile?.email || null);
-      handleSaveToHistory(inputValue, fromUnit, toUnit, formattedResult, categoryToUse.name);
+    if(outputValue) {
+        incrementConversionCount();
+        updateUserRole(profile?.email || null);
+        handleSaveToHistory(inputValue, fromUnit, toUnit, outputValue, selectedCategory.name);
     }
   };
   
@@ -405,19 +405,6 @@ export function Converter() {
             setFromUnit(parsedQuery.fromUnit);
             setToUnit(parsedQuery.toUnit);
             setInputValue(String(parsedQuery.value));
-            
-            // Perform conversion after state update
-            React.startTransition(() => {
-                const numValue = parsedQuery.value;
-                const result = category.convert(numValue, parsedQuery.fromUnit, parsedQuery.toUnit, region) as number;
-                 if (result !== undefined && !isNaN(result)) {
-                    const formattedResult = result.toLocaleString(undefined, {
-                        maximumFractionDigits: 5,
-                        useGrouping: false,
-                    });
-                    setOutputValue(formattedResult);
-                 }
-            });
         } else {
             toast({ title: t('converter.toast.cannotRestore'), description: t('converter.toast.regionError', { region }), variant: "destructive" });
         }
