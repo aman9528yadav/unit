@@ -26,7 +26,8 @@ import {
   Hourglass,
   Activity,
   BarChart3,
-  Users
+  Users,
+  EyeOff
 } from "lucide-react";
 import { addDays, format, formatDistanceToNow, parseISO, isValid } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -261,7 +262,7 @@ export function Analytics() {
           
           <Card>
               <CardHeader><CardTitle>Engagement</CardTitle></CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
                  <StatCard 
                     title="Current Streak" 
                     value={`${stats.currentStreak} days`}
@@ -271,6 +272,11 @@ export function Analytics() {
                     title="Best Streak" 
                     value={`${stats.bestStreak} days`}
                     icon={<CheckCircle className="text-yellow-500"/>}
+                />
+                <StatCard
+                    title="Days Since Last Visit"
+                    value={`${stats.daysNotOpened} days`}
+                    icon={<EyeOff className="text-gray-500" />}
                 />
               </CardContent>
           </Card>
