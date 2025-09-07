@@ -67,8 +67,6 @@ export function History() {
   const [activeTab, setActiveTab] = useState(tabFromQuery || "conversions");
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
-  const [itemToDelete, setItemToDelete] = useState<{item: HistoryItemData, type: 'conversion' | 'calculation' | 'favorite'} | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const { language, t } = useLanguage();
 
   const loadData = useCallback(() => {
@@ -120,29 +118,33 @@ export function History() {
         localStorage.setItem("favoriteConversions", '[]');
     }
   };
-
-  const handleDeleteItem = () => {
-    if (!itemToDelete) return;
+  
+  const handleDeleteItem = (itemToDelete: HistoryItemData) => {
+    let historyKey = '';
+    let currentHistory: HistoryItemData[] = [];
+    let setHistory: React.Dispatch<React.SetStateAction<HistoryItemData[]>> | null = null;
+    const type = itemToDelete.type === 'calculation' ? 'calculation' : activeTab === 'favorites' ? 'favorite' : 'conversion';
     
-    const { item, type } = itemToDelete;
 
     if (type === 'conversion') {
-        const newHistory = conversionHistory.filter(h => h.fullString !== item.fullString);
-        setConversionHistory(newHistory);
-        localStorage.setItem("conversionHistory", JSON.stringify(newHistory.map(h => h.fullString)));
-    } 
-    if (type === 'calculation') {
-        const newHistory = calculationHistory.filter(h => h.fullString !== item.fullString);
-        setCalculationHistory(newHistory);
-        localStorage.setItem("calculationHistory", JSON.stringify(newHistory.map(h => h.fullString)));
+        historyKey = 'conversionHistory';
+        currentHistory = conversionHistory;
+        setHistory = setConversionHistory;
+    } else if (type === 'calculation') {
+        historyKey = 'calculationHistory';
+        currentHistory = calculationHistory;
+        setHistory = setCalculationHistory;
+    } else if (type === 'favorite') {
+        historyKey = 'favoriteConversions';
+        currentHistory = favorites;
+        setHistory = setFavorites;
     }
-    if (type === 'favorite') {
-        const newFavorites = favorites.filter(fav => fav.fullString !== item.fullString);
-        setFavorites(newFavorites);
-        localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites.map(h => h.fullString)));
+
+    if (setHistory) {
+      const newHistory = currentHistory.filter(h => h.fullString !== itemToDelete.fullString);
+      setHistory(newHistory);
+      localStorage.setItem(historyKey, JSON.stringify(newHistory.map(h => h.fullString)));
     }
-    
-    setItemToDelete(null);
   };
   
   const itemsToDisplay = 
@@ -165,6 +167,7 @@ export function History() {
 
 
   const availableCategories = ['All', ...new Set(conversionHistory.map(item => item.categoryName).filter(Boolean as any))];
+  const [categoryFilter, setCategoryFilter] = useState<string>("All");
 
   return (
       <div className="w-full max-w-2xl mx-auto flex flex-col gap-4">
@@ -233,10 +236,10 @@ export function History() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {filteredItems.map((item, index) => (
                          <HistoryItem 
-                           key={`${item.timestamp}-${index}`} 
+                           key={`${item.fullString}-${index}`} 
                            item={item} 
                            onRestore={() => handleRestore(item)} 
-                           onDelete={() => setItemToDelete({item: item, type: activeTab as any})} 
+                           onDelete={() => handleDeleteItem(item)} 
                            t={t} 
                            language={language} 
                          />
@@ -250,24 +253,6 @@ export function History() {
                 )}
             </div>
         </Tabs>
-
-        <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t('history.dialog.deleteTitle')}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t('history.dialog.deleteDescription')}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t('history.dialog.cancel')}</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteItem} className="bg-destructive hover:bg-destructive/90">
-                {t('history.dialog.deleteConfirm')}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
       </div>
   );
 }
@@ -310,5 +295,3 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
         </div>
     )
 }
-
-    
