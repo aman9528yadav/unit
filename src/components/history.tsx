@@ -53,7 +53,7 @@ export function History() {
     const parseHistoryString = (item: string) => {
         const parts = item.split('|');
         const conversion = parts[0] || '';
-        const categoryName = parts[1] || '';
+        const categoryName = parts[1] || 'Unknown'; // Default to prevent crash
         const timestamp = parts[2] ? new Date(parts[2]) : new Date();
 
         return { conversion, categoryName, timestamp };
@@ -138,13 +138,15 @@ export function History() {
                             const category = conversionCategories.find(c => c.name === categoryName);
                             const Icon = category?.icon || Power;
                             return (
-                                <div key={index} className="bg-card p-3 rounded-lg group">
-                                    <p className="font-semibold">{conversion}</p>
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                        <Icon size={14} />
-                                        <span>{t(`categories.${categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: categoryName })}</span>
-                                        <span>•</span>
-                                        <span>{formatDistanceToNow(new Date(timestamp), { addSuffix: true })}</span>
+                                <div key={index} className="bg-card p-3 rounded-lg group relative">
+                                    <div className="cursor-pointer" onClick={() => handleRestore(item)}>
+                                        <p className="font-semibold">{conversion}</p>
+                                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                            <Icon size={14} />
+                                            <span>{t(`categories.${categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: categoryName })}</span>
+                                            <span>•</span>
+                                            <span>{formatDistanceToNow(new Date(timestamp), { addSuffix: true })}</span>
+                                        </div>
                                     </div>
                                     <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRestore(item)}><RotateCcw size={14} /></Button>
@@ -189,3 +191,5 @@ export function History() {
         </div>
     );
 }
+
+    

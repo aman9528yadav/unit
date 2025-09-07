@@ -369,6 +369,7 @@ export function Converter() {
 
     const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
     setOutputValue(formattedResult);
+    handleSaveToHistory(numValue, from, to, parseFloat(formattedResult), categoryToUse.name);
 
     if (categoryToUse.name !== 'Temperature') {
         const allUnitsInCategory = categoryToUse.units.filter(u => !u.region || u.region === region);
@@ -388,15 +389,13 @@ export function Converter() {
 }, [region, conversionCategories]);
 
   
-  const handleSaveToHistory = React.useCallback(() => {
+  const handleSaveToHistory = React.useCallback((numValue: number, from: string, to: string, result: number, categoryName: string) => {
     const saveConversionHistory = JSON.parse(localStorage.getItem(getUserKey('saveConversionHistory', profile?.email || null)) || 'true');
     if (!saveConversionHistory) return;
 
-    const numValue = parseFloat(inputValue);
-    const result = parseFloat(outputValue.replace(/,/g, ''));
-    if (isNaN(numValue) || isNaN(result) || outputValue === '') return;
+    if (isNaN(numValue) || isNaN(result)) return;
 
-    const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
+    const conversionString = getFullHistoryString(numValue, from, to, result, categoryName);
     localStorage.setItem('lastConversion', conversionString);
     
     setHistory(prevHistory => {
@@ -408,15 +407,9 @@ export function Converter() {
         localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
         return newHistory;
     });
-  }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name, profile?.email]);
+  }, [profile?.email]);
 
 
-  React.useEffect(() => {
-    if (outputValue) {
-        handleSaveToHistory();
-    }
-  }, [outputValue, handleSaveToHistory]);
-  
   useEffect(() => {
     if (!autoConvert) return;
   
@@ -1134,3 +1127,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
