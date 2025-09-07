@@ -402,7 +402,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={handleInsertConversion}><ArrowRightLeft /></Button>
                 </div>
                 {attachment && (
-                    <div className="relative w-full h-48 group">
+                    <div className="relative w-full h-64 group">
                         <Image src={attachment} alt={t('noteEditor.attachmentAlt')} layout="fill" objectFit="contain" className="rounded-md" />
                         <Button variant="destructive" size="icon" className="absolute top-2 right-2 w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={handleRemoveImage}>
                            <X size={16}/>
@@ -451,4 +451,5 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
+
 
