@@ -289,7 +289,7 @@ export function About() {
               <div className="flex flex-wrap justify-center gap-8">
                 <div className="flex flex-col items-center">
                   <Image 
-                    src={ownerInfo.imageUrl}
+                    src={ownerInfo.imageUrl || "/placeholder.png"}
                     alt={ownerInfo.name}
                     width={120}
                     height={120}
