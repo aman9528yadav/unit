@@ -5,14 +5,15 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Upload, LogOut, Settings, HelpCircle, X, Pencil, TrendingUp, Info, CheckCircle } from "lucide-react";
+import { User, Upload, LogOut, Settings, HelpCircle, X, Pencil, TrendingUp, Info, CheckCircle, Crown, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/context/language-context";
+import { getStats } from "@/lib/stats";
 
 
 interface UserProfile {
@@ -27,6 +28,9 @@ interface UserSettings {
     saveHistory: boolean;
     autoConvert: boolean;
 }
+
+const PREMIUM_MEMBER_THRESHOLD = 8000;
+type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 const DetailRow = ({ label, value, valueClassName }: { label: string, value: React.ReactNode, valueClassName?: string }) => (
     <div className="flex justify-between items-center py-3">
@@ -49,6 +53,8 @@ const Section = ({ title, children }: { title: string, children: React.ReactNode
 export function UserData() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [settings, setSettings] = useState<UserSettings | null>(null);
+    const [userRole, setUserRole] = useState<UserRole>('Member');
+    const [stats, setStats] = useState({ totalOps: 0 });
     const [isClient, setIsClient] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
@@ -58,14 +64,31 @@ export function UserData() {
     useEffect(() => {
         setIsClient(true);
         const storedProfile = localStorage.getItem('userProfile');
-        if (profile) {
-            loadSettings(profile.email);
-        } else if (typeof window !== 'undefined' && !storedProfile) {
+        if (storedProfile) {
+            const parsedProfile = JSON.parse(storedProfile);
+            setProfile(parsedProfile);
+            loadSettings(parsedProfile.email);
+            updateUserRoleAndStats(parsedProfile.email);
+        } else if (typeof window !== 'undefined') {
             router.push('/welcome');
-        } else if (storedProfile){
-            setProfile(JSON.parse(storedProfile));
         }
-    }, [router, profile]);
+    }, [router]);
+
+    const updateUserRoleAndStats = async (email: string | null) => {
+        const userStats = await getStats(email);
+        setStats({ totalOps: userStats.totalOps });
+
+        if(email === "amanyadavyadav9458@gmail.com") {
+            setUserRole('Owner');
+            return;
+        }
+        if(userStats.totalOps >= PREMIUM_MEMBER_THRESHOLD) {
+            setUserRole('Premium Member');
+        } else {
+            setUserRole('Member');
+        }
+    };
+
 
     const loadSettings = (email: string | null) => {
         const getUserKey = (key: string, userEmail: string | null) => `${userEmail || 'guest'}_${key}`;
@@ -100,6 +123,16 @@ export function UserData() {
     }
 
 
+    const roleText = {
+      'Member': t('userdata.roles.member'),
+      'Premium Member': t('userdata.roles.premiummember'),
+      'Owner': t('userdata.roles.owner')
+    }
+    const RoleIcon = userRole === 'Member' ? Star : Crown;
+    const roleIconColor = userRole === 'Member' ? '' : 'text-yellow-400';
+    const progress = Math.min((stats.totalOps / PREMIUM_MEMBER_THRESHOLD) * 100, 100);
+
+
     return (
         <div className="w-full max-w-lg mx-auto bg-card rounded-2xl shadow-lg border p-6">
             <header className="flex justify-between items-center mb-6">
@@ -120,7 +153,6 @@ export function UserData() {
              <div className="flex flex-col items-center text-center">
                  <div className="relative">
                     <Avatar className="w-28 h-28 mb-4">
-                        <AvatarImage src={profile.profileImage} alt={profile.fullName} data-ai-hint="man portrait"/>
                         <AvatarFallback>{profile.fullName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                     </Avatar>
                     <Button asChild size="icon" className="absolute bottom-4 right-0 rounded-full">
@@ -131,9 +163,27 @@ export function UserData() {
                 </div>
                 <div className="flex items-center gap-2">
                     <h2 className="text-2xl font-bold">{profile.fullName}</h2>
+                     <Badge variant="secondary">
+                        <RoleIcon className={`mr-2 h-4 w-4 ${roleIconColor}`}/>
+                        {roleText[userRole]}
+                    </Badge>
                 </div>
                 <p className="text-muted-foreground text-sm">{profile.email}</p>
             </div>
+            
+            {userRole === 'Member' && (
+                <div className="my-6">
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-sm font-semibold">{t('userdata.premium.title')}</h3>
+                        <p className="text-sm font-bold">{stats.totalOps.toLocaleString()} / {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} {t('userdata.premium.ops')}</p>
+                    </div>
+                    <Progress value={progress} />
+                    <p className="text-xs text-center text-muted-foreground mt-2">
+                        {t('userdata.premium.learnMore')}
+                    </p>
+                </div>
+            )}
+
 
             <main className="w-full mt-2">
                 <Section title={t('userdata.sections.account.title')}>
@@ -154,7 +204,6 @@ export function UserData() {
                     <DetailRow label={t('userdata.sections.preferences.region')} value={settings?.defaultRegion || '...'}/>
                     <DetailRow label={t('userdata.sections.preferences.theme')} value={t(`userdata.sections.preferences.themes.${settings?.theme.toLowerCase() || '...'}`)}/>
                     <DetailRow label={t('userdata.sections.preferences.saveHistory')} value={settings?.saveHistory ? t('userdata.sections.preferences.enabled') : t('userdata.sections.preferences.disabled')}/>
-                    <DetailRow label={t('userdata.sections.preferences.autoConvert')} value={settings?.autoConvert ? t('userdata.sections.preferences.enabled') : t('userdata.sections.preferences.disabled')}/>
                 </Section>
             </main>
 

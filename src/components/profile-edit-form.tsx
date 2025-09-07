@@ -147,11 +147,6 @@ export function ProfileEditForm() {
         <TabsContent value="account">
           <Card>
             <CardHeader className="items-center">
-              <div className="relative group cursor-pointer">
-                  <div className="w-32 h-32 text-6xl rounded-full bg-muted flex items-center justify-center">
-                    <User/>
-                  </div>
-              </div>
               <CardTitle>{t('profileEdit.account.title')}</CardTitle>
               <CardDescription>{t('profileEdit.account.description')}</CardDescription>
             </CardHeader>

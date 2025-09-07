@@ -15,7 +15,8 @@ import {
   Code,
   Gift,
   Pencil,
-  Info
+  Info,
+  Crown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -24,8 +25,13 @@ import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { useLanguage } from "@/context/language-context";
+import { getStats } from "@/lib/stats";
+import { Badge } from "./ui/badge";
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
+const PREMIUM_MEMBER_THRESHOLD = 8000;
+type UserRole = 'Member' | 'Premium Member' | 'Owner';
+
 
 interface UserProfile {
     fullName: string;
@@ -42,12 +48,26 @@ const defaultProfile: UserProfile = {
 };
 
 export function Profile() {
-  const [profile, setProfile] = useState(defaultProfile);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [userRole, setUserRole] = useState<UserRole>('Member');
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useLanguage();
   
+  const updateUserRole = async (email: string | null) => {
+    if(email === DEVELOPER_EMAIL) {
+        setUserRole('Owner');
+        return;
+    }
+    const stats = await getStats(email);
+    if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD) {
+        setUserRole('Premium Member');
+    } else {
+        setUserRole('Member');
+    }
+  };
+
   useEffect(() => {
     setIsClient(true);
     const storedProfile = localStorage.getItem("userProfile");
@@ -57,13 +77,16 @@ export function Profile() {
         parsed.birthday = format(new Date(parsed.dob), "MMMM do");
       }
       setProfile(parsed);
+      updateUserRole(parsed.email);
     } else {
         router.replace('/welcome');
     }
 
     const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'userProfile' && e.newValue) {
-            setProfile(JSON.parse(e.newValue));
+            const newProfile = JSON.parse(e.newValue);
+            setProfile(newProfile);
+            updateUserRole(newProfile.email);
         }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -91,13 +114,19 @@ export function Profile() {
     { icon: LogOut, text: t('profile.menu.logout'), onClick: handleLogout }
   ];
 
-  if (profile.email === DEVELOPER_EMAIL) {
+  if (profile?.email === DEVELOPER_EMAIL) {
     menuItems.splice(5, 0, { icon: Code, text: t('profile.menu.developer'), href: "/dev" });
   }
 
 
-  if (!isClient) {
+  if (!isClient || !profile) {
     return null; // or a loading spinner
+  }
+
+  const roleText = {
+      'Member': 'Member',
+      'Premium Member': 'Premium',
+      'Owner': 'Owner'
   }
 
   return (
@@ -127,7 +156,10 @@ export function Profile() {
             </div>
           <h2 className="text-2xl font-bold mt-2">{profile.fullName}</h2>
           <p className="text-sm">{profile.email}</p>
-          <p className="text-sm">{t('profile.birthday')}: {profile.birthday}</p>
+          <Badge variant="secondary" className="mt-2">
+             {userRole === 'Premium Member' || userRole === 'Owner' ? <Crown className="w-4 h-4 mr-2 text-yellow-400"/> : <Star className="w-4 h-4 mr-2" />}
+             {roleText[userRole]}
+          </Badge>
         </div>
       </div>
 
