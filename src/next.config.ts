@@ -77,6 +77,18 @@ const nextConfig: NextConfig = {
         hostname: 'plus.unsplash.com',
         port: '',
         pathname: '/**',
+      },
+       {
+        protocol: 'https',
+        hostname: 'images.pexels.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.googleusercontent.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
@@ -87,8 +99,4 @@ const nextConfig: NextConfig = {
   }
 };
 
-const exportConfig = process.env.NODE_ENV === 'production' ? withPWA(nextConfig) : nextConfig;
-
-export default exportConfig;
-
-    
+export default withPWA(nextConfig);
