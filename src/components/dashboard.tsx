@@ -60,14 +60,24 @@ import { listenToNextUpdateInfo, NextUpdateInfo } from "@/services/firestore";
 import { getStreakData, recordVisit } from "@/lib/streak";
 
 
-const ToolButton = ({ icon: Icon, label, href, color }: any) => (
-    <Link href={href} className="group aspect-square rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex flex-col items-center justify-center gap-2 shadow-sm text-center">
-        <div className={cn("size-12 grid place-items-center rounded-full bg-secondary", color)}>
-            <Icon className="size-6" />
+const ToolButton = ({ icon: Icon, label, href, color, newTab }: any) => {
+    const content = (
+        <div className="group aspect-square rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex flex-col items-center justify-center gap-2 shadow-sm text-center">
+            <div className={cn("size-12 grid place-items-center rounded-full bg-secondary", color)}>
+                <Icon className="size-6" />
+            </div>
+            <p className="font-semibold text-foreground text-sm">{label}</p>
         </div>
-        <p className="font-semibold text-foreground text-sm">{label}</p>
-    </Link>
-);
+    );
+    if (href) {
+        return (
+            <Link href={href} target={newTab ? "_blank" : "_self"} rel={newTab ? "noopener noreferrer" : ""}>
+                {content}
+            </Link>
+        );
+    }
+    return content;
+};
 
 const UpdateCard = ({ update }: any) => (
     <Card className="bg-card border-border shadow-sm hover:bg-secondary transition-colors w-[240px] flex-shrink-0 flex flex-col p-4">
@@ -372,7 +382,7 @@ export function Dashboard() {
       { label: t('dashboard.tools.calculator'), icon: Calculator, href: "/calculator", color: "text-orange-400" },
       { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
       { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
-      { label: 'News', icon: Newspaper, href: '/news', color: 'text-green-400' },
+      { label: 'News', icon: Newspaper, href: 'https://sutradhaar1.42web.io/', color: 'text-green-400', newTab: true },
       { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
     ];
     
