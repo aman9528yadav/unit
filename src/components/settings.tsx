@@ -78,7 +78,6 @@ export function Settings() {
   const { theme, setTheme, customTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   
-  const [autoConvert, setAutoConvert] = useState(true);
   const [saveConversionHistory, setSaveConversionHistory] = useState(true);
   const [defaultRegion, setDefaultRegion] = useState<Region>('International');
 
@@ -104,9 +103,6 @@ export function Settings() {
     const notifications = localStorage.getItem(getUserKey('notificationsEnabled', email));
     setNotificationsEnabled(notifications === null ? true : JSON.parse(notifications));
 
-    const auto = localStorage.getItem(getUserKey('autoConvert', email));
-    setAutoConvert(auto === null ? true : JSON.parse(auto));
-
     const saveConv = localStorage.getItem(getUserKey('saveConversionHistory', email));
     setSaveConversionHistory(saveConv === null ? true : JSON.parse(saveConv));
     
@@ -125,7 +121,6 @@ export function Settings() {
   const handleSaveChanges = () => {
     const userKey = profile?.email || null;
     localStorage.setItem(getUserKey('notificationsEnabled', userKey), JSON.stringify(notificationsEnabled));
-    localStorage.setItem(getUserKey('autoConvert', userKey), JSON.stringify(autoConvert));
     localStorage.setItem(getUserKey('saveConversionHistory', userKey), JSON.stringify(saveConversionHistory));
     localStorage.setItem(getUserKey('defaultRegion', userKey), defaultRegion);
     localStorage.setItem('calculatorMode', calculatorMode);
@@ -134,7 +129,6 @@ export function Settings() {
     
     // Dispatch storage events to notify other components/tabs
     window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('notificationsEnabled', userKey), newValue: JSON.stringify(notificationsEnabled) }));
-    window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('autoConvert', userKey), newValue: JSON.stringify(autoConvert) }));
     window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('saveConversionHistory', userKey), newValue: JSON.stringify(saveConversionHistory) }));
     window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('defaultRegion', userKey), newValue: defaultRegion }));
     window.dispatchEvent(new StorageEvent('storage', { key: 'calculatorMode', newValue: calculatorMode }));
@@ -256,11 +250,6 @@ export function Settings() {
                     }
                  />
                  <SettingRow
-                    label={t('settings.unitConverter.autoConvert.label')}
-                    description={t('settings.unitConverter.autoConvert.description')}
-                    control={<Switch checked={autoConvert} onCheckedChange={setAutoConvert} />}
-                />
-                 <SettingRow
                     isLink
                     href="/settings/custom-units"
                     label={t('settings.unitConverter.customUnit.label')}
@@ -330,5 +319,3 @@ export function Settings() {
     </div>
   );
 }
-
-    

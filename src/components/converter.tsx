@@ -193,7 +193,6 @@ export function Converter() {
   const [fromUnit, setFromUnit] = React.useState<string>(conversionCategories[0].units[0].symbol);
   const [toUnit, setToUnit] = React.useState<string>(conversionCategories[0].units[1].symbol);
   const [inputValue, setInputValue] = React.useState<string>("1");
-  const debouncedInputValue = useDebounce(inputValue, 300);
   const [outputValue, setOutputValue] = React.useState<string>("");
   const [favorites, setFavorites] = React.useState<string[]>([]);
   const [isFavorite, setIsFavorite] = React.useState(false);
@@ -208,7 +207,6 @@ export function Converter() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isSearching, startSearchTransition] = React.useTransition();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [autoConvert, setAutoConvert] = useState(true);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>('Member');
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -245,13 +243,11 @@ export function Converter() {
     // Load all settings in one go
     const loadSettings = () => {
         const storedFavorites = localStorage.getItem("favoriteConversions");
-        const savedAutoConvert = localStorage.getItem(getUserKey('autoConvert', userEmail));
         const savedCustomUnits = localStorage.getItem(getUserKey('customUnits', userEmail));
         const savedCustomCategories = localStorage.getItem(getUserKey('customCategories', userEmail));
         const savedDefaultRegion = localStorage.getItem(getUserKey('defaultRegion', userEmail));
 
         if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
-        if (savedAutoConvert !== null) setAutoConvert(JSON.parse(savedAutoConvert));
         if (savedCustomUnits) setCustomUnits(JSON.parse(savedCustomUnits));
         if (savedCustomCategories) setCustomCategories(JSON.parse(savedCustomCategories));
         if (savedDefaultRegion && regions.includes(savedDefaultRegion as Region)) {
@@ -273,7 +269,7 @@ export function Converter() {
     
     const handleStorageChange = (e: StorageEvent) => {
         const userEmail = profile?.email || null;
-        if (e.key === getUserKey('customUnits', userEmail) || e.key === getUserKey('customCategories', userEmail) || e.key === getUserKey('autoConvert', userEmail) || e.key === getUserKey('defaultRegion', userEmail)) {
+        if (e.key === getUserKey('customUnits', userEmail) || e.key === getUserKey('customCategories', userEmail) || e.key === getUserKey('defaultRegion', userEmail)) {
            loadSettings();
         }
         if(e.key === 'conversionHistory'){
@@ -319,7 +315,7 @@ export function Converter() {
       
   };
 
- const performConversion = useCallback(() => {
+ const performConversion = () => {
     const numValue = parseFloat(inputValue);
     if (isNaN(numValue) || !fromUnit || !toUnit) {
       setOutputValue("");
@@ -345,14 +341,7 @@ export function Converter() {
 
     setOutputValue(formattedResult);
     handleSaveToHistory(inputValue, fromUnit, toUnit, formattedResult, categoryToUse.name);
-  }, [inputValue, fromUnit, toUnit, region, conversionCategories, profile?.email]);
-
-  
-  useEffect(() => {
-    if (autoConvert) {
-      performConversion();
-    }
-  }, [debouncedInputValue, fromUnit, toUnit, region, autoConvert, performConversion]);
+  };
 
   React.useEffect(() => {
     if (!outputValue) {
@@ -832,12 +821,10 @@ export function Converter() {
                 </div>
                 
                 <div className="flex flex-col md:flex-row justify-between items-center mt-2 gap-4">
-                    {!autoConvert && (
-                        <Button onClick={handleConvertClick} className="w-full">
-                            <Power className="mr-2 h-4 w-4"/>
-                            {t('converter.convertButton')}
-                        </Button>
-                    )}
+                    <Button onClick={handleConvertClick} className="w-full">
+                        <Power className="mr-2 h-4 w-4"/>
+                        {t('converter.convertButton')}
+                    </Button>
                 </div>
             </CardContent>
         </Card>
