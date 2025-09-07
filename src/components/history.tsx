@@ -42,12 +42,27 @@ export function History() {
     const { toast } = useToast();
     const router = useRouter();
 
-    useEffect(() => {
-        setIsClient(true);
+    const loadData = () => {
         const storedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
         const storedFavorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
         if (storedHistory) setHistory(JSON.parse(storedHistory));
         if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
+    };
+
+    useEffect(() => {
+        setIsClient(true);
+        loadData();
+
+        const handleStorageChange = (event: StorageEvent) => {
+            if (event.key === HISTORY_STORAGE_KEY || event.key === FAVORITES_STORAGE_KEY) {
+                loadData();
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
     }, []);
 
     const parseHistoryString = (item: string) => {
@@ -67,6 +82,8 @@ export function History() {
         setState([]);
         setShowClearDialog(false);
         toast({ title: tab === 'history' ? 'History Cleared' : 'Favorites Cleared' });
+        // Manually dispatch event for other tabs
+        window.dispatchEvent(new StorageEvent('storage', { key: storageKey, newValue: '[]' }));
     };
 
     const handleDeleteItem = (item: string) => {
@@ -79,6 +96,8 @@ export function History() {
         localStorage.setItem(storageKey, JSON.stringify(newList));
         setItemToDelete(null);
         toast({ title: 'Item Removed' });
+        // Manually dispatch event for other tabs
+        window.dispatchEvent(new StorageEvent('storage', { key: storageKey, newValue: JSON.stringify(newList) }));
     };
 
     const handleRestore = (item: string) => {

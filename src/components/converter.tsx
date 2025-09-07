@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -405,6 +404,7 @@ export function Converter() {
         }
         const newHistory = [conversionString, ...prevHistory];
         localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'conversionHistory', newValue: JSON.stringify(newHistory) }));
         return newHistory;
     });
   }, [profile?.email]);
