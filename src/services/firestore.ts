@@ -97,6 +97,50 @@ export async function setGlobalMaintenanceMode(isEnabled: boolean) {
     }
 }
 
+
+export interface UpdateInfo {
+  targetDate: string | null;
+  updateText: string | null;
+}
+
+/**
+ * Sets the global update information in Firebase Realtime Database.
+ * @param info - Object containing the target date and update text.
+ */
+export async function setUpdateInfo(info: UpdateInfo) {
+    try {
+        const updateInfoRef = ref(rtdb, 'settings/updateInfo');
+        await setRealtimeDb(updateInfoRef, info);
+    } catch (error) {
+        console.error("Error setting update info:", error);
+        throw error;
+    }
+}
+
+/**
+ * Listens for changes to the global update information from Realtime Database.
+ * @param callback - Function to be called with the update info.
+ * @returns The unsubscribe function for the listener.
+ */
+export function listenToUpdateInfo(callback: (info: UpdateInfo) => void) {
+    const updateInfoRef = ref(rtdb, 'settings/updateInfo');
+
+    const unsubscribe = onValue(updateInfoRef, (snapshot) => {
+        const data = snapshot.val();
+        const info: UpdateInfo = {
+            targetDate: data?.targetDate || null,
+            updateText: data?.updateText || null,
+        };
+        callback(info);
+    }, (error) => {
+        console.error("Error listening to update info:", error);
+        callback({ targetDate: null, updateText: null }); // Default on error
+    });
+
+    return unsubscribe;
+}
+
+
 /**
  * Sets up a real-time listener for the global maintenance mode status from Realtime Database.
  * @param setIsMaintenanceMode - State setter to update the component's view of the maintenance status.

@@ -9,6 +9,7 @@ import { RefreshCw, Delete, Divide, X, Minus, Plus, Equal, Sigma, CalculatorIcon
 import type { CalculatorMode } from '../settings';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useRouter } from 'next/navigation';
+import { incrementTodaysCalculations } from '@/lib/utils';
 
 const buttonClasses = {
   gray: "bg-muted hover:bg-muted/80 text-foreground",
@@ -168,6 +169,7 @@ export function Calculator() {
       }
       const formattedResult = evalResult.toLocaleString(undefined, { maximumFractionDigits: 10, useGrouping: true });
       setResult(formattedResult);
+      incrementTodaysCalculations();
       
       localStorage.setItem('lastCalculation', `${expression} = ${formattedResult}`); // Save for note editor
     } catch (error) {
@@ -299,5 +301,3 @@ const BasicLayout = () => (
     </div>
   );
 }
-
-    
