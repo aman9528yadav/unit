@@ -248,6 +248,46 @@ export function listenToFaqsFromRtdb(callback: (faqs: FAQ[]) => void) {
 }
 
 
+// --- ABOUT PAGE ---
+export interface AppInfo {
+    version: string;
+    build: string;
+    releaseChannel: string;
+    license: string;
+}
+
+export interface ReleasePlanItem {
+    id: string;
+    title: string;
+    date: string;
+}
+
+export interface AboutInfo {
+    appInfo: AppInfo;
+    releasePlan: ReleasePlanItem[];
+}
+
+export async function setAboutInfoInRtdb(info: AboutInfo) {
+    try {
+        const aboutRef = ref(rtdb, 'app-content/aboutInfo');
+        await setRealtimeDb(aboutRef, info);
+    } catch (error) {
+        console.error("Error saving About Info to RTDB:", error);
+        throw error;
+    }
+}
+
+export function listenToAboutInfoFromRtdb(callback: (info: AboutInfo | null) => void) {
+    const aboutRef = ref(rtdb, 'app-content/aboutInfo');
+    return onValue(aboutRef, (snapshot) => {
+        callback(snapshot.val());
+    }, (error) => {
+        console.error("Error listening to About Info from RTDB:", error);
+        callback(null);
+    });
+}
+
+
 // --- USER EVENTS (FIRESTORE) ---
 export interface UserEvent {
     email: string;

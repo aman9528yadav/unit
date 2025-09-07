@@ -7,9 +7,55 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, BarChart, Calendar, Lightbulb, Code, Sparkles, Globe, Wrench, Rocket, FileText, Shield, LifeBuoy, Flag, Info, FileClock, Users, Activity, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { listenToAboutInfoFromRtdb, AppInfo, ReleasePlanItem } from "@/services/firestore";
+import { Skeleton } from "./ui/skeleton";
+
+const defaultAppInfo: AppInfo = {
+    version: 'Beta 1.0.0',
+    build: '2025.09.01',
+    releaseChannel: 'Beta',
+    license: 'MIT',
+};
+
+const defaultReleasePlan: ReleasePlanItem[] = [
+    { id: '1', title: 'Planning', date: '12 May 2025' },
+    { id: '2', title: 'Beta Test 1', date: '29 Dec 2025' },
+    { id: '3', title: 'Beta Test 2', date: '1 July 2026' },
+    { id: '4', title: 'Beta Test 3', date: '12 Oct 2027' },
+    { id: '5', title: 'Final Release', date: '15 Aug 2028' },
+];
+
+
+function AppInfoSkeleton() {
+    return (
+        <div className="bg-white shadow-lg rounded-2xl p-4">
+            <h2 className="text-2xl font-bold text-indigo-600 mb-4"><Skeleton className="h-8 w-1/2" /></h2>
+            <div className="space-y-4">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+            </div>
+        </div>
+    )
+}
 
 export function About() {
   const router = useRouter();
+  const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
+  const [releasePlan, setReleasePlan] = useState<ReleasePlanItem[] | null>(null);
+
+
+  useEffect(() => {
+    const unsubscribe = listenToAboutInfoFromRtdb((data) => {
+        setAppInfo(data?.appInfo || defaultAppInfo);
+        setReleasePlan(data?.releasePlan || defaultReleasePlan);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const features = [
     {
       title: "App Feature",
@@ -123,26 +169,33 @@ export function About() {
 
         {/* App Info Section */}
         <section className="mt-12 grid grid-cols-1 gap-8 w-full">
-          <div className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-xl transition">
-            <h2 className="text-2xl font-bold text-indigo-600 mb-4">App Information</h2>
-            <ul className="text-gray-600 leading-relaxed space-y-2">
-              <li><strong>Version:</strong> Beta 1.0.0</li>
-              <li><strong>Build:</strong> 2025.09.01</li>
-              <li><strong>Release Channel:</strong> Beta</li>
-              <li><strong>License:</strong> MIT</li>
-            </ul>
-          </div>
+            {!appInfo || !releasePlan ? (
+                <>
+                    <AppInfoSkeleton />
+                    <AppInfoSkeleton />
+                </>
+            ) : (
+                <>
+                  <div className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-xl transition">
+                    <h2 className="text-2xl font-bold text-indigo-600 mb-4">App Information</h2>
+                    <ul className="text-gray-600 leading-relaxed space-y-2">
+                        <li><strong>Version:</strong> {appInfo.version}</li>
+                        <li><strong>Build:</strong> {appInfo.build}</li>
+                        <li><strong>Release Channel:</strong> {appInfo.releaseChannel}</li>
+                        <li><strong>License:</strong> {appInfo.license}</li>
+                    </ul>
+                  </div>
 
-          <div className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-xl transition">
-            <h2 className="text-2xl font-bold text-indigo-600 mb-4">Release Plan</h2>
-            <ul className="text-gray-600 leading-relaxed space-y-2">
-              <li>📝 <strong>Planning:</strong> 12 May 2025</li>
-              <li>🧪 <strong>Beta Test 1:</strong> 29 Dec 2025</li>
-              <li>🧪 <strong>Beta Test 2:</strong> 1 July 2026</li>
-              <li>🧪- <strong>Beta Test 3:</strong> 12 Oct 2027</li>
-              <li>🚀 <strong>Final Release:</strong> 15 Aug 2028</li>
-            </ul>
-          </div>
+                  <div className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-xl transition">
+                    <h2 className="text-2xl font-bold text-indigo-600 mb-4">Release Plan</h2>
+                    <ul className="text-gray-600 leading-relaxed space-y-2">
+                      {releasePlan.map(item => (
+                          <li key={item.id}>📝 <strong>{item.title}:</strong> {item.date}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </>
+            )}
         </section>
 
         {/* Roadmap Section */}

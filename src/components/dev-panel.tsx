@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send, Wrench, Info, Shield, BellOff, Newspaper } from 'lucide-react';
+import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send, Wrench, Info, Shield, BellOff, Newspaper, User } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
@@ -524,6 +524,13 @@ export function DevPanel() {
                                     <p className='text-xs text-muted-foreground'>Edit the "What's New" page content.</p>
                                 </div>
                                 <Button onClick={() => router.push('/dev/updates')}>Manage</Button>
+                            </div>
+                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <div>
+                                    <Label>Manage About Page</Label>
+                                    <p className='text-xs text-muted-foreground'>Edit the app info and release plan.</p>
+                                </div>
+                                <Button onClick={() => router.push('/dev/about')}>Manage</Button>
                             </div>
                         </CardContent>
                     </Card>
