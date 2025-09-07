@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -216,14 +217,15 @@ export function Calculator() {
       await incrementCalculationCount();
       await updateUserRole(userEmail);
 
-
-      const historyEntry = `${expression} = ${formattedResult}|${new Date().toISOString()}`;
+      const historyEntry = `${expression} = ${formattedResult}`;
+      const historyStringForStorage = `${historyEntry}|${new Date().toISOString()}`;
       const storedHistory = localStorage.getItem('calculationHistory');
       const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
-      const newHistory = [historyEntry, ...currentHistory];
+      const newHistory = [historyStringForStorage, ...currentHistory];
       localStorage.setItem('calculationHistory', JSON.stringify(newHistory));
-      localStorage.setItem('lastCalculation', historyEntry); 
-      loadRecentCalculations();
+      localStorage.setItem('lastCalculation', historyStringForStorage);
+      window.dispatchEvent(new StorageEvent('storage', { key: 'lastCalculation', newValue: historyStringForStorage }));
+
 
     } catch (error) {
       console.error(error)

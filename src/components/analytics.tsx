@@ -21,9 +21,12 @@ import {
   TrendingDown,
   NotebookPen,
   Trash2,
-  Star
+  Star,
+  Timer,
+  Hourglass,
+  Activity
 } from "lucide-react";
-import { addDays, format } from "date-fns";
+import { addDays, format, formatDistanceToNow, parseISO } from "date-fns";
 import { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
@@ -39,6 +42,12 @@ import { getStreakData } from "@/lib/streak";
 type ChartType = "bar" | "line";
 type TimeRangePreset = "weekly" | "monthly" | "yearly";
 
+interface LastActivityItem {
+    name: string;
+    details: string;
+    timestamp: string;
+    icon: React.ElementType;
+}
 
 const getActivityIcon = (type: string) => {
     switch (type) {
@@ -86,6 +95,29 @@ export function Analytics() {
         from: addDays(new Date(), -6),
         to: new Date(),
     });
+    const [lastActivities, setLastActivities] = useState<LastActivityItem[]>([]);
+
+    const loadLastActivities = useCallback(() => {
+        const activities: (LastActivityItem | null)[] = [
+            { key: 'lastConversion', name: 'Unit Conversion', icon: RefreshCw },
+            { key: 'lastCalculation', name: 'Calculator', icon: Calculator },
+            { key: 'lastNote', name: 'Note Edited', icon: NotebookPen },
+            { key: 'lastDateCalc', name: 'Date Calculation', icon: CalendarIcon },
+            { key: 'lastTimer', name: 'Timer', icon: Timer },
+            { key: 'lastStopwatch', name: 'Stopwatch', icon: Hourglass }
+        ].map(({ key, name, icon }) => {
+            const item = localStorage.getItem(key);
+            if (!item) return null;
+            const [details, timestamp] = item.split('|');
+            return { name, details, timestamp, icon };
+        });
+
+        const sortedActivities = activities
+            .filter((a): a is LastActivityItem => a !== null && a.timestamp !== undefined)
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+        setLastActivities(sortedActivities);
+    }, []);
 
 
     const loadStats = useCallback(async () => {
@@ -112,7 +144,14 @@ export function Analytics() {
 
     useEffect(() => {
         loadStats();
-    }, [loadStats]);
+        loadLastActivities();
+
+        const handleStorageChange = () => {
+            loadLastActivities();
+        }
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, [loadStats, loadLastActivities]);
     
     const handleTimeRangeChange = (preset: TimeRangePreset) => {
       setTimeRange(preset);
@@ -314,6 +353,33 @@ export function Analytics() {
                     )}
                 </ResponsiveContainer>
               </CardContent>
+            </Card>
+
+            <Card className="rounded-2xl shadow-md">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Activity /> Last Activity</CardTitle>
+                    <CardDescription>Your most recent actions across the app.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ul className="space-y-3">
+                        {lastActivities.length > 0 ? lastActivities.map((activity, index) => (
+                             <li key={index} className="flex items-center gap-4 p-2 bg-secondary rounded-lg">
+                                <div className="p-2 bg-primary/10 text-primary rounded-full">
+                                    <activity.icon className="w-5 h-5"/>
+                                </div>
+                                <div className="flex-1">
+                                    <p className="font-semibold">{activity.name}</p>
+                                    <p className="text-sm text-muted-foreground truncate">{activity.details}</p>
+                                </div>
+                                <p className="text-xs text-muted-foreground whitespace-nowrap">
+                                    {formatDistanceToNow(parseISO(activity.timestamp), { addSuffix: true })}
+                                </p>
+                            </li>
+                        )) : (
+                            <p className="text-center text-muted-foreground py-8">No recent activity recorded.</p>
+                        )}
+                    </ul>
+                </CardContent>
             </Card>
         </div>
       );

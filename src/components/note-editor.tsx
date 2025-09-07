@@ -201,7 +201,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         const lastCalc = localStorage.getItem('lastCalculation');
         if (lastCalc && editorRef.current) {
             editorRef.current.focus();
-            document.execCommand('insertText', false, lastCalc);
+            document.execCommand('insertText', false, lastCalc.split('|')[0]);
             setIsDirty(true);
         } else {
             toast({ title: t('noteEditor.toast.noCalculation.title'), description: t('noteEditor.toast.noCalculation.description')});
@@ -212,7 +212,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         const lastConv = localStorage.getItem('lastConversion');
         if (lastConv && editorRef.current) {
             editorRef.current.focus();
-            document.execCommand('insertText', false, lastConv);
+            document.execCommand('insertText', false, lastConv.split('|')[0]);
             setIsDirty(true);
         } else {
             toast({ title: t('noteEditor.toast.noConversion.title'), description: t('noteEditor.toast.noConversion.description')});
@@ -264,6 +264,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         }
 
         localStorage.setItem(notesKey, JSON.stringify(notes));
+        const lastNoteString = `${title || 'Untitled Note'}|${new Date().toISOString()}`;
+        localStorage.setItem('lastNote', lastNoteString);
+        window.dispatchEvent(new StorageEvent('storage', { key: 'lastNote', newValue: lastNoteString }));
         setIsDirty(false);
 
         toast({
