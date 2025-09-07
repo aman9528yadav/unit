@@ -48,7 +48,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useDebounce } from "@/hooks/use-debounce";
-import { incrementConversionCount } from "@/lib/stats";
+import { incrementConversionCount, getStats } from "@/lib/stats";
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -57,7 +57,7 @@ type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 
 const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
-const PREMIUM_REGIONS = ['Japan', 'Korea', 'China', 'Middle East'];
+const PREMIUM_REGIONS: Region[] = ['Japan', 'Korea', 'China', 'Middle East'];
 
 
 const PREMIUM_CATEGORIES = ['Pressure', 'Energy', 'Currency', 'Fuel Economy'];
@@ -237,6 +237,19 @@ export function Converter() {
         setFavorites(JSON.parse(storedFavorites));
     }
   }, []);
+  
+  const updateUserRole = async (email: string | null) => {
+    if(email === DEVELOPER_EMAIL) {
+        setUserRole('Owner');
+        return;
+    }
+    const stats = await getStats(email);
+    if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD) {
+        setUserRole('Premium Member');
+    } else {
+        setUserRole('Member');
+    }
+  };
 
   React.useEffect(() => {
     const storedProfileData = localStorage.getItem("userProfile");
@@ -246,6 +259,8 @@ export function Converter() {
         setProfile(JSON.parse(storedProfileData));
     }
     
+    updateUserRole(userEmail);
+
     // Load all settings in one go
     const loadSettings = () => {
         const savedCustomUnits = localStorage.getItem(getUserKey('customUnits', userEmail));
@@ -371,7 +386,7 @@ export function Converter() {
   };
 
   const handleRegionChange = (newRegion: string) => {
-    if (isPremiumFeatureLocked && PREMIUM_REGIONS.includes(newRegion)) {
+    if (isPremiumFeatureLocked && PREMIUM_REGIONS.includes(newRegion as Region)) {
         setShowPremiumLockDialog(true);
     } else {
         setRegion(newRegion as Region);
@@ -391,6 +406,7 @@ export function Converter() {
     if (conversionResult) {
       const { formattedResult, categoryToUse } = conversionResult;
       incrementConversionCount();
+      updateUserRole(profile?.email || null);
       handleSaveToHistory(inputValue, fromUnit, toUnit, formattedResult, categoryToUse.name);
       loadRecentConversions(); // Refresh recent conversions list
     }

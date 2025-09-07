@@ -252,14 +252,6 @@ export function Settings() {
             </Section>
             <TooltipProvider>
                 <Section title={t('settings.appearance.title')}>
-                     <div className="p-4 bg-muted/50 rounded-lg mb-4">
-                        <Label className="text-sm font-medium mb-2 block text-center">{t('themeEditor.preview')}</Label>
-                        <div className="mx-auto w-[200px] h-[400px] bg-gray-800 rounded-[20px] p-2 border-4 border-gray-900 shadow-xl overflow-hidden">
-                            <div className="w-full h-full rounded-[12px] overflow-hidden">
-                                <ThemePreview theme={selectedTheme}/>
-                            </div>
-                        </div>
-                    </div>
                      <SettingRow
                         label={t('settings.appearance.themeMode.label')}
                         description={t('settings.appearance.themeMode.description')}
@@ -295,6 +287,14 @@ export function Settings() {
                             </div>
                         }
                     />
+                     <div className="p-4 bg-muted/50 rounded-lg my-4">
+                        <Label className="text-sm font-medium mb-2 block text-center">Live Theme Preview</Label>
+                        <div className="mx-auto w-[200px] h-[400px] bg-gray-800 rounded-[20px] p-2 border-4 border-gray-900 shadow-xl overflow-hidden">
+                            <div className="w-full h-full rounded-[12px] overflow-hidden">
+                                <ThemePreview theme={selectedTheme}/>
+                            </div>
+                        </div>
+                    </div>
                 </Section>
             </TooltipProvider>
 
