@@ -289,10 +289,10 @@ export function About() {
               <div className="flex flex-wrap justify-center gap-8">
                 <div className="flex flex-col items-center">
                   <Image 
-                    src={ownerInfo.imageUrl || "/placeholder.png"}
+                    src={ownerInfo.imageUrl || null}
                     alt={ownerInfo.name}
-                    width={120}
-                    height={120}
+                    width={144}
+                    height={144}
                     className="rounded-full object-cover border-4 border-white shadow-lg"
                     data-ai-hint="man portrait"
                   />
@@ -386,5 +386,3 @@ export function About() {
     </motion.div>
   );
 }
-
-    
