@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import { FAQ, defaultFaqs } from "./help";
 import { useLanguage } from "@/context/language-context";
-import { listenToFaqs } from "@/services/firestore";
+import { listenToFaqsFromRtdb } from "@/services/firestore";
 
 
 const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
@@ -32,7 +32,7 @@ export function HowToUse() {
   const { t } = useLanguage();
   
   useEffect(() => {
-    const unsubscribe = listenToFaqs((faqsFromDb) => {
+    const unsubscribe = listenToFaqsFromRtdb((faqsFromDb) => {
         setFaqs(faqsFromDb.length > 0 ? faqsFromDb : defaultFaqs);
     });
     return () => unsubscribe();
