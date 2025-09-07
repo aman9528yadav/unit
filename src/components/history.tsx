@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -60,6 +61,8 @@ const parseHistoryString = (item: string, type: HistoryItemData['type']): Histor
     return null;
 }
 
+const getUserKey = (key: string, email: string | null) => `${email || 'guest'}_${key}`;
+
 export function History() {
   const [conversionHistory, setConversionHistory] = useState<HistoryItemData[]>([]);
   const [calculationHistory, setCalculationHistory] = useState<HistoryItemData[]>([]);
@@ -82,7 +85,21 @@ export function History() {
     if(storedProfile) {
         setProfile(JSON.parse(storedProfile));
     }
+    
+    // Load initial data from localStorage for instant UI
+    const localConvKey = getUserKey('conversionHistory', userEmail);
+    const localCalcKey = getUserKey('calculationHistory', userEmail);
+    const localFavKey = getUserKey('favoriteConversions', userEmail);
+    
+    const localConvHistory = JSON.parse(localStorage.getItem(localConvKey) || '[]');
+    const localCalcHistory = JSON.parse(localStorage.getItem(localCalcKey) || '[]');
+    const localFavorites = JSON.parse(localStorage.getItem(localFavKey) || '[]');
+    
+    setConversionHistory(localConvHistory.map((s: string) => parseHistoryString(s, 'conversion')).filter(Boolean as any));
+    setCalculationHistory(localCalcHistory.map((s: string) => parseHistoryString(s, 'calculation')).filter(Boolean as any));
+    setFavorites(localFavorites.map((s: string) => parseHistoryString(s, 'favorite')).filter(Boolean as any));
 
+    // Listen to RTDB for real-time updates
     const unsub = listenToUserData(userEmail, (data) => {
         const convHistory: string[] = data?.conversionHistory || [];
         const calcHistory: string[] = data?.calculationHistory || [];
@@ -91,6 +108,12 @@ export function History() {
         setConversionHistory(convHistory.map(s => parseHistoryString(s, 'conversion')).filter(Boolean as any));
         setCalculationHistory(calcHistory.map(s => parseHistoryString(s, 'calculation')).filter(Boolean as any));
         setFavorites(favs.map(s => parseHistoryString(s, 'favorite')).filter(Boolean as any));
+
+        // Also update local storage when RTDB changes
+        localStorage.setItem(localConvKey, JSON.stringify(convHistory));
+        localStorage.setItem(localCalcKey, JSON.stringify(calcHistory));
+        localStorage.setItem(localFavKey, JSON.stringify(favs));
+
     });
     
     return () => unsub();
@@ -265,3 +288,5 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
         </div>
     )
 }
+
+    

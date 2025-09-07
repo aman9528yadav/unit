@@ -260,7 +260,11 @@ export function Converter() {
         setCustomUnits(data.customUnits || []);
         setCustomCategories(data.customCategories || []);
         setFavorites(data.favoriteConversions || []);
-        setRecentConversions((data.conversionHistory || []).slice(0, 4));
+        const conversionHistory = data.conversionHistory || [];
+        setRecentConversions(conversionHistory.slice(0, 4));
+        const localHistoryKey = getUserKey('conversionHistory', userEmail);
+        localStorage.setItem(localHistoryKey, JSON.stringify(conversionHistory));
+        
         const savedDefaultRegion = data.defaultRegion;
          if (savedDefaultRegion && regions.includes(savedDefaultRegion as Region)) {
           setRegion(savedDefaultRegion as Region);
@@ -327,12 +331,19 @@ export function Converter() {
   const handleSaveToHistory = (input: string, from: string, to: string, result: string, category: string) => {
     const historyString = getFullHistoryString(input, from, to, result, category);
     
+    const localHistoryKey = getUserKey('conversionHistory', profile?.email || null);
+    const localHistory = JSON.parse(localStorage.getItem(localHistoryKey) || '[]');
+    const newLocalHistory = [historyString, ...localHistory].slice(0, 100);
+    localStorage.setItem(localHistoryKey, JSON.stringify(newLocalHistory));
+
+
     if (profile?.email) {
         addConversionToHistory(profile.email, historyString);
     }
     
     localStorage.setItem('lastConversion', historyString);
     window.dispatchEvent(new StorageEvent('storage', { key: 'lastConversion', newValue: historyString }));
+    window.dispatchEvent(new StorageEvent('storage', { key: localHistoryKey, newValue: JSON.stringify(newLocalHistory) }));
   };
   
  const handleSearch = () => {
@@ -953,3 +964,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
