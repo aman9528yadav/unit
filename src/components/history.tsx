@@ -56,16 +56,19 @@ export function History() {
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const { language, t } = useLanguage();
 
-  const parseHistoryString = useCallback((item: string): HistoryItemData => {
+  const parseHistoryString = useCallback((item: string): HistoryItemData | null => {
     const parts = item.split('|');
+    if (parts.length < 3) return null; // Ensure the string is valid
+    const conversionParts = parts[0].split(' ');
+
     return {
       conversion: parts[0] || '',
       categoryName: parts[1] || '',
       timestamp: parts[2] || new Date().toISOString(),
-      value: parts[0]?.split(' ')[0] || '',
-      from: parts[0]?.split(' ')[1] || '',
-      result: parts[0]?.split(' ')[3] || '',
-      to: parts[0]?.split(' ')[4] || '',
+      value: conversionParts[0] || '',
+      from: conversionParts[1] || '',
+      result: conversionParts[3] || '',
+      to: conversionParts[4] || '',
     };
   }, []);
 
@@ -128,7 +131,9 @@ export function History() {
   
   const itemsToDisplay = activeTab === 'history' ? history : favorites;
     
-  const filteredItems = itemsToDisplay.map(parseHistoryString).filter(parsed => {
+  const filteredItems = itemsToDisplay.map(parseHistoryString).filter((parsed): parsed is HistoryItemData => {
+    if (!parsed) return false;
+    
     const category = conversionCategories.find(c => c.name === parsed.categoryName);
     const fromUnit = category?.units.find(u => u.symbol === parsed.from);
     const toUnit = category?.units.find(u => u.symbol === parsed.to);
@@ -147,7 +152,7 @@ export function History() {
     return searchMatch && categoryMatch;
   });
 
-  const availableCategories = ['All', ...new Set(itemsToDisplay.map(item => parseHistoryString(item).categoryName).filter(Boolean))];
+  const availableCategories = ['All', ...new Set(itemsToDisplay.map(item => parseHistoryString(item)?.categoryName).filter(Boolean as any))];
 
   return (
       <div className="w-full max-w-2xl mx-auto flex flex-col gap-4">
@@ -285,3 +290,5 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
         </div>
     )
 }
+
+    

@@ -279,32 +279,33 @@ export function Converter() {
     };
   }, [profile?.email, allUnits, conversionCategories]);
   
-  const getFullHistoryString = (value: number, from: string, to: string, result: number, categoryName: string) => {
-    const conversion = `${value} ${from} \u2192 ${result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false })} ${to}`;
+  const getFullHistoryString = (value: string, from: string, to: string, result: string, categoryName: string) => {
+    const conversion = `${value} ${from} \u2192 ${result} ${to}`;
     const timestamp = new Date().toISOString();
     return `${conversion}|${categoryName}|${timestamp}`;
   }
 
-  const handleSaveToHistory = useCallback(async (value: number, from: string, to: string, result: number, category: string) => {
-    const userEmail = profile?.email || null;
-    const shouldSaveKey = getUserKey('saveConversionHistory', userEmail);
+  const handleSaveToHistory = useCallback(async (valueStr: string, from: string, to: string, resultStr: string, category: string) => {
+    const shouldSaveKey = getUserKey('saveConversionHistory', profile?.email || null);
     const shouldSave = JSON.parse(localStorage.getItem(shouldSaveKey) ?? 'true');
     
     if (!shouldSave) return;
     
-    const newHistoryEntry = getFullHistoryString(value, from, to, result, category);
+    const newHistoryEntry = getFullHistoryString(valueStr, from, to, resultStr, category);
 
     const storedHistory = localStorage.getItem("conversionHistory");
     const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
 
+    // Prevent adding if it's identical to the most recent entry
     if (currentHistory.length > 0 && currentHistory[0] === newHistoryEntry) {
         return;
     }
     
     const newHistory = [newHistoryEntry, ...currentHistory];
     localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
-    localStorage.setItem('lastConversion', newHistoryEntry);
+    localStorage.setItem('lastConversion', newHistoryEntry); // For use in note editor
     
+    // Notify other tabs/windows
     window.dispatchEvent(new StorageEvent('storage', { key: 'conversionHistory', newValue: JSON.stringify(newHistory) }));
     
     await incrementTodaysCalculations();
@@ -356,7 +357,7 @@ export function Converter() {
     }
     
     // Save to history right after a successful conversion
-    await handleSaveToHistory(numValue, from, to, result, categoryToUse.name);
+    await handleSaveToHistory(valueStr, from, to, formattedResult, categoryToUse.name);
 }, [region, conversionCategories, handleSaveToHistory]);
   
   useEffect(() => {
@@ -366,14 +367,12 @@ export function Converter() {
   }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion, inputValue]);
 
   React.useEffect(() => {
-    const numValue = parseFloat(inputValue);
-    if (isNaN(numValue) || !outputValue) {
+    if (!outputValue) {
       setIsFavorite(false);
       return
     };
 
-    const result = parseFloat(outputValue.replace(/,/g, ''));
-    const fullHistoryString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
+    const fullHistoryString = getFullHistoryString(inputValue, fromUnit, toUnit, outputValue, selectedCategory.name);
     setIsFavorite(favorites.some(fav => fav === fullHistoryString));
   }, [inputValue, fromUnit, toUnit, outputValue, favorites, selectedCategory.name]);
 
@@ -427,8 +426,7 @@ export function Converter() {
     const numValue = parseFloat(inputValue);
     if (isNaN(numValue) || !outputValue) return;
 
-    const result = parseFloat(outputValue.replace(/,/g, ''));
-    const fullHistoryString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
+    const fullHistoryString = getFullHistoryString(inputValue, fromUnit, toUnit, outputValue, selectedCategory.name);
 
     let newFavorites: string[];
     const isAlreadyFavorite = favorites.some(fav => fav === fullHistoryString);
@@ -468,13 +466,12 @@ export function Converter() {
   };
 
   const handleShareAsText = async () => {
-    const numValue = parseFloat(inputValue);
-    if (isNaN(numValue) || !outputValue) {
+    if (!outputValue) {
       toast({ title: t('converter.toast.nothingToShare'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
       return;
     }
-    const result = parseFloat(outputValue.replace(/,/g, ''));
-    const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name).split('|')[0];
+    
+    const conversionString = getFullHistoryString(inputValue, fromUnit, toUnit, outputValue, selectedCategory.name).split('|')[0];
 
     if (navigator.share) {
       try {
@@ -500,19 +497,17 @@ export function Converter() {
   };
 
   const handleExportAsTxt = () => {
-    const numValue = parseFloat(inputValue);
-    if (isNaN(numValue) || !outputValue) {
+    if (!outputValue) {
       toast({ title: t('converter.toast.nothingToExport'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
       return;
     }
-    const result = parseFloat(outputValue.replace(/,/g, ''));
-    const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name).split('|')[0];
+    const conversionString = getFullHistoryString(inputValue, fromUnit, toUnit, outputValue, selectedCategory.name).split('|')[0];
     
     const blob = new Blob([conversionString], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `conversion-${numValue}${fromUnit}-to-${toUnit}.txt`;
+    link.download = `conversion-${inputValue}${fromUnit}-to-${toUnit}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -521,8 +516,7 @@ export function Converter() {
   };
   
   const handleExportAsImage = async () => {
-    const numValue = parseFloat(inputValue);
-     if (isNaN(numValue) || !outputValue || !imageExportRef.current) {
+     if (!outputValue || !imageExportRef.current) {
         toast({ title: t('converter.toast.nothingToExport'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
         return;
     }
@@ -532,7 +526,7 @@ export function Converter() {
         const image = canvas.toDataURL("image/png", 1.0);
         const link = document.createElement('a');
         link.href = image;
-        link.download = `conversion-${numValue}${fromUnit}-to-${toUnit}.png`;
+        link.download = `conversion-${inputValue}${fromUnit}-to-${toUnit}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -970,3 +964,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
