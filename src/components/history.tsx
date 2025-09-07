@@ -51,7 +51,7 @@ export function History() {
   const [activeTab, setActiveTab] = useState(tabFromQuery || "conversions");
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
-  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{item: string, type: 'conversion' | 'calculation' | 'favorite'} | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const { language, t } = useLanguage();
 
@@ -126,12 +126,13 @@ export function History() {
     }
   };
 
-  const handleDeleteItem = (itemString: string) => {
-    if (activeTab === 'conversions') {
+  const handleDeleteItem = (itemString: string, type: 'conversion' | 'calculation' | 'favorite') => {
+    if (type === 'conversion' || type === 'favorite') {
         const newHistory = conversionHistory.filter(h => h !== itemString);
         setConversionHistory(newHistory);
         localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
-    } else if (activeTab === 'calculator') {
+    } 
+    if (type === 'calculation') {
         const newHistory = calculationHistory.filter(h => h !== itemString);
         setCalculationHistory(newHistory);
         localStorage.setItem("calculationHistory", JSON.stringify(newHistory));
@@ -230,7 +231,14 @@ export function History() {
                 {filteredItems.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {filteredItems.map((item, index) => (
-                         <HistoryItem key={`${item.timestamp}-${index}`} item={item} onRestore={handleRestore} onDelete={() => setItemToDelete(item.fullString)} t={t} language={language} />
+                         <HistoryItem 
+                           key={`${item.timestamp}-${index}`} 
+                           item={item} 
+                           onRestore={handleRestore} 
+                           onDelete={() => setItemToDelete({item: item.fullString, type: activeTab as any})} 
+                           t={t} 
+                           language={language} 
+                         />
                     ))}
                   </div>
                 ) : (
@@ -252,7 +260,7 @@ export function History() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setItemToDelete(null)}>{t('history.dialog.cancel')}</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleDeleteItem(itemToDelete!)} className="bg-destructive hover:bg-destructive/90">
+              <AlertDialogAction onClick={() => handleDeleteItem(itemToDelete!.item, itemToDelete!.type)} className="bg-destructive hover:bg-destructive/90">
                 {t('history.dialog.deleteConfirm')}
               </AlertDialogAction>
             </AlertDialogFooter>

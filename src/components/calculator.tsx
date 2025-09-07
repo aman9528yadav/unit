@@ -4,11 +4,12 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Delete, Divide, X, Minus, Plus, Equal, Sigma, CalculatorIcon, Home, User } from 'lucide-react';
+import { RefreshCw, Delete, Divide, X, Minus, Plus, Equal, Sigma, CalculatorIcon, Home, User, History } from 'lucide-react';
 import type { CalculatorMode } from '../settings';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useRouter } from 'next/navigation';
 import { incrementTodaysCalculations } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
 const buttonClasses = {
   gray: "bg-muted hover:bg-muted/80 text-foreground",
@@ -46,8 +47,9 @@ export function Calculator() {
   const router = useRouter();
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [recentCalculations, setRecentCalculations] = useState<string[]>([]);
 
-  
+
   // A simple and safe expression evaluator
   const evaluateExpression = (expr: string, currentAngleMode: 'deg' | 'rad'): number => {
       // Regular expression to match trig functions like sin(90), cos(45), etc.
@@ -86,6 +88,12 @@ export function Calculator() {
       // Using Function constructor is safer than eval, but still requires caution.
       return new Function('return ' + processedExpr)();
   };
+  
+  const loadRecentCalculations = () => {
+    const storedHistory = localStorage.getItem('calculationHistory');
+    const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
+    setRecentCalculations(currentHistory.slice(0, 4));
+  }
 
   useEffect(() => {
     setIsClient(true);
@@ -94,6 +102,7 @@ export function Calculator() {
         setProfile(JSON.parse(storedProfile));
     }
     
+    loadRecentCalculations();
 
     const savedMode = localStorage.getItem('calculatorMode') as CalculatorMode;
     const soundEnabled = localStorage.getItem('calculatorSoundEnabled');
@@ -104,6 +113,9 @@ export function Calculator() {
     const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'calculatorSoundEnabled') {
             setIsSoundEnabled(e.newValue === null ? true : JSON.parse(e.newValue));
+        }
+        if (e.key === 'calculationHistory') {
+           loadRecentCalculations();
         }
     };
     
@@ -176,6 +188,7 @@ export function Calculator() {
       const newHistory = [historyEntry, ...currentHistory];
       localStorage.setItem('calculationHistory', JSON.stringify(newHistory));
       localStorage.setItem('lastCalculation', historyEntry); 
+      setRecentCalculations(newHistory.slice(0, 4));
 
     } catch (error) {
       console.error(error)
@@ -303,6 +316,27 @@ const BasicLayout = () => (
                 )}
             </div>
         </div>
+        
+         {recentCalculations.length > 0 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                        <History size={18} />
+                        Recent Calculations
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                        {recentCalculations.map((calc, i) => (
+                            <li key={i} className="flex justify-between items-center p-2 bg-secondary rounded-md">
+                               <span>{calc.split('|')[0]}</span>
+                               <Button variant="ghost" size="sm" onClick={() => router.push('/history?tab=calculator')}>View All</Button>
+                            </li>
+                        ))}
+                    </ul>
+                </CardContent>
+            </Card>
+        )}
     </div>
   );
 }

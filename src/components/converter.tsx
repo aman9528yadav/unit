@@ -29,7 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, User, Lock, ChevronDown, Sparkles, LogIn, Scale, Power } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, User, Lock, ChevronDown, Sparkles, LogIn, Scale, Power, History } from "lucide-react";
 import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow.ts";
 import { useToast } from "@/hooks/use-toast";
@@ -214,6 +214,7 @@ export function Converter() {
   const [userRole, setUserRole] = useState<UserRole>('Member');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const [recentConversions, setRecentConversions] = useState<string[]>([]);
 
 
   const imageExportRef = React.useRef<HTMLDivElement>(null);
@@ -228,6 +229,11 @@ export function Converter() {
   const fromUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === fromUnit), [currentUnits, fromUnit]);
   const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit), [currentUnits, toUnit]);
 
+  const loadRecentConversions = useCallback(() => {
+    const storedHistory = localStorage.getItem("conversionHistory");
+    const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
+    setRecentConversions(currentHistory.slice(0, 4));
+  }, []);
 
   React.useEffect(() => {
     const storedProfileData = localStorage.getItem("userProfile");
@@ -252,6 +258,7 @@ export function Converter() {
         if (savedDefaultRegion && regions.includes(savedDefaultRegion as Region)) {
           setRegion(savedDefaultRegion as Region);
         }
+        loadRecentConversions();
     };
     
     loadSettings();
@@ -270,6 +277,9 @@ export function Converter() {
         if (e.key === getUserKey('customUnits', userEmail) || e.key === getUserKey('customCategories', userEmail) || e.key === getUserKey('autoConvert', userEmail) || e.key === getUserKey('defaultRegion', userEmail)) {
            loadSettings();
         }
+        if(e.key === 'conversionHistory'){
+            loadRecentConversions();
+        }
     };
     
     window.addEventListener('storage', handleStorageChange);
@@ -277,10 +287,10 @@ export function Converter() {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [profile?.email, allUnits, conversionCategories]);
+  }, [profile?.email, allUnits, conversionCategories, loadRecentConversions]);
   
   const getFullHistoryString = (value: string, from: string, to: string, result: string, categoryName: string) => {
-    const conversion = `${value} ${from} \u2192 ${result} ${to}`;
+    const conversion = `${value} ${from} → ${result} ${to}`;
     const timestamp = new Date().toISOString();
     return `${conversion}|${categoryName}|${timestamp}`;
   }
@@ -854,6 +864,26 @@ export function Converter() {
             </CardContent>
         </Card>
 
+        {recentConversions.length > 0 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                        <History size={18} />
+                        Recent Conversions
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                        {recentConversions.map((conv, i) => (
+                            <li key={i} className="flex justify-between items-center p-2 bg-secondary rounded-md">
+                               <span>{conv.split('|')[0]}</span>
+                               <Button variant="ghost" size="sm" onClick={() => router.push('/history?tab=conversions')}>View All</Button>
+                            </li>
+                        ))}
+                    </ul>
+                </CardContent>
+            </Card>
+        )}
       
        <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
         <AlertDialogContent>
@@ -964,5 +994,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
