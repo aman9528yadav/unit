@@ -189,7 +189,6 @@ export function Converter() {
   const [inputValue, setInputValue] = React.useState<string>("1");
   const debouncedInputValue = useDebounce(inputValue, 300);
   const [outputValue, setOutputValue] = React.useState<string>("");
-  const [history, setHistory] = React.useState<string[]>([]);
   const [favorites, setFavorites] = React.useState<string[]>([]);
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [region, setRegion] = React.useState<Region>('International');
@@ -232,14 +231,12 @@ export function Converter() {
   React.useEffect(() => {
     const userEmail = profile?.email || null;
 
-    const storedHistory = localStorage.getItem("conversionHistory");
     const storedFavorites = localStorage.getItem("favoriteConversions");
     const savedAutoConvert = localStorage.getItem(getUserKey('autoConvert', userEmail));
     const savedCustomUnits = localStorage.getItem(getUserKey('customUnits', userEmail));
     const savedCustomCategories = localStorage.getItem(getUserKey('customCategories', userEmail));
     const savedDefaultRegion = localStorage.getItem(getUserKey('defaultRegion', userEmail));
 
-    if (storedHistory) setHistory(JSON.parse(storedHistory));
     if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
 
     if (savedAutoConvert !== null) setAutoConvert(JSON.parse(savedAutoConvert));
@@ -273,9 +270,6 @@ export function Converter() {
         }
         if (e.key === getUserKey('defaultRegion', userEmail) && e.newValue && regions.includes(e.newValue as Region)) {
             setRegion(e.newValue as Region);
-        }
-        if (e.key === 'conversionHistory') {
-            setHistory(JSON.parse(e.newValue || '[]'));
         }
     };
 
@@ -340,6 +334,29 @@ export function Converter() {
   }, [selectedCategory, region, currentUnits]);
 
 
+ const handleSaveToHistory = React.useCallback((numValue: number, from: string, to: string, result: number, categoryName: string) => {
+    const saveConversionHistory = JSON.parse(localStorage.getItem(getUserKey('saveConversionHistory', profile?.email || null)) || 'true');
+    if (!saveConversionHistory) return;
+
+    if (isNaN(numValue) || isNaN(result)) return;
+
+    const conversionString = getFullHistoryString(numValue, from, to, result, categoryName);
+    localStorage.setItem('lastConversion', conversionString);
+
+    const historyKey = "conversionHistory";
+    const currentHistory = JSON.parse(localStorage.getItem(historyKey) || '[]');
+    
+    // Prevent adding duplicate of the very last entry, which helps with auto-convert
+    if (currentHistory.length > 0 && currentHistory[0].split('|')[0] === conversionString.split('|')[0]) {
+        return;
+    }
+
+    const newHistory = [conversionString, ...currentHistory];
+    localStorage.setItem(historyKey, JSON.stringify(newHistory));
+    window.dispatchEvent(new StorageEvent('storage', { key: historyKey, newValue: JSON.stringify(newHistory) }));
+}, [profile?.email]);
+
+
  const performConversion = React.useCallback(async (value: string | number, from: string, to: string) => {
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
     setIsGraphVisible(false);
@@ -385,29 +402,9 @@ export function Converter() {
         setChartData([]);
     }
 
-}, [region, conversionCategories]);
-
+}, [region, conversionCategories, handleSaveToHistory]);
   
-  const handleSaveToHistory = React.useCallback((numValue: number, from: string, to: string, result: number, categoryName: string) => {
-    const saveConversionHistory = JSON.parse(localStorage.getItem(getUserKey('saveConversionHistory', profile?.email || null)) || 'true');
-    if (!saveConversionHistory) return;
-
-    if (isNaN(numValue) || isNaN(result)) return;
-
-    const conversionString = getFullHistoryString(numValue, from, to, result, categoryName);
-    localStorage.setItem('lastConversion', conversionString);
-    
-    setHistory(prevHistory => {
-        // Prevent adding duplicate of the very last entry, which helps with auto-convert
-        if (prevHistory.length > 0 && prevHistory[0].split('|')[0] === conversionString.split('|')[0]) {
-            return prevHistory;
-        }
-        const newHistory = [conversionString, ...prevHistory];
-        localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
-        window.dispatchEvent(new StorageEvent('storage', { key: 'conversionHistory', newValue: JSON.stringify(newHistory) }));
-        return newHistory;
-    });
-  }, [profile?.email]);
+  
 
 
   useEffect(() => {
@@ -744,6 +741,22 @@ export function Converter() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+  
+  const [history, setHistory] = useState<string[]>([]);
+   useEffect(() => {
+        const handleStorageChange = () => {
+            const storedHistory = localStorage.getItem("conversionHistory");
+            if (storedHistory) {
+                setHistory(JSON.parse(storedHistory));
+            }
+        };
+
+        handleStorageChange(); // Initial load
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
+
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-4">
@@ -1127,3 +1140,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
