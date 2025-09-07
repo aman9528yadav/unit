@@ -9,14 +9,26 @@ import {
   FileText,
   Calculator,
   Download,
-  Calendar,
+  Calendar as CalendarIcon,
+  BarChart,
+  LineChart as LineChartIcon,
+  ArrowRight
 } from "lucide-react";
+import { addDays, format } from "date-fns";
+import { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { getStats, type DailyActivity } from "@/lib/stats";
-import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { LineChart, Line, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart as RechartsBarChart } from "recharts";
 import { useLanguage } from "@/context/language-context";
+import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Calendar } from "./ui/calendar";
+
+type ChartType = "bar" | "line";
+type TimeRangePreset = "weekly" | "monthly" | "yearly";
+
 
 const getActivityIcon = (type: string) => {
     switch (type) {
@@ -38,42 +50,58 @@ export function Analytics() {
         totalConversions: number;
         totalCalculations: number;
         totalDateCalculations: number;
-        weeklyActivity: DailyActivity[];
-        monthlyActivity: DailyActivity[];
+        activity: DailyActivity[];
     }>({
         totalConversions: 0,
         totalCalculations: 0,
         totalDateCalculations: 0,
-        weeklyActivity: [],
-        monthlyActivity: [],
+        activity: [],
     });
-    const [recentActivity, setRecentActivity] = useState<any[]>([]);
+    
+    const [timeRange, setTimeRange] = useState<TimeRangePreset>("weekly");
+    const [chartType, setChartType] = useState<ChartType>("bar");
+    const [dateRange, setDateRange] = useState<DateRange | undefined>({
+        from: addDays(new Date(), -6),
+        to: new Date(),
+    });
+
 
     const loadStats = useCallback(async () => {
         const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
-        const fetchedStats = await getStats(userEmail);
-        setStats(fetchedStats);
+        const fetchedStats = await getStats(userEmail, dateRange);
+        setStats({
+            totalConversions: fetchedStats.totalConversions,
+            totalCalculations: fetchedStats.totalCalculations,
+            totalDateCalculations: fetchedStats.totalDateCalculations,
+            activity: fetchedStats.activity,
+        });
 
-        // Create a mock recent activity list from stats for demonstration
-        const activity = fetchedStats.weeklyActivity.flatMap(day => [
-             { type: "Conversion", detail: `${day.conversions} conversions`, date: day.date },
-             { type: "Date Calc", detail: `${day.dateCalculations} calculations`, date: day.date },
-        ]).filter(item => item.detail.startsWith('0') === false).slice(0, 5);
-        setRecentActivity(activity);
-
-    }, []);
+    }, [dateRange]);
 
     useEffect(() => {
         loadStats();
     }, [loadStats]);
-
-
+    
+    const handleTimeRangeChange = (preset: TimeRangePreset) => {
+      setTimeRange(preset);
+      const to = new Date();
+      let from;
+      if (preset === 'weekly') {
+        from = addDays(to, -6);
+      } else if (preset === 'monthly') {
+        from = addDays(to, -29);
+      } else if (preset === 'yearly') {
+        from = addDays(to, -364);
+      }
+      setDateRange({ from, to });
+    }
+    
     const calculateChange = (key: 'conversions' | 'calculations' | 'dateCalculations') => {
-        if (stats.weeklyActivity.length < 2) {
+        if (stats.activity.length < 2) {
             return { today: 0, yesterday: 0, change: 0, percent: 0 };
         }
-        const today = stats.weeklyActivity[stats.weeklyActivity.length - 1][key];
-        const yesterday = stats.weeklyActivity[stats.weeklyActivity.length - 2][key];
+        const today = stats.activity[stats.activity.length - 1][key];
+        const yesterday = stats.activity[stats.activity.length - 2][key];
         const change = today - yesterday;
         const percent = yesterday === 0 ? (change > 0 ? 100 : 0) : (change / yesterday) * 100;
         return { today, yesterday, change, percent };
@@ -90,26 +118,32 @@ export function Analytics() {
     ];
     
     const COLORS = ["#6366f1", "#22c55e", "#f97316"];
+    
+    const formattedChartData = stats.activity.map(day => ({
+        ...day,
+        date: format(new Date(day.date), 'MMM d')
+    }));
 
     return (
-        <div className="p-6 grid gap-6 bg-gradient-to-br from-gray-50 to-white min-h-screen">
+        <div className="w-full max-w-4xl mx-auto flex flex-col gap-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-extrabold tracking-tight">📊 Analytics Dashboard</h1>
-            <div className="flex gap-2">
-              <Button variant="outline" className="rounded-xl shadow-sm"><Calendar className="mr-2 h-4 w-4" /> Date Range</Button>
-              <Button className="rounded-xl shadow-sm"><Download className="mr-2 h-4 w-4" /> Export</Button>
-            </div>
+            <Button asChild>
+                <Link href="/">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+                </Link>
+            </Button>
           </div>
     
           {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
               <CardHeader><CardTitle>Total Conversions</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-4xl font-extrabold text-indigo-600">{stats.totalConversions}</p>
                 <p className={`text-sm font-medium ${conversionsStats.change >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {conversionsStats.change >= 0 ? "🔼" : "🔽"} {Math.abs(conversionsStats.percent).toFixed(1)}%
+                  {conversionsStats.change >= 0 ? "🔼" : "🔽"} {Math.abs(conversionsStats.percent).toFixed(1)}% vs previous day
                 </p>
               </CardContent>
             </Card>
@@ -119,7 +153,7 @@ export function Analytics() {
               <CardContent>
                 <p className="text-4xl font-extrabold text-green-600">{stats.totalCalculations}</p>
                  <p className={`text-sm font-medium ${calculationsStats.change >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {calculationsStats.change >= 0 ? "🔼" : "🔽"} {Math.abs(calculationsStats.percent).toFixed(1)}%
+                  {calculationsStats.change >= 0 ? "🔼" : "🔽"} {Math.abs(calculationsStats.percent).toFixed(1)}% vs previous day
                 </p>
               </CardContent>
             </Card>
@@ -129,7 +163,7 @@ export function Analytics() {
               <CardContent>
                 <p className="text-4xl font-extrabold text-orange-600">{stats.totalDateCalculations}</p>
                 <p className={`text-sm font-medium ${dateCalcStats.change >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {dateCalcStats.change >= 0 ? "🔼" : "🔽"} {Math.abs(dateCalcStats.percent).toFixed(1)}%
+                  {dateCalcStats.change >= 0 ? "🔼" : "🔽"} {Math.abs(dateCalcStats.percent).toFixed(1)}% vs previous day
                 </p>
               </CardContent>
             </Card>
@@ -141,74 +175,89 @@ export function Analytics() {
           </div>
     
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Line Chart */}
             <Card className="rounded-2xl shadow-md">
-              <CardHeader><CardTitle>Daily Usage Trend</CardTitle></CardHeader>
-              <CardContent className="h-80">
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <CardTitle>Usage Trend</CardTitle>
+                        <CardDescription>Your activity over the selected period.</CardDescription>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                         <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                id="date"
+                                variant={"outline"}
+                                className="w-[240px] justify-start text-left font-normal"
+                                >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {dateRange?.from ? (
+                                    dateRange.to ? (
+                                    <>
+                                        {format(dateRange.from, "LLL dd, y")} -{" "}
+                                        {format(dateRange.to, "LLL dd, y")}
+                                    </>
+                                    ) : (
+                                    format(dateRange.from, "LLL dd, y")
+                                    )
+                                ) : (
+                                    <span>Pick a date</span>
+                                )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="end">
+                                <Calendar
+                                initialFocus
+                                mode="range"
+                                defaultMonth={dateRange?.from}
+                                selected={dateRange}
+                                onSelect={setDateRange}
+                                numberOfMonths={2}
+                                />
+                            </PopoverContent>
+                        </Popover>
+                        <Tabs value={timeRange} onValueChange={(v) => handleTimeRangeChange(v as TimeRangePreset)}>
+                            <TabsList>
+                                <TabsTrigger value="weekly">Weekly</TabsTrigger>
+                                <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                                <TabsTrigger value="yearly">Yearly</TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+                        <Tabs value={chartType} onValueChange={(v) => setChartType(v as ChartType)}>
+                            <TabsList>
+                                <TabsTrigger value="bar"><BarChart className="w-4 h-4"/></TabsTrigger>
+                                <TabsTrigger value="line"><LineChartIcon className="w-4 h-4"/></TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+                    </div>
+                </div>
+              </CardHeader>
+              <CardContent className="h-96">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={stats.weeklyActivity}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="date" stroke="#6b7280" tickFormatter={(str) => new Date(str).toLocaleDateString('en-us', { weekday: 'short' })}/>
-                    <YAxis stroke="#6b7280" />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="conversions" stroke="#6366f1" strokeWidth={3} dot={{ r: 5 }} name="Conversions" />
-                    <Line type="monotone" dataKey="calculations" stroke="#22c55e" strokeWidth={3} dot={{ r: 5 }} name="Calculator"/>
-                    <Line type="monotone" dataKey="dateCalculations" stroke="#f97316" strokeWidth={3} dot={{ r: 5 }} name="Date Calcs"/>
-                  </LineChart>
+                    {chartType === 'line' ? (
+                        <LineChart data={formattedChartData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                            <XAxis dataKey="date" stroke="#6b7280" />
+                            <YAxis stroke="#6b7280" />
+                            <Tooltip />
+                            <Line type="monotone" dataKey="conversions" name="Conversions" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} />
+                            <Line type="monotone" dataKey="calculations" name="Calculator" stroke="#22c55e" strokeWidth={2} dot={{ r: 4 }}/>
+                            <Line type="monotone" dataKey="dateCalculations" name="Date Calcs" stroke="#f97316" strokeWidth={2} dot={{ r: 4 }}/>
+                        </LineChart>
+                    ) : (
+                        <RechartsBarChart data={formattedChartData}>
+                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                            <XAxis dataKey="date" stroke="#6b7280" />
+                            <YAxis stroke="#6b7280" />
+                            <Tooltip />
+                            <Bar dataKey="conversions" name="Conversions" stackId="a" fill="#6366f1" />
+                            <Bar dataKey="calculations" name="Calculator" stackId="a" fill="#22c55e" />
+                            <Bar dataKey="dateCalculations" name="Date Calcs" stackId="a" fill="#f97316" />
+                        </RechartsBarChart>
+                    )}
                 </ResponsiveContainer>
               </CardContent>
             </Card>
-    
-            {/* Pie Chart */}
-            <Card className="rounded-2xl shadow-md">
-              <CardHeader><CardTitle>Feature Usage Share</CardTitle></CardHeader>
-              <CardContent className="h-80 flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={featureShare} cx="50%" cy="50%" outerRadius={100} dataKey="value" label>
-                      {featureShare.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-    
-          {/* Recent Activity Preview */}
-          <Card className="rounded-2xl shadow-md">
-            <CardHeader><CardTitle>Recent Activity</CardTitle></CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm text-left">
-                  <thead>
-                    <tr className="border-b text-muted-foreground">
-                      <th className="py-2 px-4">Type</th>
-                      <th className="py-2 px-4">Detail</th>
-                      <th className="py-2 px-4">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentActivity.map((activity, index) => (
-                      <tr key={index} className="border-b last:border-0 hover:bg-gray-50 transition">
-                        <td className="py-2 px-4 flex items-center gap-2 font-medium">
-                          {getActivityIcon(activity.type)} {activity.type}
-                        </td>
-                        <td className="py-2 px-4">{activity.detail}</td>
-                        <td className="py-2 px-4 text-muted-foreground">{new Date(activity.date).toLocaleDateString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       );
 }
-
-
-    

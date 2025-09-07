@@ -1,9 +1,10 @@
 
 "use client";
 
-import { format, startOfWeek, startOfMonth } from 'date-fns';
+import { format, startOfWeek, startOfMonth, eachDayOfInterval, eachMonthOfInterval, eachYearOfInterval, startOfYear, endOfYear, subDays } from 'date-fns';
 import { updateUserData, getUserData } from '@/services/firestore';
 import { NOTES_STORAGE_KEY_BASE, type Note } from '@/components/notepad';
+import { DateRange } from 'react-day-picker';
 
 const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
 
@@ -49,12 +50,11 @@ export interface DailyActivity {
     total: number;
 }
 
-export const getStats = async (email: string | null): Promise<{
+export const getStats = async (email: string | null, dateRange?: DateRange): Promise<{
     todaysOps: number;
     totalOps: number;
     savedNotes: number;
-    weeklyActivity: DailyActivity[];
-    monthlyActivity: DailyActivity[];
+    activity: DailyActivity[];
     totalConversions: number;
     totalCalculations: number;
     totalDateCalculations: number;
@@ -78,56 +78,38 @@ export const getStats = async (email: string | null): Promise<{
     const notes: Note[] = notesData ? JSON.parse(notesData) : [];
     const savedNotes = notes.filter(note => !note.deletedAt).length;
 
-    // Prepare weekly activity
-    const weeklyActivity: DailyActivity[] = [];
-    for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateString = format(date, 'yyyy-MM-dd');
-        
-        const conversions = dailyConversions[dateString] || 0;
-        const calculations = dailyCalculations[dateString] || 0;
-        const dateCalcs = dailyDateCalculations[dateString] || 0;
-        
-        weeklyActivity.push({ 
-            date: dateString, 
-            conversions,
-            calculations,
-            dateCalculations: dateCalcs,
-            total: conversions + calculations + dateCalcs
-        });
+    // Prepare activity based on date range
+    const activity: DailyActivity[] = [];
+    
+    const interval = {
+        start: dateRange?.from || subDays(new Date(), 6),
+        end: dateRange?.to || new Date(),
+    }
+    
+    if (interval.start && interval.end) {
+         const daysInInterval = eachDayOfInterval(interval);
+         daysInInterval.forEach(day => {
+            const dateString = format(day, 'yyyy-MM-dd');
+            const conversions = dailyConversions[dateString] || 0;
+            const calculations = dailyCalculations[dateString] || 0;
+            const dateCalcs = dailyDateCalculations[dateString] || 0;
+            
+            activity.push({ 
+                date: dateString, 
+                conversions,
+                calculations,
+                dateCalculations: dateCalcs,
+                total: conversions + calculations + dateCalcs
+            });
+         })
     }
 
-    // Prepare monthly activity
-    const monthlyActivity: DailyActivity[] = [];
-    const now = new Date();
-    const firstDayOfMonth = startOfMonth(now);
-    const daysInMonth = now.getDate();
-
-    for (let i = 0; i < daysInMonth; i++) {
-        const date = new Date(firstDayOfMonth);
-        date.setDate(date.getDate() + i);
-        const dateString = format(date, 'yyyy-MM-dd');
-
-        const conversions = dailyConversions[dateString] || 0;
-        const calculations = dailyCalculations[dateString] || 0;
-        const dateCalcs = dailyDateCalculations[dateString] || 0;
-
-        monthlyActivity.push({
-            date: dateString,
-            conversions,
-            calculations,
-            dateCalculations: dateCalcs,
-            total: conversions + calculations + dateCalcs
-        });
-    }
 
     return { 
         todaysOps, 
         totalOps, 
         savedNotes, 
-        weeklyActivity,
-        monthlyActivity,
+        activity,
         totalConversions,
         totalCalculations,
         totalDateCalculations
