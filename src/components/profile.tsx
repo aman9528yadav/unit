@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -30,9 +31,10 @@ import { getStats } from "@/lib/stats";
 import { Badge } from "./ui/badge";
 import { motion } from "framer-motion";
 import { listenToUserData } from "@/services/firestore";
+import { getStreakData } from "@/lib/streak";
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
-const PREMIUM_MEMBER_THRESHOLD = 8000;
+const PREMIUM_MEMBER_THRESHOLD = 10000;
 type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 
@@ -65,7 +67,8 @@ export function Profile() {
         return;
     }
     const stats = await getStats(email);
-    if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD) {
+    const streakData = await getStreakData(email);
+    if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
         setUserRole('Premium Member');
     } else {
         setUserRole('Member');

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -34,7 +35,7 @@ export const defaultFaqs: FAQ[] = [
     {
         id: uuidv4(),
         question: "What are the benefits of being a Premium Member?",
-        answer: `<p class="mb-2">Becoming a Premium Member unlocks exclusive features to enhance your experience. You can achieve Premium status by completing <strong>8,000</strong> operations (conversions or calculations) within the app.</p><p class="mb-2">Premium benefits include:</p><ul class="list-disc pl-5 space-y-1"><li><strong>Custom Themes:</strong> Personalize the app's appearance by creating and applying your own color schemes in the Theme Editor.</li><li><strong>Custom Units:</strong> Add your own unique units and even create entirely new conversion categories tailored to your needs.</li></ul><p class="mt-2">You can track your progress towards becoming a Premium Member on your profile page.</p>`
+        answer: `<p class="mb-2">Becoming a Premium Member unlocks exclusive features to enhance your experience. You can achieve Premium status by either completing <strong>10,000</strong> operations (conversions or calculations) or by maintaining a <strong>15-day</strong> best streak within the app.</p><p class="mb-2">Premium benefits include:</p><ul class="list-disc pl-5 space-y-1"><li><strong>Custom Themes:</strong> Personalize the app's appearance by creating and applying your own color schemes in the Theme Editor.</li><li><strong>Custom Units:</strong> Add your own unique units and even create entirely new conversion categories tailored to your needs.</li></ul><p class="mt-2">You can track your progress towards becoming a Premium Member on your profile page.</p>`
     },
     {
         id: uuidv4(),
@@ -107,5 +108,3 @@ export function Help() {
     </div>
   );
 }
-
-    

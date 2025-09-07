@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { incrementCalculationCount, getStats } from '@/lib/stats';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { addCalculationToHistory, deleteCalculationFromHistory, listenToUserData, CALCULATION_HISTORY_KEY } from '@/services/firestore';
+import { getStreakData } from '@/lib/streak';
 
 const buttonClasses = {
   gray: "bg-muted hover:bg-muted/80 text-foreground",
@@ -40,7 +41,7 @@ const CalculatorButton = ({
   </Button>
 );
 
-const PREMIUM_MEMBER_THRESHOLD = 8000;
+const PREMIUM_MEMBER_THRESHOLD = 10000;
 type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 export function Calculator() {
@@ -104,7 +105,8 @@ export function Calculator() {
     }
     if (email) {
         const stats = await getStats(email);
-        if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD) {
+        const streakData = await getStreakData(email);
+        if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
             setUserRole('Premium Member');
         } else {
             setUserRole('Member');
@@ -404,7 +406,7 @@ const BasicLayout = () => (
                     </div>
                     <AlertDialogTitle className="text-2xl">Premium Feature Locked</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This feature is available to Premium Members. Complete {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} operations to unlock this feature and more!
+                        This feature is available to Premium Members. Complete {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} operations or maintain a 15-day streak to unlock this feature and more!
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="sm:justify-center flex-col-reverse sm:flex-row gap-2">

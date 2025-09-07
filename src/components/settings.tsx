@@ -28,10 +28,11 @@ import { Avatar, AvatarFallback } from "./ui/avatar";
 import { cn } from "@/lib/utils";
 import { Label } from "./ui/label";
 import { listenToUserData, updateUserData } from "@/services/firestore";
+import { getStreakData } from "@/lib/streak";
 
 
 export type CalculatorMode = 'basic' | 'scientific';
-const PREMIUM_MEMBER_THRESHOLD = 8000;
+const PREMIUM_MEMBER_THRESHOLD = 10000;
 type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 
@@ -165,7 +166,8 @@ export function Settings() {
         return;
     }
     const stats = await getStats(email);
-    if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD) {
+    const streakData = await getStreakData(email);
+    if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
         setUserRole('Premium Member');
     } else {
         setUserRole('Member');
@@ -451,7 +453,7 @@ export function Settings() {
                     </div>
                     <AlertDialogTitle className="text-2xl">Premium Feature Locked</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This feature is available to Premium Members. Complete {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} operations to unlock this feature and more!
+                        This feature is available to Premium Members. Complete {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} operations or maintain a 15-day streak to unlock this feature and more!
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="sm:justify-center flex-col-reverse sm:flex-row gap-2">

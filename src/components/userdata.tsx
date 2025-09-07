@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -15,6 +16,7 @@ import { useLanguage } from "@/context/language-context";
 import { getStats } from "@/lib/stats";
 import { ProfilePhotoEditor } from "./profile-photo-editor";
 import { listenToUserData } from "@/services/firestore";
+import { getStreakData } from "@/lib/streak";
 
 
 interface UserProfile {
@@ -30,7 +32,7 @@ interface UserSettings {
     autoConvert: boolean;
 }
 
-const PREMIUM_MEMBER_THRESHOLD = 8000;
+const PREMIUM_MEMBER_THRESHOLD = 10000;
 type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 const DetailRow = ({ label, value, valueClassName }: { label: string, value: React.ReactNode, valueClassName?: string }) => (
@@ -101,12 +103,13 @@ export function UserData() {
     const updateUserRoleAndStats = async (email: string | null) => {
         const userStats = await getStats(email);
         setStats({ totalOps: userStats.totalOps });
+        const streakData = await getStreakData(email);
 
         if(email === "amanyadavyadav9458@gmail.com") {
             setUserRole('Owner');
             return;
         }
-        if(userStats.totalOps >= PREMIUM_MEMBER_THRESHOLD) {
+        if(userStats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
             setUserRole('Premium Member');
         } else {
             setUserRole('Member');
