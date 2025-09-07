@@ -36,6 +36,7 @@ import {
   Newspaper,
   Rocket
 } from "lucide-react";
+import * as LucideIcons from 'lucide-react';
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -57,7 +58,7 @@ import { DailyActivity, processUserDataForStats } from "@/lib/stats";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { format, intervalToDuration } from "date-fns";
-import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData } from "@/services/firestore";
+import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData, listenToUpdatesFromRtdb, UpdateItem } from "@/services/firestore";
 import { getStreakData, recordVisit, StreakData } from "@/lib/streak";
 
 
@@ -97,21 +98,27 @@ const ToolButton = ({ icon: Icon, label, href, color, target, onClick }: any) =>
 };
 
 
-const UpdateCard = ({ update }: any) => (
-    <Card className="bg-card border-border shadow-sm hover:bg-secondary transition-colors w-[240px] flex-shrink-0 flex flex-col p-4">
-      <div className="flex items-start gap-3 flex-1">
-          <div className={cn("size-10 grid place-items-center rounded-lg", update.bgColor, update.color)}>
-            <update.icon className="size-5" />
+const UpdateCard = ({ update }: { update: UpdateItem }) => {
+    const Icon = (LucideIcons as any)[update.icon] || Rocket;
+    return (
+        <Card className="bg-card border-border shadow-sm hover:bg-secondary transition-colors w-[240px] flex-shrink-0 flex flex-col p-4">
+          <div className="flex items-start gap-3 flex-1">
+              <div 
+                className="size-10 grid place-items-center rounded-lg"
+                style={{ backgroundColor: update.bgColor, color: update.textColor }}
+              >
+                <Icon className="size-5" />
+              </div>
+              <div className="flex-1">
+                  <p className="font-semibold text-foreground">{update.title}</p>
+              </div>
           </div>
-          <div className="flex-1">
-              <p className="font-semibold text-foreground">{update.title}</p>
-          </div>
-      </div>
-      <p className="text-xs text-muted-foreground pt-2 line-clamp-2">
-          {update.description}
-      </p>
-    </Card>
-);
+          <p className="text-xs text-muted-foreground pt-2 line-clamp-2">
+              {update.description}
+          </p>
+        </Card>
+    );
+};
 
 
 const RecommendationCard = ({ item }: any) => (
@@ -347,6 +354,8 @@ export function Dashboard() {
       daysNotOpened: 0,
   });
 
+  const [recentUpdates, setRecentUpdates] = useState<UpdateItem[]>([]);
+
     useEffect(() => {
         setIsClient(true);
         const storedProfileData = localStorage.getItem("userProfile");
@@ -355,6 +364,11 @@ export function Dashboard() {
         if(storedProfileData) {
             setProfile(JSON.parse(storedProfileData));
         }
+        
+        const unsubUpdates = listenToUpdatesFromRtdb((updates) => {
+            const sortedUpdates = updates.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            setRecentUpdates(sortedUpdates);
+        });
 
         const unsub = listenToUserData(userEmail, (userData) => {
             const processedStats = processUserDataForStats(userData, userEmail);
@@ -382,6 +396,7 @@ export function Dashboard() {
         return () => {
             window.removeEventListener('storage', handleStorageChange);
             unsub();
+            unsubUpdates();
         }
     }, []);
   
@@ -453,49 +468,6 @@ export function Dashboard() {
         by: "Aman",
         img: "https://picsum.photos/seed/tech3/400/200",
         dataAiHint: "team working"
-      },
-    ];
-
-    const recentUpdates = [
-      {
-        icon: Palette,
-        title: t('updates.items.appearance.title'),
-        description: t('updates.items.appearance.description'),
-        href: "/updates",
-        color: "text-pink-400",
-        bgColor: "bg-pink-500/10"
-      },
-      {
-        icon: Zap,
-        title: t('updates.items.timeTools.title'),
-        description: t('updates.items.timeTools.description'),
-        href: "/updates",
-        color: "text-green-400",
-        bgColor: "bg-green-500/10"
-      },
-      {
-        icon: Gift,
-        title: t('updates.items.customUnits.title'),
-        description: t('updates.items.customUnits.description'),
-        href: "/updates",
-        color: "text-blue-400",
-        bgColor: "bg-blue-500/10"
-      },
-      {
-        icon: Wand2,
-        title: t('updates.items.smartSearch.title'),
-        description: t('updates.items.smartSearch.description'),
-        href: "/updates",
-        color: "text-indigo-400",
-        bgColor: "bg-indigo-500/10"
-      },
-       {
-        icon: Languages,
-        title: t('updates.items.languageSupport.title'),
-        description: t('updates.items.languageSupport.description'),
-        href: "/updates",
-        color: "text-teal-400",
-        bgColor: "bg-teal-500/10"
       },
     ];
     
@@ -613,7 +585,7 @@ export function Dashboard() {
           <ScrollArea className="w-full whitespace-nowrap rounded-lg">
             <div className="flex gap-4 pb-4">
                 {recentUpdates.map((update) => (
-                    <UpdateCard key={update.title} update={update} />
+                    <UpdateCard key={update.id} update={update} />
                 ))}
             </div>
             <ScrollBar orientation="horizontal" />
