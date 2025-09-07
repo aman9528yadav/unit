@@ -106,11 +106,9 @@ const UpdateCard = ({ update }: any) => (
               <p className="font-semibold text-foreground">{update.title}</p>
           </div>
       </div>
-      <div className="flex-1 min-h-0">
-        <div className="text-xs text-muted-foreground pt-2 whitespace-normal break-words flex-1 min-h-0 line-clamp-2">
+      <p className="text-xs text-muted-foreground pt-2 line-clamp-2">
           {update.description}
-        </div>
-      </div>
+      </p>
     </Card>
 );
 
@@ -717,4 +715,3 @@ export function Dashboard() {
     </motion.div>
   );
 }
-
