@@ -11,3 +11,5 @@ export default function AnalyticsPage() {
     </main>
   );
 }
+
+    
