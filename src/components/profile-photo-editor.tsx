@@ -187,5 +187,3 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
         </div>
     );
 }
-
-    

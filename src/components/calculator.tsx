@@ -141,6 +141,9 @@ export function Calculator() {
         if (e.key === 'calculationHistory') {
            loadRecentCalculations();
         }
+         if (e.key === 'userProfile') {
+            setProfile(e.newValue ? JSON.parse(e.newValue) : null);
+        }
     };
     
     window.addEventListener('storage', handleStorageChange);
@@ -148,7 +151,7 @@ export function Calculator() {
     return () => {
         window.removeEventListener('storage', handleStorageChange);
     };
-  }, [isClient]);
+  }, []);
   
   const playSound = () => {
     if (isSoundEnabled && audioRef.current) {
@@ -334,6 +337,7 @@ const BasicLayout = () => (
             <Button variant="ghost" className="gap-2" onClick={() => router.push(profile ? '/profile' : '/welcome')}>
                 Hi, {profile?.fullName.split(' ')[0] || 'Guest'}
                 <Avatar className="h-8 w-8">
+                    <AvatarImage src={profile?.profileImage} alt={profile?.fullName}/>
                     <AvatarFallback><User /></AvatarFallback>
                 </Avatar>
             </Button>

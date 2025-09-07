@@ -283,6 +283,9 @@ export function Converter() {
         if (e.key === 'conversionHistory') {
            loadRecentConversions();
         }
+        if (e.key === 'userProfile') {
+            setProfile(e.newValue ? JSON.parse(e.newValue) : null);
+        }
     };
     
     window.addEventListener('storage', handleStorageChange);
