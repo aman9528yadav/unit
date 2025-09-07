@@ -8,7 +8,7 @@ import { LanguageProvider } from '@/context/language-context';
 import { ThemeProvider } from '@/context/theme-context';
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { listenToGlobalMaintenanceMode, syncOfflineData } from '@/services/firestore';
+import { listenToGlobalMaintenanceMode } from '@/services/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
@@ -35,22 +35,8 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenanceMode);
-        
-        const handleOnline = () => {
-          console.log('App is online, attempting to sync data.');
-          syncOfflineData();
-        };
-
-        window.addEventListener('online', handleOnline);
-
-        // Initial check
-        if (navigator.onLine) {
-            handleOnline();
-        }
-
         return () => {
             unsubscribe();
-            window.removeEventListener('online', handleOnline);
         };
     }, []);
 
@@ -125,3 +111,4 @@ export default function RootLayout({
     </ThemeProvider>
   );
 }
+
