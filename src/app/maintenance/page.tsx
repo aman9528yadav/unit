@@ -130,6 +130,12 @@ export default function MaintenancePage() {
                 <CountdownBox value={timeLeft.seconds ?? 0} label="SECONDS"/>
             </div>
         )}
+        
+        {!timeLeft && !timerFinished && (
+             <div className="bg-blue-100 border border-blue-200 text-blue-800 p-4 rounded-lg">
+                <p className="font-semibold">The expected completion time has not been set yet. Please check back later.</p>
+            </div>
+        )}
 
         {timerFinished && (
             <div className="bg-green-100 border border-green-200 text-green-800 p-4 rounded-lg">
