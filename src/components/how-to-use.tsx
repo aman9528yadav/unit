@@ -72,7 +72,9 @@ export function HowToUse() {
   const allSectionDetails = useMemo(() => {
     const combined: Record<string, { title: string }> = { ...defaultSectionDetails };
     customCategories.forEach(cat => {
-        combined[cat.id] = { title: cat.name };
+        if (cat.id && cat.name) {
+            combined[cat.id] = { title: cat.name };
+        }
     });
     return combined;
   }, [customCategories]);
@@ -93,7 +95,7 @@ export function HowToUse() {
       'notepad',
       'customization',
     ];
-    const customOrder = customCategories.map(c => c.id);
+    const customOrder = customCategories.map(c => c.id).filter(Boolean);
     return [...defaultOrder, ...customOrder];
   }, [customCategories]);
 
