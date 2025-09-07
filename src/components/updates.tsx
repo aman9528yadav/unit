@@ -3,80 +3,13 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Gift, Zap, Rocket, Timer, Palette, Languages, User, Wand2 } from "lucide-react";
-import { format, intervalToDuration, differenceInDays } from "date-fns";
+import { ArrowLeft, Timer } from "lucide-react";
+import { format, intervalToDuration, differenceInDays, parseISO } from "date-fns";
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/language-context';
-import { listenToNextUpdateInfo, NextUpdateInfo } from '@/services/firestore';
-
-const getUpdates = (t: (key: string) => string) => [
-    {
-        version: "v2.4.0",
-        date: "2024-10-01T10:00:00Z",
-        title: t('updates.items.profileManagement.title'),
-        description: t('updates.items.profileManagement.description'),
-        icon: User,
-        bgColor: "bg-orange-500/10",
-        textColor: "text-orange-400"
-    },
-    {
-        version: "v2.3.0",
-        date: "2024-09-25T10:00:00Z",
-        title: t('updates.items.languageSupport.title'),
-        description: t('updates.items.languageSupport.description'),
-        icon: Languages,
-        bgColor: "bg-teal-500/10",
-        textColor: "text-teal-400"
-    },
-     {
-        version: "v2.2.0",
-        date: "2024-09-10T10:00:00Z",
-        title: t('updates.items.smartSearch.title'),
-        description: t('updates.items.smartSearch.description'),
-        icon: Wand2,
-        bgColor: "bg-indigo-500/10",
-        textColor: "text-indigo-400"
-    },
-    {
-        version: "v2.1.5",
-        date: "2024-08-20T10:00:00Z",
-        title: t('updates.items.appearance.title'),
-        description: t('updates.items.appearance.description'),
-        icon: Palette,
-        bgColor: "bg-pink-500/10",
-        textColor: "text-pink-400"
-    },
-    {
-        version: "v2.1.0",
-        date: "2024-08-15T10:00:00Z",
-        title: t('updates.items.timeTools.title'),
-        description: t('updates.items.timeTools.description'),
-        icon: Zap,
-        bgColor: "bg-green-500/10",
-        textColor: "text-green-400"
-    },
-    {
-        version: "v2.0.0",
-        date: "2024-07-20T09:00:00Z",
-        title: t('updates.items.customUnits.title'),
-        description: t('updates.items.customUnits.description'),
-        icon: Gift,
-        bgColor: "bg-blue-500/10",
-        textColor: "text-blue-400"
-    },
-    {
-        version: "v1.0.0",
-        date: "2024-06-01T12:00:00Z",
-        title: t('updates.items.initialLaunch.title'),
-        description: t('updates.items.initialLaunch.description'),
-        icon: Rocket,
-        bgColor: "bg-purple-500/10",
-        textColor: "text-purple-400"
-    },
-];
-
+import { listenToNextUpdateInfo, NextUpdateInfo, listenToUpdatesFromRtdb, UpdateItem } from '@/services/firestore';
+import * as LucideIcons from "lucide-react";
 
 export function Updates() {
   const [targetDate, setTargetDate] = useState<Date | null>(null);
@@ -85,11 +18,12 @@ export function Updates() {
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
   const { t } = useLanguage();
-
-  const updates = getUpdates(t);
+  const [updates, setUpdates] = useState<UpdateItem[]>([]);
 
   useEffect(() => {
     setIsClient(true);
+    const unsubscribe = listenToUpdatesFromRtdb(setUpdates);
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -134,7 +68,8 @@ export function Updates() {
 
     return () => clearInterval(timer);
   }, [targetDate, isClient]);
-
+  
+  const sortedUpdates = [...updates].sort((a,b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6">
@@ -180,22 +115,25 @@ export function Updates() {
 
       <div className="relative pl-8">
         <div className="absolute left-4 top-4 bottom-4 w-0.5 bg-border"></div>
-        {updates.map((update, index) => (
-            <div key={index} className="mb-6 relative">
-                <div className="flex items-center mb-2">
-                    <div className={`absolute left-[-18px] top-1 p-2 rounded-full border-4 border-background ${update.bgColor} ${update.textColor}`}>
-                        <update.icon className="w-5 h-5" />
-                    </div>
-                    <p className="text-sm text-muted-foreground ml-8">
-                        {isClient ? format(new Date(update.date), "d MMM yyyy, h:mm a") : ''}
-                    </p>
-                </div>
-                <div className="bg-card p-4 rounded-xl ml-8">
-                    <h2 className="text-lg font-semibold text-foreground mb-2">{update.title}</h2>
-                    <p className="text-sm text-muted-foreground">{update.description}</p>
-                </div>
-            </div>
-        ))}
+        {sortedUpdates.map((update, index) => {
+            const Icon = (LucideIcons as any)[update.icon] || LucideIcons.Rocket;
+            return (
+              <div key={index} className="mb-6 relative">
+                  <div className="flex items-center mb-2">
+                      <div className="absolute left-[-18px] top-1 p-2 rounded-full border-4 border-background" style={{ backgroundColor: update.bgColor, color: update.textColor }}>
+                          <Icon className="w-5 h-5" />
+                      </div>
+                      <p className="text-sm text-muted-foreground ml-8">
+                          {isClient ? format(new Date(update.date), "d MMM yyyy, h:mm a") : ''}
+                      </p>
+                  </div>
+                  <div className="bg-card p-4 rounded-xl ml-8">
+                      <h2 className="text-lg font-semibold text-foreground mb-2">{update.title}</h2>
+                      <p className="text-sm text-muted-foreground">{update.description}</p>
+                  </div>
+              </div>
+            )
+        })}
       </div>
     </div>
   );

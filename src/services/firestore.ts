@@ -9,6 +9,7 @@ import type { AppNotification } from '@/lib/notifications';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import type { Note } from '@/components/notepad';
+import * as LucideIcons from 'lucide-react';
 
 
 export type HowToUseCategory = 'gettingStarted' | 'unitConverter' | 'calculator' | 'notepad' | 'customization';
@@ -92,6 +93,68 @@ export const defaultFeatures: HowToUseFeature[] = [
       category: 'customization'
     },
 ];
+
+// --- Update Items ---
+export interface UpdateItem {
+  id: string;
+  version: string;
+  date: string;
+  title: string;
+  description: string;
+  icon: keyof typeof LucideIcons;
+  bgColor: string;
+  textColor: string;
+}
+
+const defaultUpdates: UpdateItem[] = [
+    {
+        id: uuidv4(),
+        version: "v2.4.0",
+        date: "2024-10-01T10:00:00Z",
+        title: 'Profile Management',
+        description: 'Manage your profile, track stats, and view your premium membership progress.',
+        icon: 'User',
+        bgColor: "bg-orange-500/10",
+        textColor: "text-orange-400"
+    },
+    {
+        id: uuidv4(),
+        version: "v2.3.0",
+        date: "2024-09-25T10:00:00Z",
+        title: 'Language Support: Hindi',
+        description: 'The entire app is now available in Hindi.',
+        icon: 'Languages',
+        bgColor: "bg-teal-500/10",
+        textColor: "text-teal-400"
+    },
+];
+
+export async function setUpdatesInRtdb(updates: UpdateItem[]) {
+    try {
+        const updatesRef = ref(rtdb, 'app-content/updates');
+        await setRealtimeDb(updatesRef, updates);
+    } catch (error) {
+        console.error("Error saving updates to RTDB:", error);
+        throw error;
+    }
+}
+
+export function listenToUpdatesFromRtdb(callback: (updates: UpdateItem[]) => void) {
+    const updatesRef = ref(rtdb, 'app-content/updates');
+    return onValue(updatesRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data && Array.isArray(data) && data.length > 0) {
+            callback(data);
+        } else {
+            setUpdatesInRtdb(defaultUpdates);
+            callback(defaultUpdates);
+        }
+    }, (error) => {
+        console.error("Error listening to updates from RTDB:", error);
+        callback(defaultUpdates);
+    });
+}
+
 
 // --- FAQ HELP PAGE ---
 export interface FAQ {
