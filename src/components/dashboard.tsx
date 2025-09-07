@@ -461,9 +461,17 @@ export function Dashboard() {
     ];
     
     const chartConfig = {
-      ops: {
-        label: "Operations",
-        color: "hsl(var(--primary))",
+      conversions: {
+        label: "Conversions",
+        color: "hsl(var(--chart-1))",
+      },
+      calculations: {
+        label: "Calculator Ops",
+        color: "hsl(var(--chart-2))",
+      },
+      dateCalculations: {
+        label: "Date Calcs",
+        color: "hsl(var(--chart-3))",
       },
     };
 
@@ -528,7 +536,9 @@ export function Dashboard() {
                        <ChartTooltip 
                         content={<ChartTooltipContent />}
                        />
-                       <Bar dataKey="ops" fill="var(--color-ops)" radius={4} />
+                       <Bar dataKey="conversions" fill="var(--color-conversions)" radius={4} stackId="a" />
+                       <Bar dataKey="calculations" fill="var(--color-calculations)" radius={4} stackId="a" />
+                       <Bar dataKey="dateCalculations" fill="var(--color-dateCalculations)" radius={4} stackId="a" />
                     </BarChart>
                 </ChartContainer>
             </CardContent>

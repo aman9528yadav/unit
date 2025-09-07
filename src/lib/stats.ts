@@ -43,7 +43,10 @@ export const incrementDateCalculationCount = () => {
 
 export interface DailyActivity {
     date: string;
-    ops: number;
+    conversions: number;
+    calculations: number;
+    dateCalculations: number;
+    total: number;
 }
 
 export const getStats = async (email: string | null): Promise<{
@@ -73,8 +76,18 @@ export const getStats = async (email: string | null): Promise<{
         const date = new Date();
         date.setDate(date.getDate() - i);
         const dateString = format(date, 'yyyy-MM-dd');
-        const ops = (dailyConversions[dateString] || 0) + (dailyCalculations[dateString] || 0) + (dailyDateCalculations[dateString] || 0);
-        weeklyActivity.push({ date: dateString, ops });
+        
+        const conversions = dailyConversions[dateString] || 0;
+        const calculations = dailyCalculations[dateString] || 0;
+        const dateCalcs = dailyDateCalculations[dateString] || 0;
+        
+        weeklyActivity.push({ 
+            date: dateString, 
+            conversions,
+            calculations,
+            dateCalculations: dateCalcs,
+            total: conversions + calculations + dateCalcs
+        });
     }
 
     return { todaysOps, totalOps, savedNotes, weeklyActivity };
