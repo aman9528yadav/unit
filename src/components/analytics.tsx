@@ -26,7 +26,7 @@ import {
   Hourglass,
   Activity
 } from "lucide-react";
-import { addDays, format, formatDistanceToNow, parseISO } from "date-fns";
+import { addDays, format, formatDistanceToNow, parseISO, isValid } from "date-fns";
 import { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
@@ -114,7 +114,12 @@ export function Analytics() {
 
         const sortedActivities = activities
             .filter((a): a is LastActivityItem => a !== null && a.timestamp !== undefined)
-            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            .sort((a, b) => {
+                const dateA = new Date(a.timestamp).getTime();
+                const dateB = new Date(b.timestamp).getTime();
+                if(isNaN(dateA) || isNaN(dateB)) return 0;
+                return dateB - dateA;
+            });
 
         setLastActivities(sortedActivities);
     }, []);
@@ -362,20 +367,25 @@ export function Analytics() {
                 </CardHeader>
                 <CardContent>
                     <ul className="space-y-3">
-                        {lastActivities.length > 0 ? lastActivities.map((activity, index) => (
-                             <li key={index} className="flex items-center gap-4 p-2 bg-secondary rounded-lg">
-                                <div className="p-2 bg-primary/10 text-primary rounded-full">
-                                    <activity.icon className="w-5 h-5"/>
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-semibold">{activity.name}</p>
-                                    <p className="text-sm text-muted-foreground truncate">{activity.details}</p>
-                                </div>
-                                <p className="text-xs text-muted-foreground whitespace-nowrap">
-                                    {formatDistanceToNow(parseISO(activity.timestamp), { addSuffix: true })}
-                                </p>
-                            </li>
-                        )) : (
+                        {lastActivities.length > 0 ? lastActivities.map((activity, index) => {
+                            const date = parseISO(activity.timestamp);
+                            if (!isValid(date)) return null;
+
+                            return (
+                                <li key={index} className="flex items-center gap-4 p-2 bg-secondary rounded-lg">
+                                    <div className="p-2 bg-primary/10 text-primary rounded-full">
+                                        <activity.icon className="w-5 h-5"/>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="font-semibold">{activity.name}</p>
+                                        <p className="text-sm text-muted-foreground truncate">{activity.details}</p>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground whitespace-nowrap">
+                                        {formatDistanceToNow(date, { addSuffix: true })}
+                                    </p>
+                                </li>
+                            )
+                        }) : (
                             <p className="text-center text-muted-foreground py-8">No recent activity recorded.</p>
                         )}
                     </ul>
