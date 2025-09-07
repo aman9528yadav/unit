@@ -102,6 +102,7 @@ export interface UpdateInfo {
   targetDate: string | null;
   updateText: string | null;
   maintenanceType: string | null;
+  customMaintenanceTitle?: string;
 }
 
 export interface NextUpdateInfo {
@@ -152,11 +153,12 @@ export function listenToUpdateInfo(callback: (info: UpdateInfo) => void) {
             targetDate: data?.targetDate || null,
             updateText: data?.updateText || null,
             maintenanceType: data?.maintenanceType || null,
+            customMaintenanceTitle: data?.customMaintenanceTitle || ''
         };
         callback(info);
     }, (error) => {
         console.error("Error listening to update info:", error);
-        callback({ targetDate: null, updateText: null, maintenanceType: null }); // Default on error
+        callback({ targetDate: null, updateText: null, maintenanceType: null, customMaintenanceTitle: '' }); // Default on error
     });
 
     return unsubscribe;

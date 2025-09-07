@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send, Wrench } from 'lucide-react';
+import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send, Wrench, Info } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
@@ -37,6 +37,7 @@ export function DevPanel() {
     const [maintenanceDuration, setMaintenanceDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const [maintenanceText, setMaintenanceText] = useState('');
     const [maintenanceType, setMaintenanceType] = useState('Security');
+    const [customMaintenanceTitle, setCustomMaintenanceTitle] = useState('');
     
     // State for Updates Tab
     const [updateDuration, setUpdateDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -70,6 +71,7 @@ export function DevPanel() {
         const unsubUpdateInfo = listenToUpdateInfo((info) => {
             setMaintenanceText(info.updateText || '');
             setMaintenanceType(info.maintenanceType || 'Security');
+            setCustomMaintenanceTitle(info.customMaintenanceTitle || '');
             if (info.targetDate) {
                 const target = new Date(info.targetDate);
                 const now = new Date();
@@ -132,7 +134,8 @@ export function DevPanel() {
              await setUpdateInfo({ 
                 targetDate: targetDateTime?.toISOString() ?? null, 
                 updateText: maintenanceText, 
-                maintenanceType 
+                maintenanceType,
+                customMaintenanceTitle: maintenanceType === 'Custom' ? customMaintenanceTitle : '',
             });
              toast({ title: 'Maintenance Info Saved' });
         } catch(e) {
@@ -314,9 +317,21 @@ export function DevPanel() {
                                         <SelectItem value="Feature Update">Feature Update</SelectItem>
                                         <SelectItem value="Bug Fixes">Bug Fixes</SelectItem>
                                         <SelectItem value="Performance">Performance</SelectItem>
+                                        <SelectItem value="Custom">Custom</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
+                            {maintenanceType === 'Custom' && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="customMaintenanceTitle" className="flex items-center gap-2"><Info /> Custom Title</Label>
+                                    <Input 
+                                        id="customMaintenanceTitle"
+                                        value={customMaintenanceTitle}
+                                        onChange={(e) => setCustomMaintenanceTitle(e.target.value)}
+                                        placeholder="e.g., Database Migration"
+                                    />
+                                </div>
+                            )}
                              <Button onClick={handleSetMaintenanceInfo} className="w-full">Save Maintenance Info</Button>
                         </CardContent>
                     </Card>

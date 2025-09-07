@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Wrench, Clock, Settings, Zap, Hourglass, Bug, Rocket, Shield } from "lucide-react";
+import { Wrench, Clock, Settings, Zap, Hourglass, Bug, Rocket, Shield, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from '@/components/ui/button';
@@ -35,19 +35,20 @@ const maintenanceTypeMap = {
     "Security": { icon: Shield, title: "Security Update", description: "Applying the latest security patches to keep your data safe." },
     "Feature Update": { icon: Rocket, title: "New Features", description: "We're launching exciting new features for you to enjoy." },
     "Bug Fixes": { icon: Bug, title: "Bug Squashing", description: "Ironing out some wrinkles to improve your experience." },
-    "Performance": { icon: Zap, title: "Performance Boost", description: "Making the app faster and more responsive." }
+    "Performance": { icon: Zap, title: "Performance Boost", description: "Making the app faster and more responsive." },
+    "Custom": { icon: Info, title: "Update in Progress", description: "We're making some improvements." }
 };
 
 
 export default function MaintenancePage() {
   const [targetDate, setTargetDate] = useState<Date | null>(null);
-  const [updateText, setUpdateText] = useState<string | null>(null);
-  const [maintenanceType, setMaintenanceType] = useState<string | null>(null);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [timeLeft, setTimeLeft] = useState<Duration & { totalDays?: number } | null>(null);
   const [timerFinished, setTimerFinished] = useState(false);
 
   useEffect(() => {
     const unsubscribe = listenToUpdateInfo((info: UpdateInfo) => {
+        setUpdateInfo(info);
         if (info.targetDate) {
             const date = new Date(info.targetDate);
             if (!isNaN(date.getTime()) && date > new Date()) {
@@ -61,8 +62,6 @@ export default function MaintenancePage() {
             setTargetDate(null);
             setTimerFinished(false);
         }
-        setUpdateText(info.updateText || "General improvements and bug fixes.");
-        setMaintenanceType(info.maintenanceType || "Performance");
     });
     
     return () => unsubscribe();
@@ -90,8 +89,9 @@ export default function MaintenancePage() {
     return () => clearInterval(timer);
   }, [targetDate]);
   
+  const maintenanceType = updateInfo?.maintenanceType || "Performance";
   const typeDetails = maintenanceTypeMap[maintenanceType as keyof typeof maintenanceTypeMap] || maintenanceTypeMap['Performance'];
-
+  const displayTitle = maintenanceType === 'Custom' ? (updateInfo?.customMaintenanceTitle || typeDetails.title) : typeDetails.title;
 
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 sm:p-6 text-center">
@@ -108,12 +108,12 @@ export default function MaintenancePage() {
         <div className="space-y-4">
             <h1 className="text-4xl md:text-5xl font-bold text-foreground">We'll Be Back Soon!</h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              {updateText}
+              {updateInfo?.updateText || "General improvements and bug fixes."}
             </p>
             <div className="flex justify-center">
                <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground p-2 px-4 rounded-full text-sm font-medium">
                   <typeDetails.icon className="w-5 h-5 text-primary" />
-                  <span>{typeDetails.title}</span>
+                  <span>{displayTitle}</span>
                </div>
             </div>
         </div>
