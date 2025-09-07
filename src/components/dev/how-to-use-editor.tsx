@@ -23,6 +23,10 @@ import { useRouter } from 'next/navigation';
 import { setHowToUseFeaturesInRtdb, listenToHowToUseFeaturesFromRtdb, HowToUseFeature, defaultFeatures, HowToUseCategory, CustomHowToUseCategory, listenToCustomHowToUseCategoriesFromRtdb, setCustomHowToUseCategoriesInRtdb } from '@/services/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
+import * as LucideIcons from 'lucide-react';
+
+
+const iconNames = Object.keys(LucideIcons).filter(key => typeof (LucideIcons as any)[key] === 'object');
 
 
 export function HowToUseEditor() {
@@ -68,7 +72,7 @@ export function HowToUseEditor() {
             { id: 'notepad', name: 'Notepad' },
             { id: 'customization', name: 'Customization & Settings' },
         ];
-        const combined = [...baseCategories, ...customCategories];
+        const combined = [...baseCategories, ...customCategories.map(c => ({ id: c.id, name: c.name }))];
         return combined;
     }, [customCategories]);
 
@@ -133,6 +137,10 @@ export function HowToUseEditor() {
         if (!newCategoryName || !newCategoryId) {
             toast({ title: "Incomplete Information", description: "Please fill out both ID and Name.", variant: "destructive" });
             return;
+        }
+        if (allCategories.some(c => c.id === newCategoryId || c.name === newCategoryName)) {
+             toast({ title: "Category exists", description: "A category with this ID or name already exists.", variant: "destructive" });
+             return;
         }
         const updatedCategories = [...customCategories, { id: newCategoryId, name: newCategoryName }];
         try {
@@ -270,9 +278,23 @@ export function HowToUseEditor() {
                             <Label htmlFor="description" className="text-right mt-2">Description</Label>
                             <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" rows={4} />
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
+                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="icon" className="text-right">Icon</Label>
-                            <Input id="icon" value={icon} onChange={(e) => setIcon(e.target.value)} className="col-span-3" placeholder="Enter a lucide-react icon name"/>
+                            <Select value={icon} onValueChange={(value) => setIcon(value)}>
+                                <SelectTrigger className="col-span-3">
+                                    <SelectValue placeholder="Select an icon" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {iconNames.map((iconName) => (
+                                        <SelectItem key={iconName} value={iconName}>
+                                            <div className="flex items-center gap-2">
+                                                {React.createElement((LucideIcons as any)[iconName], { className: "w-4 h-4" })}
+                                                <span>{iconName}</span>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                          <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="category" className="text-right">Category</Label>

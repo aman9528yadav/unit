@@ -8,7 +8,6 @@ import { ArrowLeft } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
-import { FAQ, defaultFaqs } from "./help";
 import { useLanguage } from "@/context/language-context";
 import { 
     listenToFaqsFromRtdb, 
@@ -17,7 +16,9 @@ import {
     HowToUseCategory, 
     defaultFeatures,
     listenToCustomHowToUseCategoriesFromRtdb,
-    CustomHowToUseCategory
+    CustomHowToUseCategory,
+    FAQ,
+    defaultFaqs
 } from "@/services/firestore";
 
 const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
@@ -69,29 +70,31 @@ export function HowToUse() {
   }, []);
   
   const allSectionDetails = useMemo(() => {
-    const combined = { ...defaultSectionDetails };
+    const combined: Record<string, { title: string }> = { ...defaultSectionDetails };
     customCategories.forEach(cat => {
-        combined[cat.id as HowToUseCategory] = { title: cat.name };
+        combined[cat.id] = { title: cat.name };
     });
     return combined;
   }, [customCategories]);
   
   const groupedFeatures = useMemo(() => {
     return features.reduce((acc, feature) => {
-        (acc[feature.category as HowToUseCategory] = acc[feature.category as HowToUseCategory] || []).push(feature);
+        const categoryKey = feature.category as HowToUseCategory | string;
+        (acc[categoryKey] = acc[categoryKey] || []).push(feature);
         return acc;
-    }, {} as Record<HowToUseCategory, HowToUseFeature[]>);
+    }, {} as Record<HowToUseCategory | string, HowToUseFeature[]>);
   }, [features]);
 
   const orderedCategories = useMemo(() => {
-    return [
+    const defaultOrder: (HowToUseCategory | string)[] = [
       'gettingStarted',
       'unitConverter',
       'calculator',
       'notepad',
       'customization',
-      ...customCategories.map(c => c.id)
     ];
+    const customOrder = customCategories.map(c => c.id);
+    return [...defaultOrder, ...customOrder];
   }, [customCategories]);
 
   return (
@@ -104,8 +107,8 @@ export function HowToUse() {
         </header>
         
         {orderedCategories.map(categoryKey => {
-            const featuresInSection = groupedFeatures[categoryKey as HowToUseCategory];
-            const details = allSectionDetails[categoryKey as HowToUseCategory];
+            const featuresInSection = groupedFeatures[categoryKey];
+            const details = allSectionDetails[categoryKey];
             if (!details || !featuresInSection || featuresInSection.length === 0) return null;
 
             return (
