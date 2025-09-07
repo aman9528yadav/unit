@@ -352,12 +352,11 @@ export function DevPanel() {
             </header>
 
             <Tabs defaultValue="maintenance" className="w-full">
-                <TabsList className="grid w-full grid-cols-6">
+                <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="maintenance"><Timer /></TabsTrigger>
                     <TabsTrigger value="updates"><ServerCog /></TabsTrigger>
                     <TabsTrigger value="broadcast"><Send /></TabsTrigger>
                     <TabsTrigger value="content"><MessageSquare /></TabsTrigger>
-                    <TabsTrigger value="data"><Trash2 /></TabsTrigger>
                     <TabsTrigger value="security"><Shield /></TabsTrigger>
                 </TabsList>
                 <TabsContent value="maintenance" className="mt-4">
@@ -540,29 +539,6 @@ export function DevPanel() {
                             <CardDescription>Manage dynamic text shown in the app.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div>
-                                <Label htmlFor="welcomeMessage">Dashboard Welcome Message</Label>
-                                <Input 
-                                    id="welcomeMessage" 
-                                    value={welcomeMessage}
-                                    onChange={(e) => setWelcomeMessage(e.target.value)}
-                                    placeholder="e.g., Welcome back!"
-                                />
-                            </div>
-                            <Button onClick={handleSetWelcomeMessage} className="w-full">Save Welcome Message</Button>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="data" className="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><Trash2 /> Data Management</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                <p>Clear all app data</p>
-                                <Button variant="destructive" onClick={handleClearLocalStorage}>Clear Local Storage</Button>
-                            </div>
                              <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
                                 <div>
                                     <Label>Manage Help Content</Label>
@@ -591,6 +567,16 @@ export function DevPanel() {
                                 </div>
                                 <Button onClick={() => router.push('/dev/about')}>Manage</Button>
                             </div>
+                             <div>
+                                <Label htmlFor="welcomeMessage">Dashboard Welcome Message</Label>
+                                <Input 
+                                    id="welcomeMessage" 
+                                    value={welcomeMessage}
+                                    onChange={(e) => setWelcomeMessage(e.target.value)}
+                                    placeholder="e.g., Welcome back!"
+                                />
+                            </div>
+                            <Button onClick={handleSetWelcomeMessage} className="w-full">Save Welcome Message</Button>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -632,3 +618,4 @@ export function DevPanel() {
         </div>
     );
 }
+
