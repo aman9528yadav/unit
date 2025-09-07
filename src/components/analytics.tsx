@@ -24,7 +24,9 @@ import {
   Star,
   Timer,
   Hourglass,
-  Activity
+  Activity,
+  BarChart3,
+  Users
 } from "lucide-react";
 import { addDays, format, formatDistanceToNow, parseISO, isValid } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -38,6 +40,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
 import { getStreakData } from "@/lib/streak";
+import { cn } from "@/lib/utils";
+
 
 type ChartType = "bar" | "line";
 type TimeRangePreset = "weekly" | "monthly" | "yearly";
@@ -49,18 +53,34 @@ interface LastActivityItem {
     icon: React.ElementType;
 }
 
-const getActivityIcon = (type: string) => {
-    switch (type) {
-      case "Conversion":
-        return <RefreshCw className="text-indigo-500" size={18} />;
-      case "Note":
-        return <FileText className="text-green-500" size={18} />;
-      case "Date Calc":
-        return <Calculator className="text-orange-500" size={18} />;
-      default:
-        return null;
-    }
-};
+const StatCard = ({ title, value, icon, change, changeType, description }: { title: string, value: string | number, icon: React.ReactNode, change?: string, changeType?: 'increase' | 'decrease' | 'neutral', description?: string }) => (
+    <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
+        <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+                 <div className="p-2 bg-secondary rounded-lg text-secondary-foreground">
+                    {icon}
+                 </div>
+                <CardTitle className="text-lg">{title}</CardTitle>
+            </div>
+        </CardHeader>
+        <CardContent>
+            <p className="text-4xl font-extrabold">{value}</p>
+            {change &&
+                <p className={cn(
+                    "text-sm font-medium",
+                    changeType === 'increase' && 'text-green-600',
+                    changeType === 'decrease' && 'text-red-600'
+                )}>
+                    {changeType === 'increase' && <TrendingUp className="inline-block w-4 h-4" />}
+                    {changeType === 'decrease' && <TrendingDown className="inline-block w-4 h-4" />}
+                     {change}
+                </p>
+            }
+             {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
+        </CardContent>
+    </Card>
+);
+
 
 
 export function Analytics() {
@@ -203,77 +223,78 @@ export function Analytics() {
     return (
         <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <header className="flex items-center justify-between">
             <h1 className="text-3xl font-extrabold tracking-tight">📊 Analytics Dashboard</h1>
             <Button asChild>
                 <Link href="/">
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
                 </Link>
             </Button>
-          </div>
-    
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
-              <CardHeader><CardTitle>Total Conversions</CardTitle></CardHeader>
-              <CardContent>
-                <p className="text-4xl font-extrabold text-indigo-600">{stats.totalConversions}</p>
-                <p className={`text-sm font-medium ${conversionsStats.change >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {conversionsStats.change >= 0 ? <TrendingUp className="inline-block w-4 h-4" /> : <TrendingDown className="inline-block w-4 h-4" />} {Math.abs(conversionsStats.percent).toFixed(1)}% vs previous day
-                </p>
+          </header>
+          
+          <Card>
+            <CardHeader><CardTitle>Usage Statistics</CardTitle></CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <StatCard 
+                    title="Total Conversions" 
+                    value={stats.totalConversions}
+                    icon={<RefreshCw className="text-indigo-500"/>}
+                    change={`${Math.abs(conversionsStats.percent).toFixed(1)}% vs previous day`}
+                    changeType={conversionsStats.change >= 0 ? 'increase' : 'decrease'}
+                />
+                 <StatCard 
+                    title="Calculator Ops" 
+                    value={stats.totalCalculations}
+                    icon={<Calculator className="text-green-500"/>}
+                    change={`${Math.abs(calculationsStats.percent).toFixed(1)}% vs previous day`}
+                    changeType={calculationsStats.change >= 0 ? 'increase' : 'decrease'}
+                />
+                 <StatCard 
+                    title="Date Calculations" 
+                    value={stats.totalDateCalculations}
+                    icon={<CalendarIcon className="text-orange-500"/>}
+                    change={`${Math.abs(dateCalcStats.percent).toFixed(1)}% vs previous day`}
+                    changeType={dateCalcStats.change >= 0 ? 'increase' : 'decrease'}
+                />
+            </CardContent>
+          </Card>
+          
+          <Card>
+              <CardHeader><CardTitle>Engagement</CardTitle></CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <StatCard 
+                    title="Current Streak" 
+                    value={`${stats.currentStreak} days`}
+                    icon={<Flame className="text-red-500"/>}
+                />
+                <StatCard 
+                    title="Best Streak" 
+                    value={`${stats.bestStreak} days`}
+                    icon={<CheckCircle className="text-yellow-500"/>}
+                />
               </CardContent>
-            </Card>
-    
-            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
-              <CardHeader><CardTitle>Calculator Ops</CardTitle></CardHeader>
-              <CardContent>
-                <p className="text-4xl font-extrabold text-green-600">{stats.totalCalculations}</p>
-                 <p className={`text-sm font-medium ${calculationsStats.change >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {calculationsStats.change >= 0 ? <TrendingUp className="inline-block w-4 h-4" /> : <TrendingDown className="inline-block w-4 h-4" />} {Math.abs(calculationsStats.percent).toFixed(1)}% vs previous day
-                </p>
+          </Card>
+
+           <Card>
+              <CardHeader><CardTitle>Content</CardTitle></CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <StatCard 
+                    title="Saved Notes" 
+                    value={stats.savedNotes}
+                    icon={<NotebookPen className="text-blue-500"/>}
+                />
+                <StatCard 
+                    title="Recycle Bin" 
+                    value={stats.recycledNotes}
+                    icon={<Trash2 className="text-gray-500"/>}
+                />
+                <StatCard 
+                    title="Favorite Conversions" 
+                    value={stats.favoriteConversions}
+                    icon={<Star className="text-pink-500"/>}
+                />
               </CardContent>
-            </Card>
-    
-            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
-              <CardHeader><CardTitle>Date Calculations</CardTitle></CardHeader>
-              <CardContent>
-                <p className="text-4xl font-extrabold text-orange-600">{stats.totalDateCalculations}</p>
-                <p className={`text-sm font-medium ${dateCalcStats.change >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {dateCalcStats.change >= 0 ? <TrendingUp className="inline-block w-4 h-4" /> : <TrendingDown className="inline-block w-4 h-4" />} {Math.abs(dateCalcStats.percent).toFixed(1)}% vs previous day
-                </p>
-              </CardContent>
-            </Card>
-    
-            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
-              <CardHeader><CardTitle>Total Operations</CardTitle></CardHeader>
-              <CardContent><p className="text-4xl font-extrabold text-gray-700">{stats.totalConversions + stats.totalCalculations + stats.totalDateCalculations}</p></CardContent>
-            </Card>
-
-            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
-              <CardHeader><CardTitle>Current Streak</CardTitle></CardHeader>
-              <CardContent><p className="text-4xl font-extrabold text-red-500 flex items-center gap-2"><Flame /> {stats.currentStreak} days</p></CardContent>
-            </Card>
-            
-            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
-              <CardHeader><CardTitle>Best Streak</CardTitle></CardHeader>
-              <CardContent><p className="text-4xl font-extrabold text-yellow-500 flex items-center gap-2"><CheckCircle /> {stats.bestStreak} days</p></CardContent>
-            </Card>
-
-            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
-              <CardHeader><CardTitle>Saved Notes</CardTitle></CardHeader>
-              <CardContent><p className="text-4xl font-extrabold text-blue-500 flex items-center gap-2"><NotebookPen /> {stats.savedNotes}</p></CardContent>
-            </Card>
-            
-            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
-              <CardHeader><CardTitle>Recycle Bin</CardTitle></CardHeader>
-              <CardContent><p className="text-4xl font-extrabold text-gray-500 flex items-center gap-2"><Trash2 /> {stats.recycledNotes}</p></CardContent>
-            </Card>
-
-            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
-              <CardHeader><CardTitle>Favorite Conversions</CardTitle></CardHeader>
-              <CardContent><p className="text-4xl font-extrabold text-pink-500 flex items-center gap-2"><Star /> {stats.favoriteConversions}</p></CardContent>
-            </Card>
-          </div>
+          </Card>
     
           {/* Charts */}
             <Card className="rounded-2xl shadow-md">
@@ -368,9 +389,7 @@ export function Analytics() {
                 <CardContent>
                     <ul className="space-y-3">
                         {lastActivities.length > 0 ? lastActivities.map((activity, index) => {
-                            const date = parseISO(activity.timestamp);
-                            if (!isValid(date)) return null;
-
+                            if (!isValid(parseISO(activity.timestamp))) return null;
                             return (
                                 <li key={index} className="flex items-center gap-4 p-2 bg-secondary rounded-lg">
                                     <div className="p-2 bg-primary/10 text-primary rounded-full">
@@ -381,7 +400,7 @@ export function Analytics() {
                                         <p className="text-sm text-muted-foreground truncate">{activity.details}</p>
                                     </div>
                                     <p className="text-xs text-muted-foreground whitespace-nowrap">
-                                        {formatDistanceToNow(date, { addSuffix: true })}
+                                        {formatDistanceToNow(parseISO(activity.timestamp), { addSuffix: true })}
                                     </p>
                                 </li>
                             )
