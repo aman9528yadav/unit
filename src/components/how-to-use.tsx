@@ -105,8 +105,8 @@ export function HowToUse() {
   const toPascalCase = (str: string) => {
     if (!str) return 'Zap'; // Default icon
     return str
-        .replace(/-(\w)/g, (_, c) => c.toUpperCase())
-        .replace(/^\w/, c => c.toUpperCase());
+      .replace(/-(\w)/g, (_, c) => c.toUpperCase())
+      .replace(/(\w)/, (c) => c.toUpperCase());
   };
 
   return (
