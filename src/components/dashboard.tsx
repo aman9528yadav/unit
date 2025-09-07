@@ -34,7 +34,9 @@ import {
   ChevronDown,
   Info,
   Newspaper,
-  Rocket
+  Rocket,
+  Lightbulb,
+  Beaker
 } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useRouter } from "next/navigation";
@@ -121,25 +123,23 @@ const UpdateCard = ({ update }: { update: UpdateItem }) => {
 };
 
 
-const RecommendationCard = ({ item }: any) => (
-  <motion.div whileHover={{ y: -2 }} className="min-w-[280px] max-w-[300px] rounded-xl overflow-hidden border border-border bg-card">
-    <div className="relative h-36">
-      <Image src={item.img} alt={item.title} layout="fill" objectFit="cover" data-ai-hint={item.dataAiHint} />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-      <Button asChild size="icon" className="absolute bottom-3 left-3 rounded-full shadow-xl bg-primary hover:bg-primary/90">
-         <Link href="/how-to-use">
-            <PlayCircle className="size-5 text-primary-foreground" />
-         </Link>
-      </Button>
-    </div>
-    <div className="p-4">
-      <p className="font-medium leading-tight text-foreground">{item.title}</p>
-      <p className="text-xs text-muted-foreground mt-1">
-        {item.minutes} {item.minutesLabel} • {item.by}
-      </p>
-    </div>
-  </motion.div>
+const HowToUseCard = ({ icon: Icon, title, description, href }: any) => (
+  <Link href={href}>
+    <motion.div
+      className="bg-card p-4 rounded-lg border border-border flex items-start gap-4 hover:bg-secondary transition-colors cursor-pointer"
+      whileHover={{ y: -2 }}
+    >
+      <div className="p-3 bg-primary/10 rounded-full text-primary">
+        <Icon className="size-6" />
+      </div>
+      <div>
+        <p className="font-semibold text-foreground">{title}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+    </motion.div>
+  </Link>
 );
+
 
 interface UserProfile {
     fullName: string;
@@ -441,33 +441,24 @@ export function Dashboard() {
     const toolsToShow = showMoreTools ? allTools : allTools.slice(0, 6);
 
 
-    const recommendations = [
+    const howToUseItems = [
       {
-        id: 1,
-        title: t('dashboard.recommendations.smartSearch.title'),
-        minutes: 5,
-        minutesLabel: t('dashboard.minutes'),
-        by: "Aman",
-        img: "https://picsum.photos/seed/tech1/400/200",
-        dataAiHint: "digital analytics"
+        icon: Search,
+        title: "Smart Search",
+        description: "Type conversions like '10kg to lbs' directly.",
+        href: "/how-to-use"
       },
       {
-        id: 2,
-        title: t('dashboard.recommendations.smartCalc.title'),
-        minutes: 15,
-        minutesLabel: t('dashboard.minutes'),
-        by: "Aman",
-        img: "https://picsum.photos/seed/tech2/400/200",
-        dataAiHint: "financial calculator"
+        icon: Beaker,
+        title: "Custom Units",
+        description: "Add your own units for specialized tasks.",
+        href: "/how-to-use"
       },
       {
-        id: 3,
-        title: t('dashboard.recommendations.proTips.title'),
-        minutes: 8,
-        minutesLabel: t('dashboard.minutes'),
-        by: "Aman",
-        img: "https://picsum.photos/seed/tech3/400/200",
-        dataAiHint: "team working"
+        icon: Timer,
+        title: "Time Utilities",
+        description: "Use the Pomodoro timer, stopwatch, and more.",
+        href: "/how-to-use"
       },
     ];
     
@@ -594,19 +585,17 @@ export function Dashboard() {
 
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">{t('dashboard.recommendations.title')}</h2>
+          <h2 className="text-lg font-semibold text-foreground">Discover Sutradhaar</h2>
            <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
-              <Link href="/help">
+              <Link href="/how-to-use">
                   {t('dashboard.seeAll')} <ArrowRight className="size-4" />
               </Link>
           </Button>
         </div>
-        <div className="overflow-hidden">
-             <div className="flex gap-4 overflow-x-auto pb-4 -mb-4 -mx-4 px-4">
-              {recommendations.map((r) => (
-                <RecommendationCard key={r.id} item={r} />
-              ))}
-            </div>
+        <div className="space-y-3">
+          {howToUseItems.map((item) => (
+            <HowToUseCard key={item.title} {...item} />
+          ))}
         </div>
       </section>
       
@@ -686,5 +675,3 @@ export function Dashboard() {
     </motion.div>
   );
 }
-
-    
