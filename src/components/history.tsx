@@ -27,7 +27,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "./ui/input";
 import { conversionCategories } from "@/lib/conversions";
-import { format, formatDistanceToNow, parseISO } from 'date-fns';
+import { format, formatDistanceToNow, parseISO, isValid } from 'date-fns';
 import { enUS, hi } from 'date-fns/locale';
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLanguage } from "@/context/language-context";
@@ -41,50 +41,45 @@ interface HistoryItemData {
   timestamp: string;
 }
 
+const parseHistoryString = (item: string, type: 'conversion' | 'calculation'): HistoryItemData | null => {
+    const parts = item.split('|');
+    if (type === 'conversion' && parts.length >= 3 && isValid(parseISO(parts[2]))) {
+        return { type, fullString: item, display: parts[0], categoryName: parts[1], timestamp: parts[2] };
+    }
+    if (type === 'calculation' && parts.length >= 2 && isValid(parseISO(parts[1]))) {
+        return { type, fullString: item, display: parts[0], timestamp: parts[1] };
+    }
+    // Handle legacy items without timestamps
+    if (parts.length < (type === 'conversion' ? 3 : 2)) {
+         return { type, fullString: item, display: parts[0], categoryName: type === 'conversion' ? parts[1] : undefined, timestamp: new Date(0).toISOString() };
+    }
+    return null;
+}
+
 export function History() {
-  const [conversionHistory, setConversionHistory] = useState<string[]>([]);
-  const [calculationHistory, setCalculationHistory] = useState<string[]>([]);
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [conversionHistory, setConversionHistory] = useState<HistoryItemData[]>([]);
+  const [calculationHistory, setCalculationHistory] = useState<HistoryItemData[]>([]);
+  const [favorites, setFavorites] = useState<HistoryItemData[]>([]);
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabFromQuery = searchParams.get('tab') as 'conversions' | 'calculator' | 'favorites' | null;
   const [activeTab, setActiveTab] = useState(tabFromQuery || "conversions");
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
-  const [itemToDelete, setItemToDelete] = useState<{item: string, type: 'conversion' | 'calculation' | 'favorite'} | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{item: HistoryItemData, type: 'conversion' | 'calculation' | 'favorite'} | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const { language, t } = useLanguage();
 
-  const parseConversionHistoryString = useCallback((item: string): HistoryItemData | null => {
-    const parts = item.split('|');
-    if (parts.length < 3) return null;
-    return {
-      type: 'conversion',
-      fullString: item,
-      display: parts[0] || '',
-      categoryName: parts[1] || '',
-      timestamp: parts[2] || new Date().toISOString(),
-    };
-  }, []);
-
-  const parseCalculationHistoryString = useCallback((item: string): HistoryItemData | null => {
-    const parts = item.split('|');
-    if (parts.length < 2) return null;
-    return {
-      type: 'calculation',
-      fullString: item,
-      display: parts[0] || '',
-      timestamp: parts[1] || new Date().toISOString(),
-    };
-  }, []);
-
   const loadData = useCallback(() => {
-    const storedConvHistory = localStorage.getItem("conversionHistory");
-    const storedCalcHistory = localStorage.getItem("calculationHistory");
-    const storedFavorites = localStorage.getItem("favoriteConversions");
-    if (storedConvHistory) setConversionHistory(JSON.parse(storedConvHistory));
-    if (storedCalcHistory) setCalculationHistory(JSON.parse(storedCalcHistory));
-    if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
+    const storedConvHistory: string[] = JSON.parse(localStorage.getItem("conversionHistory") || '[]');
+    const storedCalcHistory: string[] = JSON.parse(localStorage.getItem("calculationHistory") || '[]');
+    const storedFavorites: string[] = JSON.parse(localStorage.getItem("favoriteConversions") || '[]');
+    
+    setConversionHistory(storedConvHistory.map(s => parseHistoryString(s, 'conversion')).filter(Boolean as any));
+    setCalculationHistory(storedCalcHistory.map(s => parseHistoryString(s, 'calculation')).filter(Boolean as any));
+    setFavorites(storedFavorites.map(s => parseHistoryString(s, 'conversion')).filter(Boolean as any));
+
   }, []);
 
   useEffect(() => {
@@ -108,64 +103,68 @@ export function History() {
     };
   }, [loadData]);
 
-  const handleRestore = (item: string) => {
-    localStorage.setItem("restoreConversion", item);
+  const handleRestore = (item: HistoryItemData) => {
+    localStorage.setItem("restoreConversion", item.fullString);
     router.push("/converter");
   };
   
   const handleClearAll = () => {
     if (activeTab === 'conversions') {
         setConversionHistory([]);
-        localStorage.removeItem("conversionHistory");
+        localStorage.setItem("conversionHistory", '[]');
     } else if (activeTab === 'calculator') {
         setCalculationHistory([]);
-        localStorage.removeItem("calculationHistory");
+        localStorage.setItem("calculationHistory", '[]');
     } else {
         setFavorites([]);
-        localStorage.removeItem("favoriteConversions");
+        localStorage.setItem("favoriteConversions", '[]');
     }
   };
 
   const handleDeleteItem = () => {
     if (!itemToDelete) return;
+    
+    const { item, type } = itemToDelete;
 
-    if (itemToDelete.type === 'conversion') {
-        const newHistory = conversionHistory.filter(h => h !== itemToDelete.item);
+    if (type === 'conversion') {
+        const newHistory = conversionHistory.filter(h => h.fullString !== item.fullString);
         setConversionHistory(newHistory);
-        localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
+        localStorage.setItem("conversionHistory", JSON.stringify(newHistory.map(h => h.fullString)));
     } 
-    if (itemToDelete.type === 'calculation') {
-        const newHistory = calculationHistory.filter(h => h !== itemToDelete.item);
+    if (type === 'calculation') {
+        const newHistory = calculationHistory.filter(h => h.fullString !== item.fullString);
         setCalculationHistory(newHistory);
-        localStorage.setItem("calculationHistory", JSON.stringify(newHistory));
+        localStorage.setItem("calculationHistory", JSON.stringify(newHistory.map(h => h.fullString)));
     }
-    if (itemToDelete.type === 'favorite') {
-        const newFavorites = favorites.filter(fav => fav !== itemToDelete.item);
+    if (type === 'favorite') {
+        const newFavorites = favorites.filter(fav => fav.fullString !== item.fullString);
         setFavorites(newFavorites);
-        localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
+        localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites.map(h => h.fullString)));
     }
     
     setItemToDelete(null);
   };
   
   const itemsToDisplay = 
-      activeTab === 'conversions' ? conversionHistory.map(parseConversionHistoryString)
-    : activeTab === 'calculator' ? calculationHistory.map(parseCalculationHistoryString)
-    : favorites.map(parseConversionHistoryString); // Favorites are only for conversions
+      activeTab === 'conversions' ? conversionHistory
+    : activeTab === 'calculator' ? calculationHistory
+    : favorites;
     
-  const filteredItems = itemsToDisplay.filter((parsed): parsed is HistoryItemData => {
-    if (!parsed) return false;
-    
-    const searchMatch = !debouncedSearch || 
-           parsed.display.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-           (parsed.categoryName && parsed.categoryName.toLowerCase().includes(debouncedSearch.toLowerCase()));
-    
-    const categoryMatch = categoryFilter === "All" || (parsed.categoryName && parsed.categoryName === categoryFilter);
+  const filteredItems = itemsToDisplay
+    .filter((item): item is HistoryItemData => {
+      if (!item) return false;
+      const searchMatch = !debouncedSearch || 
+            item.display.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            (item.categoryName && item.categoryName.toLowerCase().includes(debouncedSearch.toLowerCase()));
+      
+      const categoryMatch = categoryFilter === "All" || (item.categoryName && item.categoryName === categoryFilter);
 
-    return searchMatch && (activeTab !== 'conversions' || categoryMatch);
-  });
+      return searchMatch && (activeTab !== 'conversions' || categoryMatch);
+    })
+    .sort((a, b) => parseISO(b.timestamp).getTime() - parseISO(a.timestamp).getTime());
 
-  const availableCategories = ['All', ...new Set(conversionHistory.map(item => parseConversionHistoryString(item)?.categoryName).filter(Boolean as any))];
+
+  const availableCategories = ['All', ...new Set(conversionHistory.map(item => item.categoryName).filter(Boolean as any))];
 
   return (
       <div className="w-full max-w-2xl mx-auto flex flex-col gap-4">
@@ -236,8 +235,8 @@ export function History() {
                          <HistoryItem 
                            key={`${item.timestamp}-${index}`} 
                            item={item} 
-                           onRestore={() => handleRestore(item.fullString)} 
-                           onDelete={() => setItemToDelete({item: item.fullString, type: activeTab as any})} 
+                           onRestore={() => handleRestore(item)} 
+                           onDelete={() => setItemToDelete({item: item, type: activeTab as any})} 
                            t={t} 
                            language={language} 
                          />
@@ -282,6 +281,7 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
     const formatTimestamp = (timestamp: string) => {
         try {
             const date = parseISO(timestamp);
+            if (!isValid(date) || date.getTime() === 0) return 'some time ago';
             return formatDistanceToNow(date, { addSuffix: true, locale: locale });
         } catch(e) {
             return "some time ago"
@@ -298,12 +298,32 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
             </div>
             <p className="font-semibold text-foreground break-all">{item.display}</p>
             <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-2 right-2">
-                 {item.type === 'conversion' && <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onRestore}>
-                    <RotateCcw className="h-4 w-4"/>
-                </Button>}
-                <Button size="icon" variant="destructive" className="h-7 w-7" onClick={onDelete}>
-                    <Trash2 className="h-4 w-4"/>
-                </Button>
+                 {item.type === 'conversion' && 
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onRestore}>
+                        <RotateCcw className="h-4 w-4"/>
+                    </Button>
+                 }
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button size="icon" variant="destructive" className="h-7 w-7">
+                            <Trash2 className="h-4 w-4"/>
+                        </Button>
+                    </AlertDialogTrigger>
+                     <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>{t('history.dialog.deleteTitle')}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {t('history.dialog.deleteDescription')}
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>{t('history.dialog.cancel')}</AlertDialogCancel>
+                        <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90">
+                            {t('history.dialog.deleteConfirm')}
+                        </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </div>
     )
