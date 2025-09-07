@@ -253,7 +253,15 @@ export function History() {
 
 function HistoryItem({ item, onRestore, onDelete, t, language }: { item: HistoryItemData; onRestore: () => void; onDelete: () => void; t: (key: string, params?: any) => string; language: string; }) {
     const category = item.categoryName ? conversionCategories.find(c => c.name === item.categoryName) : null;
-    const Icon = item.type === 'calculation' ? CalculatorIcon : category?.icon || ArrowRightLeft;
+    let Icon;
+    if (item.type === 'calculation') {
+        Icon = CalculatorIcon;
+    } else if (item.type === 'favorite') {
+        Icon = Star;
+    } else {
+        Icon = category?.icon || ArrowRightLeft;
+    }
+
     const locale = language === 'hi' ? hi : enUS;
 
     const formatTimestamp = (timestamp: string) => {
@@ -269,7 +277,7 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
     return (
         <div className="bg-secondary p-3 rounded-lg group relative">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                <Icon size={14}/> 
+                <Icon size={14} className={item.type === 'favorite' ? 'text-yellow-500' : ''}/> 
                 {item.categoryName && <span>{t(`categories.${item.categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: item.categoryName })}</span>}
                 {item.categoryName && <span>•</span>}
                 <span>{formatTimestamp(item.timestamp)}</span>
