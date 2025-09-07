@@ -170,7 +170,13 @@ export function Calculator() {
       setResult(formattedResult);
       await incrementTodaysCalculations();
       
-      localStorage.setItem('lastCalculation', `${expression} = ${formattedResult}`); // Save for note editor
+      const historyEntry = `${expression} = ${formattedResult}|${new Date().toISOString()}`;
+      const storedHistory = localStorage.getItem('calculationHistory');
+      const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
+      const newHistory = [historyEntry, ...currentHistory];
+      localStorage.setItem('calculationHistory', JSON.stringify(newHistory));
+      localStorage.setItem('lastCalculation', historyEntry); 
+
     } catch (error) {
       console.error(error)
       setResult('Error');

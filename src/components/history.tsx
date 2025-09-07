@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Trash2, Clock, Star, RotateCcw, Home, Search, Filter, Power, ChevronDown, ShieldX } from "lucide-react";
+import { ArrowLeft, Trash2, Clock, Star, RotateCcw, Home, Search, Filter, Power, ChevronDown, ShieldX, CalculatorIcon, ArrowRightLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -34,60 +34,66 @@ import { useLanguage } from "@/context/language-context";
 
 
 interface HistoryItemData {
-  conversion: string;
-  categoryName: string;
+  type: 'conversion' | 'calculation';
+  fullString: string;
+  display: string;
+  categoryName?: string;
   timestamp: string;
-  value: string;
-  from: string;
-  result: string;
-  to: string;
 }
 
 export function History() {
-  const [history, setHistory] = useState<string[]>([]);
+  const [conversionHistory, setConversionHistory] = useState<string[]>([]);
+  const [calculationHistory, setCalculationHistory] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const tabFromQuery = searchParams.get('tab') as 'history' | 'favorites' | null;
-  const [activeTab, setActiveTab] = useState(tabFromQuery || "history");
+  const tabFromQuery = searchParams.get('tab') as 'conversions' | 'calculator' | 'favorites' | null;
+  const [activeTab, setActiveTab] = useState(tabFromQuery || "conversions");
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const { language, t } = useLanguage();
 
-  const parseHistoryString = useCallback((item: string): HistoryItemData | null => {
+  const parseConversionHistoryString = useCallback((item: string): HistoryItemData | null => {
     const parts = item.split('|');
-    if (parts.length < 3) return null; // Ensure the string is valid
-    const conversionParts = parts[0].split(' ');
-
+    if (parts.length < 3) return null;
     return {
-      conversion: parts[0] || '',
+      type: 'conversion',
+      fullString: item,
+      display: parts[0] || '',
       categoryName: parts[1] || '',
       timestamp: parts[2] || new Date().toISOString(),
-      value: conversionParts[0] || '',
-      from: conversionParts[1] || '',
-      result: conversionParts[3] || '',
-      to: conversionParts[4] || '',
+    };
+  }, []);
+
+  const parseCalculationHistoryString = useCallback((item: string): HistoryItemData | null => {
+    const parts = item.split('|');
+    if (parts.length < 2) return null;
+    return {
+      type: 'calculation',
+      fullString: item,
+      display: parts[0] || '',
+      timestamp: parts[1] || new Date().toISOString(),
     };
   }, []);
 
   const loadData = useCallback(() => {
-    const storedHistory = localStorage.getItem("conversionHistory");
+    const storedConvHistory = localStorage.getItem("conversionHistory");
+    const storedCalcHistory = localStorage.getItem("calculationHistory");
     const storedFavorites = localStorage.getItem("favoriteConversions");
-    if (storedHistory) setHistory(JSON.parse(storedHistory));
+    if (storedConvHistory) setConversionHistory(JSON.parse(storedConvHistory));
+    if (storedCalcHistory) setCalculationHistory(JSON.parse(storedCalcHistory));
     if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
   }, []);
 
   useEffect(() => {
     loadData();
-    
     const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'conversionHistory' || e.key === 'favoriteConversions') {
+        if (e.key === 'conversionHistory' || e.key === 'favoriteConversions' || e.key === 'calculationHistory') {
             loadData();
         }
     };
-    
     const handleVisibilityChange = () => {
         if (document.visibilityState === 'visible') {
             loadData();
@@ -108,9 +114,12 @@ export function History() {
   };
   
   const handleClearAll = () => {
-    if (activeTab === 'history') {
-        setHistory([]);
+    if (activeTab === 'conversions') {
+        setConversionHistory([]);
         localStorage.removeItem("conversionHistory");
+    } else if (activeTab === 'calculator') {
+        setCalculationHistory([]);
+        localStorage.removeItem("calculationHistory");
     } else {
         setFavorites([]);
         localStorage.removeItem("favoriteConversions");
@@ -118,10 +127,17 @@ export function History() {
   };
 
   const handleDeleteItem = (itemString: string) => {
-    const newHistory = history.filter(h => h !== itemString);
-    setHistory(newHistory);
-    localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
-
+    if (activeTab === 'conversions') {
+        const newHistory = conversionHistory.filter(h => h !== itemString);
+        setConversionHistory(newHistory);
+        localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
+    } else if (activeTab === 'calculator') {
+        const newHistory = calculationHistory.filter(h => h !== itemString);
+        setCalculationHistory(newHistory);
+        localStorage.setItem("calculationHistory", JSON.stringify(newHistory));
+    }
+    
+    // Also remove from favorites if it's there
     const newFavorites = favorites.filter(fav => fav !== itemString);
     setFavorites(newFavorites);
     localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
@@ -129,30 +145,24 @@ export function History() {
     setItemToDelete(null);
   };
   
-  const itemsToDisplay = activeTab === 'history' ? history : favorites;
+  const itemsToDisplay = 
+      activeTab === 'conversions' ? conversionHistory.map(parseConversionHistoryString)
+    : activeTab === 'calculator' ? calculationHistory.map(parseCalculationHistoryString)
+    : favorites.map(parseConversionHistoryString); // Favorites are only for conversions
     
-  const filteredItems = itemsToDisplay.map(parseHistoryString).filter((parsed): parsed is HistoryItemData => {
+  const filteredItems = itemsToDisplay.filter((parsed): parsed is HistoryItemData => {
     if (!parsed) return false;
     
-    const category = conversionCategories.find(c => c.name === parsed.categoryName);
-    const fromUnit = category?.units.find(u => u.symbol === parsed.from);
-    const toUnit = category?.units.find(u => u.symbol === parsed.to);
-
-    const fromName = fromUnit ? t(`units.${fromUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: fromUnit.name }) : parsed.from;
-    const toName = toUnit ? t(`units.${toUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: toUnit.name }) : parsed.to;
-    
     const searchMatch = !debouncedSearch || 
-           parsed.conversion.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-           parsed.categoryName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-           fromName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-           toName.toLowerCase().includes(debouncedSearch.toLowerCase());
+           parsed.display.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+           (parsed.categoryName && parsed.categoryName.toLowerCase().includes(debouncedSearch.toLowerCase()));
     
-    const categoryMatch = categoryFilter === "All" || parsed.categoryName === categoryFilter;
+    const categoryMatch = categoryFilter === "All" || (parsed.categoryName && parsed.categoryName === categoryFilter);
 
-    return searchMatch && categoryMatch;
+    return searchMatch && (activeTab !== 'conversions' || categoryMatch);
   });
 
-  const availableCategories = ['All', ...new Set(itemsToDisplay.map(item => parseHistoryString(item)?.categoryName).filter(Boolean as any))];
+  const availableCategories = ['All', ...new Set(conversionHistory.map(item => parseConversionHistoryString(item)?.categoryName).filter(Boolean as any))];
 
   return (
       <div className="w-full max-w-2xl mx-auto flex flex-col gap-4">
@@ -175,7 +185,7 @@ export function History() {
               <AlertDialogHeader>
                 <AlertDialogTitle>{t('history.dialog.title')}</AlertDialogTitle>
                 <AlertDialogDescription>
-                    {t('history.dialog.description', {tab: activeTab === 'history' ? t('history.tabs.history') : t('history.tabs.favorites')})}
+                    {t('history.dialog.description', {tab: activeTab})}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -188,10 +198,11 @@ export function History() {
           </AlertDialog>
         </header>
         
-        <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'history' | 'favorites')} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="history">{t('history.tabs.history')}</TabsTrigger>
-                <TabsTrigger value="favorites">{t('history.tabs.favorites')}</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={v => setActiveTab(v)} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="conversions">Conversions</TabsTrigger>
+                <TabsTrigger value="calculator">Calculator</TabsTrigger>
+                <TabsTrigger value="favorites">Favorites</TabsTrigger>
             </TabsList>
             
             <div className="flex items-center gap-2 my-4">
@@ -199,31 +210,33 @@ export function History() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input placeholder={t('history.searchPlaceholder')} className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline"><Filter className="mr-2"/> {categoryFilter === 'All' ? t('history.filter.all') : t(`categories.${categoryFilter.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: categoryFilter })} <ChevronDown className="ml-2 h-4 w-4" /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                    <DropdownMenuRadioGroup value={categoryFilter} onValueChange={setCategoryFilter}>
-                        {availableCategories.map(cat => (
-                            <DropdownMenuRadioItem key={cat} value={cat}>{cat === 'All' ? t('history.filter.all') : t(`categories.${cat.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat })}</DropdownMenuRadioItem>
-                        ))}
-                    </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {activeTab === 'conversions' && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline"><Filter className="mr-2"/> {categoryFilter === 'All' ? t('history.filter.all') : t(`categories.${categoryFilter.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: categoryFilter })} <ChevronDown className="ml-2 h-4 w-4" /></Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                      <DropdownMenuRadioGroup value={categoryFilter} onValueChange={setCategoryFilter}>
+                          {availableCategories.map(cat => (
+                              <DropdownMenuRadioItem key={cat} value={cat}>{cat === 'All' ? t('history.filter.all') : t(`categories.${cat.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat })}</DropdownMenuRadioItem>
+                          ))}
+                      </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
 
             <div className="bg-card p-4 rounded-lg">
                 {filteredItems.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {filteredItems.map((item, index) => (
-                         <HistoryItem key={`${item.timestamp}-${index}`} item={item} onRestore={handleRestore} onDelete={() => setItemToDelete(`${item.conversion}|${item.categoryName}|${item.timestamp}`)} t={t} language={language} />
+                         <HistoryItem key={`${item.timestamp}-${index}`} item={item} onRestore={handleRestore} onDelete={() => setItemToDelete(item.fullString)} t={t} language={language} />
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-16 text-muted-foreground flex flex-col items-center gap-4">
                     <ShieldX size={48} />
-                    <p className="font-semibold">{t('history.emptyState', {tab: t(`history.tabs.${activeTab}`)})}</p>
+                    <p className="font-semibold">{t('history.emptyState', {tab: activeTab})}</p>
                   </div>
                 )}
             </div>
@@ -252,37 +265,32 @@ export function History() {
 
 
 function HistoryItem({ item, onRestore, onDelete, t, language }: { item: HistoryItemData; onRestore: (item: string) => void; onDelete: () => void; t: (key: string, params?: any) => string; language: string; }) {
-    const fullHistoryString = `${item.conversion}|${item.categoryName}|${item.timestamp}`;
-    const category = conversionCategories.find(c => c.name === item.categoryName);
-    const Icon = category?.icon || Power;
+    const category = item.categoryName ? conversionCategories.find(c => c.name === item.categoryName) : null;
+    const Icon = item.type === 'conversion' ? category?.icon || ArrowRightLeft : CalculatorIcon;
     const locale = language === 'hi' ? hi : enUS;
 
-    const fromUnit = category?.units.find(u => u.symbol === item.from);
-    const toUnit = category?.units.find(u => u.symbol === item.to);
-    
-    const fromName = fromUnit ? t(`units.${fromUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: fromUnit.name }) : item.from;
-    const toName = toUnit ? t(`units.${toUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: toUnit.name }) : item.to;
-    
-    const translatedConversion = `${item.value} ${fromName} → ${item.result} ${toName}`;
-
     const formatTimestamp = (timestamp: string) => {
-        const date = parseISO(timestamp);
-        return formatDistanceToNow(date, { addSuffix: true, locale: locale });
+        try {
+            const date = parseISO(timestamp);
+            return formatDistanceToNow(date, { addSuffix: true, locale: locale });
+        } catch(e) {
+            return "some time ago"
+        }
     };
 
     return (
         <div className="bg-secondary p-3 rounded-lg group relative">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
                 <Icon size={14}/> 
-                <span>{t(`categories.${item.categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: item.categoryName })}</span>
-                <span>•</span>
+                {item.categoryName && <span>{t(`categories.${item.categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: item.categoryName })}</span>}
+                {item.categoryName && <span>•</span>}
                 <span>{formatTimestamp(item.timestamp)}</span>
             </div>
-            <p className="font-semibold text-foreground">{translatedConversion}</p>
+            <p className="font-semibold text-foreground break-all">{item.display}</p>
             <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-2 right-2">
-                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onRestore(fullHistoryString)}>
+                 {item.type === 'conversion' && <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onRestore(item.fullString)}>
                     <RotateCcw className="h-4 w-4"/>
-                </Button>
+                </Button>}
                 <Button size="icon" variant="destructive" className="h-7 w-7" onClick={onDelete}>
                     <Trash2 className="h-4 w-4"/>
                 </Button>
@@ -290,5 +298,3 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
         </div>
     )
 }
-
-    
