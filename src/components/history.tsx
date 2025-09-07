@@ -96,15 +96,17 @@ export function History() {
     setIsClient(true);
     loadData();
     
-    const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'conversionHistory' || e.key === 'favoriteConversions') {
-            loadData();
-        }
-    };
+    const handleDataChange = () => loadData();
     
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    // Listen for custom storage events from the converter
+    window.addEventListener('storage', handleDataChange);
+    // Also listen for when the tab becomes visible again
+    document.addEventListener('visibilitychange', handleDataChange);
 
+    return () => {
+        window.removeEventListener('storage', handleDataChange);
+        document.removeEventListener('visibilitychange', handleDataChange);
+    };
   }, []);
 
   const handleRestore = (item: string) => {
