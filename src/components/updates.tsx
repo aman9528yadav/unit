@@ -123,12 +123,14 @@ export function Updates() {
                       <div className="absolute left-[-18px] top-1 p-2 rounded-full border-4 border-background" style={{ backgroundColor: update.bgColor, color: update.textColor }}>
                           <Icon className="w-5 h-5" />
                       </div>
-                      <p className="text-sm text-muted-foreground ml-8">
-                          {isClient ? format(new Date(update.date), "d MMM yyyy, h:mm a") : ''}
-                      </p>
+                      <div className="ml-8">
+                        <p className="font-semibold text-foreground leading-tight">{update.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                            {update.version} • {isClient ? format(new Date(update.date), "d MMM yyyy") : ''}
+                        </p>
+                      </div>
                   </div>
                   <div className="bg-card p-4 rounded-xl ml-8">
-                      <h2 className="text-lg font-semibold text-foreground mb-2">{update.title}</h2>
                       <p className="text-sm text-muted-foreground">{update.description}</p>
                   </div>
               </div>

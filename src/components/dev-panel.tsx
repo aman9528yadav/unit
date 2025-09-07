@@ -202,6 +202,23 @@ export function DevPanel() {
         }
     };
 
+    const handleClearMaintenanceInfo = async () => {
+        setMaintenanceDuration({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        setMaintenanceText('');
+        setCustomMaintenanceTitle('');
+        setMaintenanceType('Security');
+        await setUpdateInfo({ targetDate: null, updateText: '', maintenanceType: 'Security', customMaintenanceTitle: '' });
+        toast({ title: 'Maintenance Info Cleared' });
+    }
+
+    const handleClearUpdateInfo = async () => {
+        setUpdateDuration({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        setUpdateText('');
+        setShowUpdateOnDashboard(false);
+        await setNextUpdateInfo({ targetDate: null, updateText: '', showOnDashboard: false });
+        toast({ title: 'Next Update Info Cleared' });
+    }
+
     const handleSendNotification = async () => {
         if (!notificationTitle || !notificationDescription) {
             toast({ title: "Incomplete", description: "Please fill out both title and description.", variant: "destructive" });
@@ -330,7 +347,10 @@ export function DevPanel() {
                 <TabsContent value="maintenance" className="mt-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><Timer /> Maintenance Page</CardTitle>
+                            <CardTitle className="flex items-center justify-between">
+                                <span className="flex items-center gap-2"><Timer /> Maintenance Page</span>
+                                <Button variant="outline" size="sm" onClick={handleClearMaintenanceInfo}>Clear</Button>
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                              <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
@@ -407,8 +427,11 @@ export function DevPanel() {
                 </TabsContent>
                 <TabsContent value="updates" className="mt-4">
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><ServerCog /> Updates Page</CardTitle>
+                         <CardHeader>
+                            <CardTitle className="flex items-center justify-between">
+                                <span className="flex items-center gap-2"><ServerCog /> Updates Page</span>
+                                <Button variant="outline" size="sm" onClick={handleClearUpdateInfo}>Clear</Button>
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                              <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
