@@ -2,8 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Plus, Trash2, Edit } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,8 +18,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { FAQ, FAQ_STORAGE_KEY, defaultFaqs } from '../help';
+import { FAQ, defaultFaqs } from '../help';
 import { useRouter } from 'next/navigation';
+import { setFaqs as setFaqsInDb, listenToFaqs } from '@/services/firestore';
 
 
 export function HelpEditor() {
@@ -36,24 +36,22 @@ export function HelpEditor() {
     
     useEffect(() => {
         setIsClient(true);
-        loadFaqs();
+        const unsubscribe = listenToFaqs((faqsFromDb) => {
+            setFaqs(faqsFromDb.length > 0 ? faqsFromDb : defaultFaqs);
+        });
+        return () => unsubscribe();
     }, []);
 
-    const loadFaqs = () => {
-        const storedFaqs = localStorage.getItem(FAQ_STORAGE_KEY);
-        if (storedFaqs) {
-            setFaqs(JSON.parse(storedFaqs));
-        } else {
-            setFaqs(defaultFaqs);
+    const handleSaveAll = async () => {
+        try {
+            await setFaqsInDb(faqs);
+            toast({ title: "FAQs Saved!", description: "All changes have been saved to the database." });
+        } catch (error) {
+            console.error(error);
+            toast({ title: "Error", description: "Failed to save FAQs.", variant: "destructive" });
         }
     };
     
-    const updateStoredFaqs = (updatedFaqs: FAQ[]) => {
-        setFaqs(updatedFaqs);
-        localStorage.setItem(FAQ_STORAGE_KEY, JSON.stringify(updatedFaqs));
-        window.dispatchEvent(new StorageEvent('storage', { key: FAQ_STORAGE_KEY, newValue: JSON.stringify(updatedFaqs) }));
-    };
-
     const handleOpenDialog = (faq: FAQ | null = null) => {
         setEditingFaq(faq);
         if (faq) {
@@ -66,33 +64,28 @@ export function HelpEditor() {
         setIsDialogOpen(true);
     };
     
-    const handleSave = () => {
+    const handleSaveItem = () => {
         if (!question || !answer) {
             toast({ title: "Incomplete Information", description: "Please fill out both question and answer.", variant: "destructive" });
             return;
         }
 
+        let updatedFaqs;
         if (editingFaq) {
-            // Update existing FAQ
-            const updatedFaqs = faqs.map(f => f.id === editingFaq.id ? { ...f, question, answer } : f);
-            updateStoredFaqs(updatedFaqs);
-            toast({ title: "FAQ Updated!", description: "The FAQ item has been successfully updated." });
+            updatedFaqs = faqs.map(f => f.id === editingFaq.id ? { ...f, question, answer } : f);
         } else {
-            // Add new FAQ
             const newFaq: FAQ = { id: uuidv4(), question, answer };
-            const updatedFaqs = [...faqs, newFaq];
-            updateStoredFaqs(updatedFaqs);
-            toast({ title: "FAQ Added!", description: "The new FAQ item has been added." });
+            updatedFaqs = [...faqs, newFaq];
         }
-
+        setFaqs(updatedFaqs);
         setIsDialogOpen(false);
     };
 
     const handleDelete = (faqId: string) => {
         if (window.confirm("Are you sure you want to delete this FAQ item?")) {
             const updatedFaqs = faqs.filter(f => f.id !== faqId);
-            updateStoredFaqs(updatedFaqs);
-            toast({ title: "FAQ Deleted", description: "The FAQ item has been removed." });
+            setFaqs(updatedFaqs);
+            toast({ title: "FAQ Deleted", description: "The FAQ item has been removed. Click 'Save All Changes' to commit." });
         }
     };
 
@@ -109,9 +102,14 @@ export function HelpEditor() {
                     </Button>
                     <h1 className="text-xl font-bold">Manage Help Content</h1>
                 </div>
-                 <Button size="icon" onClick={() => handleOpenDialog()}>
-                    <Plus />
-                </Button>
+                 <div className='flex gap-2'>
+                    <Button size="icon" onClick={() => handleOpenDialog()}>
+                        <Plus />
+                    </Button>
+                     <Button size="icon" variant="secondary" onClick={handleSaveAll}>
+                        <Save />
+                    </Button>
+                 </div>
             </header>
 
             <div className="flex-grow space-y-2">
@@ -159,7 +157,7 @@ export function HelpEditor() {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                        <Button type="submit" onClick={handleSave}>Save Changes</Button>
+                        <Button type="submit" onClick={handleSaveItem}>{editingFaq ? 'Update Item' : 'Add Item'}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

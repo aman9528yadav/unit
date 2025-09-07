@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, LogIn, Sigma, Calculator, NotebookText, Star, Settings, Palette, Beaker, Zap, Search, Mic } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
-import { FAQ, defaultFaqs, FAQ_STORAGE_KEY } from "./help";
+import { FAQ, defaultFaqs } from "./help";
 import { useLanguage } from "@/context/language-context";
+import { listenToFaqs } from "@/services/firestore";
+
 
 const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
     <div className="bg-card p-6 rounded-xl border border-border/80 shadow-sm">
@@ -30,22 +32,10 @@ export function HowToUse() {
   const { t } = useLanguage();
   
   useEffect(() => {
-    const storedFaqs = localStorage.getItem(FAQ_STORAGE_KEY);
-    if (storedFaqs) {
-        setFaqs(JSON.parse(storedFaqs));
-    } else {
-        setFaqs(defaultFaqs);
-        localStorage.setItem(FAQ_STORAGE_KEY, JSON.stringify(defaultFaqs));
-    }
-
-    const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === FAQ_STORAGE_KEY && e.newValue) {
-            setFaqs(JSON.parse(e.newValue));
-        }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-
+    const unsubscribe = listenToFaqs((faqsFromDb) => {
+        setFaqs(faqsFromDb.length > 0 ? faqsFromDb : defaultFaqs);
+    });
+    return () => unsubscribe();
   }, []);
 
   return (

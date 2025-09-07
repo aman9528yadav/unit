@@ -14,14 +14,14 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/language-context';
+import { listenToFaqs } from '@/services/firestore';
+
 
 export interface FAQ {
     id: string;
     question: string;
     answer: string;
 }
-
-export const FAQ_STORAGE_KEY = 'faqData';
 
 export const defaultFaqs: FAQ[] = [
     {
@@ -64,33 +64,16 @@ export const defaultFaqs: FAQ[] = [
 export function Help() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const [profile, setProfile] = useState(null);
   const router = useRouter();
   const { t } = useLanguage();
   
   useEffect(() => {
     setIsClient(true);
-    const storedProfile = localStorage.getItem("userProfile");
-    if (storedProfile) {
-        setProfile(JSON.parse(storedProfile));
-    }
-    
-    const storedFaqs = localStorage.getItem(FAQ_STORAGE_KEY);
-    if (storedFaqs) {
-        setFaqs(JSON.parse(storedFaqs));
-    } else {
-        setFaqs(defaultFaqs);
-        localStorage.setItem(FAQ_STORAGE_KEY, JSON.stringify(defaultFaqs));
-    }
+    const unsubscribe = listenToFaqs((faqsFromDb) => {
+        setFaqs(faqsFromDb.length > 0 ? faqsFromDb : defaultFaqs);
+    });
 
-    const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === FAQ_STORAGE_KEY && e.newValue) {
-            setFaqs(JSON.parse(e.newValue));
-        }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-
+    return () => unsubscribe();
   }, [t]);
 
   if (!isClient) {

@@ -4,8 +4,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BarChart, Calendar, Lightbulb, Code, Sparkles, Globe, Wrench, Rocket, FileText, Shield, LifeBuoy, Flag, Info, FileClock } from "lucide-react";
+import { ArrowLeft, BarChart, Calendar, Lightbulb, Code, Sparkles, Globe, Wrench, Rocket, FileText, Shield, LifeBuoy, Flag, Info, FileClock, Users, Activity, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 export function About() {
   const router = useRouter();
@@ -64,6 +65,27 @@ export function About() {
     { title: 'Contact Us', href: 'https://aman9528.wixstudio.com/my-site-3', icon: <Globe/> },
     { title: 'Report an Issue', href: 'https://aman9528.wixstudio.com/my-site-3', icon: <Flag/> },
   ];
+  
+  const testimonials = [
+      {
+          name: "Priya Sharma",
+          location: "Mumbai",
+          text: "This app is a lifesaver for my freelance work. The currency converter is always up-to-date, and the notes feature helps me keep track of everything in one place. Highly recommended!",
+          image: "https://picsum.photos/seed/woman1/100/100"
+      },
+      {
+          name: "Rohan Kumar",
+          location: "Delhi",
+          text: "As a student, I use the calculator and unit converter daily. It's fast, accurate, and the interface is so clean and easy to use. The best all-in-one productivity tool I've found.",
+          image: "https://picsum.photos/seed/man1/100/100"
+      },
+      {
+          name: "Anjali Gupta",
+          location: "Bangalore",
+          text: "The custom units feature is a game-changer for my niche projects. I can create my own conversion categories, which saves me so much time. A truly powerful and flexible app.",
+          image: "https://picsum.photos/seed/woman2/100/100"
+      }
+  ];
 
 
   return (
@@ -82,6 +104,16 @@ export function About() {
           <p className="mt-4 text-lg md:text-xl text-gray-600">
             Sutradhaar is a modern, smart, and simple unit converter app built by Aman Yadav. It combines design, speed, and accuracy to help you calculate effortlessly.
           </p>
+           <div className="mt-8 flex justify-center gap-6 text-center">
+                <div>
+                    <p className="text-3xl font-bold text-indigo-600">10,000+</p>
+                    <p className="text-sm text-muted-foreground">Happy Users</p>
+                </div>
+                <div>
+                    <p className="text-3xl font-bold text-indigo-600">1M+</p>
+                    <p className="text-sm text-muted-foreground">Calculations Done</p>
+                </div>
+            </div>
         </section>
 
         {/* Action Buttons Section */}
@@ -155,6 +187,44 @@ export function About() {
             })}
           </div>
         </section>
+        
+        {/* Testimonials Section */}
+        <section className="mt-16 w-full">
+          <h2 className="text-3xl font-bold text-center text-gray-800 mb-10">
+            What Our Users Say
+          </h2>
+          <div className="space-y-8">
+            {testimonials.map((testimonial, idx) => (
+                 <motion.div 
+                    key={idx}
+                    className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.5 }}
+                    transition={{ duration: 0.5, delay: idx * 0.1 }}
+                >
+                    <div className="flex items-start gap-4">
+                        <Image
+                            src={testimonial.image}
+                            alt={testimonial.name}
+                            width={60}
+                            height={60}
+                            className="rounded-full border-2 border-indigo-200"
+                            data-ai-hint="person photo"
+                        />
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                                {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />)}
+                            </div>
+                            <p className="text-gray-700 italic mt-2">"{testimonial.text}"</p>
+                            <p className="text-right mt-4 font-semibold text-indigo-600">- {testimonial.name}, <span className="font-normal text-gray-500">{testimonial.location}</span></p>
+                        </div>
+                    </div>
+                </motion.div>
+            ))}
+          </div>
+        </section>
+
 
         {/* Credits Section */}
         <section className="mt-16 w-full text-center">

@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { db, rtdb } from '@/lib/firebase';
@@ -7,6 +6,7 @@ import { collection, addDoc, serverTimestamp, onSnapshot as onFirestoreSnapshot,
 import { ref, set as setRealtimeDb, onValue, remove as removeRealtimeDb } from "firebase/database";
 import type { AppNotification } from '@/lib/notifications';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { FAQ, defaultFaqs } from '@/components/help';
 
 const OFFLINE_QUEUE_KEY = 'firestoreOfflineQueue';
 
@@ -15,6 +15,31 @@ export interface UserEvent {
     name: string;
     type: 'login' | 'signup';
 }
+
+export async function setFaqs(faqs: FAQ[]) {
+    try {
+        const faqsDocRef = doc(db, 'app-content', 'faqs');
+        await setFirestoreDoc(faqsDocRef, { faqsList: faqs });
+    } catch (error) {
+        console.error("Error saving FAQs:", error);
+        throw error;
+    }
+}
+
+export function listenToFaqs(callback: (faqs: FAQ[]) => void) {
+    const faqsDocRef = doc(db, 'app-content', 'faqs');
+    return onFirestoreSnapshot(faqsDocRef, (doc) => {
+        if (doc.exists()) {
+            callback(doc.data().faqsList || defaultFaqs);
+        } else {
+            callback(defaultFaqs);
+        }
+    }, (error) => {
+        console.error("Error listening to FAQs:", error);
+        callback(defaultFaqs);
+    });
+}
+
 
 /**
  * Logs a user event (login or signup) to Firestore.
@@ -42,13 +67,13 @@ export async function sendGlobalNotification(notification: { title: string, desc
             title: notification.title,
             description: notification.description,
             icon: notification.icon,
-            createdAt: serverTimestamp(), // Use server time for consistency
+            createdAt: new Date().toISOString(),
         };
-        await addDoc(collection(db, 'notifications'), notificationData);
+        // Using a single document to store the latest notification
+        const broadcastRef = doc(db, 'app-content', 'broadcastNotification');
+        await setFirestoreDoc(broadcastRef, notificationData);
     } catch (error) {
         console.error("Error sending notification: ", error);
-        // Depending on the app's needs, you might want to throw the error
-        // or handle it gracefully (e.g., show an error toast to the admin).
         throw error;
     }
 }
