@@ -23,6 +23,8 @@ export interface FAQ {
     answer: string;
 }
 
+export const FAQ_STORAGE_KEY = 'faqs';
+
 export const defaultFaqs: FAQ[] = [
     {
         id: uuidv4(),
