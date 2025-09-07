@@ -74,14 +74,15 @@ const ToolButton = ({ icon: Icon, label, href, color, target, onClick }: any) =>
         </motion.div>
     );
 
-    if (href) {
-        return (
-            <Link href={href} target={target}>
-                {content}
-            </Link>
-        );
+    if (onClick) {
+      return <div onClick={onClick} className="cursor-pointer">{content}</div>;
     }
-    return <div onClick={onClick} className="cursor-pointer">{content}</div>;
+    
+    return (
+      <Link href={href} target={target}>
+        {content}
+      </Link>
+    );
 };
 
 
@@ -396,7 +397,7 @@ export function Dashboard() {
       { label: t('dashboard.tools.calculator'), icon: Calculator, href: "/calculator", color: "text-orange-400" },
       { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
       { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
-      { label: 'News', icon: Newspaper, onClick: () => openFeatureDialog("News & Updates", "Get the latest news, announcements, and updates about the app, all in one place."), color: 'text-green-400' },
+      { label: 'News', icon: Newspaper, href: "/news", color: 'text-green-400' },
       { label: 'AI Search', icon: Wand2, onClick: () => openFeatureDialog("AI Smart Search (Coming Soon)", "A powerful new search experience that understands natural language to find notes, perform conversions, and navigate the app faster than ever."), color: 'text-indigo-400' },
     ];
     

@@ -12,7 +12,12 @@ import {
   Calendar as CalendarIcon,
   BarChart,
   LineChart as LineChartIcon,
-  ArrowRight
+  ArrowRight,
+  Flame,
+  TrendingUp,
+  CheckCircle,
+  XCircle,
+  TrendingDown
 } from "lucide-react";
 import { addDays, format } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -25,6 +30,7 @@ import { useLanguage } from "@/context/language-context";
 import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
+import { getStreakData } from "@/lib/streak";
 
 type ChartType = "bar" | "line";
 type TimeRangePreset = "weekly" | "monthly" | "yearly";
@@ -51,11 +57,17 @@ export function Analytics() {
         totalCalculations: number;
         totalDateCalculations: number;
         activity: DailyActivity[];
+        currentStreak: number;
+        bestStreak: number;
+        daysNotOpened: number;
     }>({
         totalConversions: 0,
         totalCalculations: 0,
         totalDateCalculations: 0,
         activity: [],
+        currentStreak: 0,
+        bestStreak: 0,
+        daysNotOpened: 0,
     });
     
     const [timeRange, setTimeRange] = useState<TimeRangePreset>("weekly");
@@ -68,12 +80,19 @@ export function Analytics() {
 
     const loadStats = useCallback(async () => {
         const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
-        const fetchedStats = await getStats(userEmail, dateRange);
+        const [fetchedStats, streakData] = await Promise.all([
+          getStats(userEmail, dateRange),
+          getStreakData(userEmail)
+        ]);
+
         setStats({
             totalConversions: fetchedStats.totalConversions,
             totalCalculations: fetchedStats.totalCalculations,
             totalDateCalculations: fetchedStats.totalDateCalculations,
             activity: fetchedStats.activity,
+            currentStreak: streakData.currentStreak,
+            bestStreak: streakData.bestStreak,
+            daysNotOpened: streakData.daysNotOpened,
         });
 
     }, [dateRange]);
@@ -143,7 +162,7 @@ export function Analytics() {
               <CardContent>
                 <p className="text-4xl font-extrabold text-indigo-600">{stats.totalConversions}</p>
                 <p className={`text-sm font-medium ${conversionsStats.change >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {conversionsStats.change >= 0 ? "🔼" : "🔽"} {Math.abs(conversionsStats.percent).toFixed(1)}% vs previous day
+                  {conversionsStats.change >= 0 ? <TrendingUp className="inline-block w-4 h-4" /> : <TrendingDown className="inline-block w-4 h-4" />} {Math.abs(conversionsStats.percent).toFixed(1)}% vs previous day
                 </p>
               </CardContent>
             </Card>
@@ -153,7 +172,7 @@ export function Analytics() {
               <CardContent>
                 <p className="text-4xl font-extrabold text-green-600">{stats.totalCalculations}</p>
                  <p className={`text-sm font-medium ${calculationsStats.change >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {calculationsStats.change >= 0 ? "🔼" : "🔽"} {Math.abs(calculationsStats.percent).toFixed(1)}% vs previous day
+                  {calculationsStats.change >= 0 ? <TrendingUp className="inline-block w-4 h-4" /> : <TrendingDown className="inline-block w-4 h-4" />} {Math.abs(calculationsStats.percent).toFixed(1)}% vs previous day
                 </p>
               </CardContent>
             </Card>
@@ -163,7 +182,7 @@ export function Analytics() {
               <CardContent>
                 <p className="text-4xl font-extrabold text-orange-600">{stats.totalDateCalculations}</p>
                 <p className={`text-sm font-medium ${dateCalcStats.change >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {dateCalcStats.change >= 0 ? "🔼" : "🔽"} {Math.abs(dateCalcStats.percent).toFixed(1)}% vs previous day
+                  {dateCalcStats.change >= 0 ? <TrendingUp className="inline-block w-4 h-4" /> : <TrendingDown className="inline-block w-4 h-4" />} {Math.abs(dateCalcStats.percent).toFixed(1)}% vs previous day
                 </p>
               </CardContent>
             </Card>
@@ -171,6 +190,21 @@ export function Analytics() {
             <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
               <CardHeader><CardTitle>Total Operations</CardTitle></CardHeader>
               <CardContent><p className="text-4xl font-extrabold text-gray-700">{stats.totalConversions + stats.totalCalculations + stats.totalDateCalculations}</p></CardContent>
+            </Card>
+
+            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
+              <CardHeader><CardTitle>Current Streak</CardTitle></CardHeader>
+              <CardContent><p className="text-4xl font-extrabold text-red-500 flex items-center gap-2"><Flame /> {stats.currentStreak} days</p></CardContent>
+            </Card>
+            
+            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
+              <CardHeader><CardTitle>Best Streak</CardTitle></CardHeader>
+              <CardContent><p className="text-4xl font-extrabold text-yellow-500 flex items-center gap-2"><CheckCircle /> {stats.bestStreak} days</p></CardContent>
+            </Card>
+
+            <Card className="rounded-2xl shadow-md hover:shadow-lg transition col-span-1 md:col-span-2">
+              <CardHeader><CardTitle>Last Seen</CardTitle></CardHeader>
+              <CardContent><p className="text-4xl font-extrabold text-gray-500 flex items-center gap-2"><XCircle /> {stats.daysNotOpened} days ago</p></CardContent>
             </Card>
           </div>
     
