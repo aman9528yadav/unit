@@ -6,6 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Mail, ExternalLink } from "lucide-react";
 import Link from 'next/link';
+import { useEffect, useState } from "react";
+import { listenToAboutInfoFromRtdb, type AppInfo } from "@/services/firestore";
+import { Skeleton } from "./ui/skeleton";
 
 const DetailRow = ({ label, value }: { label: string, value: React.ReactNode }) => (
     <div className="flex justify-between items-center py-2">
@@ -15,6 +18,17 @@ const DetailRow = ({ label, value }: { label: string, value: React.ReactNode }) 
 );
 
 export function AboutCard() {
+    const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
+
+    useEffect(() => {
+        const unsubscribe = listenToAboutInfoFromRtdb((data) => {
+            if (data?.appInfo) {
+                setAppInfo(data.appInfo);
+            }
+        });
+        return () => unsubscribe();
+    }, []);
+
     return (
         <Card className="bg-card border-border shadow-sm">
             <CardHeader>
@@ -24,11 +38,16 @@ export function AboutCard() {
                 <div className="divide-y divide-border">
                     <DetailRow
                         label="App"
+                        value={<span>Sutradhaar • Unit Converter</span>}
+                    />
+                    <DetailRow
+                        label="Version"
                         value={
-                            <div className="flex items-center gap-2">
-                                <span>Sutradhaar • Unit Converter</span>
-                                <Badge variant="outline">Beta 1.0.0</Badge>
-                            </div>
+                            appInfo ? (
+                                <span>{appInfo.version}</span>
+                            ) : (
+                                <Skeleton className="h-4 w-24" />
+                            )
                         }
                     />
                     <DetailRow
