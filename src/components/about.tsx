@@ -122,7 +122,7 @@ export function About() {
         </section>
 
         {/* App Info Section */}
-        <section className="mt-12 grid md:grid-cols-2 gap-8 w-full">
+        <section className="mt-12 grid grid-cols-1 gap-8 w-full">
           <div className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-xl transition">
             <h2 className="text-2xl font-bold text-indigo-600 mb-4">App Information</h2>
             <ul className="text-gray-600 leading-relaxed space-y-2">
@@ -318,5 +318,3 @@ export function About() {
     </motion.div>
   );
 }
-
-    
