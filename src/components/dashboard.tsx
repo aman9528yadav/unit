@@ -52,6 +52,10 @@ import { AboutCard } from "./about-card";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import { Label } from "./ui/label";
 import { Checkbox } from "./ui/checkbox";
+import { getStats, type DailyActivity } from "@/lib/stats";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { format } from "date-fns";
 
 
 const ToolButton = ({ icon: Icon, label, href, color }: any) => (
@@ -166,6 +170,19 @@ const LanguageToggle = () => {
     );
 };
 
+const StatCard = ({ title, value, icon: Icon, color }: { title: string, value: string, icon: React.ElementType, color?: string }) => (
+    <Card className="flex flex-col p-4 bg-card border-border shadow-sm">
+        <div className="flex items-center gap-2">
+            <div className={cn("size-8 grid place-items-center rounded-lg", color)}>
+                <Icon className="size-5" />
+            </div>
+            <p className="font-semibold text-lg">{value}</p>
+        </div>
+        <p className="text-sm text-muted-foreground mt-2">{title}</p>
+    </Card>
+);
+
+
 export function Dashboard() {
   const { t } = useLanguage();
   const [isClient, setIsClient] = useState(false);
@@ -176,20 +193,45 @@ export function Dashboard() {
   const [doNotShowAgain, setDoNotShowAgain] = useState(false);
   const router = useRouter();
 
+  const [stats, setStats] = useState({
+      todaysOps: 0,
+      totalOps: 0,
+      savedNotes: 0,
+      weeklyActivity: [] as DailyActivity[],
+  });
 
-  useEffect(() => {
-    setIsClient(true);
-    const hasSeenDialog = localStorage.getItem('hasSeenBetaDialog');
-    if (!hasSeenDialog) {
-        setShowBetaDialog(true);
-    }
-    
-    const storedProfile = localStorage.getItem("userProfile");
-    
-    if(storedProfile) {
-        setProfile(JSON.parse(storedProfile));
-    }
-  }, []);
+  const loadStats = useCallback(async () => {
+        const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
+        const fetchedStats = await getStats(userEmail);
+        setStats(fetchedStats);
+    }, []);
+
+    useEffect(() => {
+        setIsClient(true);
+        loadStats();
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                loadStats();
+            }
+        };
+        
+        const hasSeenDialog = localStorage.getItem('hasSeenBetaDialog');
+        if (!hasSeenDialog) {
+            setShowBetaDialog(true);
+        }
+        
+        const storedProfile = localStorage.getItem("userProfile");
+        
+        if(storedProfile) {
+            setProfile(JSON.parse(storedProfile));
+        }
+        
+        window.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            window.removeEventListener('visibilitychange', handleVisibilityChange);
+        }
+    }, [loadStats]);
   
   const handleProfileClick = () => {
     if (profile) {
@@ -296,6 +338,18 @@ export function Dashboard() {
         bgColor: "bg-teal-500/10"
       },
     ];
+    
+    const chartConfig = {
+      ops: {
+        label: "Operations",
+        color: "hsl(var(--primary))",
+      },
+    };
+
+    const formattedChartData = stats.weeklyActivity.map(item => ({
+        ...item,
+        date: format(new Date(item.date), "EEE")
+    }))
 
   if (!isClient) {
     return null;
@@ -304,6 +358,14 @@ export function Dashboard() {
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-8 py-8">
       <Header name={profile?.fullName || t('dashboard.guest')} profile={profile} onProfileClick={handleProfileClick} />
+      
+      <section>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+             <StatCard title="Today's Ops" value={String(stats.todaysOps)} icon={TrendingUp} color="text-green-500 bg-green-500/10" />
+             <StatCard title="All Time Ops" value={String(stats.totalOps)} icon={BarChart3} color="text-blue-500 bg-blue-500/10" />
+             <StatCard title="Saved Notes" value={String(stats.savedNotes)} icon={NotebookPen} color="text-yellow-500 bg-yellow-500/10" />
+          </div>
+      </section>
 
       <section>
         <Card className="bg-card border-border shadow-sm">
@@ -326,6 +388,27 @@ export function Dashboard() {
             </Button>
           </CardContent>
         </Card>
+      </section>
+      
+      <section>
+         <Card>
+            <CardHeader>
+                <CardTitle>Weekly Report</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={chartConfig} className="h-48 w-full">
+                    <BarChart data={formattedChartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+                       <CartesianGrid vertical={false} strokeDasharray="3 3"/>
+                       <XAxis dataKey="date" tickLine={false} axisLine={false} />
+                       <YAxis tickLine={false} axisLine={false} />
+                       <ChartTooltip 
+                        content={<ChartTooltipContent />}
+                       />
+                       <Bar dataKey="ops" fill="var(--color-ops)" radius={4} />
+                    </BarChart>
+                </ChartContainer>
+            </CardContent>
+         </Card>
       </section>
 
       <section>

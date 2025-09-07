@@ -48,6 +48,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useDebounce } from "@/hooks/use-debounce";
+import { incrementConversionCount } from "@/lib/stats";
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -386,6 +387,7 @@ export function Converter() {
     const conversionResult = performConversion();
     if (conversionResult) {
       const { formattedResult, categoryToUse } = conversionResult;
+      incrementConversionCount();
       handleSaveToHistory(inputValue, fromUnit, toUnit, formattedResult, categoryToUse.name);
       loadRecentConversions(); // Refresh recent conversions list
     }
@@ -996,5 +998,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    

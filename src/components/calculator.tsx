@@ -9,6 +9,7 @@ import type { CalculatorMode } from '../settings';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { incrementCalculationCount } from '@/lib/stats';
 
 const buttonClasses = {
   gray: "bg-muted hover:bg-muted/80 text-foreground",
@@ -180,6 +181,8 @@ export function Calculator() {
       const formattedResult = evalResult.toLocaleString(undefined, { maximumFractionDigits: 10, useGrouping: true });
       setResult(formattedResult);
       
+      incrementCalculationCount();
+
       const historyEntry = `${expression} = ${formattedResult}|${new Date().toISOString()}`;
       const storedHistory = localStorage.getItem('calculationHistory');
       const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
@@ -353,5 +356,3 @@ const BasicLayout = () => (
     </div>
   );
 }
-
-    
