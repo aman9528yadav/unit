@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Delete, Divide, X, Minus, Plus, Equal, Sigma, CalculatorIcon, Home, User, History } from 'lucide-react';
+import { RefreshCw, Delete, Divide, X, Minus, Plus, Equal, Sigma, CalculatorIcon, Home, User, History, Trash2 } from 'lucide-react';
 import type { CalculatorMode } from '../settings';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useRouter } from 'next/navigation';
@@ -186,12 +186,20 @@ export function Calculator() {
       const newHistory = [historyEntry, ...currentHistory];
       localStorage.setItem('calculationHistory', JSON.stringify(newHistory));
       localStorage.setItem('lastCalculation', historyEntry); 
-      setRecentCalculations(newHistory.slice(0, 4));
+      loadRecentCalculations();
 
     } catch (error) {
       console.error(error)
       setResult('Error');
     }
+  };
+
+  const handleDeleteCalculation = (itemToDelete: string) => {
+    const storedHistory = localStorage.getItem('calculationHistory');
+    const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
+    const newHistory = currentHistory.filter((item: string) => item !== itemToDelete);
+    localStorage.setItem('calculationHistory', JSON.stringify(newHistory));
+    loadRecentCalculations();
   };
   
   if (!isClient) {
@@ -318,17 +326,24 @@ const BasicLayout = () => (
          {recentCalculations.length > 0 && (
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                        <History size={18} />
-                        Recent Calculations
+                    <CardTitle className="flex items-center justify-between text-base">
+                        <div className="flex items-center gap-2">
+                           <History size={18} />
+                           Recent Calculations
+                        </div>
+                        <Button variant="link" size="sm" onClick={() => router.push('/history?tab=calculator')}>View All</Button>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                         {recentCalculations.map((calc, i) => (
-                            <li key={i} className="flex justify-between items-center p-2 bg-secondary rounded-md">
-                               <span>{calc.split('|')[0]}</span>
-                               <Button variant="ghost" size="sm" onClick={() => router.push('/history?tab=calculator')}>View All</Button>
+                            <li key={i} className="flex justify-between items-center p-2 bg-secondary rounded-md group">
+                               <span className="truncate">{calc.split('|')[0]}</span>
+                               <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteCalculation(calc)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                               </div>
                             </li>
                         ))}
                     </ul>
@@ -338,3 +353,5 @@ const BasicLayout = () => (
     </div>
   );
 }
+
+    

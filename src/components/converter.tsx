@@ -29,7 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Share2, Globe, LayoutGrid, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, User, Lock, ChevronDown, Sparkles, LogIn, Scale, Power, History, Star } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Share2, Globe, LayoutGrid, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, User, Lock, ChevronDown, Sparkles, LogIn, Scale, Power, History, Star, Trash2 } from "lucide-react";
 import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow.ts";
 import { useToast } from "@/hooks/use-toast";
@@ -423,6 +423,23 @@ export function Converter() {
         toast({ title: t('converter.toast.cannotRestore'), description: t('converter.toast.categoryError'), variant: "destructive" });
     }
   };
+  
+  const handleRestoreConversion = (item: string) => {
+    localStorage.setItem("restoreConversion", item);
+    // Use a slight delay to allow localStorage to update before navigation
+    setTimeout(() => router.push("/converter"), 50);
+    // Reload is not ideal, but it's a simple way to ensure state is fresh
+    setTimeout(() => window.location.reload(), 100);
+  }
+
+  const handleDeleteConversion = (itemToDelete: string) => {
+    const storedHistory = localStorage.getItem('conversionHistory');
+    const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
+    const newHistory = currentHistory.filter((item: string) => item !== itemToDelete);
+    localStorage.setItem('conversionHistory', JSON.stringify(newHistory));
+    loadRecentConversions();
+  }
+
 
   const handleShareAsText = async () => {
     if (!outputValue) {
@@ -901,17 +918,27 @@ export function Converter() {
         {recentConversions.length > 0 && (
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                        <History size={18} />
-                        {t('converter.recentConversions')}
+                    <CardTitle className="flex items-center justify-between text-base">
+                        <div className="flex items-center gap-2">
+                           <History size={18} />
+                           {t('converter.recentConversions')}
+                        </div>
+                        <Button variant="link" size="sm" onClick={() => router.push('/history?tab=conversions')}>{t('dashboard.seeAll')}</Button>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                         {recentConversions.map((calc, i) => (
-                            <li key={i} className="flex justify-between items-center p-2 bg-secondary rounded-md">
-                               <span>{calc.split('|')[0]}</span>
-                               <Button variant="ghost" size="sm" onClick={() => router.push('/history?tab=conversions')}>{t('dashboard.seeAll')}</Button>
+                            <li key={i} className="flex justify-between items-center p-2 bg-secondary rounded-md group">
+                               <span className="truncate">{calc.split('|')[0]}</span>
+                               <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRestoreConversion(calc)}>
+                                        <RotateCcw className="h-4 w-4"/>
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteConversion(calc)}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                               </div>
                             </li>
                         ))}
                     </ul>
