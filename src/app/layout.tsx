@@ -100,7 +100,7 @@ export default function RootLayout({
       <LanguageProvider>
             <html lang="en">
             <head>
-                <title>UniConvert</title>
+                <title>Sutradhaar</title>
                 <meta name="description" content="A straightforward unit converter app for various measurements." />
                 <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
                 <meta name="manifest" content="/manifest.json" />

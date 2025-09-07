@@ -126,9 +126,14 @@ export default function MaintenancePage() {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="flex flex-col items-center gap-8 w-full max-w-lg"
       >
-        <div className="p-4 bg-primary/10 rounded-full cursor-pointer" onClick={handleIconClick}>
+        <motion.div
+            className="p-4 bg-primary/10 rounded-full cursor-pointer"
+            onClick={handleIconClick}
+            animate={{ rotate: [0, 15, -10, 5, 0], scale: [1, 1.1, 1, 1.1, 1] }}
+            transition={{ duration: 1.5, ease: "easeInOut", repeat: Infinity, repeatDelay: 2 }}
+        >
             <Wrench className="w-10 h-10 text-primary" />
-        </div>
+        </motion.div>
         
         <div className="space-y-4">
             <h1 className="text-4xl md:text-5xl font-bold text-foreground">We'll Be Back Soon!</h1>
