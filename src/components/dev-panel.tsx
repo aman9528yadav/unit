@@ -7,13 +7,13 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send, Wrench, Info, Shield, BellOff, Newspaper, User } from 'lucide-react';
+import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send, Wrench, Info, Shield, BellOff, Newspaper, User, MessageSquare } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
-import { setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo, setBroadcastNotification, listenToBroadcastNotification, deleteBroadcastNotification } from '@/services/firestore';
+import { setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo, setBroadcastNotification, listenToBroadcastNotification, deleteBroadcastNotification, listenToDashboardWelcomeMessage, setDashboardWelcomeMessage } from '@/services/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { intervalToDuration } from 'date-fns';
 
@@ -50,6 +50,9 @@ export function DevPanel() {
     const [notificationTitle, setNotificationTitle] = useState('');
     const [notificationDescription, setNotificationDescription] = useState('');
     
+    // State for UI Content Tab
+    const [welcomeMessage, setWelcomeMessage] = useState('');
+
     // State for Security Tab
     const [currentDevPassword, setCurrentDevPassword] = useState('');
     const [newDevPassword, setNewDevPassword] = useState('');
@@ -129,12 +132,15 @@ export function DevPanel() {
             setNotificationTitle(info?.title || '');
             setNotificationDescription(info?.description || '');
         });
+        
+        const unsubWelcomeMessage = listenToDashboardWelcomeMessage(setWelcomeMessage);
 
         return () => {
             unsubMaintenanceMode();
             unsubUpdateInfo();
             unsubNextUpdateInfo();
             unsubBroadcast();
+            unsubWelcomeMessage();
         };
     }, [isAuthorized, isAuthenticated]);
     
@@ -262,6 +268,15 @@ export function DevPanel() {
             toast({ title: "Update Failed", description: "Could not change maintenance mode status.", variant: "destructive" });
         }
     };
+    
+    const handleSetWelcomeMessage = async () => {
+        try {
+            await setDashboardWelcomeMessage(welcomeMessage);
+            toast({ title: 'Welcome Message Updated' });
+        } catch (error) {
+             toast({ title: "Update Failed", description: "Could not update welcome message.", variant: "destructive" });
+        }
+    };
 
     const handleDevPasswordChange = () => {
         if (!currentDevPassword || !newDevPassword) {
@@ -337,10 +352,11 @@ export function DevPanel() {
             </header>
 
             <Tabs defaultValue="maintenance" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-6">
                     <TabsTrigger value="maintenance"><Timer /></TabsTrigger>
                     <TabsTrigger value="updates"><ServerCog /></TabsTrigger>
                     <TabsTrigger value="broadcast"><Send /></TabsTrigger>
+                    <TabsTrigger value="content"><MessageSquare /></TabsTrigger>
                     <TabsTrigger value="data"><Trash2 /></TabsTrigger>
                     <TabsTrigger value="security"><Shield /></TabsTrigger>
                 </TabsList>
@@ -514,6 +530,26 @@ export function DevPanel() {
                                     <BellOff/>
                                 </Button>
                             </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="content" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><MessageSquare /> UI Content</CardTitle>
+                            <CardDescription>Manage dynamic text shown in the app.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <Label htmlFor="welcomeMessage">Dashboard Welcome Message</Label>
+                                <Input 
+                                    id="welcomeMessage" 
+                                    value={welcomeMessage}
+                                    onChange={(e) => setWelcomeMessage(e.target.value)}
+                                    placeholder="e.g., Welcome back!"
+                                />
+                            </div>
+                            <Button onClick={handleSetWelcomeMessage} className="w-full">Save Welcome Message</Button>
                         </CardContent>
                     </Card>
                 </TabsContent>

@@ -352,6 +352,23 @@ export interface BroadcastNotification {
     createdAt: string;
 }
 
+export async function setDashboardWelcomeMessage(message: string) {
+    try {
+        const welcomeRef = ref(rtdb, 'settings/dashboardWelcomeMessage');
+        await setRealtimeDb(welcomeRef, message);
+    } catch (error) {
+        console.error("Error setting welcome message:", error);
+        throw error;
+    }
+}
+
+export function listenToDashboardWelcomeMessage(callback: (message: string) => void) {
+    const welcomeRef = ref(rtdb, 'settings/dashboardWelcomeMessage');
+    return onValue(welcomeRef, (snapshot) => {
+        callback(snapshot.val() || "Welcome back to your dashboard!");
+    });
+}
+
 export async function setGlobalMaintenanceMode(isEnabled: boolean) {
     try {
         const maintenanceRef = ref(rtdb, 'settings/maintenance');

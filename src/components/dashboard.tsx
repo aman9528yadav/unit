@@ -60,7 +60,7 @@ import { DailyActivity, processUserDataForStats } from "@/lib/stats";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { format, intervalToDuration } from "date-fns";
-import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData, listenToUpdatesFromRtdb, UpdateItem } from "@/services/firestore";
+import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData, listenToUpdatesFromRtdb, UpdateItem, listenToDashboardWelcomeMessage, setDashboardWelcomeMessage } from "@/services/firestore";
 import { getStreakData, recordVisit, StreakData } from "@/lib/streak";
 
 
@@ -154,23 +154,20 @@ const Header = ({ name, onProfileClick, profileImage }: { name: string, onProfil
   const [welcomeMessage, setWelcomeMessage] = useState(t('dashboard.welcome'));
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setWelcomeMessage(t('dashboard.dynamicWelcome'));
-    }, 120000); // 2 minutes in milliseconds
-
-    return () => clearTimeout(timer);
+    const unsub = listenToDashboardWelcomeMessage((message) => {
+        if(message) {
+            setWelcomeMessage(message);
+        } else {
+            setWelcomeMessage(t('dashboard.welcome'));
+        }
+    });
+    return () => unsub();
   }, [t]);
   
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">{t('dashboard.greeting', { name: name })}</h1>
-             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CheckCircle2 className="size-4 text-green-500" />
-                {welcomeMessage}
-            </div>
-        </div>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">{t('dashboard.greeting', { name: name })}</h1>
         <div className="flex items-center gap-2">
             <LanguageToggle />
             <Notifications />
@@ -181,6 +178,10 @@ const Header = ({ name, onProfileClick, profileImage }: { name: string, onProfil
                 </Avatar>
             </Button>
         </div>
+      </div>
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <CheckCircle2 className="size-4 text-green-500" />
+          {welcomeMessage}
       </div>
        <div>
            <GlobalSearch />
