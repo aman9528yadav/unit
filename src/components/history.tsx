@@ -31,19 +31,23 @@ import { format, formatDistanceToNow, parseISO, isValid } from 'date-fns';
 import { enUS, hi } from 'date-fns/locale';
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLanguage } from "@/context/language-context";
+import { listenToUserData, clearAllHistory, deleteHistoryItem } from "@/services/firestore";
 
 
 interface HistoryItemData {
-  type: 'conversion' | 'calculation';
+  type: 'conversion' | 'calculation' | 'favorite';
   fullString: string;
   display: string;
   categoryName?: string;
   timestamp: string;
 }
 
-const parseHistoryString = (item: string, type: 'conversion' | 'calculation'): HistoryItemData | null => {
+const parseHistoryString = (item: string, type: HistoryItemData['type']): HistoryItemData | null => {
     const parts = item.split('|');
     if (type === 'conversion' && parts.length >= 3 && isValid(parseISO(parts[2]))) {
+        return { type, fullString: item, display: parts[0], categoryName: parts[1], timestamp: parts[2] };
+    }
+     if (type === 'favorite' && parts.length >= 3 && isValid(parseISO(parts[2]))) {
         return { type, fullString: item, display: parts[0], categoryName: parts[1], timestamp: parts[2] };
     }
     if (type === 'calculation' && parts.length >= 2 && isValid(parseISO(parts[1]))) {
@@ -60,6 +64,7 @@ export function History() {
   const [conversionHistory, setConversionHistory] = useState<HistoryItemData[]>([]);
   const [calculationHistory, setCalculationHistory] = useState<HistoryItemData[]>([]);
   const [favorites, setFavorites] = useState<HistoryItemData[]>([]);
+  const [profile, setProfile] = useState<{email: string} | null>(null);
   
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -70,37 +75,26 @@ export function History() {
   const { language, t } = useLanguage();
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
 
-  const loadData = useCallback(() => {
-    const storedConvHistory: string[] = JSON.parse(localStorage.getItem("conversionHistory") || '[]');
-    const storedCalcHistory: string[] = JSON.parse(localStorage.getItem("calculationHistory") || '[]');
-    const storedFavorites: string[] = JSON.parse(localStorage.getItem("favoriteConversions") || '[]');
-    
-    setConversionHistory(storedConvHistory.map(s => parseHistoryString(s, 'conversion')).filter(Boolean as any));
-    setCalculationHistory(storedCalcHistory.map(s => parseHistoryString(s, 'calculation')).filter(Boolean as any));
-    setFavorites(storedFavorites.map(s => parseHistoryString(s, 'conversion')).filter(Boolean as any));
-
-  }, []);
 
   useEffect(() => {
-    loadData();
-    const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'conversionHistory' || e.key === 'favoriteConversions' || e.key === 'calculationHistory') {
-            loadData();
-        }
-    };
-    const handleVisibilityChange = () => {
-        if (document.visibilityState === 'visible') {
-            loadData();
-        }
-    };
+    const storedProfile = localStorage.getItem("userProfile");
+    const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
+    if(storedProfile) {
+        setProfile(JSON.parse(storedProfile));
+    }
 
-    window.addEventListener('storage', handleStorageChange);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-        window.removeEventListener('storage', handleStorageChange);
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [loadData]);
+    const unsub = listenToUserData(userEmail, (data) => {
+        const convHistory: string[] = data?.conversionHistory || [];
+        const calcHistory: string[] = data?.calculationHistory || [];
+        const favs: string[] = data?.favoriteConversions || [];
+
+        setConversionHistory(convHistory.map(s => parseHistoryString(s, 'conversion')).filter(Boolean as any));
+        setCalculationHistory(calcHistory.map(s => parseHistoryString(s, 'calculation')).filter(Boolean as any));
+        setFavorites(favs.map(s => parseHistoryString(s, 'favorite')).filter(Boolean as any));
+    });
+    
+    return () => unsub();
+  }, []);
 
   const handleRestore = (item: HistoryItemData) => {
     localStorage.setItem("restoreConversion", item.fullString);
@@ -108,44 +102,20 @@ export function History() {
   };
   
   const handleClearAll = () => {
-    if (activeTab === 'conversions') {
-        setConversionHistory([]);
-        localStorage.setItem("conversionHistory", '[]');
-    } else if (activeTab === 'calculator') {
-        setCalculationHistory([]);
-        localStorage.setItem("calculationHistory", '[]');
-    } else {
-        setFavorites([]);
-        localStorage.setItem("favoriteConversions", '[]');
-    }
+    if(!profile?.email) return;
+    const historyType = activeTab === 'conversions' ? 'conversionHistory'
+                     : activeTab === 'calculator' ? 'calculationHistory'
+                     : 'favoriteConversions';
+
+    clearAllHistory(profile.email, historyType);
   };
   
   const handleDeleteItem = (itemToDelete: HistoryItemData) => {
-    let historyKey = '';
-    let currentHistory: HistoryItemData[] = [];
-    let setHistory: React.Dispatch<React.SetStateAction<HistoryItemData[]>> | null = null;
-    const type = itemToDelete.type === 'calculation' ? 'calculation' : activeTab === 'favorites' ? 'favorite' : 'conversion';
-    
-
-    if (type === 'conversion') {
-        historyKey = 'conversionHistory';
-        currentHistory = conversionHistory;
-        setHistory = setConversionHistory;
-    } else if (type === 'calculation') {
-        historyKey = 'calculationHistory';
-        currentHistory = calculationHistory;
-        setHistory = setCalculationHistory;
-    } else if (type === 'favorite') {
-        historyKey = 'favoriteConversions';
-        currentHistory = favorites;
-        setHistory = setFavorites;
-    }
-
-    if (setHistory) {
-      const newHistory = currentHistory.filter(h => h.fullString !== itemToDelete.fullString);
-      setHistory(newHistory);
-      localStorage.setItem(historyKey, JSON.stringify(newHistory.map(h => h.fullString)));
-    }
+     if(!profile?.email) return;
+     const historyType = activeTab === 'conversions' ? 'conversionHistory'
+                     : activeTab === 'calculator' ? 'calculationHistory'
+                     : 'favoriteConversions';
+    deleteHistoryItem(profile.email, historyType, itemToDelete.fullString);
   };
   
   const itemsToDisplay = 
@@ -260,7 +230,7 @@ export function History() {
 
 function HistoryItem({ item, onRestore, onDelete, t, language }: { item: HistoryItemData; onRestore: () => void; onDelete: () => void; t: (key: string, params?: any) => string; language: string; }) {
     const category = item.categoryName ? conversionCategories.find(c => c.name === item.categoryName) : null;
-    const Icon = item.type === 'conversion' ? category?.icon || ArrowRightLeft : CalculatorIcon;
+    const Icon = item.type === 'calculation' ? CalculatorIcon : category?.icon || ArrowRightLeft;
     const locale = language === 'hi' ? hi : enUS;
 
     const formatTimestamp = (timestamp: string) => {
@@ -283,7 +253,7 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
             </div>
             <p className="font-semibold text-foreground break-all">{item.display}</p>
             <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-2 right-2">
-                 {item.type === 'conversion' && 
+                 {item.type !== 'calculation' && 
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onRestore}>
                         <RotateCcw className="h-4 w-4"/>
                     </Button>

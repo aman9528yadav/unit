@@ -310,7 +310,36 @@ export async function updateUserNotes(email: string | null, notes: Note[]) {
 }
 
 
-// --- OFFLINE DATA SYNC ---
-// Note: With Realtime Database's built-in offline persistence, a manual queue is less critical,
-// but can still be useful for more complex scenarios. The current implementation relies on
-// RTDB's native capabilities.
+// --- HISTORY AND FAVORITES ---
+type HistoryType = 'conversionHistory' | 'calculationHistory' | 'favoriteConversions';
+
+async function addToHistory(email: string, historyType: HistoryType, item: string) {
+    const userRef = ref(rtdb, `users/${sanitizeEmail(email)}/${historyType}`);
+    const snapshot = await get(userRef);
+    const currentHistory = snapshot.val() || [];
+    const newHistory = [item, ...currentHistory].slice(0, 100); // Keep last 100 items
+    await setRealtimeDb(userRef, newHistory);
+}
+
+export const addConversionToHistory = (email: string, item: string) => addToHistory(email, 'conversionHistory', item);
+export const addCalculationToHistory = (email: string, item: string) => addToHistory(email, 'calculationHistory', item);
+export const addFavoriteToHistory = (email: string, item: string) => addToHistory(email, 'favoriteConversions', item);
+
+
+export async function deleteHistoryItem(email: string, historyType: HistoryType, itemToDelete: string) {
+    const userRef = ref(rtdb, `users/${sanitizeEmail(email)}/${historyType}`);
+    const snapshot = await get(userRef);
+    const currentHistory = snapshot.val() || [];
+    const newHistory = currentHistory.filter((item: string) => item !== itemToDelete);
+    await setRealtimeDb(userRef, newHistory);
+}
+
+
+export async function clearAllHistory(email: string, historyType: HistoryType) {
+    await setRealtimeDb(ref(rtdb, `users/${sanitizeEmail(email)}/${historyType}`), []);
+}
+
+
+export async function setFavorites(email: string, favorites: string[]) {
+     await setRealtimeDb(ref(rtdb, `users/${sanitizeEmail(email)}/favoriteConversions`), favorites);
+}

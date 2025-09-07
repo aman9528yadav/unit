@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { incrementCalculationCount, getStats } from '@/lib/stats';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { addCalculationToHistory, deleteCalculationFromHistory, listenToUserData } from '@/services/firestore';
 
 const buttonClasses = {
   gray: "bg-muted hover:bg-muted/80 text-foreground",
@@ -96,12 +97,6 @@ export function Calculator() {
       return new Function('return ' + processedExpr)();
   };
   
-  const loadRecentCalculations = () => {
-    const storedHistory = localStorage.getItem('calculationHistory');
-    const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
-    setRecentCalculations(currentHistory.slice(0, 4));
-  }
-  
   const updateUserRole = async (email: string | null) => {
     if(email === "amanyadavyadav9458@gmail.com") {
         setUserRole('Owner');
@@ -123,6 +118,8 @@ export function Calculator() {
   useEffect(() => {
     setIsClient(true);
     const storedProfile = localStorage.getItem('userProfile');
+    const email = storedProfile ? JSON.parse(storedProfile).email : null;
+    
     if (storedProfile) {
         const parsedProfile = JSON.parse(storedProfile);
         setProfile(parsedProfile);
@@ -130,9 +127,11 @@ export function Calculator() {
     } else {
         updateUserRole(null); // Guest user
     }
-    
-    loadRecentCalculations();
 
+    const unsub = listenToUserData(email, (data) => {
+        setRecentCalculations((data?.calculationHistory || []).slice(0, 4));
+    });
+    
     const savedMode = localStorage.getItem('calculatorMode') as CalculatorMode;
     const soundEnabled = localStorage.getItem('calculatorSoundEnabled');
     
@@ -143,9 +142,6 @@ export function Calculator() {
         if (e.key === 'calculatorSoundEnabled') {
             setIsSoundEnabled(e.newValue === null ? true : JSON.parse(e.newValue));
         }
-        if (e.key === 'calculationHistory') {
-           loadRecentCalculations();
-        }
          if (e.key === 'userProfile') {
             setProfile(e.newValue ? JSON.parse(e.newValue) : null);
         }
@@ -155,6 +151,7 @@ export function Calculator() {
 
     return () => {
         window.removeEventListener('storage', handleStorageChange);
+        unsub();
     };
   }, []);
   
@@ -223,10 +220,11 @@ export function Calculator() {
 
       const historyEntry = `${expression} = ${formattedResult}`;
       const historyStringForStorage = `${historyEntry}|${new Date().toISOString()}`;
-      const storedHistory = localStorage.getItem('calculationHistory');
-      const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
-      const newHistory = [historyStringForStorage, ...currentHistory];
-      localStorage.setItem('calculationHistory', JSON.stringify(newHistory));
+      
+      if(userEmail) {
+        addCalculationToHistory(userEmail, historyStringForStorage);
+      }
+
       localStorage.setItem('lastCalculation', historyStringForStorage);
       window.dispatchEvent(new StorageEvent('storage', { key: 'lastCalculation', newValue: historyStringForStorage }));
 
@@ -238,11 +236,9 @@ export function Calculator() {
   };
 
   const handleDeleteCalculation = (itemToDelete: string) => {
-    const storedHistory = localStorage.getItem('calculationHistory');
-    const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
-    const newHistory = currentHistory.filter((item: string) => item !== itemToDelete);
-    localStorage.setItem('calculationHistory', JSON.stringify(newHistory));
-    loadRecentCalculations();
+    if (profile?.email) {
+      deleteCalculationFromHistory(profile.email, itemToDelete);
+    }
   };
   
   if (!isClient) {

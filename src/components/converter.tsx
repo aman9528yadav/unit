@@ -50,6 +50,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useDebounce } from "@/hooks/use-debounce";
 import { incrementConversionCount, getStats } from "@/lib/stats";
+import { listenToUserData, addConversionToHistory, addFavoriteToHistory, setFavorites, deleteHistoryItem } from "@/services/firestore";
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -226,19 +227,6 @@ export function Converter() {
   const fromUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === fromUnit), [currentUnits, fromUnit]);
   const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit), [currentUnits, toUnit]);
   
-  const loadRecentConversions = useCallback(() => {
-    const storedHistory = localStorage.getItem('conversionHistory');
-    const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
-    setRecentConversions(currentHistory.slice(0, 4));
-  }, []);
-  
-  const loadFavorites = useCallback(() => {
-    const storedFavorites = localStorage.getItem("favoriteConversions");
-    if (storedFavorites) {
-        setFavorites(JSON.parse(storedFavorites));
-    }
-  }, []);
-  
   const updateUserRole = async (email: string | null) => {
     if(email === DEVELOPER_EMAIL) {
         setUserRole('Owner');
@@ -266,22 +254,17 @@ export function Converter() {
     
     updateUserRole(userEmail);
 
-    // Load all settings in one go
-    const loadSettings = () => {
-        const savedCustomUnits = localStorage.getItem(getUserKey('customUnits', userEmail));
-        const savedCustomCategories = localStorage.getItem(getUserKey('customCategories', userEmail));
-        const savedDefaultRegion = localStorage.getItem(getUserKey('defaultRegion', userEmail));
-
-        if (savedCustomUnits) setCustomUnits(JSON.parse(savedCustomUnits));
-        if (savedCustomCategories) setCustomCategories(JSON.parse(savedCustomCategories));
-        if (savedDefaultRegion && regions.includes(savedDefaultRegion as Region)) {
+    const unsub = listenToUserData(userEmail, (data) => {
+        if (!data) return;
+        setCustomUnits(data.customUnits || []);
+        setCustomCategories(data.customCategories || []);
+        setFavorites(data.favoriteConversions || []);
+        setRecentConversions((data.conversionHistory || []).slice(0, 4));
+        const savedDefaultRegion = data.defaultRegion;
+         if (savedDefaultRegion && regions.includes(savedDefaultRegion as Region)) {
           setRegion(savedDefaultRegion as Region);
         }
-    };
-    
-    loadSettings();
-    loadFavorites();
-    loadRecentConversions();
+    });
 
     const itemToRestore = localStorage.getItem("restoreConversion");
     if (itemToRestore) {
@@ -293,16 +276,6 @@ export function Converter() {
     }
     
     const handleStorageChange = (e: StorageEvent) => {
-        const userEmail = profile?.email || null;
-        if (e.key === getUserKey('customUnits', userEmail) || e.key === getUserKey('customCategories', userEmail) || e.key === getUserKey('defaultRegion', userEmail)) {
-           loadSettings();
-        }
-         if (e.key === 'favoriteConversions') {
-            loadFavorites();
-        }
-        if (e.key === 'conversionHistory') {
-           loadRecentConversions();
-        }
         if (e.key === 'userProfile') {
             setProfile(e.newValue ? JSON.parse(e.newValue) : null);
         }
@@ -312,8 +285,9 @@ export function Converter() {
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      unsub();
     };
-  }, [profile?.email, allUnits, conversionCategories, loadFavorites, loadRecentConversions]);
+  }, [allUnits, conversionCategories]);
   
   const getFullHistoryString = (input: string, from: string, to: string, result: string, category: string): string => {
     return `${input} ${from} → ${result} ${to}|${category}|${new Date().toISOString()}`;
@@ -321,15 +295,13 @@ export function Converter() {
 
   const handleSaveToHistory = (input: string, from: string, to: string, result: string, category: string) => {
     const historyString = getFullHistoryString(input, from, to, result, category);
-
-    const storedHistory = localStorage.getItem('conversionHistory');
-    const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
-    const newHistory = [historyString, ...currentHistory];
-
-    localStorage.setItem('conversionHistory', JSON.stringify(newHistory));
-    localStorage.setItem('lastConversion', historyString);
     
-    window.dispatchEvent(new StorageEvent('storage', { key: 'conversionHistory', newValue: JSON.stringify(newHistory) }));
+    if (profile?.email) {
+        addConversionToHistory(profile.email, historyString);
+    }
+    
+    localStorage.setItem('lastConversion', historyString);
+    window.dispatchEvent(new StorageEvent('storage', { key: 'lastConversion', newValue: historyString }));
   };
   
  const performConversion = () => {
@@ -413,7 +385,6 @@ export function Converter() {
       incrementConversionCount();
       updateUserRole(profile?.email || null);
       handleSaveToHistory(inputValue, fromUnit, toUnit, formattedResult, categoryToUse.name);
-      loadRecentConversions(); // Refresh recent conversions list
     }
   };
   
@@ -459,11 +430,9 @@ export function Converter() {
   }
 
   const handleDeleteConversion = (itemToDelete: string) => {
-    const storedHistory = localStorage.getItem('conversionHistory');
-    const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
-    const newHistory = currentHistory.filter((item: string) => item !== itemToDelete);
-    localStorage.setItem('conversionHistory', JSON.stringify(newHistory));
-    loadRecentConversions();
+     if(profile?.email){
+        deleteHistoryItem(profile.email, 'conversionHistory', itemToDelete);
+     }
   }
 
 
@@ -567,7 +536,7 @@ export function Converter() {
   };
 
   const handleToggleFavorite = () => {
-    if (!outputValue) return;
+    if (!outputValue || !profile?.email) return;
 
     const currentConversionString = getFullHistoryString(inputValue, fromUnit, toUnit, outputValue, selectedCategory.name);
 
@@ -576,7 +545,7 @@ export function Converter() {
       : [...favorites, currentConversionString];
 
     setFavorites(newFavorites);
-    localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
+    setFavorites(profile.email, newFavorites);
     
     if (favorites.includes(currentConversionString)) {
         toast({ title: t('converter.toast.favRemoved') });
