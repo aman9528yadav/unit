@@ -18,8 +18,14 @@ export interface HowToUseFeature {
     title: string;
     description: string;
     icon: string;
-    category: HowToUseCategory;
+    category: HowToUseCategory | string;
 }
+
+export interface CustomHowToUseCategory {
+    id: string;
+    name: string;
+}
+
 
 export const defaultFeatures: HowToUseFeature[] = [
      {
@@ -121,6 +127,31 @@ export function listenToHowToUseFeaturesFromRtdb(callback: (features: HowToUseFe
     }, (error) => {
         console.error("Error listening to HowToUse features from RTDB:", error);
         callback(defaultFeatures);
+    });
+}
+
+export async function setCustomHowToUseCategoriesInRtdb(categories: CustomHowToUseCategory[]) {
+    try {
+        const categoriesRef = ref(rtdb, 'app-content/howToUseCategories');
+        await setRealtimeDb(categoriesRef, categories);
+    } catch (error) {
+        console.error("Error saving HowToUse categories to RTDB:", error);
+        throw error;
+    }
+}
+
+export function listenToCustomHowToUseCategoriesFromRtdb(callback: (categories: CustomHowToUseCategory[]) => void) {
+    const categoriesRef = ref(rtdb, 'app-content/howToUseCategories');
+    return onValue(categoriesRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data && Array.isArray(data)) {
+            callback(data);
+        } else {
+            callback([]);
+        }
+    }, (error) => {
+        console.error("Error listening to custom HowToUse categories from RTDB:", error);
+        callback([]);
     });
 }
 

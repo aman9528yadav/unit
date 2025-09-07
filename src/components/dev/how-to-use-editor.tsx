@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Plus, Trash2, Edit, Save, LogIn, Zap, Search, Sigma, Star, Calculator, NotebookText, Palette, Beaker, LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -58,7 +58,7 @@ export function HowToUseEditor() {
             setFeatures(featuresFromDb);
         });
          const unsubscribeCategories = listenToCustomHowToUseCategoriesFromRtdb((cats) => {
-            setCustomCategories(cats);
+            setCustomCategories(cats || []);
         });
         return () => {
             unsubscribeFeatures();
@@ -318,4 +318,3 @@ export function HowToUseEditor() {
     );
 }
 
-    
