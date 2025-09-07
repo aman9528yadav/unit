@@ -6,9 +6,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music } from "lucide-react";
+import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music, Sigma } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
-import { useTheme } from "@/context/theme-context";
+import { useTheme, type CustomTheme } from "@/context/theme-context";
 import {
   Select,
   SelectContent,
@@ -24,6 +24,8 @@ import { Region } from "@/lib/conversions";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { getStats } from "@/lib/stats";
+import { Avatar, AvatarFallback } from "./ui/avatar";
+import { cn } from "@/lib/utils";
 
 
 export type CalculatorMode = 'basic' | 'scientific';
@@ -79,6 +81,31 @@ const SettingRow = ({ label, description, control, isLink = false, href, childre
         <div onClick={handleWrapperClick} className={isLocked ? 'cursor-pointer' : ''}>
             {content}
             {children && <div className="pt-3">{children}</div>}
+        </div>
+    );
+};
+
+const ThemePreview = ({ theme }: { theme: string }) => {
+    return (
+        <div className={cn("w-full h-auto p-4 bg-background text-foreground font-sans rounded-lg border", theme)}>
+            <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                    <div className="p-2 bg-primary/10 rounded-lg text-primary"><Sigma /></div>
+                    <h1 className="text-lg font-bold">Converter</h1>
+                </div>
+                <Avatar className="h-8 w-8">
+                    <AvatarFallback><User /></AvatarFallback>
+                </Avatar>
+            </div>
+            <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                    <div className="h-8 w-full rounded-md border border-input bg-background flex items-center px-2 text-sm">10</div>
+                    <div className="h-8 w-full rounded-md border border-input bg-background flex items-center px-2 text-sm">Kilometers</div>
+                </div>
+                <div className="text-center text-2xl font-bold text-primary">6.2137</div>
+                <Button>Convert</Button>
+                <Button variant="secondary">History</Button>
+            </div>
         </div>
     );
 };
@@ -223,6 +250,9 @@ export function Settings() {
             </Section>
             <TooltipProvider>
                 <Section title={t('settings.appearance.title')}>
+                    <div className="p-4 bg-muted/50 rounded-lg mb-4">
+                        <ThemePreview theme={selectedTheme}/>
+                    </div>
                      <SettingRow
                         label={t('settings.appearance.themeMode.label')}
                         description={t('settings.appearance.themeMode.description')}
