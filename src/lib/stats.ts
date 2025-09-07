@@ -2,16 +2,19 @@
 
 "use client";
 
-import { format, startOfWeek, startOfMonth, eachDayOfInterval, eachMonthOfInterval, eachYearOfInterval, startOfYear, endOfYear, subDays } from 'date-fns';
+import { format, eachDayOfInterval, subDays } from 'date-fns';
 import { updateUserData, getUserData } from '@/services/firestore';
 import { NOTES_STORAGE_KEY_BASE, type Note } from '@/components/notepad';
 import { DateRange } from 'react-day-picker';
 
 const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
 
-const incrementStat = async (field: 'totalConversions' | 'totalCalculations' | 'totalDateCalculations', dailyField: 'dailyConversions' | 'dailyCalculations' | 'dailyDateCalculations') => {
+const incrementStat = async (field: 'totalConversions' | 'totalCalculations' | 'totalDateCalculations') => {
     const userEmail = typeof window !== 'undefined' ? (localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null) : null;
+    if (!userEmail) return; // Don't track stats for guests in RTDB
+
     const today = format(new Date(), 'yyyy-MM-dd');
+    const dailyField = `daily${field.charAt(10).toUpperCase()}${field.slice(11)}`; // e.g., dailyConversions
 
     const userData = await getUserData(userEmail);
     
@@ -31,15 +34,15 @@ const incrementStat = async (field: 'totalConversions' | 'totalCalculations' | '
 };
 
 export const incrementConversionCount = () => {
-    incrementStat('totalConversions', 'dailyConversions');
+    incrementStat('totalConversions');
 };
 
 export const incrementCalculationCount = () => {
-    incrementStat('totalCalculations', 'dailyCalculations');
+    incrementStat('totalCalculations');
 };
 
 export const incrementDateCalculationCount = () => {
-    incrementStat('totalDateCalculations', 'dailyDateCalculations');
+    incrementStat('totalDateCalculations');
 };
 
 
@@ -51,7 +54,7 @@ export interface DailyActivity {
     total: number;
 }
 
-export const getStats = async (email: string | null, dateRange?: DateRange): Promise<{
+export const getStats = async (email: string | null): Promise<{
     todaysOps: number;
     totalOps: number;
     savedNotes: number;
@@ -76,14 +79,14 @@ export const getStats = async (email: string | null, dateRange?: DateRange): Pro
     const todaysOps = (dailyConversions[today] || 0) + (dailyCalculations[today] || 0) + (dailyDateCalculations[today] || 0);
     const totalOps = totalConversions + totalCalculations + totalDateCalculations;
 
-    // Get note stats
+    // Get note stats from localStorage (remains local)
     const notesKey = getUserNotesKey(email);
     const notesData = typeof window !== 'undefined' ? localStorage.getItem(notesKey) : null;
     const notes: Note[] = notesData ? JSON.parse(notesData) : [];
     const savedNotes = notes.filter(note => !note.deletedAt).length;
     const recycledNotes = notes.filter(note => !!note.deletedAt).length;
 
-    // Get favorite stats
+    // Get favorite stats from localStorage (remains local)
     const favoritesData = typeof window !== 'undefined' ? localStorage.getItem('favoriteConversions') : null;
     const favoriteConversions = favoritesData ? JSON.parse(favoritesData).length : 0;
 
@@ -92,8 +95,8 @@ export const getStats = async (email: string | null, dateRange?: DateRange): Pro
     const activity: DailyActivity[] = [];
     
     const interval = {
-        start: dateRange?.from || subDays(new Date(), 6),
-        end: dateRange?.to || new Date(),
+        start: subDays(new Date(), 6),
+        end: new Date(),
     }
     
     if (interval.start && interval.end) {

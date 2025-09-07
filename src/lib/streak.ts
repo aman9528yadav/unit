@@ -17,12 +17,13 @@ const getTodayDateString = () => format(new Date(), 'yyyy-MM-dd');
  * @param email - The user's email or null for guests.
  */
 export async function recordVisit(email: string | null) {
+    if (!email) return; // Do not record visits for guests
     const today = getTodayDateString();
     const userData = await getUserData(email);
     const visitHistory: string[] = userData.userVisitHistory || [];
     
     if (!visitHistory.includes(today)) {
-        const updatedHistory = [...visitHistory, today];
+        const updatedHistory = [...visitHistory, today].slice(-365); // Keep last year of visits
         await updateUserData(email, { userVisitHistory: updatedHistory });
     }
 }
@@ -33,6 +34,8 @@ export async function recordVisit(email: string | null) {
  * @returns An object containing the current streak, best streak, and days since last visit.
  */
 export async function getStreakData(email: string | null): Promise<StreakData> {
+    if (!email) return { currentStreak: 0, bestStreak: 0, daysNotOpened: 0 };
+    
     const userData = await getUserData(email);
     const visitHistory: string[] = userData.userVisitHistory || [];
 
