@@ -29,7 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, User, Lock, ChevronDown, Sparkles, LogIn, Scale, Power, History } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Share2, Globe, LayoutGrid, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, User, Lock, ChevronDown, Sparkles, LogIn, Scale, Power, History } from "lucide-react";
 import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow.ts";
 import { useToast } from "@/hooks/use-toast";
@@ -194,12 +194,8 @@ export function Converter() {
   const [toUnit, setToUnit] = React.useState<string>(conversionCategories[0].units[1].symbol);
   const [inputValue, setInputValue] = React.useState<string>("1");
   const [outputValue, setOutputValue] = React.useState<string>("");
-  const [favorites, setFavorites] = React.useState<string[]>([]);
-  const [isFavorite, setIsFavorite] = React.useState(false);
   const [region, setRegion] = React.useState<Region>('International');
   const { language, t } = useLanguage();
-  const [chartData, setChartData] = useState<ChartDataItem[]>([]);
-  const [isGraphVisible, setIsGraphVisible] = useState(false);
   const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
 
@@ -211,8 +207,6 @@ export function Converter() {
   const [userRole, setUserRole] = useState<UserRole>('Member');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const searchContainerRef = useRef<HTMLDivElement>(null);
-  const [recentConversions, setRecentConversions] = useState<string[]>([]);
-
 
   const imageExportRef = React.useRef<HTMLDivElement>(null);
 
@@ -226,12 +220,6 @@ export function Converter() {
   const fromUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === fromUnit), [currentUnits, fromUnit]);
   const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit), [currentUnits, toUnit]);
 
-  const loadRecentConversions = useCallback(() => {
-    const storedHistory = localStorage.getItem("conversionHistory");
-    const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
-    setRecentConversions(currentHistory.slice(0, 4));
-  }, []);
-
   React.useEffect(() => {
     const storedProfileData = localStorage.getItem("userProfile");
     const userEmail = storedProfileData ? JSON.parse(storedProfileData).email : null;
@@ -242,18 +230,15 @@ export function Converter() {
     
     // Load all settings in one go
     const loadSettings = () => {
-        const storedFavorites = localStorage.getItem("favoriteConversions");
         const savedCustomUnits = localStorage.getItem(getUserKey('customUnits', userEmail));
         const savedCustomCategories = localStorage.getItem(getUserKey('customCategories', userEmail));
         const savedDefaultRegion = localStorage.getItem(getUserKey('defaultRegion', userEmail));
 
-        if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
         if (savedCustomUnits) setCustomUnits(JSON.parse(savedCustomUnits));
         if (savedCustomCategories) setCustomCategories(JSON.parse(savedCustomCategories));
         if (savedDefaultRegion && regions.includes(savedDefaultRegion as Region)) {
           setRegion(savedDefaultRegion as Region);
         }
-        loadRecentConversions();
     };
     
     loadSettings();
@@ -272,9 +257,6 @@ export function Converter() {
         if (e.key === getUserKey('customUnits', userEmail) || e.key === getUserKey('customCategories', userEmail) || e.key === getUserKey('defaultRegion', userEmail)) {
            loadSettings();
         }
-        if(e.key === 'conversionHistory'){
-            loadRecentConversions();
-        }
     };
     
     window.addEventListener('storage', handleStorageChange);
@@ -282,40 +264,8 @@ export function Converter() {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [profile?.email, allUnits, conversionCategories, loadRecentConversions]);
+  }, [profile?.email, allUnits, conversionCategories]);
   
-  const getFullHistoryString = (value: string, from: string, to: string, result: string, categoryName: string) => {
-    const conversion = `${value} ${from} → ${result} ${to}`;
-    const timestamp = new Date().toISOString();
-    return `${conversion}|${categoryName}|${timestamp}`;
-  };
-
-  const handleSaveToHistory = (valueStr: string, from: string, to: string, resultStr: string, category: string) => {
-      const userEmail = profile?.email || null;
-      const shouldSaveKey = getUserKey('saveConversionHistory', userEmail);
-      const shouldSave = JSON.parse(localStorage.getItem(shouldSaveKey) ?? 'true');
-
-      if (!shouldSave) return;
-
-      const newHistoryEntry = getFullHistoryString(valueStr, from, to, resultStr, category);
-
-      const storedHistory = localStorage.getItem("conversionHistory");
-      let currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
-      
-      // Prevent duplicate entries
-      const isDuplicate = currentHistory.length > 0 && currentHistory[0].startsWith(newHistoryEntry.split('|').slice(0, 2).join('|'));
-      if (isDuplicate) {
-          return;
-      }
-      
-      currentHistory.unshift(newHistoryEntry);
-      
-      localStorage.setItem("conversionHistory", JSON.stringify(currentHistory));
-      localStorage.setItem('lastConversion', newHistoryEntry);
-
-      loadRecentConversions();
-  };
-
  const performConversion = () => {
     const numValue = parseFloat(inputValue);
     if (isNaN(numValue) || !fromUnit || !toUnit) {
@@ -343,17 +293,6 @@ export function Converter() {
     setOutputValue(formattedResult);
     return { formattedResult, categoryToUse };
   };
-
-  React.useEffect(() => {
-    if (!outputValue) {
-      setIsFavorite(false);
-      return
-    };
-
-    const fullHistoryString = getFullHistoryString(inputValue, fromUnit, toUnit, outputValue, selectedCategory.name);
-    setIsFavorite(favorites.some(fav => fav === fullHistoryString));
-  }, [inputValue, fromUnit, toUnit, outputValue, favorites, selectedCategory.name]);
-
 
  const handleSearch = () => {
     if (isSearching) return;
@@ -402,34 +341,9 @@ export function Converter() {
   };
 
   const handleConvertClick = () => {
-    const result = performConversion();
-    if(result) {
-        handleSaveToHistory(inputValue, fromUnit, toUnit, result.formattedResult, result.categoryToUse.name);
-    }
+    performConversion();
   };
   
-  const handleToggleFavorite = () => {
-    const numValue = parseFloat(inputValue);
-    if (isNaN(numValue) || !outputValue) return;
-
-    const fullHistoryString = getFullHistoryString(inputValue, fromUnit, toUnit, outputValue, selectedCategory.name);
-
-    let newFavorites: string[];
-    const isAlreadyFavorite = favorites.some(fav => fav === fullHistoryString);
-
-    if (isAlreadyFavorite) {
-      newFavorites = favorites.filter(fav => fav !== fullHistoryString);
-      toast({ title: t('converter.toast.favRemoved') });
-    } else {
-      newFavorites = [fullHistoryString, ...favorites];
-      toast({ title: t('converter.toast.favAdded') });
-    }
-    
-    setFavorites(newFavorites);
-    localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
-  };
-
-
   const restoreFromParsedQuery = (parsedQuery: ParseConversionQueryOutput) => {
     const category = conversionCategories.find(c => c.name === parsedQuery.category);
     if (category) {
@@ -469,7 +383,7 @@ export function Converter() {
       return;
     }
     
-    const conversionString = getFullHistoryString(inputValue, fromUnit, toUnit, outputValue, selectedCategory.name).split('|')[0];
+    const conversionString = `${inputValue} ${fromUnit} → ${outputValue} ${toUnit}`;
 
     if (navigator.share) {
       try {
@@ -499,7 +413,7 @@ export function Converter() {
       toast({ title: t('converter.toast.nothingToExport'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
       return;
     }
-    const conversionString = getFullHistoryString(inputValue, fromUnit, toUnit, outputValue, selectedCategory.name).split('|')[0];
+    const conversionString = `${inputValue} ${fromUnit} → ${outputValue} ${toUnit}`;
     
     const blob = new Blob([conversionString], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -832,9 +746,6 @@ export function Converter() {
                     <span className="text-2xl font-bold">{outputValue || "0.00"}</span>
                      <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon" onClick={handleCopy} disabled={!outputValue}><Copy size={16}/></Button>
-                        <Button variant="ghost" size="icon" onClick={handleToggleFavorite} disabled={!outputValue}>
-                            <Star size={16} className={cn(isFavorite && "fill-yellow-400 text-yellow-400")}/>
-                        </Button>
                         <Button variant="ghost" size="icon" onClick={handleShareClick}>
                             <Share2 size={16} />
                         </Button>
@@ -849,27 +760,6 @@ export function Converter() {
                 </div>
             </CardContent>
         </Card>
-
-        {recentConversions.length > 0 && (
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                        <History size={18} />
-                        Recent Conversions
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                        {recentConversions.map((conv, i) => (
-                            <li key={i} className="flex justify-between items-center p-2 bg-secondary rounded-md">
-                               <span>{conv.split('|')[0]}</span>
-                               <Button variant="ghost" size="sm" onClick={() => router.push('/history?tab=conversions')}>View All</Button>
-                            </li>
-                        ))}
-                    </ul>
-                </CardContent>
-            </Card>
-        )}
       
        <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
         <AlertDialogContent>
