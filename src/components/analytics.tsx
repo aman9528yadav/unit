@@ -27,7 +27,8 @@ import {
   Activity,
   BarChart3,
   Users,
-  EyeOff
+  EyeOff,
+  ChevronDown
 } from "lucide-react";
 import { addDays, format, formatDistanceToNow, parseISO, isValid } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -55,30 +56,29 @@ interface LastActivityItem {
 }
 
 const StatCard = ({ title, value, icon, change, changeType, description }: { title: string, value: string | number, icon: React.ReactNode, change?: string, changeType?: 'increase' | 'decrease' | 'neutral', description?: string }) => (
-    <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
-        <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-                 <div className="p-2 bg-secondary rounded-lg text-secondary-foreground">
-                    {icon}
-                 </div>
-                <CardTitle className="text-lg">{title}</CardTitle>
-            </div>
-        </CardHeader>
-        <CardContent>
-            <p className="text-4xl font-extrabold">{value}</p>
+    <Card className="rounded-2xl shadow-sm hover:shadow-lg transition flex flex-col p-4 bg-card border-border">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+             <div className="p-1 bg-secondary rounded-lg text-secondary-foreground">
+                {icon}
+             </div>
+            {title}
+        </div>
+        <div className="flex-1 flex flex-col justify-center items-center gap-1">
+            <p className="text-3xl font-extrabold">{value}</p>
             {change &&
                 <p className={cn(
-                    "text-sm font-medium",
+                    "text-xs font-medium flex items-center gap-1",
                     changeType === 'increase' && 'text-green-600',
-                    changeType === 'decrease' && 'text-red-600'
+                    changeType === 'decrease' && 'text-red-600',
+                     changeType === 'neutral' && 'text-muted-foreground'
                 )}>
-                    {changeType === 'increase' && <TrendingUp className="inline-block w-4 h-4" />}
-                    {changeType === 'decrease' && <TrendingDown className="inline-block w-4 h-4" />}
+                    {changeType === 'increase' && <TrendingUp className="inline-block w-3 h-3" />}
+                    {changeType === 'decrease' && <TrendingDown className="inline-block w-3 h-3" />}
                      {change}
                 </p>
             }
-             {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
-        </CardContent>
+        </div>
+         {description && <p className="text-xs text-muted-foreground mt-1 text-center">{description}</p>}
     </Card>
 );
 
@@ -117,6 +117,8 @@ export function Analytics() {
         to: new Date(),
     });
     const [lastActivities, setLastActivities] = useState<LastActivityItem[]>([]);
+    const [showAllStats, setShowAllStats] = useState(false);
+
 
     const loadLastActivities = useCallback(() => {
         const activities: (LastActivityItem | null)[] = [
@@ -208,13 +210,61 @@ export function Analytics() {
     const dateCalcStats = calculateChange("dateCalculations");
     const calculationsStats = calculateChange("calculations");
     
-    const featureShare = [
-      { name: "Unit Conversions", value: stats.totalConversions },
-      { name: "Calculator", value: stats.totalCalculations },
-      { name: "Date Calculations", value: stats.totalDateCalculations },
+    const allStatCards = [
+        { 
+            title: "Total Conversions", 
+            value: stats.totalConversions,
+            icon: <RefreshCw className="text-indigo-500 w-4 h-4"/>,
+            change: `${conversionsStats.percent > 0 ? '+' : ''}${conversionsStats.percent.toFixed(1)}% vs prev day`,
+            changeType: conversionsStats.change > 0 ? 'increase' : (conversionsStats.change < 0 ? 'decrease' : 'neutral'),
+        },
+        { 
+            title: "Calculator Ops", 
+            value: stats.totalCalculations,
+            icon: <Calculator className="text-green-500 w-4 h-4"/>,
+            change: `${calculationsStats.percent > 0 ? '+' : ''}${calculationsStats.percent.toFixed(1)}% vs prev day`,
+            changeType: calculationsStats.change > 0 ? 'increase' : (calculationsStats.change < 0 ? 'decrease' : 'neutral'),
+        },
+        { 
+            title: "Date Calculations", 
+            value: stats.totalDateCalculations,
+            icon: <CalendarIcon className="text-orange-500 w-4 h-4"/>,
+            change: `${dateCalcStats.percent > 0 ? '+' : ''}${dateCalcStats.percent.toFixed(1)}% vs prev day`,
+            changeType: dateCalcStats.change > 0 ? 'increase' : (dateCalcStats.change < 0 ? 'decrease' : 'neutral'),
+        },
+        { 
+            title: "Current Streak", 
+            value: `${stats.currentStreak} days`,
+            icon: <Flame className="text-red-500 w-4 h-4"/>,
+        },
+        { 
+            title: "Best Streak", 
+            value: `${stats.bestStreak} days`,
+            icon: <CheckCircle className="text-yellow-500 w-4 h-4"/>,
+        },
+        {
+            title: "Days Since Last Visit",
+            value: `${stats.daysNotOpened} days`,
+            icon: <EyeOff className="text-gray-500 w-4 h-4" />,
+        },
+        { 
+            title: "Saved Notes", 
+            value: stats.savedNotes,
+            icon: <NotebookPen className="text-blue-500 w-4 h-4"/>,
+        },
+        { 
+            title: "Recycle Bin", 
+            value: stats.recycledNotes,
+            icon: <Trash2 className="text-gray-500 w-4 h-4"/>,
+        },
+        { 
+            title: "Favorite Conversions", 
+            value: stats.favoriteConversions,
+            icon: <Star className="text-pink-500 w-4 h-4"/>,
+        }
     ];
-    
-    const COLORS = ["#6366f1", "#22c55e", "#f97316"];
+
+    const visibleStatCards = showAllStats ? allStatCards : allStatCards.slice(0, 6);
     
     const formattedChartData = stats.activity.map(day => ({
         ...day,
@@ -233,74 +283,27 @@ export function Analytics() {
             </Button>
           </header>
           
-          <Card>
-            <CardHeader><CardTitle>Usage Statistics</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                 <StatCard 
-                    title="Total Conversions" 
-                    value={stats.totalConversions}
-                    icon={<RefreshCw className="text-indigo-500"/>}
-                    change={`${Math.abs(conversionsStats.percent).toFixed(1)}% vs previous day`}
-                    changeType={conversionsStats.change >= 0 ? 'increase' : 'decrease'}
-                />
-                 <StatCard 
-                    title="Calculator Ops" 
-                    value={stats.totalCalculations}
-                    icon={<Calculator className="text-green-500"/>}
-                    change={`${Math.abs(calculationsStats.percent).toFixed(1)}% vs previous day`}
-                    changeType={calculationsStats.change >= 0 ? 'increase' : 'decrease'}
-                />
-                 <StatCard 
-                    title="Date Calculations" 
-                    value={stats.totalDateCalculations}
-                    icon={<CalendarIcon className="text-orange-500"/>}
-                    change={`${Math.abs(dateCalcStats.percent).toFixed(1)}% vs previous day`}
-                    changeType={dateCalcStats.change >= 0 ? 'increase' : 'decrease'}
-                />
-            </CardContent>
-          </Card>
-          
-          <Card>
-              <CardHeader><CardTitle>Engagement</CardTitle></CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                 <StatCard 
-                    title="Current Streak" 
-                    value={`${stats.currentStreak} days`}
-                    icon={<Flame className="text-red-500"/>}
-                />
-                <StatCard 
-                    title="Best Streak" 
-                    value={`${stats.bestStreak} days`}
-                    icon={<CheckCircle className="text-yellow-500"/>}
-                />
-                <StatCard
-                    title="Days Since Last Visit"
-                    value={`${stats.daysNotOpened} days`}
-                    icon={<EyeOff className="text-gray-500" />}
-                />
-              </CardContent>
-          </Card>
-
            <Card>
-              <CardHeader><CardTitle>Content</CardTitle></CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                 <StatCard 
-                    title="Saved Notes" 
-                    value={stats.savedNotes}
-                    icon={<NotebookPen className="text-blue-500"/>}
-                />
-                <StatCard 
-                    title="Recycle Bin" 
-                    value={stats.recycledNotes}
-                    icon={<Trash2 className="text-gray-500"/>}
-                />
-                <StatCard 
-                    title="Favorite Conversions" 
-                    value={stats.favoriteConversions}
-                    icon={<Star className="text-pink-500"/>}
-                />
-              </CardContent>
-          </Card>
+                <CardHeader>
+                    <CardTitle>Overview</CardTitle>
+                    <CardDescription>A complete overview of all your stats.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {visibleStatCards.map((cardProps, index) => (
+                            <StatCard key={index} {...cardProps} />
+                        ))}
+                    </div>
+                    {allStatCards.length > 6 && (
+                        <div className="flex justify-center mt-4">
+                            <Button variant="outline" onClick={() => setShowAllStats(!showAllStats)}>
+                                {showAllStats ? 'Show Less' : 'Show More'}
+                                <ChevronDown className={cn("ml-2 h-4 w-4 transition-transform", showAllStats && "rotate-180")} />
+                            </Button>
+                        </div>
+                    )}
+                </CardContent>
+           </Card>
     
           {/* Charts */}
             <Card className="rounded-2xl shadow-md">
