@@ -163,8 +163,10 @@ export function Analytics() {
 
         loadLastActivities();
 
-        const handleStorageChange = () => {
-            loadLastActivities();
+        const handleStorageChange = (e: StorageEvent) => {
+            if (['lastConversion', 'lastCalculation', 'lastNote', 'lastDateCalc', 'lastTimer', 'lastStopwatch'].includes(e.key || '')) {
+                loadLastActivities();
+            }
         }
         window.addEventListener('storage', handleStorageChange);
         
@@ -172,7 +174,7 @@ export function Analytics() {
             unsub();
             window.removeEventListener('storage', handleStorageChange);
         }
-    }, []);
+    }, [loadLastActivities]);
     
     const handleTimeRangeChange = (preset: TimeRangePreset) => {
       setTimeRange(preset);
