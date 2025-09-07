@@ -16,7 +16,8 @@ import {
   Gift,
   Pencil,
   Info,
-  Crown
+  Crown,
+  Cake
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -164,6 +165,12 @@ export function Profile() {
             </div>
           <h2 className="text-2xl font-bold mt-2">{profile.fullName}</h2>
           <p className="text-sm">{profile.email}</p>
+          {profile.birthday && (
+            <div className="flex items-center gap-2 text-sm">
+                <Cake className="w-4 h-4" />
+                <span>{profile.birthday}</span>
+            </div>
+          )}
           <Badge variant="secondary" className="mt-2">
              {userRole === 'Premium Member' || userRole === 'Owner' ? <Crown className="w-4 h-4 mr-2 text-yellow-400"/> : <Star className="w-4 h-4 mr-2" />}
              {roleText[userRole]}
