@@ -126,22 +126,24 @@ export function History() {
     }
   };
 
-  const handleDeleteItem = (itemString: string, type: 'conversion' | 'calculation' | 'favorite') => {
-    if (type === 'conversion' || type === 'favorite') {
-        const newHistory = conversionHistory.filter(h => h !== itemString);
+  const handleDeleteItem = () => {
+    if (!itemToDelete) return;
+
+    if (itemToDelete.type === 'conversion') {
+        const newHistory = conversionHistory.filter(h => h !== itemToDelete.item);
         setConversionHistory(newHistory);
         localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
     } 
-    if (type === 'calculation') {
-        const newHistory = calculationHistory.filter(h => h !== itemString);
+    if (itemToDelete.type === 'calculation') {
+        const newHistory = calculationHistory.filter(h => h !== itemToDelete.item);
         setCalculationHistory(newHistory);
         localStorage.setItem("calculationHistory", JSON.stringify(newHistory));
     }
-    
-    // Also remove from favorites if it's there
-    const newFavorites = favorites.filter(fav => fav !== itemString);
-    setFavorites(newFavorites);
-    localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
+    if (itemToDelete.type === 'favorite') {
+        const newFavorites = favorites.filter(fav => fav !== itemToDelete.item);
+        setFavorites(newFavorites);
+        localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
+    }
     
     setItemToDelete(null);
   };
@@ -234,7 +236,7 @@ export function History() {
                          <HistoryItem 
                            key={`${item.timestamp}-${index}`} 
                            item={item} 
-                           onRestore={handleRestore} 
+                           onRestore={() => handleRestore(item.fullString)} 
                            onDelete={() => setItemToDelete({item: item.fullString, type: activeTab as any})} 
                            t={t} 
                            language={language} 
@@ -250,7 +252,7 @@ export function History() {
             </div>
         </Tabs>
 
-        <AlertDialog open={!!itemToDelete}>
+        <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{t('history.dialog.deleteTitle')}</AlertDialogTitle>
@@ -259,8 +261,8 @@ export function History() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setItemToDelete(null)}>{t('history.dialog.cancel')}</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleDeleteItem(itemToDelete!.item, itemToDelete!.type)} className="bg-destructive hover:bg-destructive/90">
+              <AlertDialogCancel>{t('history.dialog.cancel')}</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteItem} className="bg-destructive hover:bg-destructive/90">
                 {t('history.dialog.deleteConfirm')}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -272,7 +274,7 @@ export function History() {
 }
 
 
-function HistoryItem({ item, onRestore, onDelete, t, language }: { item: HistoryItemData; onRestore: (item: string) => void; onDelete: () => void; t: (key: string, params?: any) => string; language: string; }) {
+function HistoryItem({ item, onRestore, onDelete, t, language }: { item: HistoryItemData; onRestore: () => void; onDelete: () => void; t: (key: string, params?: any) => string; language: string; }) {
     const category = item.categoryName ? conversionCategories.find(c => c.name === item.categoryName) : null;
     const Icon = item.type === 'conversion' ? category?.icon || ArrowRightLeft : CalculatorIcon;
     const locale = language === 'hi' ? hi : enUS;
@@ -296,7 +298,7 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
             </div>
             <p className="font-semibold text-foreground break-all">{item.display}</p>
             <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-2 right-2">
-                 {item.type === 'conversion' && <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onRestore(item.fullString)}>
+                 {item.type === 'conversion' && <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onRestore}>
                     <RotateCcw className="h-4 w-4"/>
                 </Button>}
                 <Button size="icon" variant="destructive" className="h-7 w-7" onClick={onDelete}>
@@ -306,3 +308,5 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
         </div>
     )
 }
+
+    

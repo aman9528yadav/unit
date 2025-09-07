@@ -295,44 +295,47 @@ export function Converter() {
     return `${conversion}|${categoryName}|${timestamp}`;
   }
 
-  const handleSaveToHistory = useCallback(async (valueStr: string, from: string, to: string, resultStr: string, category: string) => {
-    const shouldSaveKey = getUserKey('saveConversionHistory', profile?.email || null);
-    const shouldSave = JSON.parse(localStorage.getItem(shouldSaveKey) ?? 'true');
-    
-    if (!shouldSave) return;
-    
-    const newHistoryEntry = getFullHistoryString(valueStr, from, to, resultStr, category);
+  const handleSaveToHistory = useCallback((valueStr: string, from: string, to: string, resultStr: string, category: string) => {
+      const shouldSaveKey = getUserKey('saveConversionHistory', profile?.email || null);
+      const shouldSave = JSON.parse(localStorage.getItem(shouldSaveKey) ?? 'true');
 
-    const storedHistory = localStorage.getItem("conversionHistory");
-    const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
+      if (!shouldSave) return;
 
-    // Prevent adding if it's identical to the most recent entry
-    if (currentHistory.length > 0 && currentHistory[0] === newHistoryEntry) {
-        return;
-    }
-    
-    const newHistory = [newHistoryEntry, ...currentHistory];
-    localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
-    localStorage.setItem('lastConversion', newHistoryEntry); // For use in note editor
-    
-    // Notify other tabs/windows
-    window.dispatchEvent(new StorageEvent('storage', { key: 'conversionHistory', newValue: JSON.stringify(newHistory) }));
-    
-    await incrementTodaysCalculations();
+      const newHistoryEntry = getFullHistoryString(valueStr, from, to, resultStr, category);
+
+      const storedHistory = localStorage.getItem("conversionHistory");
+      let currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
+      
+      // Prevent adding if it's identical to the most recent entry
+      if (currentHistory.length > 0 && currentHistory[0] === newHistoryEntry) {
+          return;
+      }
+      
+      currentHistory.unshift(newHistoryEntry);
+      
+      localStorage.setItem("conversionHistory", JSON.stringify(currentHistory));
+      localStorage.setItem('lastConversion', newHistoryEntry);
+
+      // Manually update recent conversions state for immediate UI feedback
+      setRecentConversions(currentHistory.slice(0, 4));
+
+      window.dispatchEvent(new StorageEvent('storage', { key: 'conversionHistory', newValue: JSON.stringify(currentHistory) }));
+      
+      incrementTodaysCalculations();
   }, [profile?.email]);
 
 
- const performConversion = useCallback(async (valueStr: string, from: string, to: string) => {
-    const numValue = parseFloat(valueStr);
+ const performConversion = useCallback(() => {
+    const numValue = parseFloat(inputValue);
     setIsGraphVisible(false);
 
-    if (isNaN(numValue) || !from || !to) {
+    if (isNaN(numValue) || !fromUnit || !toUnit) {
         setOutputValue("");
         setChartData([]);
         return;
     }
 
-    const categoryToUse = conversionCategories.find(c => c.units.some(u => u.symbol === from) && c.units.some(u => u.symbol === to));
+    const categoryToUse = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit) && c.units.some(u => u.symbol === toUnit));
 
     if (!categoryToUse) {
         setOutputValue("");
@@ -340,7 +343,9 @@ export function Converter() {
         return;
     }
 
-    const result = await categoryToUse.convert(numValue, from, to, region);
+    // `convert` can be a promise, but we'll handle it synchronously for now
+    const result = categoryToUse.convert(numValue, fromUnit, toUnit, region) as number;
+
 
     if (result === undefined || isNaN(result)) {
         setOutputValue("");
@@ -353,26 +358,24 @@ export function Converter() {
 
     if (categoryToUse.name !== 'Temperature') {
         const allUnitsInCategory = categoryToUse.units.filter(u => !u.region || u.region === region);
-        const chartDataPromises = allUnitsInCategory.map(async (unit) => {
-            const convertedValue = await categoryToUse.convert(numValue, from, unit.symbol, region);
+        const newChartData = allUnitsInCategory.map((unit) => {
+            const convertedValue = categoryToUse.convert(numValue, fromUnit, unit.symbol, region) as number;
             return { 
                 name: unit.symbol, 
                 value: parseFloat(convertedValue.toFixed(5)) 
             };
         });
-        const newChartData = await Promise.all(chartDataPromises);
         setChartData(newChartData);
     } else {
         setChartData([]);
     }
     
-    // Save to history right after a successful conversion
-    await handleSaveToHistory(valueStr, from, to, formattedResult, categoryToUse.name);
-}, [region, conversionCategories, handleSaveToHistory]);
+    handleSaveToHistory(inputValue, fromUnit, toUnit, formattedResult, categoryToUse.name);
+}, [inputValue, fromUnit, toUnit, region, conversionCategories, handleSaveToHistory]);
   
   useEffect(() => {
     if (autoConvert) {
-      performConversion(debouncedInputValue, fromUnit, toUnit);
+      performConversion();
     }
   }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion]);
 
@@ -429,7 +432,7 @@ export function Converter() {
   };
 
   const handleConvertClick = () => {
-    performConversion(inputValue, fromUnit, toUnit);
+    performConversion();
   };
   
   const handleToggleFavorite = () => {
@@ -466,7 +469,7 @@ export function Converter() {
             setFromUnit(parsedQuery.fromUnit);
             setToUnit(parsedQuery.toUnit);
             setInputValue(String(parsedQuery.value));
-            performConversion(String(parsedQuery.value), parsedQuery.fromUnit, parsedQuery.toUnit);
+            performConversion();
         } else {
             toast({ title: t('converter.toast.cannotRestore'), description: t('converter.toast.regionError', { region }), variant: "destructive" });
         }
@@ -994,3 +997,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
