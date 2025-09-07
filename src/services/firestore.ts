@@ -17,7 +17,7 @@ export interface HowToUseFeature {
     id: string;
     title: string;
     description: string;
-    icon: string; // Now just the icon name as a string
+    icon: string;
     category: HowToUseCategory | string;
 }
 
@@ -132,7 +132,7 @@ export function listenToHowToUseFeaturesFromRtdb(callback: (features: HowToUseFe
 
 export async function setCustomHowToUseCategoriesInRtdb(categories: CustomHowToUseCategory[]) {
     try {
-        const categoriesRef = ref(rtdb, 'app-content/howToUseCategories');
+        const categoriesRef = ref(rtdb, 'app-content/customHowToUseCategories');
         await setRealtimeDb(categoriesRef, categories);
     } catch (error) {
         console.error("Error saving HowToUse categories to RTDB:", error);
@@ -141,7 +141,7 @@ export async function setCustomHowToUseCategoriesInRtdb(categories: CustomHowToU
 }
 
 export function listenToCustomHowToUseCategoriesFromRtdb(callback: (categories: CustomHowToUseCategory[]) => void) {
-    const categoriesRef = ref(rtdb, 'app-content/howToUseCategories');
+    const categoriesRef = ref(rtdb, 'app-content/customHowToUseCategories');
     return onValue(categoriesRef, (snapshot) => {
         const data = snapshot.val();
         if (data && Array.isArray(data)) {

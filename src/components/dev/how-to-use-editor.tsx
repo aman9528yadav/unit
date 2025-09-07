@@ -26,7 +26,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '..
 import * as LucideIcons from 'lucide-react';
 
 
-const iconNames = Object.keys(LucideIcons).filter(key => typeof (LucideIcons as any)[key] === 'object');
+const iconNames = Object.keys(LucideIcons).filter(key => typeof (LucideIcons as any)[key] === 'object' && key[0] === key[0].toUpperCase());
 
 
 export function HowToUseEditor() {
