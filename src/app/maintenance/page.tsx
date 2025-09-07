@@ -105,23 +105,19 @@ export default function MaintenancePage() {
             <Wrench className="w-10 h-10 text-primary" />
         </div>
         
-        <div className="space-y-2">
+        <div className="space-y-4">
             <h1 className="text-4xl md:text-5xl font-bold text-foreground">We'll Be Back Soon!</h1>
-            <p className="text-muted-foreground max-w-2xl">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               {updateText}
             </p>
+            <div className="flex justify-center">
+               <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground p-2 px-4 rounded-full text-sm font-medium">
+                  <typeDetails.icon className="w-5 h-5 text-primary" />
+                  <span>{typeDetails.title}</span>
+               </div>
+            </div>
         </div>
         
-        <div className="w-full max-w-sm">
-            <FeatureCard 
-                icon={typeDetails.icon}
-                title={typeDetails.title}
-                description={typeDetails.description}
-                className="bg-secondary"
-            />
-        </div>
-
-
         {timeLeft && (
             <div className="flex gap-2 sm:gap-4">
                 <CountdownBox value={timeLeft.totalDays ?? 0} label="DAYS"/>
