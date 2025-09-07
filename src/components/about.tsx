@@ -291,9 +291,9 @@ export function About() {
                   <Image 
                     src={ownerInfo.imageUrl || null}
                     alt={ownerInfo.name}
-                    width={144}
-                    height={144}
-                    className="rounded-full object-cover border-4 border-white shadow-lg"
+                    width={160}
+                    height={160}
+                    className="rounded-2xl object-cover border-4 border-white shadow-lg"
                     data-ai-hint="man portrait"
                   />
                   <h3 className="mt-3 text-lg font-semibold text-indigo-600">{ownerInfo.name}</h3>
