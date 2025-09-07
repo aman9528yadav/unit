@@ -157,7 +157,10 @@ export function Settings() {
     
     // Only save settings if they are not locked
     const isPremiumFeatureLocked = userRole === 'Member';
-    if(isPremiumFeatureLocked && (selectedTheme === 'retro' || selectedTheme === 'glass' || calculatorMode === 'scientific')) {
+    const isThemeLocked = isPremiumFeatureLocked && (selectedTheme === 'retro' || selectedTheme === 'glass' || selectedTheme === 'nord' || selectedTheme === 'rose-pine');
+    const isCalcModeLocked = isPremiumFeatureLocked && calculatorMode === 'scientific';
+
+    if(isThemeLocked || isCalcModeLocked) {
         setShowPremiumLockDialog(true);
         // Revert to old settings
         const oldTheme = localStorage.getItem('theme') || 'light';
@@ -231,6 +234,8 @@ export function Settings() {
                                     <SelectItem value="dark">{t('settings.appearance.themes.dark')}</SelectItem>
                                     <SelectItem value="retro" disabled={isPremiumFeatureLocked}>Retro</SelectItem>
                                     <SelectItem value="glass" disabled={isPremiumFeatureLocked}>Glass</SelectItem>
+                                    <SelectItem value="nord" disabled={isPremiumFeatureLocked}>Nord</SelectItem>
+                                    <SelectItem value="rose-pine" disabled={isPremiumFeatureLocked}>Rosé Pine</SelectItem>
                                     {customTheme && (
                                         <SelectItem value="custom" disabled={isPremiumFeatureLocked}>
                                             {t('settings.appearance.themes.custom')}

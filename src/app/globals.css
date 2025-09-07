@@ -119,6 +119,97 @@ body {
     --card-foreground: hsl(var(--foreground));
     --popover-foreground: hsl(var(--foreground));
   }
+  
+  .nord {
+    --background: 210 16% 96%; /* snow */
+    --foreground: 220 12% 28%; /* polar night */
+    --card: 220 14% 92%; /* frost */
+    --card-foreground: 220 12% 28%;
+    --popover: 210 16% 96%;
+    --popover-foreground: 220 12% 28%;
+    --primary: 220 25% 55%; /* frost blue */
+    --primary-foreground: 210 16% 96%;
+    --secondary: 220 14% 85%;
+    --secondary-foreground: 220 12% 28%;
+    --muted: 220 14% 92%;
+    --muted-foreground: 220 12% 40%;
+    --accent: 160 50% 65%; /* aurora green */
+    --accent-foreground: 220 12% 28%;
+    --destructive: 0 60% 60%; /* aurora red */
+    --destructive-foreground: 210 16% 96%;
+    --border: 220 14% 85%;
+    --input: 220 14% 92%;
+    --ring: 220 25% 55%;
+    --radius: 0.5rem;
+  }
+  
+  .dark.nord {
+    --background: 220 12% 18%;
+    --foreground: 210 16% 85%;
+    --card: 220 13% 22%;
+    --card-foreground: 210 16% 85%;
+    --popover: 220 12% 18%;
+    --popover-foreground: 210 16% 85%;
+    --primary: 220 25% 65%;
+    --primary-foreground: 220 12% 18%;
+    --secondary: 220 13% 28%;
+    --secondary-foreground: 210 16% 85%;
+    --muted: 220 13% 22%;
+    --muted-foreground: 210 16% 65%;
+    --accent: 160 50% 65%;
+    --accent-foreground: 220 12% 18%;
+    --destructive: 0 60% 60%;
+    --destructive-foreground: 220 12% 18%;
+    --border: 220 13% 28%;
+    --input: 220 13% 22%;
+    --ring: 220 25% 65%;
+  }
+  
+  .rose-pine {
+    --background: 345 50% 98%;
+    --foreground: 250 25% 30%;
+    --card: 345 30% 95%;
+    --card-foreground: 250 25% 30%;
+    --popover: 345 50% 98%;
+    --popover-foreground: 250 25% 30%;
+    --primary: 345 60% 65%;
+    --primary-foreground: 250 25% 30%;
+    --secondary: 250 20% 90%;
+    --secondary-foreground: 250 25% 30%;
+    --muted: 345 30% 95%;
+    --muted-foreground: 250 20% 50%;
+    --accent: 175 40% 60%;
+    --accent-foreground: 250 25% 30%;
+    --destructive: 0 50% 60%;
+    --destructive-foreground: 345 50% 98%;
+    --border: 250 20% 85%;
+    --input: 345 30% 95%;
+    --ring: 345 60% 65%;
+    --radius: 0.7rem;
+  }
+  
+  .dark.rose-pine {
+    --background: 250 25% 15%;
+    --foreground: 345 30% 90%;
+    --card: 250 20% 18%;
+    --card-foreground: 345 30% 90%;
+    --popover: 250 25% 15%;
+    --popover-foreground: 345 30% 90%;
+    --primary: 345 60% 75%;
+    --primary-foreground: 250 25% 15%;
+    --secondary: 250 20% 22%;
+    --secondary-foreground: 345 30% 90%;
+    --muted: 250 20% 18%;
+    --muted-foreground: 345 20% 70%;
+    --accent: 175 40% 70%;
+    --accent-foreground: 250 25% 15%;
+    --destructive: 0 50% 70%;
+    --destructive-foreground: 250 25% 15%;
+    --border: 250 20% 25%;
+    --input: 250 20% 18%;
+    --ring: 345 60% 75%;
+  }
+
 }
 
 @layer components {

@@ -175,7 +175,11 @@
             "themes": {
                 "light": "Light",
                 "dark": "Dark",
-                "custom": "Custom"
+                "custom": "Custom",
+                "retro": "Retro",
+                "glass": "Glass",
+                "nord": "Nord",
+                "rose-pine": "Rosé Pine"
             },
             "premiumTooltip": "Unlock Premium to use custom themes."
         },
@@ -635,6 +639,7 @@
     },
     "themeEditor": {
         "title": "Theme Editor",
+        "preview": "Preview",
         "customizeColors": "Customize Colors",
         "properties": {
             "background": "Background",

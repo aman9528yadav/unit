@@ -16,7 +16,7 @@ import {
   BarChart3,
   TrendingUp,
   CheckCircle2,
-  UserCircle2,
+  User,
   Settings,
   Languages,
   Sigma,
@@ -143,7 +143,7 @@ const Header = ({ name, onProfileClick, profileImage }: { name: string, onProfil
             <Button variant="ghost" size="icon" className="rounded-full" onClick={onProfileClick}>
                 <Avatar className="h-10 w-10 border border-border bg-card text-foreground">
                     <AvatarImage src={profileImage}/>
-                    <AvatarFallback><UserCircle2 className="size-6" /></AvatarFallback>
+                    <AvatarFallback><User /></AvatarFallback>
                 </Avatar>
             </Button>
         </div>
@@ -175,8 +175,8 @@ function AnimatedStat({ value }: { value: number }) {
   const ref = React.useRef(null);
   const isInView = useInView(ref, { once: true });
   const spring = useSpring(0, {
-    damping: 20,
-    stiffness: 100,
+    damping: 30, // Slower, less bouncy
+    stiffness: 80, // Less stiff
   });
 
   useEffect(() => {
@@ -186,8 +186,8 @@ function AnimatedStat({ value }: { value: number }) {
   }, [isInView, value, spring]);
 
   const displayValue = useSpring(spring, {
-    damping: 20,
-    stiffness: 100,
+    damping: 30,
+    stiffness: 80,
   });
 
   useEffect(() => {
@@ -346,7 +346,7 @@ export function Dashboard() {
   
   const handleProfileClick = () => {
     if (profile) {
-      router.push('/userdata');
+      router.push('/profile');
     } else {
       setShowLoginDialog(true);
     }
