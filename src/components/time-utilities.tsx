@@ -26,7 +26,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { incrementTodaysCalculations } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 
 // --- Web Worker Code ---
@@ -157,7 +156,6 @@ function PomodoroTimer() {
                      const newPomodoroCount = mode === 'work' ? pomodoros + 1 : pomodoros;
                      if(mode === 'work') {
                         setPomodoros(newPomodoroCount);
-                        incrementTodaysCalculations();
                      }
                      
                      const newMode = mode === 'work'
@@ -391,7 +389,6 @@ function Stopwatch() {
                 isRunning: true,
                 laps: laps
             }));
-             incrementTodaysCalculations();
         } else {
             // Pausing
             localStorage.setItem('stopwatchState', JSON.stringify({
@@ -487,7 +484,6 @@ function DateDifference() {
                 return;
             }
             setDuration(intervalToDuration({ start: startDate, end: endDate }));
-            incrementTodaysCalculations();
         }
     }, [startDate, endDate]);
 
@@ -560,7 +556,6 @@ function AddSubtractTime() {
             { days: addDays, weeks: addWeeks, months: addMonths, years: addYears }[unit] :
             { days: subDays, weeks: subWeeks, months: subMonths, years: subYears }[unit];
         setResultDate(fn(date, amount));
-        incrementTodaysCalculations();
     }
 
     return (
@@ -636,7 +631,6 @@ function AgeCalculator() {
     React.useEffect(() => {
         if (birthDate) {
             setAge(intervalToDuration({ start: birthDate, end: new Date() }));
-            incrementTodaysCalculations();
         }
     }, [birthDate]);
 
@@ -683,7 +677,6 @@ function WorkingDaysCalculator() {
         const holidayDates = holidays.split('\n').map(h => h.trim()).filter(Boolean).map(h => parseISO(h));
         const holidayCount = holidayDates.filter(h => h >= startDate && h <= endDate && h.getDay() !== 0 && h.getDay() !== 6).length;
         setWorkingDays(businessDays - holidayCount);
-        incrementTodaysCalculations();
     }
     
     return (

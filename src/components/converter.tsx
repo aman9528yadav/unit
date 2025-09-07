@@ -35,7 +35,6 @@ import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flo
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
-import { incrementTodaysCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { CustomUnit, CustomCategory } from "./custom-unit-manager";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -318,7 +317,6 @@ export function Converter() {
 
       setRecentConversions(currentHistory.slice(0, 4));
       
-      incrementTodaysCalculations();
   };
 
  const performConversion = useCallback(() => {

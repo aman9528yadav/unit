@@ -35,15 +35,6 @@ import {
   Newspaper,
   Rocket
 } from "lucide-react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -51,8 +42,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { getTodaysCalculations, getWeeklyCalculations, getAllTimeCalculations } from "@/lib/utils";
-import { getStreakData, recordVisit, type StreakData } from "@/lib/streak";
 import { GlobalSearch } from "./global-search";
 import { Notifications } from "./notifications";
 import { useLanguage } from "@/context/language-context";
@@ -64,53 +53,6 @@ import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import { Label } from "./ui/label";
 import { Checkbox } from "./ui/checkbox";
 
-
-interface Note {
-    id: string;
-    deletedAt?: string | null;
-}
-
-const NOTES_STORAGE_KEY_BASE = 'userNotesV2';
-const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : 'guest_userNotesV2';
-
-const getSavedNotesCount = (email: string | null): number => {
-    if (typeof window === 'undefined') return 0;
-    const storageKey = getUserNotesKey(email);
-    const savedNotes = localStorage.getItem(storageKey);
-    if (savedNotes) {
-        try {
-            const notes: Note[] = JSON.parse(savedNotes);
-            return notes.filter(note => !note.deletedAt).length;
-        } catch (e) {
-            console.error("Failed to parse notes from storage", e);
-            return 0;
-        }
-    }
-    return 0;
-};
-
-const Stat = ({ icon: Icon, label, value, trend }: any) => (
-  <Card className="bg-card border-border shadow-sm">
-    <CardContent className="p-4">
-      <div className="flex items-center gap-3">
-        <div className="size-10 grid place-items-center rounded-lg bg-secondary text-primary">
-          <Icon className="size-5" />
-        </div>
-        <div className="flex-1">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-          <div className="flex items-center gap-2">
-            <p className="text-xl font-semibold text-foreground">{value}</p>
-            {trend && (
-              <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
-                <TrendingUp className="mr-1 size-3" /> {trend}
-              </Badge>
-            )}
-          </div>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-);
 
 const ToolButton = ({ icon: Icon, label, href, color }: any) => (
     <Link href={href} className="group aspect-square rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex flex-col items-center justify-center gap-2 shadow-sm text-center">
@@ -228,36 +170,12 @@ export function Dashboard() {
   const { t } = useLanguage();
   const [isClient, setIsClient] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [todayCalculations, setTodayCalculations] = useState(0);
-  const [allTimeCalculations, setAllTimeCalculations] = useState(0);
-  const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string; value: number}[]>([]);
-  const [savedNotesCount, setSavedNotesCount] = useState(0);
-  const [streakData, setStreakData] = useState<StreakData>({ currentStreak: 0, bestStreak: 0, daysNotOpened: 0 });
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [showMoreTools, setShowMoreTools] = useState(false);
   const [showBetaDialog, setShowBetaDialog] = useState(false);
   const [doNotShowAgain, setDoNotShowAgain] = useState(false);
   const router = useRouter();
 
-
-  const updateStats = useCallback(async (email: string | null) => {
-    try {
-        const [today, weekly, allTime, notesCount, streak] = await Promise.all([
-            getTodaysCalculations(email),
-            getWeeklyCalculations(email),
-            getAllTimeCalculations(email),
-            Promise.resolve(getSavedNotesCount(email)),
-            getStreakData(email)
-        ]);
-        setTodayCalculations(today);
-        setWeeklyCalculations(weekly);
-        setAllTimeCalculations(allTime);
-        setSavedNotesCount(notesCount);
-        setStreakData(streak);
-    } catch (error) {
-        console.error("Failed to update stats:", error);
-    }
-  }, []);
 
   useEffect(() => {
     setIsClient(true);
@@ -267,28 +185,11 @@ export function Dashboard() {
     }
     
     const storedProfile = localStorage.getItem("userProfile");
-    const email = storedProfile ? JSON.parse(storedProfile).email : null;
     
     if(storedProfile) {
         setProfile(JSON.parse(storedProfile));
-        recordVisit(email);
     }
-
-    updateStats(email);
-    
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        updateStats(email);
-      }
-    };
-    
-    window.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      window.removeEventListener('visibilitychange', handleVisibilityChange);
-    }
-
-  }, [updateStats]);
+  }, []);
   
   const handleProfileClick = () => {
     if (profile) {
@@ -404,13 +305,6 @@ export function Dashboard() {
     <div className="w-full max-w-lg mx-auto flex flex-col gap-8 py-8">
       <Header name={profile?.fullName || t('dashboard.guest')} profile={profile} onProfileClick={handleProfileClick} />
 
-      <section className="grid grid-cols-2 gap-4">
-        <Stat icon={Calculator} label={t('dashboard.todayOps')} value={String(todayCalculations)} />
-        <Stat icon={Flame} label={t('dashboard.currentStreak')} value={`${streakData.currentStreak} ${t('dashboard.days')}`} />
-        <Stat icon={NotebookPen} label={t('dashboard.savedNotes')} value={String(savedNotesCount)} />
-        <Stat icon={History} label={t('dashboard.allTimeOps')} value={String(allTimeCalculations)} />
-      </section>
-
       <section>
         <Card className="bg-card border-border shadow-sm">
           <CardHeader>
@@ -430,36 +324,6 @@ export function Dashboard() {
                 {showMoreTools ? t('dashboard.showLess') : t('dashboard.showMore')}
                 <ChevronDown className={cn("ml-2 h-4 w-4 transition-transform", showMoreTools && "rotate-180")} />
             </Button>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section>
-        <Card className="overflow-hidden rounded-xl bg-card border-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-0">
-            <div>
-              <CardTitle className="text-base text-foreground">{t('dashboard.calculationStats')}</CardTitle>
-              <p className="text-xs text-muted-foreground">{t('dashboard.last7Days')}</p>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="h-48 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={weeklyCalculations} margin={{ left: 0, right: 0, top: 10, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid vertical={false} strokeOpacity={0.1} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                  <YAxis allowDecimals={false} width={28} tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                  <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))" }} />
-                  <Area type="monotone" dataKey="value" strokeWidth={2} stroke="hsl(var(--primary))" fill="url(#fill)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
           </CardContent>
         </Card>
       </section>

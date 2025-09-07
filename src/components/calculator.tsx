@@ -8,7 +8,6 @@ import { RefreshCw, Delete, Divide, X, Minus, Plus, Equal, Sigma, CalculatorIcon
 import type { CalculatorMode } from '../settings';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useRouter } from 'next/navigation';
-import { incrementTodaysCalculations } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
 const buttonClasses = {
@@ -180,7 +179,6 @@ export function Calculator() {
       }
       const formattedResult = evalResult.toLocaleString(undefined, { maximumFractionDigits: 10, useGrouping: true });
       setResult(formattedResult);
-      await incrementTodaysCalculations();
       
       const historyEntry = `${expression} = ${formattedResult}|${new Date().toISOString()}`;
       const storedHistory = localStorage.getItem('calculationHistory');
