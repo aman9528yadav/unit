@@ -36,7 +36,8 @@ import {
   Newspaper,
   Rocket,
   Lightbulb,
-  Beaker
+  Beaker,
+  BookOpen
 } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useRouter } from "next/navigation";
@@ -180,7 +181,6 @@ const Header = ({ name, onProfileClick, profileImage }: { name: string, onProfil
         </div>
       </div>
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <CheckCircle2 className="size-4 text-green-500" />
           {welcomeMessage}
       </div>
        <div>
@@ -644,11 +644,14 @@ export function Dashboard() {
               Don't show this message again
             </Label>
           </div>
-          <AlertDialogFooter className="flex-col-reverse sm:flex-col-reverse gap-2">
-            <AlertDialogAction onClick={handleBetaDialogClose}>Got it!</AlertDialogAction>
-            <Button asChild variant="outline">
-                <Link href="/about">About App</Link>
-            </Button>
+          <AlertDialogFooter className="grid grid-cols-2 gap-2">
+              <Button asChild variant="outline">
+                  <Link href="/about"><Info className="mr-2 h-4 w-4"/> About App</Link>
+              </Button>
+              <Button asChild variant="outline">
+                  <Link href="/how-to-use"><BookOpen className="mr-2 h-4 w-4"/> How to Use</Link>
+              </Button>
+              <AlertDialogAction onClick={handleBetaDialogClose} className="col-span-2">Got it!</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
