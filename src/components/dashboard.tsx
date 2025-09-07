@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Link from 'next/link';
-import { motion } from "framer-motion";
+import { motion, useSpring, useInView } from "framer-motion";
 import {
   Calculator,
   History,
@@ -40,7 +40,7 @@ import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { GlobalSearch } from "./global-search";
 import { Notifications } from "./notifications";
@@ -110,10 +110,11 @@ const RecommendationCard = ({ item }: any) => (
 interface UserProfile {
     fullName: string;
     email: string;
+    profileImage?: string;
     [key: string]: any;
 }
 
-const Header = ({ name, onProfileClick }: { name: string, onProfileClick: () => void }) => {
+const Header = ({ name, onProfileClick, profileImage }: { name: string, onProfileClick: () => void, profileImage?: string }) => {
   const router = useRouter();
   const { t } = useLanguage();
   const [welcomeMessage, setWelcomeMessage] = useState(t('dashboard.welcome'));
@@ -141,7 +142,8 @@ const Header = ({ name, onProfileClick }: { name: string, onProfileClick: () => 
             <Notifications />
             <Button variant="ghost" size="icon" className="rounded-full" onClick={onProfileClick}>
                 <Avatar className="h-10 w-10 border border-border bg-card text-foreground">
-                <AvatarFallback><UserCircle2 className="size-6" /></AvatarFallback>
+                    <AvatarImage src={profileImage}/>
+                    <AvatarFallback><UserCircle2 className="size-6" /></AvatarFallback>
                 </Avatar>
             </Button>
         </div>
@@ -169,13 +171,44 @@ const LanguageToggle = () => {
     );
 };
 
-const StatCard = ({ title, value, icon: Icon, color }: { title: string, value: string, icon: React.ElementType, color?: string }) => (
+function AnimatedStat({ value }: { value: number }) {
+  const ref = React.useRef(null);
+  const isInView = useInView(ref, { once: true });
+  const spring = useSpring(0, {
+    damping: 20,
+    stiffness: 100,
+  });
+
+  useEffect(() => {
+    if (isInView) {
+      spring.set(value);
+    }
+  }, [isInView, value, spring]);
+
+  const displayValue = useSpring(spring, {
+    damping: 20,
+    stiffness: 100,
+  });
+
+  useEffect(() => {
+    const unsubscribe = displayValue.on("change", (latest) => {
+      if (ref.current) {
+        (ref.current as any).textContent = Math.round(latest).toLocaleString();
+      }
+    });
+    return () => unsubscribe();
+  }, [displayValue]);
+
+  return <p ref={ref} className="font-semibold text-lg">0</p>;
+}
+
+const StatCard = ({ title, value, icon: Icon, color }: { title: string, value: number, icon: React.ElementType, color?: string }) => (
     <Card className="flex flex-col p-4 bg-card border-border shadow-sm">
         <div className="flex items-center gap-2">
             <div className={cn("size-8 grid place-items-center rounded-lg", color)}>
                 <Icon className="size-5" />
             </div>
-            <p className="font-semibold text-lg">{value}</p>
+            <AnimatedStat value={value} />
         </div>
         <p className="text-sm text-muted-foreground mt-2">{title}</p>
     </Card>
@@ -296,16 +329,24 @@ export function Dashboard() {
         if(storedProfile) {
             setProfile(JSON.parse(storedProfile));
         }
+
+        const handleStorageChange = (event: StorageEvent) => {
+            if (event.key === 'userProfile' && event.newValue) {
+                setProfile(JSON.parse(event.newValue));
+            }
+        };
         
         window.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('storage', handleStorageChange);
         return () => {
             window.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('storage', handleStorageChange);
         }
     }, [loadStats]);
   
   const handleProfileClick = () => {
     if (profile) {
-      router.push('/profile');
+      router.push('/userdata');
     } else {
       setShowLoginDialog(true);
     }
@@ -427,15 +468,15 @@ export function Dashboard() {
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-8 py-8">
-      <Header name={profile?.fullName || t('dashboard.guest')} onProfileClick={handleProfileClick} />
+      <Header name={profile?.fullName || t('dashboard.guest')} onProfileClick={handleProfileClick} profileImage={profile?.profileImage} />
       
       <UpdateBanner />
 
       <section>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-             <StatCard title="Today's Ops" value={String(stats.todaysOps)} icon={TrendingUp} color="text-green-500 bg-green-500/10" />
-             <StatCard title="All Time Ops" value={String(stats.totalOps)} icon={BarChart3} color="text-blue-500 bg-blue-500/10" />
-             <StatCard title="Saved Notes" value={String(stats.savedNotes)} icon={NotebookPen} color="text-yellow-500 bg-yellow-500/10" />
+             <StatCard title="Today's Ops" value={stats.todaysOps} icon={TrendingUp} color="text-green-500 bg-green-500/10" />
+             <StatCard title="All Time Ops" value={stats.totalOps} icon={BarChart3} color="text-blue-500 bg-blue-500/10" />
+             <StatCard title="Saved Notes" value={stats.savedNotes} icon={NotebookPen} color="text-yellow-500 bg-yellow-500/10" />
           </div>
       </section>
 
