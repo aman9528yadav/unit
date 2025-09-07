@@ -16,26 +16,27 @@ export interface UserEvent {
     type: 'login' | 'signup';
 }
 
-export async function setFaqs(faqs: FAQ[]) {
+export async function setFaqsInRtdb(faqs: FAQ[]) {
     try {
-        const faqsDocRef = doc(db, 'app-content', 'faqs');
-        await setFirestoreDoc(faqsDocRef, { faqsList: faqs });
+        const faqsRef = ref(rtdb, 'app-content/faqs');
+        await setRealtimeDb(faqsRef, faqs);
     } catch (error) {
-        console.error("Error saving FAQs:", error);
+        console.error("Error saving FAQs to RTDB:", error);
         throw error;
     }
 }
 
-export function listenToFaqs(callback: (faqs: FAQ[]) => void) {
-    const faqsDocRef = doc(db, 'app-content', 'faqs');
-    return onFirestoreSnapshot(faqsDocRef, (doc) => {
-        if (doc.exists()) {
-            callback(doc.data().faqsList || defaultFaqs);
+export function listenToFaqsFromRtdb(callback: (faqs: FAQ[]) => void) {
+    const faqsRef = ref(rtdb, 'app-content/faqs');
+    return onValue(faqsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            callback(data);
         } else {
             callback(defaultFaqs);
         }
     }, (error) => {
-        console.error("Error listening to FAQs:", error);
+        console.error("Error listening to FAQs from RTDB:", error);
         callback(defaultFaqs);
     });
 }
@@ -378,3 +379,5 @@ export async function updateUserData(email: string | null, data: { [key: string]
         localStorage.setItem(localDataKey, JSON.stringify(newLocalData));
     }
 }
+
+    

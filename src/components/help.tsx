@@ -14,7 +14,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/language-context';
-import { listenToFaqs } from '@/services/firestore';
+import { listenToFaqsFromRtdb } from '@/services/firestore';
 
 
 export interface FAQ {
@@ -71,7 +71,7 @@ export function Help() {
   
   useEffect(() => {
     setIsClient(true);
-    const unsubscribe = listenToFaqs((faqsFromDb) => {
+    const unsubscribe = listenToFaqsFromRtdb((faqsFromDb) => {
         setFaqs(faqsFromDb.length > 0 ? faqsFromDb : defaultFaqs);
     });
 
@@ -107,3 +107,5 @@ export function Help() {
     </div>
   );
 }
+
+    

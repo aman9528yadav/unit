@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import type { FAQ } from '../help';
 import { useRouter } from 'next/navigation';
-import { setFaqs as setFaqsInDb, listenToFaqs } from '@/services/firestore';
+import { setFaqsInRtdb, listenToFaqsFromRtdb } from '@/services/firestore';
 
 
 export function HelpEditor() {
@@ -36,7 +36,7 @@ export function HelpEditor() {
     
     useEffect(() => {
         setIsClient(true);
-        const unsubscribe = listenToFaqs((faqsFromDb) => {
+        const unsubscribe = listenToFaqsFromRtdb((faqsFromDb) => {
             setFaqs(faqsFromDb);
         });
         return () => unsubscribe();
@@ -45,7 +45,7 @@ export function HelpEditor() {
     const handleSaveAll = async () => {
         if (!faqs) return;
         try {
-            await setFaqsInDb(faqs);
+            await setFaqsInRtdb(faqs);
             toast({ title: "FAQs Saved!", description: "All changes have been saved to the database." });
         } catch (error) {
             console.error(error);
@@ -80,8 +80,8 @@ export function HelpEditor() {
         }
         
         try {
-            await setFaqsInDb(updatedFaqs);
-            setFaqs(updatedFaqs); // Update local state to match
+            await setFaqsInRtdb(updatedFaqs);
+            // The listener will update the local state automatically
             toast({ title: "Success", description: `FAQ item ${editingFaq ? 'updated' : 'added'}.`});
             setIsDialogOpen(false);
         } catch (error) {
@@ -94,7 +94,7 @@ export function HelpEditor() {
         if (!faqs) return;
         if (window.confirm("Are you sure you want to delete this FAQ item?")) {
             const updatedFaqs = faqs.filter(f => f.id !== faqId);
-            setFaqsInDb(updatedFaqs);
+            setFaqsInRtdb(updatedFaqs);
             toast({ title: "FAQ Deleted", description: "The FAQ item has been removed." });
         }
     };
@@ -174,3 +174,5 @@ export function HelpEditor() {
         </div>
     );
 }
+
+    
