@@ -9,7 +9,7 @@ import { ArrowLeft, Gift, Zap, Rocket, Timer, Palette, Languages, User, Wand2 } 
 import { format, intervalToDuration, differenceInDays } from "date-fns";
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/language-context';
-import { listenToUpdateInfo, UpdateInfo } from '@/services/firestore';
+import { listenToNextUpdateInfo, NextUpdateInfo } from '@/services/firestore';
 
 const getUpdates = (t: (key: string) => string) => [
     {
@@ -95,7 +95,7 @@ export function Updates() {
   useEffect(() => {
     if(!isClient) return;
     
-    const unsubscribe = listenToUpdateInfo((info: UpdateInfo) => {
+    const unsubscribe = listenToNextUpdateInfo((info: NextUpdateInfo) => {
         if (info.targetDate) {
             const date = new Date(info.targetDate);
              if (!isNaN(date.getTime()) && date > new Date()) {

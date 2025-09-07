@@ -104,8 +104,13 @@ export interface UpdateInfo {
   maintenanceType: string | null;
 }
 
+export interface NextUpdateInfo {
+  targetDate: string | null;
+  updateText: string | null;
+}
+
 /**
- * Sets the global update information in Firebase Realtime Database.
+ * Sets the global update information in Firebase Realtime Database for the maintenance page.
  * @param info - Object containing the target date and update text.
  */
 export async function setUpdateInfo(info: UpdateInfo) {
@@ -119,7 +124,22 @@ export async function setUpdateInfo(info: UpdateInfo) {
 }
 
 /**
- * Listens for changes to the global update information from Realtime Database.
+ * Sets the global update information in Firebase Realtime Database for the updates page.
+ * @param info - Object containing the target date and update text.
+ */
+export async function setNextUpdateInfo(info: NextUpdateInfo) {
+    try {
+        const updateInfoRef = ref(rtdb, 'settings/nextUpdateInfo');
+        await setRealtimeDb(updateInfoRef, info);
+    } catch (error) {
+        console.error("Error setting next update info:", error);
+        throw error;
+    }
+}
+
+
+/**
+ * Listens for changes to the global update information from Realtime Database for the maintenance page.
  * @param callback - Function to be called with the update info.
  * @returns The unsubscribe function for the listener.
  */
@@ -137,6 +157,29 @@ export function listenToUpdateInfo(callback: (info: UpdateInfo) => void) {
     }, (error) => {
         console.error("Error listening to update info:", error);
         callback({ targetDate: null, updateText: null, maintenanceType: null }); // Default on error
+    });
+
+    return unsubscribe;
+}
+
+/**
+ * Listens for changes to the global update information from Realtime Database for the updates page.
+ * @param callback - Function to be called with the update info.
+ * @returns The unsubscribe function for the listener.
+ */
+export function listenToNextUpdateInfo(callback: (info: NextUpdateInfo) => void) {
+    const updateInfoRef = ref(rtdb, 'settings/nextUpdateInfo');
+
+    const unsubscribe = onValue(updateInfoRef, (snapshot) => {
+        const data = snapshot.val();
+        const info: NextUpdateInfo = {
+            targetDate: data?.targetDate || null,
+            updateText: data?.updateText || null,
+        };
+        callback(info);
+    }, (error) => {
+        console.error("Error listening to next update info:", error);
+        callback({ targetDate: null, updateText: null }); // Default on error
     });
 
     return unsubscribe;

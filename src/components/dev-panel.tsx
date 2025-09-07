@@ -13,7 +13,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
-import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo } from '@/services/firestore';
+import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo } from '@/services/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 
@@ -32,13 +32,21 @@ export function DevPanel() {
     const [password, setPassword] = useState('');
     const [isClient, setIsClient] = useState(false);
     const [showAuthPassword, setShowAuthPassword] = useState(false);
-    const [duration, setDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-    const [updateText, setUpdateText] = useState('');
+
+    // State for Maintenance Tab
+    const [maintenanceDuration, setMaintenanceDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+    const [maintenanceText, setMaintenanceText] = useState('');
     const [maintenanceType, setMaintenanceType] = useState('Security');
+    
+    // State for Updates Tab
+    const [updateDuration, setUpdateDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+    const [updateText, setUpdateText] = useState('');
+
+    // Shared State
     const [notificationTitle, setNotificationTitle] = useState('');
     const [notificationDescription, setNotificationDescription] = useState('');
     const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
-    const [newToggleState, setNewToggleState] = useState(false);
+    
     const router = useRouter();
     const { toast } = useToast();
 
@@ -80,53 +88,48 @@ export function DevPanel() {
         }
     };
     
-    const handleDurationChange = (unit: keyof typeof duration, value: string) => {
+    const handleMaintenanceDurationChange = (unit: keyof typeof maintenanceDuration, value: string) => {
         const numValue = parseInt(value, 10);
-        setDuration(prev => ({ ...prev, [unit]: isNaN(numValue) ? 0 : numValue }));
+        setMaintenanceDuration(prev => ({ ...prev, [unit]: isNaN(numValue) ? 0 : numValue }));
     };
 
-    const handleSetTimer = async () => {
+    const handleUpdateDurationChange = (unit: keyof typeof updateDuration, value: string) => {
+        const numValue = parseInt(value, 10);
+        setUpdateDuration(prev => ({ ...prev, [unit]: isNaN(numValue) ? 0 : numValue }));
+    };
+
+    const handleSetMaintenanceInfo = async () => {
         const now = new Date();
-        const { days, hours, minutes, seconds } = duration;
-        const totalMilliseconds = (days * 86400 + hours * 3600 + minutes * 60 + seconds) * 1000;
-        
-        if(totalMilliseconds <= 0) {
-            await setUpdateInfo({ targetDate: null, updateText, maintenanceType });
-            toast({ title: 'Countdown Cleared', description: 'Duration was zero or negative.' });
-            return;
-        }
-
-        const targetDateTime = new Date(now.getTime() + totalMilliseconds);
-        
-        try {
-            await setUpdateInfo({ targetDate: targetDateTime.toISOString(), updateText, maintenanceType });
-            toast({ title: 'Countdown Set!', description: `Timer set for ${targetDateTime.toLocaleString()}` });
-        } catch (error) {
-            toast({ title: 'Error', description: 'Could not set countdown in database.', variant: 'destructive'});
-        }
-    };
-
-    const handleClearTimer = async () => {
-        try {
-            await setUpdateInfo({ targetDate: null, updateText, maintenanceType });
-            setDuration({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-            toast({ title: 'Countdown Cleared' });
-        } catch (error) {
-            toast({ title: 'Error', description: 'Could not clear countdown in database.', variant: 'destructive'});
-        }
-    };
-    
-    const handleSaveDetails = async () => {
-        const now = new Date();
-        const { days, hours, minutes, seconds } = duration;
+        const { days, hours, minutes, seconds } = maintenanceDuration;
         const totalMilliseconds = (days * 86400 + hours * 3600 + minutes * 60 + seconds) * 1000;
         const targetDateTime = totalMilliseconds > 0 ? new Date(now.getTime() + totalMilliseconds) : null;
         
         try {
-             await setUpdateInfo({ targetDate: targetDateTime?.toISOString() ?? null, updateText, maintenanceType });
-             toast({ title: 'Update Details Saved' });
+             await setUpdateInfo({ 
+                targetDate: targetDateTime?.toISOString() ?? null, 
+                updateText: maintenanceText, 
+                maintenanceType 
+            });
+             toast({ title: 'Maintenance Info Saved' });
         } catch(e) {
-            toast({ title: 'Error saving update details', variant: 'destructive' });
+            toast({ title: 'Error saving maintenance info', variant: 'destructive' });
+        }
+    };
+
+     const handleSetUpdateInfo = async () => {
+        const now = new Date();
+        const { days, hours, minutes, seconds } = updateDuration;
+        const totalMilliseconds = (days * 86400 + hours * 3600 + minutes * 60 + seconds) * 1000;
+        const targetDateTime = totalMilliseconds > 0 ? new Date(now.getTime() + totalMilliseconds) : null;
+        
+        try {
+             await setNextUpdateInfo({ 
+                targetDate: targetDateTime?.toISOString() ?? null, 
+                updateText: updateText,
+            });
+             toast({ title: 'Next Update Info Saved' });
+        } catch(e) {
+            toast({ title: 'Error saving next update info', variant: 'destructive' });
         }
     };
 
@@ -231,7 +234,7 @@ export function DevPanel() {
                 <TabsContent value="maintenance" className="mt-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><Timer /> Maintenance</CardTitle>
+                            <CardTitle className="flex items-center gap-2"><Timer /> Maintenance Page</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                              <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
@@ -249,34 +252,30 @@ export function DevPanel() {
                                 <Label>Set Countdown Duration</Label>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <Label htmlFor="days" className="text-xs">Days</Label>
-                                        <Input id="days" type="number" value={duration.days} onChange={(e) => handleDurationChange('days', e.target.value)} placeholder="0" />
+                                        <Label htmlFor="days-m" className="text-xs">Days</Label>
+                                        <Input id="days-m" type="number" value={maintenanceDuration.days} onChange={(e) => handleMaintenanceDurationChange('days', e.target.value)} placeholder="0" />
                                     </div>
                                     <div>
-                                        <Label htmlFor="hours" className="text-xs">Hours</Label>
-                                        <Input id="hours" type="number" value={duration.hours} onChange={(e) => handleDurationChange('hours', e.target.value)} placeholder="0" />
+                                        <Label htmlFor="hours-m" className="text-xs">Hours</Label>
+                                        <Input id="hours-m" type="number" value={maintenanceDuration.hours} onChange={(e) => handleMaintenanceDurationChange('hours', e.target.value)} placeholder="0" />
                                     </div>
                                     <div>
-                                        <Label htmlFor="minutes" className="text-xs">Minutes</Label>
-                                        <Input id="minutes" type="number" value={duration.minutes} onChange={(e) => handleDurationChange('minutes', e.target.value)} placeholder="0" />
+                                        <Label htmlFor="minutes-m" className="text-xs">Minutes</Label>
+                                        <Input id="minutes-m" type="number" value={maintenanceDuration.minutes} onChange={(e) => handleMaintenanceDurationChange('minutes', e.target.value)} placeholder="0" />
                                     </div>
                                     <div>
-                                        <Label htmlFor="seconds" className="text-xs">Seconds</Label>
-                                        <Input id="seconds" type="number" value={duration.seconds} onChange={(e) => handleDurationChange('seconds', e.target.value)} placeholder="0" />
+                                        <Label htmlFor="seconds-m" className="text-xs">Seconds</Label>
+                                        <Input id="seconds-m" type="number" value={maintenanceDuration.seconds} onChange={(e) => handleMaintenanceDurationChange('seconds', e.target.value)} placeholder="0" />
                                     </div>
-                                </div>
-                                <div className="flex gap-2 mt-2">
-                                    <Button onClick={handleSetTimer} className="w-full">Set Timer</Button>
-                                    <Button onClick={handleClearTimer} variant="destructive" className="w-full">Clear Timer</Button>
                                 </div>
                             </div>
-                             <div className="pt-4 space-y-2">
-                                <Label htmlFor="updateText" className="flex items-center gap-2"><NotebookText /> Upcoming Feature Details</Label>
+                             <div className="space-y-2">
+                                <Label htmlFor="maintenanceText" className="flex items-center gap-2"><NotebookText /> Maintenance Details</Label>
                                 <Textarea 
-                                    id="updateText"
-                                    value={updateText}
-                                    onChange={(e) => setUpdateText(e.target.value)}
-                                    placeholder="Describe what's coming in the next update..."
+                                    id="maintenanceText"
+                                    value={maintenanceText}
+                                    onChange={(e) => setMaintenanceText(e.target.value)}
+                                    placeholder="Describe what's happening during maintenance..."
                                     rows={3}
                                 />
                             </div>
@@ -294,77 +293,48 @@ export function DevPanel() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                             <Button onClick={handleSaveDetails} className="w-full">Save Details</Button>
+                             <Button onClick={handleSetMaintenanceInfo} className="w-full">Save Maintenance Info</Button>
                         </CardContent>
                     </Card>
                 </TabsContent>
                 <TabsContent value="updates" className="mt-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><ServerCog /> Updates</CardTitle>
+                            <CardTitle className="flex items-center gap-2"><ServerCog /> Updates Page</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                <div>
-                                    <Label htmlFor="maintenance-mode-updates">Enable Maintenance Mode</Label>
-                                    <p className='text-xs text-muted-foreground'>Redirects all users to maintenance site.</p>
-                                </div>
-                                <Switch
-                                    id="maintenance-mode-updates"
-                                    checked={isMaintenanceMode}
-                                    onCheckedChange={handleMaintenanceModeToggle}
-                                />
-                            </div>
                             <div>
                                 <Label>Set Countdown Duration</Label>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <Label htmlFor="days-updates" className="text-xs">Days</Label>
-                                        <Input id="days-updates" type="number" value={duration.days} onChange={(e) => handleDurationChange('days', e.target.value)} placeholder="0" />
+                                        <Label htmlFor="days-u" className="text-xs">Days</Label>
+                                        <Input id="days-u" type="number" value={updateDuration.days} onChange={(e) => handleUpdateDurationChange('days', e.target.value)} placeholder="0" />
                                     </div>
                                     <div>
-                                        <Label htmlFor="hours-updates" className="text-xs">Hours</Label>
-                                        <Input id="hours-updates" type="number" value={duration.hours} onChange={(e) => handleDurationChange('hours', e.target.value)} placeholder="0" />
+                                        <Label htmlFor="hours-u" className="text-xs">Hours</Label>
+                                        <Input id="hours-u" type="number" value={updateDuration.hours} onChange={(e) => handleUpdateDurationChange('hours', e.target.value)} placeholder="0" />
                                     </div>
                                     <div>
-                                        <Label htmlFor="minutes-updates" className="text-xs">Minutes</Label>
-                                        <Input id="minutes-updates" type="number" value={duration.minutes} onChange={(e) => handleDurationChange('minutes', e.target.value)} placeholder="0" />
+                                        <Label htmlFor="minutes-u" className="text-xs">Minutes</Label>
+                                        <Input id="minutes-u" type="number" value={updateDuration.minutes} onChange={(e) => handleUpdateDurationChange('minutes', e.target.value)} placeholder="0" />
                                     </div>
                                     <div>
-                                        <Label htmlFor="seconds-updates" className="text-xs">Seconds</Label>
-                                        <Input id="seconds-updates" type="number" value={duration.seconds} onChange={(e) => handleDurationChange('seconds', e.target.value)} placeholder="0" />
+                                        <Label htmlFor="seconds-u" className="text-xs">Seconds</Label>
+                                        <Input id="seconds-u" type="number" value={updateDuration.seconds} onChange={(e) => handleUpdateDurationChange('seconds', e.target.value)} placeholder="0" />
                                     </div>
-                                </div>
-                                <div className="flex gap-2 mt-2">
-                                    <Button onClick={handleSetTimer} className="w-full">Set Timer</Button>
-                                    <Button onClick={handleClearTimer} variant="destructive" className="w-full">Clear Timer</Button>
                                 </div>
                             </div>
-                             <div className="pt-4 space-y-2">
-                                <Label htmlFor="updateText-updates" className="flex items-center gap-2"><NotebookText /> Upcoming Feature Details</Label>
+                             <div className="space-y-2">
+                                <Label htmlFor="updateText" className="flex items-center gap-2"><NotebookText /> Upcoming Feature Details</Label>
                                 <Textarea 
-                                    id="updateText-updates"
+                                    id="updateText"
                                     value={updateText}
                                     onChange={(e) => setUpdateText(e.target.value)}
                                     placeholder="Describe what's coming in the next update..."
                                     rows={3}
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="maintenanceType-updates" className="flex items-center gap-2"><Wrench /> Maintenance Type</Label>
-                                <Select value={maintenanceType} onValueChange={setMaintenanceType}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Security">Security</SelectItem>
-                                        <SelectItem value="Feature Update">Feature Update</SelectItem>
-                                        <SelectItem value="Bug Fixes">Bug Fixes</SelectItem>
-                                        <SelectItem value="Performance">Performance</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                             <Button onClick={handleSaveDetails} className="w-full">Save Details</Button>
+                             <Button onClick={handleSetUpdateInfo} className="w-full">Save Update Info</Button>
                         </CardContent>
                     </Card>
                 </TabsContent>
