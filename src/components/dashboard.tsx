@@ -283,8 +283,6 @@ export function Dashboard() {
       { label: t('dashboard.tools.converter'), icon: Sigma, href: "/converter", color: "text-blue-400" },
       { label: t('dashboard.tools.calculator'), icon: Calculator, href: "/calculator", color: "text-orange-400" },
       { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
-      { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
-      { label: 'Analytics', icon: BarChart3, href: '/analytics', color: 'text-purple-400' },
       { label: 'News', icon: Newspaper, href: '/news', color: 'text-green-400' },
       { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
     ];
@@ -296,7 +294,7 @@ export function Dashboard() {
         { label: t('dashboard.tools.stopwatch'), icon: Hourglass, href: '/time?tab=stopwatch', color: 'text-indigo-500' },
     ];
 
-    const toolsToShow = showMoreTools ? [...quickTools.slice(0, 5), ...moreTools, ...quickTools.slice(5)] : quickTools.slice(0, 6);
+    const toolsToShow = showMoreTools ? [...quickTools.slice(0, 3), ...moreTools, ...quickTools.slice(3)] : quickTools;
 
 
     const recommendations = [
