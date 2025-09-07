@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Plus, Trash2, Edit, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,8 +20,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from 'next/navigation';
-import { setHowToUseFeaturesInRtdb, listenToHowToUseFeaturesFromRtdb, HowToUseFeature, defaultFeatures } from '@/services/firestore';
+import { setHowToUseFeaturesInRtdb, listenToHowToUseFeaturesFromRtdb, HowToUseFeature, defaultFeatures, HowToUseCategory } from '@/services/firestore';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 
+
+const categoryNames: Record<HowToUseCategory, string> = {
+    gettingStarted: 'Getting Started',
+    unitConverter: 'Unit Converter',
+    calculator: 'Calculator',
+    notepad: 'Notepad',
+    customization: 'Customization & Settings',
+};
 
 export function HowToUseEditor() {
     const [features, setFeatures] = useState<HowToUseFeature[] | null>(null);
@@ -31,6 +42,7 @@ export function HowToUseEditor() {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [icon, setIcon] = useState('Zap'); // Default icon
+    const [category, setCategory] = useState<HowToUseCategory>('gettingStarted');
     const { toast } = useToast();
     const router = useRouter();
     
@@ -59,25 +71,27 @@ export function HowToUseEditor() {
             setTitle(feature.title);
             setDescription(feature.description);
             setIcon(feature.icon);
+            setCategory(feature.category);
         } else {
             setTitle('');
             setDescription('');
             setIcon('Zap');
+            setCategory('gettingStarted');
         }
         setIsDialogOpen(true);
     };
     
     const handleSaveItem = async () => {
-        if (!title || !description || !icon || !features) {
+        if (!title || !description || !icon || !category || !features) {
             toast({ title: "Incomplete Information", description: "Please fill out all fields.", variant: "destructive" });
             return;
         }
 
         let updatedFeatures;
         if (editingFeature) {
-            updatedFeatures = features.map(f => f.id === editingFeature.id ? { ...f, title, description, icon } : f);
+            updatedFeatures = features.map(f => f.id === editingFeature.id ? { ...f, title, description, icon, category } : f);
         } else {
-            const newFeature: HowToUseFeature = { id: uuidv4(), title, description, icon };
+            const newFeature: HowToUseFeature = { id: uuidv4(), title, description, icon, category };
             updatedFeatures = [...features, newFeature];
         }
         
@@ -99,6 +113,14 @@ export function HowToUseEditor() {
             toast({ title: "Feature Deleted", description: "The feature has been removed." });
         }
     };
+    
+    const groupedFeatures = useMemo(() => {
+        if (!features) return {};
+        return features.reduce((acc, feature) => {
+            (acc[feature.category] = acc[feature.category] || []).push(feature);
+            return acc;
+        }, {} as Record<HowToUseCategory, HowToUseFeature[]>);
+    }, [features]);
 
     if (!isClient || features === null) {
         return null;
@@ -124,22 +146,33 @@ export function HowToUseEditor() {
             </header>
 
             <div className="flex-grow space-y-2">
-                {features.map((feature) => (
-                    <div key={feature.id} className="bg-card p-4 rounded-lg flex justify-between items-center">
-                        <div className="flex-1 overflow-hidden">
-                            <p className="font-bold truncate">{feature.title}</p>
-                            <p className="text-sm text-muted-foreground line-clamp-1">{feature.description}</p>
-                        </div>
-                        <div className="flex items-center gap-2 ml-4">
-                            <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(feature)}>
-                                <Edit className="text-muted-foreground" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete(feature.id)}>
-                                <Trash2 className="text-destructive" />
-                            </Button>
-                        </div>
-                    </div>
-                ))}
+                 <Accordion type="multiple" className="w-full" defaultValue={Object.keys(categoryNames)}>
+                    {Object.entries(groupedFeatures).map(([cat, featuresInCategory]) => (
+                        <AccordionItem value={cat} key={cat}>
+                             <AccordionTrigger className="font-semibold text-lg">{categoryNames[cat as HowToUseCategory]}</AccordionTrigger>
+                             <AccordionContent>
+                                <div className="space-y-2">
+                                    {featuresInCategory.map((feature) => (
+                                         <div key={feature.id} className="bg-card p-4 rounded-lg flex justify-between items-center">
+                                            <div className="flex-1 overflow-hidden">
+                                                <p className="font-bold truncate">{feature.title}</p>
+                                                <p className="text-sm text-muted-foreground line-clamp-1">{feature.description}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2 ml-4">
+                                                <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(feature)}>
+                                                    <Edit className="text-muted-foreground" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handleDelete(feature.id)}>
+                                                    <Trash2 className="text-destructive" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                 </Accordion>
                 {features.length === 0 && (
                     <div className="text-center text-muted-foreground mt-8 flex flex-col items-center gap-4 bg-card p-6 rounded-lg">
                         <p>No features found.</p>
@@ -168,6 +201,19 @@ export function HowToUseEditor() {
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="icon" className="text-right">Icon</Label>
                             <Input id="icon" value={icon} onChange={(e) => setIcon(e.target.value)} className="col-span-3" placeholder="Lucide icon name, e.g., Zap"/>
+                        </div>
+                         <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="category" className="text-right">Category</Label>
+                            <Select value={category} onValueChange={(value) => setCategory(value as HowToUseCategory)}>
+                                <SelectTrigger className="col-span-3">
+                                    <SelectValue placeholder="Select a category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Object.entries(categoryNames).map(([key, name]) => (
+                                        <SelectItem key={key} value={key}>{name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                     <DialogFooter>

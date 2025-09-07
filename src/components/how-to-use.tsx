@@ -1,17 +1,16 @@
 
+
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LogIn, Sigma, Calculator, NotebookText, Star, Settings, Palette, Beaker, Zap, Search, Mic } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import { FAQ, defaultFaqs } from "./help";
 import { useLanguage } from "@/context/language-context";
-import { listenToFaqsFromRtdb, listenToHowToUseFeaturesFromRtdb, HowToUseFeature, defaultFeatures } from "@/services/firestore";
-
+import { listenToFaqsFromRtdb, listenToHowToUseFeaturesFromRtdb, HowToUseFeature, HowToUseCategory, defaultFeatures } from "@/services/firestore";
 
 const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
     <div className="bg-card p-6 rounded-xl border border-border/80 shadow-sm">
@@ -26,6 +25,15 @@ const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, titl
         </div>
     </div>
 );
+
+const sectionDetails: Record<HowToUseCategory, { title: string }> = {
+    gettingStarted: { title: "Getting Started" },
+    unitConverter: { title: "Unit Converter" },
+    calculator: { title: "Calculator" },
+    notepad: { title: "Notepad" },
+    customization: { title: "Customization & Settings" },
+};
+
 
 export function HowToUse() {
   const router = useRouter();
@@ -47,29 +55,12 @@ export function HowToUse() {
     };
   }, []);
   
-  const sections: { [key: string]: HowToUseFeature[] } = {
-    gettingStarted: [],
-    unitConverter: [],
-    calculator: [],
-    notepad: [],
-    customization: [],
-  };
-
-  features.forEach(feature => {
-      // This is a simple grouping logic, you might want a more robust way to categorize features
-      if (['Login', 'Dashboard'].some(keyword => feature.title.includes(keyword))) {
-          sections.gettingStarted.push(feature);
-      } else if (['Search', 'Manual Conversion', 'Favorites'].some(keyword => feature.title.includes(keyword))) {
-          sections.unitConverter.push(feature);
-      } else if (['Calculator'].some(keyword => feature.title.includes(keyword))) {
-          sections.calculator.push(feature);
-      } else if (['Notepad', 'Editing'].some(keyword => feature.title.includes(keyword))) {
-          sections.notepad.push(feature);
-      } else {
-          sections.customization.push(feature);
-      }
-  });
-
+  const groupedFeatures = useMemo(() => {
+    return features.reduce((acc, feature) => {
+        (acc[feature.category] = acc[feature.category] || []).push(feature);
+        return acc;
+    }, {} as Record<HowToUseCategory, HowToUseFeature[]>);
+  }, [features]);
 
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col gap-8 p-4 sm:p-6 pb-12">
@@ -80,80 +71,30 @@ export function HowToUse() {
             <h1 className="text-2xl font-bold text-foreground">How to Use Sutradhaar</h1>
         </header>
         
-        <section>
-            <h2 className="text-xl font-bold mb-4">Getting Started</h2>
-            <div className="space-y-4">
-                <FeatureCard 
-                    icon={<LogIn />}
-                    title="Login, Signup, or Skip"
-                    description="Create an account to save your data and unlock premium features, or use the app as a guest by skipping the login."
-                />
-                <FeatureCard 
-                    icon={<Zap />}
-                    title="The Dashboard"
-                    description="Your central hub. Access all major tools like the Converter, Calculator, and Notes with a single tap. View your usage stats at a glance."
-                />
-            </div>
-        </section>
+        {Object.entries(groupedFeatures).map(([category, featuresInSection]) => {
+            const details = sectionDetails[category as HowToUseCategory];
+            // @ts-ignore
+            if (!details || featuresInSection.length === 0) return null;
 
-        <section>
-            <h2 className="text-xl font-bold mb-4">Unit Converter</h2>
-            <div className="space-y-4">
-                <FeatureCard 
-                    icon={<Search />}
-                    title="Smart Search"
-                    description="The fastest way to convert. Simply type your query like '10kg to lbs' or '5 miles in km' into the search bar on the dashboard or converter page."
-                />
-                 <FeatureCard 
-                    icon={<Sigma />}
-                    title="Manual Conversion"
-                    description="For more control, manually select a category (e.g., Length, Weight), choose your 'From' and 'To' units, and enter the value. The result appears instantly."
-                />
-                <FeatureCard 
-                    icon={<Star />}
-                    title="Favorites & History"
-                    description="Never lose a conversion. Your calculations are automatically saved to History. Tap the star icon to save any conversion as a favorite for quick access later."
-                />
-            </div>
-        </section>
-        
-        <section>
-            <h2 className="text-xl font-bold mb-4">Calculator</h2>
-             <div className="space-y-4">
-                <FeatureCard 
-                    icon={<Calculator />}
-                    title="Basic & Scientific Modes"
-                    description="Perform simple arithmetic in Basic mode. Unlock the Scientific calculator by becoming a Premium Member to access functions like sine, cosine, and logarithms."
-                />
-            </div>
-        </section>
-
-        <section>
-            <h2 className="text-xl font-bold mb-4">Notepad</h2>
-             <div className="space-y-4">
-                <FeatureCard 
-                    icon={<NotebookText />}
-                    title="Rich Text Editing"
-                    description="Create detailed notes with titles, categories, and rich text formatting like bold, italics, lists, and different colors. You can even attach images."
-                />
-            </div>
-        </section>
-
-        <section>
-            <h2 className="text-xl font-bold mb-4">Settings & Customization</h2>
-             <div className="space-y-4">
-                <FeatureCard 
-                    icon={<Palette />}
-                    title="Theme Editor"
-                    description="Make the app truly yours. As a Premium Member, you can use the Theme Editor to change the app's colors to match your style."
-                />
-                <FeatureCard 
-                    icon={<Beaker />}
-                    title="Custom Units"
-                    description="A premium feature for power users. Add your own units to existing categories or create entirely new categories for specialized conversions."
-                />
-            </div>
-        </section>
+            return (
+                 <section key={category}>
+                    <h2 className="text-xl font-bold mb-4">{details.title}</h2>
+                    <div className="space-y-4">
+                        {featuresInSection.map(feature => {
+                             const Icon = (LucideIcons as any)[feature.icon] || LucideIcons.Zap;
+                             return (
+                                <FeatureCard 
+                                    key={feature.id}
+                                    icon={<Icon />}
+                                    title={feature.title}
+                                    description={feature.description}
+                                />
+                             )
+                        })}
+                    </div>
+                </section>
+            )
+        })}
 
          <section>
             <h2 className="text-xl font-bold mb-4">Frequently Asked Questions</h2>

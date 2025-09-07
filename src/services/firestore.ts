@@ -11,31 +11,79 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Note } from '@/components/notepad';
 
 
+export type HowToUseCategory = 'gettingStarted' | 'unitConverter' | 'calculator' | 'notepad' | 'customization';
+
 export interface HowToUseFeature {
     id: string;
     title: string;
     description: string;
     icon: string;
+    category: HowToUseCategory;
 }
 
 export const defaultFeatures: HowToUseFeature[] = [
+     {
+      id: uuidv4(),
+      title: 'Login, Signup, or Skip',
+      description: 'Create an account to save your data and unlock premium features, or use the app as a guest by skipping the login.',
+      icon: 'LogIn',
+      category: 'gettingStarted'
+    },
     {
       id: uuidv4(),
-      title: 'Converter',
-      description: 'Use the smart search or manual inputs to convert units across various categories.',
+      title: 'The Dashboard',
+      description: 'Your central hub. Access all major tools like the Converter, Calculator, and Notes with a single tap. View your usage stats at a glance.',
+      icon: 'Zap',
+      category: 'gettingStarted'
+    },
+    {
+      id: uuidv4(),
+      title: 'Smart Search',
+      description: "The fastest way to convert. Simply type your query like '10kg to lbs' or '5 miles in km' into the search bar on the dashboard or converter page.",
+      icon: 'Search',
+      category: 'unitConverter'
+    },
+     {
+      id: uuidv4(),
+      title: 'Manual Conversion',
+      description: "For more control, manually select a category (e.g., Length, Weight), choose your 'From' and 'To' units, and enter the value. The result appears instantly.",
       icon: 'Sigma',
+      category: 'unitConverter'
     },
     {
       id: uuidv4(),
-      title: 'Calculator',
-      description: 'Perform basic and scientific calculations with a clean and simple interface.',
+      title: 'Favorites & History',
+      description: "Never lose a conversion. Your calculations are automatically saved to History. Tap the star icon to save any conversion as a favorite for quick access later.",
+      icon: 'Star',
+      category: 'unitConverter'
+    },
+    {
+      id: uuidv4(),
+      title: 'Basic & Scientific Modes',
+      description: "Perform simple arithmetic in Basic mode. Unlock the Scientific calculator by becoming a Premium Member to access functions like sine, cosine, and logarithms.",
       icon: 'Calculator',
+      category: 'calculator'
     },
     {
       id: uuidv4(),
-      title: 'Notepad',
-      description: 'Jot down notes, format text, and even attach images. Your notes are saved to your account.',
+      title: 'Rich Text Editing',
+      description: "Create detailed notes with titles, categories, and rich text formatting like bold, italics, lists, and different colors. You can even attach images.",
       icon: 'NotebookText',
+      category: 'notepad'
+    },
+    {
+      id: uuidv4(),
+      title: 'Theme Editor',
+      description: "Make the app truly yours. As a Premium Member, you can use the Theme Editor to change the app's colors to match your style.",
+      icon: 'Palette',
+      category: 'customization'
+    },
+    {
+      id: uuidv4(),
+      title: 'Custom Units',
+      description: "A premium feature for power users. Add your own units to existing categories or create entirely new categories for specialized conversions.",
+      icon: 'Beaker',
+      category: 'customization'
     },
 ];
 
@@ -65,7 +113,7 @@ export function listenToHowToUseFeaturesFromRtdb(callback: (features: HowToUseFe
     const featuresRef = ref(rtdb, 'app-content/howToUseFeatures');
     return onValue(featuresRef, (snapshot) => {
         const data = snapshot.val();
-        if (data) {
+        if (data && Array.isArray(data) && data.length > 0) {
             callback(data);
         } else {
             callback(defaultFeatures);
