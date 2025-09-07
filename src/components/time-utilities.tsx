@@ -684,7 +684,7 @@ function AgeCalculator() {
                  <Button onClick={calculate} className="w-full">{t('timePage.dateCalc.calculate')}</Button>
                  {age && (
                     <div className="bg-secondary p-4 rounded-xl mt-4 w-full">
-                        <h3 className="font-semibold mb-3 text-center">{t('timePage.dateCalc.yourAge')}</h3>
+                        <h3 className="font-semibold mb-2 text-center">{t('timePage.dateCalc.yourAge')}</h3>
                         <div className="grid grid-cols-3 gap-4 text-center">
                             <StatCard value={age.years} label={t('timePage.dateCalc.years')} />
                             <StatCard value={age.months} label={t('timePage.dateCalc.months')} />

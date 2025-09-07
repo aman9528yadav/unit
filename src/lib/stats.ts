@@ -3,9 +3,10 @@
 "use client";
 
 import { format, eachDayOfInterval, subDays } from 'date-fns';
-import { updateUserData, getUserData, rtdb } from '@/services/firestore';
+import { updateUserData, getUserData } from '@/services/firestore';
 import { NOTES_STORAGE_KEY_BASE, type Note } from '@/components/notepad';
 import { ref, runTransaction } from 'firebase/database';
+import { rtdb } from '@/lib/firebase';
 
 const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
 
@@ -14,33 +15,15 @@ const incrementStat = async (field: 'totalConversions' | 'totalCalculations' | '
     if (!userEmail) return;
 
     const today = format(new Date(), 'yyyy-MM-dd');
-    const dailyField = `daily${field.charAt(10).toUpperCase()}${field.slice(11)}`;
-
     const sanitizedEmail = userEmail.replace(/[.#$[\]]/g, '_');
-    const userRef = ref(rtdb, `users/${sanitizedEmail}`);
+    
+    // Construct paths for total and daily stats
+    const totalStatRef = ref(rtdb, `users/${sanitizedEmail}/${field}`);
+    const dailyStatRef = ref(rtdb, `users/${sanitizedEmail}/dailyStats/${today}/${field}`);
 
-    // Use a transaction to safely increment both total and daily counts
-    await runTransaction(userRef, (currentUserData) => {
-        if (currentUserData) {
-            // Increment total count
-            currentUserData[field] = (currentUserData[field] || 0) + 1;
-            
-            // Increment daily count
-            if (!currentUserData[dailyField]) {
-                currentUserData[dailyField] = {};
-            }
-            currentUserData[dailyField][today] = (currentUserData[dailyField][today] || 0) + 1;
-        } else {
-            // If user data doesn't exist, create it
-            return {
-                [field]: 1,
-                [dailyField]: {
-                    [today]: 1
-                }
-            };
-        }
-        return currentUserData;
-    });
+    // Use transactions to safely increment both counts
+    await runTransaction(totalStatRef, (currentValue) => (currentValue || 0) + 1);
+    await runTransaction(dailyStatRef, (currentValue) => (currentValue || 0) + 1);
 };
 
 
@@ -81,15 +64,14 @@ export const processUserDataForStats = (userData: any, email: string | null): {
     }
     const today = format(new Date(), 'yyyy-MM-dd');
 
-    const dailyConversions = userData.dailyConversions || {};
-    const dailyCalculations = userData.dailyCalculations || {};
-    const dailyDateCalculations = userData.dailyDateCalculations || {};
+    const dailyStats = userData.dailyStats || {};
+    const todaysDailyStats = dailyStats[today] || {};
 
     const totalConversions = userData.totalConversions || 0;
     const totalCalculations = userData.totalCalculations || 0;
     const totalDateCalculations = userData.totalDateCalculations || 0;
 
-    const todaysOps = (dailyConversions[today] || 0) + (dailyCalculations[today] || 0) + (dailyDateCalculations[today] || 0);
+    const todaysOps = (todaysDailyStats.totalConversions || 0) + (todaysDailyStats.totalCalculations || 0) + (todaysDailyStats.totalDateCalculations || 0);
     const totalOps = totalConversions + totalCalculations + totalDateCalculations;
 
     // Get note stats from localStorage (remains local)
@@ -116,9 +98,10 @@ export const processUserDataForStats = (userData: any, email: string | null): {
          const daysInInterval = eachDayOfInterval(interval);
          daysInInterval.forEach(day => {
             const dateString = format(day, 'yyyy-MM-dd');
-            const conversions = dailyConversions[dateString] || 0;
-            const calculations = dailyCalculations[dateString] || 0;
-            const dateCalcs = dailyDateCalculations[dateString] || 0;
+            const dayStats = dailyStats[dateString] || {};
+            const conversions = dayStats.totalConversions || 0;
+            const calculations = dayStats.totalCalculations || 0;
+            const dateCalcs = dayStats.totalDateCalculations || 0;
             
             activity.push({ 
                 date: dateString, 
@@ -149,3 +132,4 @@ export const getStats = async (email: string | null) => {
     const userData = await getUserData(email);
     return processUserDataForStats(userData, email);
 };
+

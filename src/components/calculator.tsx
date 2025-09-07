@@ -107,9 +107,13 @@ export function Calculator() {
         setUserRole('Owner');
         return;
     }
-    const stats = await getStats(email);
-    if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD) {
-        setUserRole('Premium Member');
+    if (email) {
+        const stats = await getStats(email);
+        if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD) {
+            setUserRole('Premium Member');
+        } else {
+            setUserRole('Member');
+        }
     } else {
         setUserRole('Member');
     }

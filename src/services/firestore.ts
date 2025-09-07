@@ -9,8 +9,6 @@ import type { AppNotification } from '@/lib/notifications';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
-
-// --- HOW TO USE PAGE ---
 export interface HowToUseFeature {
     id: string;
     title: string;

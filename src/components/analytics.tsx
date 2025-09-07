@@ -156,7 +156,9 @@ export function Analytics() {
             setStats(processed);
             
             // Recalculate streak based on latest visit history
-            getStreakData(userEmail).then(setStreakData);
+            if (userEmail) {
+                getStreakData(userEmail).then(setStreakData);
+            }
         });
 
         loadLastActivities();
