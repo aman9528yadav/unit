@@ -372,9 +372,9 @@ export function Converter() {
   
   useEffect(() => {
     if (autoConvert) {
-      performConversion(inputValue, fromUnit, toUnit);
+      performConversion(debouncedInputValue, fromUnit, toUnit);
     }
-  }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion, inputValue]);
+  }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion]);
 
   React.useEffect(() => {
     if (!outputValue) {
