@@ -7,7 +7,7 @@ import { NOTES_STORAGE_KEY_BASE, type Note } from '@/components/notepad';
 
 const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
 
-const incrementStat = async (field: 'totalConversions' | 'totalCalculations', dailyField: 'dailyConversions' | 'dailyCalculations') => {
+const incrementStat = async (field: 'totalConversions' | 'totalCalculations' | 'totalDateCalculations', dailyField: 'dailyConversions' | 'dailyCalculations' | 'dailyDateCalculations') => {
     const userEmail = typeof window !== 'undefined' ? (localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null) : null;
     const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -36,6 +36,11 @@ export const incrementCalculationCount = () => {
     incrementStat('totalCalculations', 'dailyCalculations');
 };
 
+export const incrementDateCalculationCount = () => {
+    incrementStat('totalDateCalculations', 'dailyDateCalculations');
+};
+
+
 export interface DailyActivity {
     date: string;
     ops: number;
@@ -52,9 +57,10 @@ export const getStats = async (email: string | null): Promise<{
 
     const dailyConversions = userData.dailyConversions || {};
     const dailyCalculations = userData.dailyCalculations || {};
+    const dailyDateCalculations = userData.dailyDateCalculations || {};
 
-    const todaysOps = (dailyConversions[today] || 0) + (dailyCalculations[today] || 0);
-    const totalOps = (userData.totalConversions || 0) + (userData.totalCalculations || 0);
+    const todaysOps = (dailyConversions[today] || 0) + (dailyCalculations[today] || 0) + (dailyDateCalculations[today] || 0);
+    const totalOps = (userData.totalConversions || 0) + (userData.totalCalculations || 0) + (userData.totalDateCalculations || 0);
 
     const notesKey = getUserNotesKey(email);
     const notesData = typeof window !== 'undefined' ? localStorage.getItem(notesKey) : null;
@@ -67,7 +73,7 @@ export const getStats = async (email: string | null): Promise<{
         const date = new Date();
         date.setDate(date.getDate() - i);
         const dateString = format(date, 'yyyy-MM-dd');
-        const ops = (dailyConversions[dateString] || 0) + (dailyCalculations[dateString] || 0);
+        const ops = (dailyConversions[dateString] || 0) + (dailyCalculations[dateString] || 0) + (dailyDateCalculations[dateString] || 0);
         weeklyActivity.push({ date: dateString, ops });
     }
 

@@ -57,6 +57,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { format, intervalToDuration } from "date-fns";
 import { listenToNextUpdateInfo, NextUpdateInfo } from "@/services/firestore";
+import { getStreakData, recordVisit } from "@/lib/streak";
 
 
 const ToolButton = ({ icon: Icon, label, href, color }: any) => (
@@ -202,13 +203,16 @@ function AnimatedStat({ value }: { value: number }) {
   return <p ref={ref} className="font-semibold text-lg">0</p>;
 }
 
-const StatCard = ({ title, value, icon: Icon, color }: { title: string, value: number, icon: React.ElementType, color?: string }) => (
+const StatCard = ({ title, value, icon: Icon, color, unit }: { title: string, value: number, icon: React.ElementType, color?: string, unit?: string }) => (
     <Card className="flex flex-col p-4 bg-card border-border shadow-sm">
         <div className="flex items-center gap-2">
             <div className={cn("size-8 grid place-items-center rounded-lg", color)}>
                 <Icon className="size-5" />
             </div>
-            <AnimatedStat value={value} />
+             <div className="flex items-baseline gap-1">
+                <AnimatedStat value={value} />
+                {unit && <span className="text-xs text-muted-foreground">{unit}</span>}
+             </div>
         </div>
         <p className="text-sm text-muted-foreground mt-2">{title}</p>
     </Card>
@@ -301,21 +305,26 @@ export function Dashboard() {
       totalOps: 0,
       savedNotes: 0,
       weeklyActivity: [] as DailyActivity[],
+      currentStreak: 0,
   });
 
-  const loadStats = useCallback(async () => {
+  const loadStatsAndStreak = useCallback(async () => {
         const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
-        const fetchedStats = await getStats(userEmail);
-        setStats(fetchedStats);
+        await recordVisit(userEmail);
+        const [fetchedStats, streakData] = await Promise.all([
+            getStats(userEmail),
+            getStreakData(userEmail)
+        ]);
+        setStats({ ...fetchedStats, currentStreak: streakData.currentStreak });
     }, []);
 
     useEffect(() => {
         setIsClient(true);
-        loadStats();
+        loadStatsAndStreak();
 
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
-                loadStats();
+                loadStatsAndStreak();
             }
         };
         
@@ -342,7 +351,7 @@ export function Dashboard() {
             window.removeEventListener('visibilitychange', handleVisibilityChange);
             window.removeEventListener('storage', handleStorageChange);
         }
-    }, [loadStats]);
+    }, [loadStatsAndStreak]);
   
   const handleProfileClick = () => {
     if (profile) {
@@ -474,10 +483,11 @@ export function Dashboard() {
       <UpdateBanner />
 
       <section>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-             <StatCard title="Today's Ops" value={stats.todaysOps} icon={TrendingUp} color="text-green-500 bg-green-500/10" />
-             <StatCard title="All Time Ops" value={stats.totalOps} icon={BarChart3} color="text-blue-500 bg-blue-500/10" />
-             <StatCard title="Saved Notes" value={stats.savedNotes} icon={NotebookPen} color="text-yellow-500 bg-yellow-500/10" />
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+             <StatCard title={t('dashboard.todayOps')} value={stats.todaysOps} icon={TrendingUp} color="text-green-500 bg-green-500/10" />
+             <StatCard title={t('dashboard.currentStreak')} value={stats.currentStreak} icon={Flame} color="text-orange-500 bg-orange-500/10" unit={t('dashboard.days')} />
+             <StatCard title={t('dashboard.savedNotes')} value={stats.savedNotes} icon={NotebookPen} color="text-yellow-500 bg-yellow-500/10" />
+             <StatCard title={t('dashboard.allTimeOps')} value={stats.totalOps} icon={BarChart3} color="text-blue-500 bg-blue-500/10" />
           </div>
       </section>
 

@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -27,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useSearchParams } from "next/navigation";
+import { incrementDateCalculationCount } from "@/lib/stats";
 
 // --- Web Worker Code ---
 // This code will be run in a separate thread to ensure timers work in the background.
@@ -476,16 +476,17 @@ function DateDifference() {
     const [startDate, setStartDate] = React.useState<Date | undefined>(new Date());
     const [endDate, setEndDate] = React.useState<Date | undefined>(new Date());
     const [duration, setDuration] = React.useState<Duration>({});
-
-    React.useEffect(() => {
+    
+    const calculate = () => {
         if (startDate && endDate) {
             if (endDate < startDate) {
                  setDuration({});
                 return;
             }
             setDuration(intervalToDuration({ start: startDate, end: endDate }));
+            incrementDateCalculationCount();
         }
-    }, [startDate, endDate]);
+    }
 
     return (
         <Card className="w-full">
@@ -524,8 +525,10 @@ function DateDifference() {
                         </Popover>
                     </div>
                 </div>
+                
+                <Button onClick={calculate} className="mt-2">{t('timePage.dateCalc.calculate')}</Button>
 
-                <div className="bg-secondary p-4 rounded-xl mt-4">
+                <div className="bg-secondary p-4 rounded-xl mt-2">
                     <h3 className="font-semibold mb-3 text-center">{t('timePage.dateCalc.result')}</h3>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                         <StatCard value={duration.years} label={t('timePage.dateCalc.years')} />
@@ -556,6 +559,7 @@ function AddSubtractTime() {
             { days: addDays, weeks: addWeeks, months: addMonths, years: addYears }[unit] :
             { days: subDays, weeks: subWeeks, months: subMonths, years: subYears }[unit];
         setResultDate(fn(date, amount));
+        incrementDateCalculationCount();
     }
 
     return (
@@ -628,11 +632,12 @@ function AgeCalculator() {
     const [birthDate, setBirthDate] = React.useState<Date | undefined>();
     const [age, setAge] = React.useState<Duration | null>(null);
 
-    React.useEffect(() => {
-        if (birthDate) {
+    const calculate = () => {
+         if (birthDate) {
             setAge(intervalToDuration({ start: birthDate, end: new Date() }));
+            incrementDateCalculationCount();
         }
-    }, [birthDate]);
+    }
 
     return (
         <Card>
@@ -649,6 +654,7 @@ function AgeCalculator() {
                         <Calendar mode="single" selected={birthDate} onSelect={setBirthDate} captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear()} initialFocus />
                     </PopoverContent>
                 </Popover>
+                 <Button onClick={calculate} className="w-full">{t('timePage.dateCalc.calculate')}</Button>
                  {age && (
                     <div className="bg-secondary p-4 rounded-xl mt-4 w-full">
                         <h3 className="font-semibold mb-3 text-center">{t('timePage.dateCalc.yourAge')}</h3>
@@ -677,6 +683,7 @@ function WorkingDaysCalculator() {
         const holidayDates = holidays.split('\n').map(h => h.trim()).filter(Boolean).map(h => parseISO(h));
         const holidayCount = holidayDates.filter(h => h >= startDate && h <= endDate && h.getDay() !== 0 && h.getDay() !== 6).length;
         setWorkingDays(businessDays - holidayCount);
+        incrementDateCalculationCount();
     }
     
     return (

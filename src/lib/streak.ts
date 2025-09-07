@@ -88,4 +88,3 @@ export async function getStreakData(email: string | null): Promise<StreakData> {
 
     return data;
 }
-
