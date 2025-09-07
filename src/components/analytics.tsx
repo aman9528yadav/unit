@@ -144,7 +144,7 @@ export function Analytics() {
     }));
 
     return (
-        <div className="w-full max-w-4xl mx-auto flex flex-col gap-6">
+        <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-extrabold tracking-tight">📊 Analytics Dashboard</h1>
@@ -202,7 +202,7 @@ export function Analytics() {
               <CardContent><p className="text-4xl font-extrabold text-yellow-500 flex items-center gap-2"><CheckCircle /> {stats.bestStreak} days</p></CardContent>
             </Card>
 
-            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
+            <Card className="rounded-2xl shadow-md hover:shadow-lg transition md:col-span-3">
               <CardHeader><CardTitle>Last Seen</CardTitle></CardHeader>
               <CardContent><p className="text-4xl font-extrabold text-gray-500 flex items-center gap-2"><XCircle /> {stats.daysNotOpened} days ago</p></CardContent>
             </Card>
