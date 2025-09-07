@@ -382,7 +382,7 @@ export function Dashboard() {
       { label: t('dashboard.tools.calculator'), icon: Calculator, href: "/calculator", color: "text-orange-400" },
       { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
       { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
-      { label: 'News', icon: Newspaper, href: 'https://sutradhaar1.42web.io/', color: 'text-green-400', newTab: true },
+      { label: 'News', icon: Newspaper, href: '/news', color: 'text-green-400' },
       { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
     ];
     

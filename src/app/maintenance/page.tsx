@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format, intervalToDuration, differenceInDays } from "date-fns";
 import { listenToUpdateInfo, UpdateInfo } from '@/services/firestore';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 const CountdownBox = ({ value, label }: { value: number; label: string }) => (
     <div className="bg-primary/10 p-4 rounded-lg text-primary w-24">
@@ -45,6 +47,9 @@ export default function MaintenancePage() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [timeLeft, setTimeLeft] = useState<Duration & { totalDays?: number } | null>(null);
   const [timerFinished, setTimerFinished] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     const unsubscribe = listenToUpdateInfo((info: UpdateInfo) => {
@@ -88,6 +93,26 @@ export default function MaintenancePage() {
 
     return () => clearInterval(timer);
   }, [targetDate]);
+
+  const handleIconClick = () => {
+    const newCount = clickCount + 1;
+    setClickCount(newCount);
+    
+    if (newCount >= 5) {
+      const storedProfile = localStorage.getItem("userProfile");
+      const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
+      if (userEmail === "amanyadavyadav9458@gmail.com") {
+        router.push('/dev');
+      } else {
+        toast({
+          title: "Access Denied",
+          description: "You are not authorized to access developer mode.",
+          variant: "destructive"
+        })
+      }
+      setClickCount(0); // Reset count after check
+    }
+  };
   
   const maintenanceType = updateInfo?.maintenanceType || "Performance";
   const typeDetails = maintenanceTypeMap[maintenanceType as keyof typeof maintenanceTypeMap] || maintenanceTypeMap['Performance'];
@@ -101,7 +126,7 @@ export default function MaintenancePage() {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="flex flex-col items-center gap-8 w-full max-w-lg"
       >
-        <div className="p-4 bg-primary/10 rounded-full">
+        <div className="p-4 bg-primary/10 rounded-full cursor-pointer" onClick={handleIconClick}>
             <Wrench className="w-10 h-10 text-primary" />
         </div>
         
