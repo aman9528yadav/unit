@@ -26,6 +26,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 import { getStats } from "@/lib/stats";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { cn } from "@/lib/utils";
+import { Label } from "./ui/label";
 
 
 export type CalculatorMode = 'basic' | 'scientific';
@@ -87,24 +88,25 @@ const SettingRow = ({ label, description, control, isLink = false, href, childre
 
 const ThemePreview = ({ theme }: { theme: string }) => {
     return (
-        <div className={cn("w-full h-auto p-4 bg-background text-foreground font-sans rounded-lg border", theme)}>
-            <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center gap-2">
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary"><Sigma /></div>
-                    <h1 className="text-lg font-bold">Converter</h1>
+        <div className={cn("w-full h-full bg-background text-foreground font-sans", theme)}>
+            <div className="p-4 flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1 bg-primary/10 rounded-lg text-primary"><Sigma size={16} /></div>
+                        <h1 className="text-md font-bold">Converter</h1>
+                    </div>
+                    <Avatar className="h-6 w-6">
+                        <AvatarFallback><User size={12}/></AvatarFallback>
+                    </Avatar>
                 </div>
-                <Avatar className="h-8 w-8">
-                    <AvatarFallback><User /></AvatarFallback>
-                </Avatar>
-            </div>
-            <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                    <div className="h-8 w-full rounded-md border border-input bg-background flex items-center px-2 text-sm">10</div>
-                    <div className="h-8 w-full rounded-md border border-input bg-background flex items-center px-2 text-sm">Kilometers</div>
+                <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2">
+                        <div className="h-8 w-full rounded-md border border-input bg-background flex items-center px-2 text-sm">10</div>
+                    </div>
+                    <div className="text-center text-xl font-bold text-primary">6.2137</div>
+                    <Button size="sm">Convert</Button>
+                    <Button size="sm" variant="secondary">History</Button>
                 </div>
-                <div className="text-center text-2xl font-bold text-primary">6.2137</div>
-                <Button>Convert</Button>
-                <Button variant="secondary">History</Button>
             </div>
         </div>
     );
@@ -250,8 +252,13 @@ export function Settings() {
             </Section>
             <TooltipProvider>
                 <Section title={t('settings.appearance.title')}>
-                    <div className="p-4 bg-muted/50 rounded-lg mb-4">
-                        <ThemePreview theme={selectedTheme}/>
+                     <div className="p-4 bg-muted/50 rounded-lg mb-4">
+                        <Label className="text-sm font-medium mb-2 block text-center">{t('themeEditor.preview')}</Label>
+                        <div className="mx-auto w-[200px] h-[400px] bg-gray-800 rounded-[20px] p-2 border-4 border-gray-900 shadow-xl overflow-hidden">
+                            <div className="w-full h-full rounded-[12px] overflow-hidden">
+                                <ThemePreview theme={selectedTheme}/>
+                            </div>
+                        </div>
                     </div>
                      <SettingRow
                         label={t('settings.appearance.themeMode.label')}
