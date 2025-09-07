@@ -20,7 +20,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Line, LineChart } from "recharts";
 import { format, startOfWeek, startOfMonth } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { useLanguage } from "./language-context";
+import { useLanguage } from "@/context/language-context";
 
 type ChartType = "bar" | "line";
 type TimeRange = "weekly" | "monthly";
