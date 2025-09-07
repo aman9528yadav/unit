@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Trash2, Clock, Star, RotateCcw, Home, Search, X, Filter, Power, ChevronDown } from "lucide-react";
+import { ArrowLeft, Trash2, Clock, Star, RotateCcw, Home, Search, Filter, Power, ChevronDown, ShieldX } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -20,17 +20,14 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "./ui/input";
 import { conversionCategories } from "@/lib/conversions";
-import { format, formatDistanceToNow, parseISO, isToday, isYesterday, isThisWeek } from 'date-fns';
+import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { enUS, hi } from 'date-fns/locale';
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLanguage } from "@/context/language-context";
@@ -49,7 +46,6 @@ interface HistoryItemData {
 export function History() {
   const [history, setHistory] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [isClient, setIsClient] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabFromQuery = searchParams.get('tab') as 'history' | 'favorites' | null;
@@ -60,51 +56,48 @@ export function History() {
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const { language, t } = useLanguage();
 
-
-  const parseHistoryString = (item: string): HistoryItemData => {
+  const parseHistoryString = useCallback((item: string): HistoryItemData => {
     const parts = item.split('|');
-    const conversion = parts[0] || '';
-    const categoryName = parts[1] || '';
-    const timestamp = parts[2] || new Date().toISOString();
-  
-    const convParts = conversion.split(' ');
-    const value = convParts[0];
-    const fromSymbol = convParts[1];
-    const result = convParts[3];
-    const toSymbol = convParts[4];
-    
     return {
-      conversion,
-      categoryName,
-      timestamp,
-      value,
-      from: fromSymbol,
-      result,
-      to: toSymbol,
+      conversion: parts[0] || '',
+      categoryName: parts[1] || '',
+      timestamp: parts[2] || new Date().toISOString(),
+      value: parts[0]?.split(' ')[0] || '',
+      from: parts[0]?.split(' ')[1] || '',
+      result: parts[0]?.split(' ')[3] || '',
+      to: parts[0]?.split(' ')[4] || '',
     };
-  };
+  }, []);
 
-  useEffect(() => {
-    setIsClient(true);
-    
-    const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'conversionHistory') {
-            setHistory(JSON.parse(e.newValue || '[]'));
-        }
-         if (e.key === 'favoriteConversions') {
-            setFavorites(JSON.parse(e.newValue || '[]'));
-        }
-    };
-    
+  const loadData = useCallback(() => {
     const storedHistory = localStorage.getItem("conversionHistory");
     const storedFavorites = localStorage.getItem("favoriteConversions");
     if (storedHistory) setHistory(JSON.parse(storedHistory));
     if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
+  }, []);
+
+  useEffect(() => {
+    loadData();
+    
+    const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'conversionHistory' || e.key === 'favoriteConversions') {
+            loadData();
+        }
+    };
+    
+    const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+            loadData();
+        }
+    };
 
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-
-  }, []);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [loadData]);
 
   const handleRestore = (item: string) => {
     localStorage.setItem("restoreConversion", item);
@@ -115,31 +108,25 @@ export function History() {
     if (activeTab === 'history') {
         setHistory([]);
         localStorage.removeItem("conversionHistory");
+    } else {
+        setFavorites([]);
+        localStorage.removeItem("favoriteConversions");
     }
-    setFavorites([]);
-    localStorage.removeItem("favoriteConversions");
   };
 
   const handleDeleteItem = (itemString: string) => {
-    // Remove from history
     const newHistory = history.filter(h => h !== itemString);
     setHistory(newHistory);
     localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
 
-    // Also remove from favorites if it's there
-    const newFavorites = favorites.filter(fav => !fav.startsWith(itemString.split('|')[0]));
+    const newFavorites = favorites.filter(fav => fav !== itemString);
     setFavorites(newFavorites);
     localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
     
     setItemToDelete(null);
   };
   
-  const itemsToDisplay = activeTab === 'history' 
-    ? history 
-    : history.filter(item => {
-        const conversionPart = item.split('|')[0];
-        return favorites.some(fav => fav.startsWith(conversionPart));
-      });
+  const itemsToDisplay = activeTab === 'history' ? history : favorites;
     
   const filteredItems = itemsToDisplay.map(parseHistoryString).filter(parsed => {
     const category = conversionCategories.find(c => c.name === parsed.categoryName);
@@ -160,7 +147,7 @@ export function History() {
     return searchMatch && categoryMatch;
   });
 
-  const availableCategories = ['All', ...new Set(history.map(item => parseHistoryString(item).categoryName).filter(Boolean))];
+  const availableCategories = ['All', ...new Set(itemsToDisplay.map(item => parseHistoryString(item).categoryName).filter(Boolean))];
 
   return (
       <div className="w-full max-w-2xl mx-auto flex flex-col gap-4">
@@ -225,12 +212,13 @@ export function History() {
                 {filteredItems.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {filteredItems.map((item, index) => (
-                         <HistoryItem key={`${item.timestamp}-${index}`} item={item} onRestore={handleRestore} onDelete={() => setItemToDelete(`${item.conversion}|${item.categoryName}|${item.timestamp}`)} t={t} language={language} activeTab={activeTab}/>
+                         <HistoryItem key={`${item.timestamp}-${index}`} item={item} onRestore={handleRestore} onDelete={() => setItemToDelete(`${item.conversion}|${item.categoryName}|${item.timestamp}`)} t={t} language={language} />
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-16 text-muted-foreground">
-                    <p>{t('history.emptyState', {tab: t(`history.tabs.${activeTab}`)})}</p>
+                  <div className="text-center py-16 text-muted-foreground flex flex-col items-center gap-4">
+                    <ShieldX size={48} />
+                    <p className="font-semibold">{t('history.emptyState', {tab: t(`history.tabs.${activeTab}`)})}</p>
                   </div>
                 )}
             </div>
@@ -258,7 +246,7 @@ export function History() {
 }
 
 
-function HistoryItem({ item, onRestore, onDelete, t, language, activeTab }: { item: HistoryItemData; onRestore: (item: string) => void; onDelete: () => void; t: (key: string, params?: any) => string; language: string; activeTab: string; }) {
+function HistoryItem({ item, onRestore, onDelete, t, language }: { item: HistoryItemData; onRestore: (item: string) => void; onDelete: () => void; t: (key: string, params?: any) => string; language: string; }) {
     const fullHistoryString = `${item.conversion}|${item.categoryName}|${item.timestamp}`;
     const category = conversionCategories.find(c => c.name === item.categoryName);
     const Icon = category?.icon || Power;
@@ -280,7 +268,6 @@ function HistoryItem({ item, onRestore, onDelete, t, language, activeTab }: { it
     return (
         <div className="bg-secondary p-3 rounded-lg group relative">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                {activeTab === 'favorites' && <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />}
                 <Icon size={14}/> 
                 <span>{t(`categories.${item.categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: item.categoryName })}</span>
                 <span>•</span>
@@ -298,6 +285,3 @@ function HistoryItem({ item, onRestore, onDelete, t, language, activeTab }: { it
         </div>
     )
 }
-    
-
-    

@@ -1,13 +1,11 @@
 
-
 "use client";
 
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from 'next/link';
 import { motion } from "framer-motion";
 import {
   Calculator,
-  Clock3,
   History,
   NotebookPen,
   Wand2,
@@ -18,9 +16,6 @@ import {
   BarChart3,
   TrendingUp,
   CheckCircle2,
-  Moon,
-  Sun,
-  User,
   UserCircle2,
   Settings,
   Languages,
@@ -54,12 +49,9 @@ import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { useTheme } from "@/context/theme-context";
-import { getTodaysCalculations, getWeeklyCalculations, getAllTimeCalculations, getAllTimeNotes } from "@/lib/utils";
+import { getTodaysCalculations, getWeeklyCalculations, getAllTimeCalculations } from "@/lib/utils";
 import { getStreakData, recordVisit, type StreakData } from "@/lib/streak";
 import { GlobalSearch } from "./global-search";
 import { Notifications } from "./notifications";
@@ -81,7 +73,7 @@ interface Note {
 const NOTES_STORAGE_KEY_BASE = 'userNotesV2';
 const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : 'guest_userNotesV2';
 
-const getSavedNotesCount = (email: string | null) => {
+const getSavedNotesCount = (email: string | null): number => {
     if (typeof window === 'undefined') return 0;
     const storageKey = getUserNotesKey(email);
     const savedNotes = localStorage.getItem(storageKey);
@@ -232,16 +224,7 @@ const LanguageToggle = () => {
     );
 };
 
-const ThemeToggle = ({ isDark, onChange }: { isDark: boolean; onChange: (isDark: boolean) => void }) => (
-  <div className="flex items-center gap-3 p-2 rounded-lg border border-border bg-card">
-    <Sun className="size-4 text-yellow-400" />
-    <Switch checked={isDark} onCheckedChange={onChange} />
-    <Moon className="size-4 text-cyan-400" />
-  </div>
-);
-
 export function Dashboard() {
-  const { theme, setTheme } = useTheme();
   const { t } = useLanguage();
   const [isClient, setIsClient] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -259,17 +242,17 @@ export function Dashboard() {
 
   const updateStats = useCallback(async (email: string | null) => {
     try {
-        const [today, weekly, allTime, notes, streak] = await Promise.all([
+        const [today, weekly, allTime, notesCount, streak] = await Promise.all([
             getTodaysCalculations(email),
             getWeeklyCalculations(email),
             getAllTimeCalculations(email),
-            getAllTimeNotes(email),
+            Promise.resolve(getSavedNotesCount(email)),
             getStreakData(email)
         ]);
         setTodayCalculations(today);
         setWeeklyCalculations(weekly);
         setAllTimeCalculations(allTime);
-        setSavedNotesCount(notes);
+        setSavedNotesCount(notesCount);
         setStreakData(streak);
     } catch (error) {
         console.error("Failed to update stats:", error);
@@ -284,21 +267,29 @@ export function Dashboard() {
     }
     
     const storedProfile = localStorage.getItem("userProfile");
+    const email = storedProfile ? JSON.parse(storedProfile).email : null;
     
     if(storedProfile) {
-        const parsedProfile = JSON.parse(storedProfile);
-        setProfile(parsedProfile);
-        recordVisit(parsedProfile.email); // Record visit for streak tracking
-        updateStats(parsedProfile.email);
-    } else {
-        updateStats(null); // Load guest data
+        setProfile(JSON.parse(storedProfile));
+        recordVisit(email);
     }
+
+    updateStats(email);
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        updateStats(email);
+      }
+    };
+    
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+    }
+
   }, [updateStats]);
   
-  const handleThemeChange = (isDark: boolean) => {
-      setTheme(isDark ? 'dark' : 'light');
-  }
-
   const handleProfileClick = () => {
     if (profile) {
       router.push('/profile');
@@ -318,7 +309,6 @@ export function Dashboard() {
       { label: t('dashboard.tools.calculator'), icon: Calculator, href: "/calculator", color: "text-orange-400" },
       { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
       { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
-      { label: 'Analytics', icon: BarChart3, href: '/analytics', color: 'text-purple-400' },
       { label: 'News', icon: Newspaper, href: '/news', color: 'text-green-400' },
       { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
     ];
@@ -330,7 +320,7 @@ export function Dashboard() {
         { label: t('dashboard.tools.stopwatch'), icon: Hourglass, href: '/time?tab=stopwatch', color: 'text-indigo-500' },
     ];
 
-    const toolsToShow = showMoreTools ? [...quickTools.slice(0, 5), ...moreTools, ...quickTools.slice(5)] : quickTools.slice(0, 6);
+    const toolsToShow = showMoreTools ? [...quickTools.slice(0, 4), ...moreTools, ...quickTools.slice(4)] : quickTools;
 
 
     const recommendations = [
@@ -404,14 +394,6 @@ export function Dashboard() {
         color: "text-teal-400",
         bgColor: "bg-teal-500/10"
       },
-       {
-        icon: User,
-        title: t('updates.items.profileManagement.title'),
-        description: t('updates.items.profileManagement.description'),
-        href: "/updates",
-        color: "text-orange-400",
-        bgColor: "bg-orange-500/10"
-      },
     ];
 
   if (!isClient) {
@@ -435,7 +417,7 @@ export function Dashboard() {
             <CardTitle>{t('dashboard.quickAccess')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               {toolsToShow.map((t) => (
                 <ToolButton key={t.label} {...t} />
               ))}

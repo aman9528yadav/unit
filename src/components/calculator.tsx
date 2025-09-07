@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -156,7 +155,7 @@ export function Calculator() {
     }
   };
 
-  const handleCalculate = () => {
+  const handleCalculate = async () => {
     playSound();
     try {
       if (!expression || /[+\-*/.^]$/.test(expression)) return;
@@ -169,7 +168,7 @@ export function Calculator() {
       }
       const formattedResult = evalResult.toLocaleString(undefined, { maximumFractionDigits: 10, useGrouping: true });
       setResult(formattedResult);
-      incrementTodaysCalculations();
+      await incrementTodaysCalculations();
       
       localStorage.setItem('lastCalculation', `${expression} = ${formattedResult}`); // Save for note editor
     } catch (error) {

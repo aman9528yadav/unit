@@ -1,9 +1,8 @@
 
-
 "use client";
 
 import * as React from "react";
-import { useState, useEffect, useMemo, useTransition, useRef } from "react";
+import { useState, useEffect, useMemo, useTransition, useRef, useCallback } from "react";
 import Link from 'next/link';
 import html2canvas from 'html2canvas';
 import {
@@ -13,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -27,32 +25,29 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, Clock, RefreshCw, Zap, Square, Beaker, Trash2, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, File as FileIcon, CalculatorIcon, StickyNote, Settings, Bell, User, Hourglass, BarChart2, ChevronDown, Sparkles, LogIn, Scale, Power, Gauge, Flame, DollarSign, Fuel, Edit, Lock, Plus, Minus } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Star, Share2, Globe, LayoutGrid, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, User, Lock, ChevronDown, Sparkles, LogIn, Scale, Power } from "lucide-react";
 import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow.ts";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { useSearchParams, useRouter } from "next/navigation";
-import { incrementTodaysCalculations, getAllTimeCalculations } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { incrementTodaysCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { CustomUnit, CustomCategory } from "./custom-unit-manager";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { cn } from "@/lib/utils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { formatDistanceToNow, isToday, isYesterday, format, parseISO } from "date-fns";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { useDebounce } from "@/hooks/use-debounce";
 
 
@@ -135,7 +130,6 @@ type ChartDataItem = {
 
 export function Converter() {
   const { toast } = useToast();
-  const searchParams = useSearchParams();
   const router = useRouter();
 
   const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
@@ -149,11 +143,11 @@ export function Converter() {
         if (!categoriesWithCustomData.some(c => c.name === cc.name)) {
             const newCategory: ConversionCategory = {
                 name: cc.name,
-                icon: Beaker, // Default icon for custom categories
+                icon: Power, // Default icon for custom categories
                 units: [{
                     name: cc.baseUnitName,
                     symbol: cc.baseUnitSymbol,
-                    info: `1 ${cc.symbol} = ${cc.factor} base units`,
+                    info: `1 ${cc.baseUnitSymbol} = 1 base unit`,
                 }],
                 factors: { [cc.baseUnitSymbol]: 1 },
                 convert: function(value, from, to) {
@@ -208,7 +202,6 @@ export function Converter() {
   const { language, t } = useLanguage();
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
   const [isGraphVisible, setIsGraphVisible] = useState(false);
-  const [showRecentHistory, setShowRecentHistory] = useState(true);
   const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
 
@@ -218,7 +211,6 @@ export function Converter() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [autoConvert, setAutoConvert] = useState(true);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
-  const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
   const [userRole, setUserRole] = useState<UserRole>('Member');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -244,8 +236,9 @@ export function Converter() {
     if (storedProfileData) {
         setProfile(JSON.parse(storedProfileData));
     }
-
-    const loadSettings = async () => {
+    
+    // Load all settings in one go
+    const loadSettings = () => {
         const storedFavorites = localStorage.getItem("favoriteConversions");
         const savedAutoConvert = localStorage.getItem(getUserKey('autoConvert', userEmail));
         const savedCustomUnits = localStorage.getItem(getUserKey('customUnits', userEmail));
@@ -253,20 +246,6 @@ export function Converter() {
         const savedDefaultRegion = localStorage.getItem(getUserKey('defaultRegion', userEmail));
 
         if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
-
-        if (userEmail) {
-            const calculations = await getAllTimeCalculations(userEmail);
-            if (userEmail === DEVELOPER_EMAIL) {
-                setUserRole('Owner');
-            } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
-                setUserRole('Premium Member');
-            } else {
-                setUserRole('Member');
-            }
-        } else {
-            setUserRole('Member');
-        }
-
         if (savedAutoConvert !== null) setAutoConvert(JSON.parse(savedAutoConvert));
         if (savedCustomUnits) setCustomUnits(JSON.parse(savedCustomUnits));
         if (savedCustomCategories) setCustomCategories(JSON.parse(savedCustomCategories));
@@ -282,123 +261,58 @@ export function Converter() {
         const parsedQuery = offlineParseConversionQuery(itemToRestore, allUnits, conversionCategories);
         if (parsedQuery) {
             restoreFromParsedQuery(parsedQuery);
-        } else {
-            handleRestoreHistory(itemToRestore);
         }
         localStorage.removeItem("restoreConversion");
     }
     
     const handleStorageChange = (e: StorageEvent) => {
         const userEmail = profile?.email || null;
-        if (e.key === getUserKey('customUnits', userEmail)) {
-            setCustomUnits(JSON.parse(e.newValue || '[]'));
+        if (e.key === getUserKey('customUnits', userEmail) || e.key === getUserKey('customCategories', userEmail) || e.key === getUserKey('autoConvert', userEmail) || e.key === getUserKey('defaultRegion', userEmail)) {
+           loadSettings();
         }
-        if (e.key === getUserKey('customCategories', userEmail)) {
-            setCustomCategories(JSON.parse(e.newValue || '[]'));
-        }
-        if (e.key === getUserKey('autoConvert', userEmail)) {
-            setAutoConvert(e.newValue === null ? true : JSON.parse(e.newValue));
-        }
-        if (e.key === getUserKey('defaultRegion', userEmail) && e.newValue && regions.includes(e.newValue as Region)) {
-            setRegion(e.newValue as Region);
-        }
-        // No need to listen for history here, as the history page will handle it.
     };
-
-    const goOnline = () => setIsOffline(false);
-    const goOffline = () => setIsOffline(true);
-
-    window.addEventListener('online', goOnline);
-    window.addEventListener('offline', goOffline);
+    
     window.addEventListener('storage', handleStorageChange);
-
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('online', goOnline);
-      window.removeEventListener('offline', goOffline);
     };
   }, [profile?.email, allUnits, conversionCategories]);
   
-  const getCurrentConversionString = (value: number, from: string, to: string, result: number) => {
-    const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
-    return `${value} ${from} → ${formattedResult} ${to}`;
-  };
-  
   const getFullHistoryString = (value: number, from: string, to: string, result: number, categoryName: string) => {
-    const conversion = getCurrentConversionString(value, from, to, result);
+    const conversion = `${value} ${from} \u2192 ${result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false })} ${to}`;
     const timestamp = new Date().toISOString();
     return `${conversion}|${categoryName}|${timestamp}`;
   }
-  
-  const parseHistoryString = (item: string) => {
-    const parts = item.split('|');
-    const conversion = parts[0] || '';
-    const categoryName = parts[1] || '';
-    const timestamp = parts[2] ? new Date(parts[2]) : new Date();
 
-    const convParts = conversion.split(' ');
-    const value = convParts[0];
-    const fromSymbol = convParts[1];
-    const result = convParts[3];
-    const toSymbol = convParts[4];
+  const handleSaveToHistory = useCallback(async (value: number, from: string, to: string, result: number, category: string) => {
+    const userEmail = profile?.email || null;
+    const shouldSaveKey = getUserKey('saveConversionHistory', userEmail);
+    const shouldSave = JSON.parse(localStorage.getItem(shouldSaveKey) ?? 'true');
     
-    const category = conversionCategories.find(c => c.name === categoryName);
-    const fromUnit = category?.units.find(u => u.symbol === fromSymbol);
-    const toUnit = category?.units.find(u => u.symbol === toSymbol);
-
-    const fromName = fromUnit ? t(`units.${fromUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: fromUnit.name }) : fromSymbol;
-    const toName = toUnit ? t(`units.${toUnit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: toUnit.name }) : toSymbol;
-    
-    const translatedConversion = `${value} ${fromName} → ${result} ${toName}`;
-
-    return { conversion: translatedConversion, categoryName, timestamp, value, from: fromSymbol, result, to: toSymbol };
-  };
-
-
-  React.useEffect(() => {
-    if (currentUnits.length > 0) {
-      setFromUnit(currentUnits[0].symbol);
-      setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
-      setInputValue("1");
-      setIsGraphVisible(false);
-    }
-  }, [selectedCategory, region, currentUnits]);
-
- const handleSaveToHistory = React.useCallback(() => {
-    const numValue = parseFloat(inputValue);
-    const result = parseFloat(outputValue.replace(/,/g, ''));
-
-    if (isNaN(numValue) || isNaN(result) || outputValue === '') return;
-    
-    const userKey = getUserKey('saveConversionHistory', profile?.email || null);
-    const shouldSave = JSON.parse(localStorage.getItem(userKey) ?? 'true');
-
     if (!shouldSave) return;
-
-    const newHistoryEntry = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
     
+    const newHistoryEntry = getFullHistoryString(value, from, to, result, category);
+
     const storedHistory = localStorage.getItem("conversionHistory");
     const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
 
-    // Prevent adding if it's the exact same as the most recent entry
     if (currentHistory.length > 0 && currentHistory[0] === newHistoryEntry) {
         return;
     }
-
+    
     const newHistory = [newHistoryEntry, ...currentHistory];
     localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
     localStorage.setItem('lastConversion', newHistoryEntry);
     
-    // This event is crucial for the history page to update in real-time.
     window.dispatchEvent(new StorageEvent('storage', { key: 'conversionHistory', newValue: JSON.stringify(newHistory) }));
     
-    incrementTodaysCalculations();
-}, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name, profile?.email]);
+    await incrementTodaysCalculations();
+  }, [profile?.email]);
 
 
- const performConversion = React.useCallback(async (value: string | number, from: string, to: string) => {
-    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+ const performConversion = useCallback(async (valueStr: string, from: string, to: string) => {
+    const numValue = parseFloat(valueStr);
     setIsGraphVisible(false);
 
     if (isNaN(numValue) || !from || !to) {
@@ -440,21 +354,16 @@ export function Converter() {
     } else {
         setChartData([]);
     }
-    // Directly call save to history after a successful conversion
-    handleSaveToHistory();
+    
+    // Save to history right after a successful conversion
+    await handleSaveToHistory(numValue, from, to, result, categoryToUse.name);
 }, [region, conversionCategories, handleSaveToHistory]);
   
   useEffect(() => {
-    if (!autoConvert) return;
-  
-    const parsed = offlineParseConversionQuery(searchQuery, allUnits, conversionCategories);
-  
-    if (parsed) {
-      restoreFromParsedQuery(parsed);
-    } else {
+    if (autoConvert) {
       performConversion(inputValue, fromUnit, toUnit);
     }
-  }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion, inputValue, allUnits, conversionCategories, searchQuery]);
+  }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion, inputValue]);
 
   React.useEffect(() => {
     const numValue = parseFloat(inputValue);
@@ -464,42 +373,22 @@ export function Converter() {
     };
 
     const result = parseFloat(outputValue.replace(/,/g, ''));
-    const conversionStringPart = getCurrentConversionString(numValue, fromUnit, toUnit, result);
     const fullHistoryString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
-    setIsFavorite(favorites.some(fav => fav.startsWith(conversionStringPart)));
+    setIsFavorite(favorites.some(fav => fav === fullHistoryString));
   }, [inputValue, fromUnit, toUnit, outputValue, favorites, selectedCategory.name]);
 
 
  const handleSearch = () => {
-    if (isSearching) {
-        return;
-    }
-
+    if (isSearching) return;
     startSearchTransition(() => {
         const parsed = offlineParseConversionQuery(searchQuery, allUnits, conversionCategories);
 
         if (parsed) {
-            const category = conversionCategories.find(c => c.name === parsed.category);
-            if (category) {
-                const categoryUnits = category.units.filter(u => !u.region || u.region === region);
-                const fromUnitExists = categoryUnits.some(u => u.symbol === parsed.fromUnit);
-                const toUnitExists = categoryUnits.some(u => u.symbol === parsed.toUnit);
-
-                if (fromUnitExists && toUnitExists) {
-                    setSelectedCategory(category);
-                    setFromUnit(parsed.fromUnit);
-                    setToUnit(parsed.toUnit);
-                    setInputValue(String(parsed.value));
-                    performConversion(parsed.value, parsed.fromUnit, parsed.toUnit);
-                    setSearchQuery("");
-                    setSuggestions([]);
-                } else {
-                    toast({ title: t('converter.toast.cannotConvert'), description: t('converter.toast.regionError', { region }), variant: "destructive" });
-                }
-            }
+            restoreFromParsedQuery(parsed);
+            setSearchQuery("");
+            setSuggestions([]);
         } else {
-             // Only show toast if the query looks like a conversion attempt
-            if (searchQuery.match(/^\d/) && searchQuery.match(/to|in|as/i)) {
+             if (searchQuery.match(/^\d/) && searchQuery.match(/to|in|as/i)) {
                  toast({ title: t('converter.toast.invalidSearch'), description: t('converter.toast.queryError'), variant: "destructive" });
             }
         }
@@ -531,26 +420,21 @@ export function Converter() {
   };
 
   const handleConvertClick = () => {
-    const parsed = offlineParseConversionQuery(inputValue, allUnits, conversionCategories);
-    if (parsed) {
-      restoreFromParsedQuery(parsed);
-    } else {
-      performConversion(inputValue, fromUnit, toUnit);
-    }
+    performConversion(inputValue, fromUnit, toUnit);
   };
   
   const handleToggleFavorite = () => {
     const numValue = parseFloat(inputValue);
     if (isNaN(numValue) || !outputValue) return;
 
-    const conversionStringPart = getCurrentConversionString(numValue, fromUnit, toUnit, parseFloat(outputValue.replace(/,/g, '')));
-    const fullHistoryString = getFullHistoryString(numValue, fromUnit, toUnit, parseFloat(outputValue.replace(/,/g, '')), selectedCategory.name);
+    const result = parseFloat(outputValue.replace(/,/g, ''));
+    const fullHistoryString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
 
     let newFavorites: string[];
-    const isAlreadyFavorite = favorites.some(fav => fav.startsWith(conversionStringPart));
+    const isAlreadyFavorite = favorites.some(fav => fav === fullHistoryString);
 
     if (isAlreadyFavorite) {
-      newFavorites = favorites.filter(fav => !fav.startsWith(conversionStringPart));
+      newFavorites = favorites.filter(fav => fav !== fullHistoryString);
       toast({ title: t('converter.toast.favRemoved') });
     } else {
       newFavorites = [fullHistoryString, ...favorites];
@@ -574,36 +458,12 @@ export function Converter() {
             setFromUnit(parsedQuery.fromUnit);
             setToUnit(parsedQuery.toUnit);
             setInputValue(String(parsedQuery.value));
-            performConversion(parsedQuery.value, parsedQuery.fromUnit, parsedQuery.toUnit);
+            performConversion(String(parsedQuery.value), parsedQuery.fromUnit, parsedQuery.toUnit);
         } else {
             toast({ title: t('converter.toast.cannotRestore'), description: t('converter.toast.regionError', { region }), variant: "destructive" });
         }
     } else {
         toast({ title: t('converter.toast.cannotRestore'), description: t('converter.toast.categoryError'), variant: "destructive" });
-    }
-  };
-
-  const handleRestoreHistory = (item: string) => {
-    const { value, from, to, result, categoryName } = parseHistoryString(item);
-  
-    const category = conversionCategories.find(c => c.name === categoryName);
-  
-    if (category) {
-      const categoryUnits = category.units.filter(u => !u.region || u.region === region);
-      const fromUnitExists = categoryUnits.some(u => u.symbol === from);
-      const toUnitExists = categoryUnits.some(u => u.symbol === to);
-
-      if(fromUnitExists && toUnitExists) {
-        setSelectedCategory(category);
-        setFromUnit(from);
-        setToUnit(to);
-        setInputValue(value);
-        setOutputValue(result);
-      } else {
-        toast({ title: t('converter.toast.cannotRestore'), description: t('converter.toast.regionError', { region }), variant: "destructive"});
-      }
-    } else {
-        toast({ title: t('converter.toast.cannotRestore'), description: t('converter.toast.categoryError'), variant: "destructive"});
     }
   };
 
@@ -614,7 +474,7 @@ export function Converter() {
       return;
     }
     const result = parseFloat(outputValue.replace(/,/g, ''));
-    const conversionString = getCurrentConversionString(numValue, fromUnit, toUnit, result);
+    const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name).split('|')[0];
 
     if (navigator.share) {
       try {
@@ -646,7 +506,7 @@ export function Converter() {
       return;
     }
     const result = parseFloat(outputValue.replace(/,/g, ''));
-    const conversionString = getCurrentConversionString(numValue, fromUnit, toUnit, result);
+    const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name).split('|')[0];
     
     const blob = new Blob([conversionString], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -690,11 +550,7 @@ export function Converter() {
       setShowLoginDialog(true);
     }
   };
-
-  const formatTimestamp = (timestamp: Date) => {
-    return formatDistanceToNow(timestamp, { addSuffix: true });
-  }
-
+  
   const handleCopy = () => {
     if (outputValue) {
         navigator.clipboard.writeText(outputValue);
@@ -897,7 +753,6 @@ export function Converter() {
                     </div>
                     <div>
                        <Label className="flex items-center gap-2 mb-2"><LayoutGrid size={16}/>{t('converter.category')}</Label>
-                       <TooltipProvider>
                            <DropdownMenu>
                                <DropdownMenuTrigger asChild>
                                    <Button variant="outline" className="w-full justify-between">
@@ -937,7 +792,6 @@ export function Converter() {
                                    </div>
                                </DropdownMenuContent>
                            </DropdownMenu>
-                       </TooltipProvider>
                     </div>
                 </div>
                 
@@ -998,35 +852,11 @@ export function Converter() {
                 <div className="flex flex-col md:flex-row justify-between items-center mt-2 gap-4">
                     {!autoConvert && (
                         <Button onClick={handleConvertClick} className="w-full">
-                            <Zap className="mr-2 h-4 w-4"/>
+                            <Power className="mr-2 h-4 w-4"/>
                             {t('converter.convertButton')}
                         </Button>
                     )}
-                    <Button variant="outline" onClick={() => setIsGraphVisible(v => !v)} className="w-full" disabled={!outputValue || selectedCategory.name === 'Temperature'}>
-                        <BarChart2 size={16} className="mr-2" /> Compare All
-                    </Button>
                 </div>
-                 {isGraphVisible && chartData.length > 0 && (
-                     <div className="h-48 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => value.toLocaleString()} />
-                                <RechartsTooltip
-                                    contentStyle={{
-                                        backgroundColor: 'hsl(var(--background))',
-                                        borderColor: 'hsl(var(--border))',
-                                        color: 'hsl(var(--foreground))',
-                                        borderRadius: 'var(--radius)',
-                                    }}
-                                    cursor={{ fill: 'hsla(var(--muted), 0.5)' }}
-                                />
-                                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                )}
             </CardContent>
         </Card>
 
@@ -1125,7 +955,7 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
             <p className="text-lg text-muted-foreground">{fromUnitInfo?.symbol}</p>
         </div>
         <div className="flex justify-center">
-            <ArrowRightLeft className="w-8 h-8 text-accent" />
+            <ArrowRightLeft className="w-8 h-8 text-muted-foreground" />
         </div>
          <div className="flex flex-col gap-2 text-center">
             <p className="text-xl text-muted-foreground">{toUnitInfo ? t(`units.${toUnitInfo.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: toUnitInfo.name }) : ''}</p>
@@ -1133,7 +963,7 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
             <p className="text-lg text-muted-foreground">{toUnitInfo?.symbol}</p>
         </div>
         <p className="text-center text-sm text-muted-foreground mt-4">
-            {t('converter.image.generatedBy')} UniConvert
+            {t('converter.image.generatedBy')} Sutradhaar
         </p>
       </div>
     );
