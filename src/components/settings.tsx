@@ -184,18 +184,16 @@ export function Settings() {
   const handleSaveChanges = () => {
     const userKey = profile?.email || null;
     
-    // Only save settings if they are not locked
     const isPremiumFeatureLocked = userRole === 'Member';
-    const isThemeLocked = isPremiumFeatureLocked && (selectedTheme === 'retro' || selectedTheme === 'glass' || selectedTheme === 'nord' || selectedTheme === 'rose-pine');
+    const isThemeLocked = isPremiumFeatureLocked && (selectedTheme === 'retro' || selectedTheme === 'glass' || selectedTheme === 'nord' || selectedTheme === 'rose-pine' || selectedTheme === 'custom');
     const isCalcModeLocked = isPremiumFeatureLocked && calculatorMode === 'scientific';
 
     if(isThemeLocked || isCalcModeLocked) {
         setShowPremiumLockDialog(true);
-        // Revert to old settings
         const oldTheme = localStorage.getItem('theme') || 'light';
         const oldCalcMode = (localStorage.getItem('calculatorMode') as CalculatorMode) || 'basic';
         setSelectedTheme(oldTheme as any);
-        setCalculatorMode(oldCalcMode);
+        if (isCalcModeLocked) setCalculatorMode(oldCalcMode);
         return;
     }
 

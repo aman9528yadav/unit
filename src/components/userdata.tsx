@@ -56,7 +56,6 @@ export function UserData() {
     const [userRole, setUserRole] = useState<UserRole>('Member');
     const [stats, setStats] = useState({ totalOps: 0 });
     const [isClient, setIsClient] = useState(false);
-    const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
     const { t } = useLanguage();
@@ -107,18 +106,7 @@ export function UserData() {
         });
     };
     
-    const handleSavePhoto = (newImage: string | null) => {
-        if (profile) {
-            const updatedProfile = { ...profile, profileImage: newImage || '' };
-            setProfile(updatedProfile);
-            localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
-            window.dispatchEvent(new StorageEvent('storage', { key: 'userProfile', newValue: JSON.stringify(updatedProfile)}));
-            toast({ title: t('profileEdit.toast.profileUpdated.title') });
-        }
-        setIsPhotoEditorOpen(false);
-    };
-
-     const handleLogout = () => {
+    const handleLogout = () => {
         auth.signOut().then(() => {
             localStorage.removeItem("userProfile");
             toast({ title: t('profile.toast.logout.title'), description: t('profile.toast.logout.description') });
@@ -133,17 +121,6 @@ export function UserData() {
         // You can return a loading skeleton here
         return null;
     }
-    
-    if (isPhotoEditorOpen) {
-        return (
-            <ProfilePhotoEditor
-                currentImage={profile.profileImage || ''}
-                onSave={handleSavePhoto}
-                onClose={() => setIsPhotoEditorOpen(false)}
-            />
-        );
-    }
-
 
     const roleText = {
       'Member': t('userdata.roles.member'),
@@ -178,9 +155,6 @@ export function UserData() {
                         <AvatarImage src={profile.profileImage} alt={profile.fullName}/>
                         <AvatarFallback>{profile.fullName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                     </Avatar>
-                    <Button size="icon" className="absolute bottom-4 right-0 rounded-full" onClick={() => setIsPhotoEditorOpen(true)}>
-                        <Pencil className="h-4 w-4" />
-                    </Button>
                 </div>
                 <div className="flex items-center gap-2">
                     <h2 className="text-2xl font-bold">{profile.fullName}</h2>

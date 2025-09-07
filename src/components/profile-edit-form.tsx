@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2 } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,10 +17,19 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/language-context";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { ProfilePhotoEditor } from "./profile-photo-editor";
 
+
+interface UserProfile {
+    fullName: string;
+    email: string;
+    dob: string;
+    profileImage?: string;
+}
 
 export function ProfileEditForm() {
-  const [profile, setProfile] = useState({ fullName: '', email: '', dob: '' });
+  const [profile, setProfile] = useState<UserProfile>({ fullName: '', email: '', dob: '' });
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -29,6 +38,7 @@ export function ProfileEditForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
   const { t } = useLanguage();
 
 
@@ -65,14 +75,11 @@ export function ProfileEditForm() {
       if (user) {
         await updateProfile(user, {
           displayName: profile.fullName,
+          photoURL: profile.profileImage
         });
 
-        const storedProfile = localStorage.getItem("userProfile");
-        const existingProfile = storedProfile ? JSON.parse(storedProfile) : {};
-        const updatedProfile = { ...existingProfile, ...profile };
-
-        localStorage.setItem("userProfile", JSON.stringify(updatedProfile));
-        window.dispatchEvent(new StorageEvent('storage', { key: 'userProfile', newValue: JSON.stringify(updatedProfile) }));
+        localStorage.setItem("userProfile", JSON.stringify(profile));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'userProfile', newValue: JSON.stringify(profile) }));
         
         toast({ title: t('profileEdit.toast.profileUpdated.title'), description: t('profileEdit.toast.profileUpdated.description') });
         router.push("/profile/success");
@@ -83,6 +90,12 @@ export function ProfileEditForm() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+  
+  const handleSavePhoto = (newImage: string | null) => {
+    setProfile(prev => ({ ...prev!, profileImage: newImage || '' }));
+    toast({ title: t('profileEdit.toast.imageReady.title'), description: t('profileEdit.toast.imageReady.description') });
+    setIsPhotoEditorOpen(false);
   };
 
   const handleChangePassword = async () => {
@@ -129,6 +142,17 @@ export function ProfileEditForm() {
   if (!isClient) {
     return null; 
   }
+  
+  if (isPhotoEditorOpen) {
+    return (
+      <ProfilePhotoEditor
+          currentImage={profile.profileImage || ''}
+          onSave={handleSavePhoto}
+          onClose={() => setIsPhotoEditorOpen(false)}
+      />
+    );
+  }
+
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6">
@@ -151,6 +175,15 @@ export function ProfileEditForm() {
               <CardDescription>{t('profileEdit.account.description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+                <div className="flex flex-col items-center gap-4">
+                    <Avatar className="w-32 h-32 text-4xl">
+                        <AvatarImage src={profile.profileImage} alt={profile.fullName} />
+                         <AvatarFallback>{profile.fullName?.split(' ').map(n => n[0]).join('') || <User />}</AvatarFallback>
+                    </Avatar>
+                    <Button variant="outline" onClick={() => setIsPhotoEditorOpen(true)}>
+                        <Pencil className="mr-2 h-4 w-4" /> Change Photo
+                    </Button>
+                </div>
               <div>
                 <Label htmlFor="fullName">{t('profileEdit.account.fullName')}</Label>
                 <Input id="fullName" name="fullName" value={profile.fullName} onChange={handleInputChange} />

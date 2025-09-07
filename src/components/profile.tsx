@@ -23,7 +23,7 @@ import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { Avatar, AvatarFallback } from "./ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useLanguage } from "@/context/language-context";
 import { getStats } from "@/lib/stats";
 import { Badge } from "./ui/badge";
@@ -38,6 +38,7 @@ interface UserProfile {
     email: string;
     birthday: string;
     dob: string;
+    profileImage?: string;
 }
 
 const defaultProfile: UserProfile = {
@@ -144,8 +145,9 @@ export function Profile() {
         <div className="flex flex-col items-center text-center gap-2 mt-2">
             <div className="relative w-28 h-28 cursor-pointer">
                 <Avatar className="w-28 h-28 text-6xl border-4 border-background">
+                    <AvatarImage src={profile.profileImage} alt={profile.fullName} />
                     <AvatarFallback>
-                        <User />
+                        {profile.fullName?.split(' ').map(n => n[0]).join('') || <User />}
                     </AvatarFallback>
                 </Avatar>
                 <Button asChild size="icon" className="absolute bottom-0 right-0 rounded-full w-8 h-8">
