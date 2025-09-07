@@ -80,7 +80,6 @@ export function ProfileEditForm() {
       if (user) {
         await updateProfile(user, {
           displayName: profile.fullName,
-          photoURL: profile.profileImage
         });
 
         // Save to RTDB
