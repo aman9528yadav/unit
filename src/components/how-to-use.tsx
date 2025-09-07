@@ -104,7 +104,9 @@ export function HowToUse() {
   // Helper to convert a string to PascalCase for icon lookup
   const toPascalCase = (str: string) => {
     if (!str) return 'Zap'; // Default icon
-    return str.replace(/(^\w|-\w)/g, (c) => c.replace('-', '').toUpperCase());
+    return str
+        .replace(/-(\w)/g, (_, c) => c.toUpperCase())
+        .replace(/^\w/, c => c.toUpperCase());
   };
 
   return (
