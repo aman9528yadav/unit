@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
@@ -52,12 +53,12 @@ import { AboutCard } from "./about-card";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import { Label } from "./ui/label";
 import { Checkbox } from "./ui/checkbox";
-import { getStats, type DailyActivity } from "@/lib/stats";
+import { DailyActivity, processUserDataForStats } from "@/lib/stats";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { format, intervalToDuration } from "date-fns";
-import { listenToNextUpdateInfo, NextUpdateInfo } from "@/services/firestore";
-import { getStreakData, recordVisit } from "@/lib/streak";
+import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData } from "@/services/firestore";
+import { getStreakData, recordVisit, StreakData } from "@/lib/streak";
 
 
 const ToolButton = ({ icon: Icon, label, href, color, target, onClick }: any) => {
@@ -211,6 +212,12 @@ function AnimatedStat({ value }: { value: number }) {
     }
   }, [isInView, value, spring]);
 
+  useEffect(() => {
+    // Animate on value change as well
+    spring.set(value);
+  }, [value, spring]);
+
+
   const displayValue = useSpring(spring, {
     damping: 30,
     stiffness: 80,
@@ -327,32 +334,42 @@ export function Dashboard() {
       totalOps: number;
       savedNotes: number;
       activity: DailyActivity[];
-      currentStreak: number;
   }>({
       todaysOps: 0,
       totalOps: 0,
       savedNotes: 0,
       activity: [],
-      currentStreak: 0,
   });
 
-  const loadStatsAndStreak = useCallback(async () => {
-        const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
-        await recordVisit(userEmail);
-        const [fetchedStats, streakData] = await Promise.all([
-            getStats(userEmail),
-            getStreakData(userEmail)
-        ]);
-        setStats({ ...fetchedStats, currentStreak: streakData.currentStreak });
-    }, []);
+  const [streakData, setStreakData] = useState<StreakData>({
+      currentStreak: 0,
+      bestStreak: 0,
+      daysNotOpened: 0,
+  });
 
     useEffect(() => {
         setIsClient(true);
-        loadStatsAndStreak();
+        const storedProfileData = localStorage.getItem("userProfile");
+        const userEmail = storedProfileData ? JSON.parse(storedProfileData).email : null;
+        
+        if(storedProfileData) {
+            setProfile(JSON.parse(storedProfileData));
+        }
 
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                loadStatsAndStreak();
+        const unsub = listenToUserData(userEmail, (userData) => {
+            const processedStats = processUserDataForStats(userData, userEmail);
+            setStats(processedStats);
+            
+            // Recalculate streak data based on the latest visit history
+            getStreakData(userEmail).then(setStreakData);
+        });
+
+        // Record visit once on component mount
+        recordVisit(userEmail);
+
+        const handleStorageChange = (event: StorageEvent) => {
+            if (event.key === 'userProfile' && event.newValue) {
+                setProfile(JSON.parse(event.newValue));
             }
         };
         
@@ -361,25 +378,12 @@ export function Dashboard() {
             setShowBetaDialog(true);
         }
         
-        const storedProfile = localStorage.getItem("userProfile");
-        
-        if(storedProfile) {
-            setProfile(JSON.parse(storedProfile));
-        }
-
-        const handleStorageChange = (event: StorageEvent) => {
-            if (event.key === 'userProfile' && event.newValue) {
-                setProfile(JSON.parse(event.newValue));
-            }
-        };
-        
-        window.addEventListener('visibilitychange', handleVisibilityChange);
         window.addEventListener('storage', handleStorageChange);
         return () => {
-            window.removeEventListener('visibilitychange', handleVisibilityChange);
             window.removeEventListener('storage', handleStorageChange);
+            unsub();
         }
-    }, [loadStatsAndStreak]);
+    }, []);
   
   const handleProfileClick = () => {
     if (profile) {
@@ -539,7 +543,7 @@ export function Dashboard() {
           </div>
           <div className="grid grid-cols-2 gap-4">
              <StatCard title={t('dashboard.todayOps')} value={stats.todaysOps} icon={TrendingUp} color="text-green-500 bg-green-500/10" />
-             <StatCard title={t('dashboard.currentStreak')} value={stats.currentStreak} icon={Flame} color="text-orange-500 bg-orange-500/10" unit={t('dashboard.days')} />
+             <StatCard title={t('dashboard.currentStreak')} value={streakData.currentStreak} icon={Flame} color="text-orange-500 bg-orange-500/10" unit={t('dashboard.days')} />
              <StatCard title={t('dashboard.savedNotes')} value={stats.savedNotes} icon={NotebookPen} color="text-yellow-500 bg-yellow-500/10" />
              <StatCard title={t('dashboard.allTimeOps')} value={stats.totalOps} icon={BarChart3} color="text-blue-500 bg-blue-500/10" />
           </div>

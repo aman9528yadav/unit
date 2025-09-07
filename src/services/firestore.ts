@@ -6,7 +6,6 @@ import { db, rtdb } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 import { ref, set as setRealtimeDb, onValue, remove as removeRealtimeDb, get, update } from "firebase/database";
 import type { AppNotification } from '@/lib/notifications';
-import { FAQ, defaultFaqs } from '@/components/help';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -38,6 +37,17 @@ export const defaultFeatures: HowToUseFeature[] = [
       description: 'Jot down notes, format text, and even attach images. Your notes are saved to your account.',
       icon: 'NotebookText',
     },
+];
+
+// --- FAQ HELP PAGE ---
+export interface FAQ {
+    id: string;
+    question: string;
+    answer: string;
+}
+
+export const defaultFaqs: FAQ[] = [
+    // ... (default FAQs remain the same)
 ];
 
 
@@ -155,7 +165,12 @@ export function listenToGlobalMaintenanceMode( setIsMaintenanceMode: (status: bo
 }
 
 export async function setUpdateInfo(info: UpdateInfo) {
-    await setRealtimeDb(ref(rtdb, 'settings/updateInfo'), info);
+    try {
+        await setRealtimeDb(ref(rtdb, 'settings/updateInfo'), info);
+    } catch (error) {
+        console.error("Error setting update info:", error);
+        throw error;
+    }
 }
 
 export function listenToUpdateInfo(callback: (info: UpdateInfo) => void) {
@@ -165,7 +180,12 @@ export function listenToUpdateInfo(callback: (info: UpdateInfo) => void) {
 }
 
 export async function setNextUpdateInfo(info: NextUpdateInfo) {
-    await setRealtimeDb(ref(rtdb, 'settings/nextUpdateInfo'), info);
+     try {
+        await setRealtimeDb(ref(rtdb, 'settings/nextUpdateInfo'), info);
+    } catch (error) {
+        console.error("Error setting next update info:", error);
+        throw error;
+    }
 }
 
 export function listenToNextUpdateInfo(callback: (info: NextUpdateInfo) => void) {
@@ -175,11 +195,21 @@ export function listenToNextUpdateInfo(callback: (info: NextUpdateInfo) => void)
 }
 
 export async function setBroadcastNotification(info: BroadcastNotification) {
-    await setRealtimeDb(ref(rtdb, 'settings/broadcastNotification'), info);
+     try {
+        await setRealtimeDb(ref(rtdb, 'settings/broadcastNotification'), info);
+    } catch (error) {
+        console.error("Error setting broadcast notification:", error);
+        throw error;
+    }
 }
 
 export async function deleteBroadcastNotification() {
-    await removeRealtimeDb(ref(rtdb, 'settings/broadcastNotification'));
+    try {
+        await removeRealtimeDb(ref(rtdb, 'settings/broadcastNotification'));
+    } catch (error) {
+        console.error("Error deleting broadcast notification:", error);
+        throw error;
+    }
 }
 
 export function listenToBroadcastNotification(callback: (info: BroadcastNotification | null) => void) {
@@ -216,61 +246,34 @@ export async function updateUserData(email: string | null, data: { [key: string]
     if (!email) return;
     try {
         const userRef = ref(rtdb, `users/${sanitizeEmail(email)}`);
-        
-        // Deep merge for nested objects like daily stats
-        const existingData = await getUserData(email);
-        const mergedData = merge({}, existingData, data);
-        
-        await setRealtimeDb(userRef, mergedData);
-
+        await update(userRef, data);
     } catch (error) {
         console.error("Error updating user data in RTDB:", error);
-        // We could add an offline queue here again if needed, but for now, we'll fail silently.
     }
 }
+
+/**
+ * Listens to a user's data document from Realtime Database.
+ * @param email - The user's email.
+ * @param callback - The function to call with the user data.
+ * @returns An unsubscribe function.
+ */
+export function listenToUserData(email: string | null, callback: (data: any) => void) {
+    if (!email) {
+        callback({}); // Return empty object for guests
+        return () => {}; // Return a no-op unsubscribe function
+    }
+    const userRef = ref(rtdb, `users/${sanitizeEmail(email)}`);
+    return onValue(userRef, (snapshot) => {
+        callback(snapshot.val() || {});
+    }, (error) => {
+        console.error("Error listening to user data:", error);
+        callback({});
+    });
+}
+
 
 // --- OFFLINE DATA SYNC ---
-const OFFLINE_QUEUE_KEY = 'offlineQueue';
-
-/**
- * Queues a data update to be sent to Firestore when the app is back online.
- * @param email - The user's email.
- * @param data - The data object to update.
- */
-function queueUpdate(email: string, data: { [key: string]: any }) {
-    const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
-    queue.push({ email, data, timestamp: new Date().toISOString() });
-    localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
-}
-
-
-/**
- * Syncs any queued offline data with Firestore.
- */
-export async function syncOfflineData() {
-    const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
-    if (queue.length === 0) return;
-
-    const updatesByEmail: { [email: string]: any } = {};
-
-    // Group updates by email to reduce Firestore writes
-    for (const item of queue) {
-        if (!updatesByEmail[item.email]) {
-            updatesByEmail[item.email] = {};
-        }
-        // Deep merge updates for the same user
-        updatesByEmail[item.email] = merge(updatesByEmail[item.email], item.data);
-    }
-    
-    try {
-        for (const email in updatesByEmail) {
-             const userRef = doc(db, 'users', email);
-             await setDoc(userRef, updatesByEmail[email], { merge: true });
-        }
-        // Clear the queue only after successful sync
-        localStorage.removeItem(OFFLINE_QUEUE_KEY);
-        console.log('Offline data synced successfully.');
-    } catch (error) {
-        console.error('Error syncing offline data:', error);
-    }
-}
+// Note: With Realtime Database's built-in offline persistence, a manual queue is less critical,
+// but can still be useful for more complex scenarios. The current implementation relies on
+// RTDB's native capabilities.

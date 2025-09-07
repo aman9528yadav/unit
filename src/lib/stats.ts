@@ -5,30 +5,28 @@
 import { format, eachDayOfInterval, subDays } from 'date-fns';
 import { updateUserData, getUserData } from '@/services/firestore';
 import { NOTES_STORAGE_KEY_BASE, type Note } from '@/components/notepad';
-import { DateRange } from 'react-day-picker';
 
 const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
 
 const incrementStat = async (field: 'totalConversions' | 'totalCalculations' | 'totalDateCalculations') => {
     const userEmail = typeof window !== 'undefined' ? (localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null) : null;
-    if (!userEmail) return; // Don't track stats for guests in RTDB
+    if (!userEmail) return;
 
     const today = format(new Date(), 'yyyy-MM-dd');
-    const dailyField = `daily${field.charAt(10).toUpperCase()}${field.slice(11)}`; // e.g., dailyConversions
-
-    const userData = await getUserData(userEmail);
     
-    const currentTotal = userData[field] || 0;
-    const dailyData = userData[dailyField] || {};
-    const todaysCount = dailyData[today] || 0;
+    // We can't just increment, we need to read the current value first.
+    const userData = await getUserData(userEmail);
 
-    const dataToUpdate = {
-        [field]: currentTotal + 1,
-        [dailyField]: {
-            ...dailyData,
-            [today]: todaysCount + 1
-        }
-    };
+    const dataToUpdate: {[key: string]: any} = {};
+
+    // Increment total count
+    dataToUpdate[field] = (userData[field] || 0) + 1;
+
+    // Increment daily count
+    const dailyField = `daily${field.charAt(10).toUpperCase()}${field.slice(11)}`; // e.g., dailyConversions
+    const dailyData = userData[dailyField] || {};
+    dailyData[today] = (dailyData[today] || 0) + 1;
+    dataToUpdate[dailyField] = dailyData;
     
     await updateUserData(userEmail, dataToUpdate);
 };
@@ -54,7 +52,7 @@ export interface DailyActivity {
     total: number;
 }
 
-export const getStats = async (email: string | null): Promise<{
+export const processUserDataForStats = (userData: any, email: string | null): {
     todaysOps: number;
     totalOps: number;
     savedNotes: number;
@@ -64,8 +62,7 @@ export const getStats = async (email: string | null): Promise<{
     totalConversions: number;
     totalCalculations: number;
     totalDateCalculations: number;
-}> => {
-    const userData = await getUserData(email);
+} => {
     const today = format(new Date(), 'yyyy-MM-dd');
 
     const dailyConversions = userData.dailyConversions || {};
@@ -129,4 +126,10 @@ export const getStats = async (email: string | null): Promise<{
         totalCalculations,
         totalDateCalculations
     };
+};
+
+
+export const getStats = async (email: string | null) => {
+    const userData = await getUserData(email);
+    return processUserDataForStats(userData, email);
 };

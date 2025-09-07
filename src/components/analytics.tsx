@@ -35,14 +35,15 @@ import { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { getStats, type DailyActivity } from "@/lib/stats";
+import { DailyActivity, processUserDataForStats } from "@/lib/stats";
 import { LineChart, Line, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart as RechartsBarChart } from "recharts";
 import { useLanguage } from "@/context/language-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
-import { getStreakData } from "@/lib/streak";
+import { getStreakData, StreakData } from "@/lib/streak";
 import { cn } from "@/lib/utils";
+import { listenToUserData } from "@/services/firestore";
 
 
 type ChartType = "bar" | "line";
@@ -94,9 +95,6 @@ export function Analytics() {
         recycledNotes: number;
         favoriteConversions: number;
         activity: DailyActivity[];
-        currentStreak: number;
-        bestStreak: number;
-        daysNotOpened: number;
     }>({
         totalConversions: 0,
         totalCalculations: 0,
@@ -105,6 +103,8 @@ export function Analytics() {
         recycledNotes: 0,
         favoriteConversions: 0,
         activity: [],
+    });
+    const [streakData, setStreakData] = useState<StreakData>({
         currentStreak: 0,
         bestStreak: 0,
         daysNotOpened: 0,
@@ -148,38 +148,29 @@ export function Analytics() {
     }, []);
 
 
-    const loadStats = useCallback(async () => {
+    useEffect(() => {
         const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
-        const [fetchedStats, streakData] = await Promise.all([
-          getStats(userEmail, dateRange),
-          getStreakData(userEmail)
-        ]);
-
-        setStats({
-            totalConversions: fetchedStats.totalConversions,
-            totalCalculations: fetchedStats.totalCalculations,
-            totalDateCalculations: fetchedStats.totalDateCalculations,
-            savedNotes: fetchedStats.savedNotes,
-            recycledNotes: fetchedStats.recycledNotes,
-            favoriteConversions: fetchedStats.favoriteConversions,
-            activity: fetchedStats.activity,
-            currentStreak: streakData.currentStreak,
-            bestStreak: streakData.bestStreak,
-            daysNotOpened: streakData.daysNotOpened,
+        
+        const unsub = listenToUserData(userEmail, (userData) => {
+            const processed = processUserDataForStats(userData, userEmail);
+            setStats(processed);
+            
+            // Recalculate streak based on latest visit history
+            getStreakData(userEmail).then(setStreakData);
         });
 
-    }, [dateRange]);
-
-    useEffect(() => {
-        loadStats();
         loadLastActivities();
 
         const handleStorageChange = () => {
             loadLastActivities();
         }
         window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
-    }, [loadStats, loadLastActivities]);
+        
+        return () => {
+            unsub();
+            window.removeEventListener('storage', handleStorageChange);
+        }
+    }, []);
     
     const handleTimeRangeChange = (preset: TimeRangePreset) => {
       setTimeRange(preset);
@@ -234,17 +225,17 @@ export function Analytics() {
         },
         { 
             title: "Current Streak", 
-            value: `${stats.currentStreak} days`,
+            value: `${streakData.currentStreak} days`,
             icon: <Flame className="text-red-500 w-4 h-4"/>,
         },
         { 
             title: "Best Streak", 
-            value: `${stats.bestStreak} days`,
+            value: `${streakData.bestStreak} days`,
             icon: <CheckCircle className="text-yellow-500 w-4 h-4"/>,
         },
         {
             title: "Days Since Last Visit",
-            value: `${stats.daysNotOpened} days`,
+            value: `${streakData.daysNotOpened} days`,
             icon: <EyeOff className="text-gray-500 w-4 h-4" />,
         },
         { 
