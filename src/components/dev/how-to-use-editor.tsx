@@ -25,12 +25,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 
 
-const iconMap: { [key: string]: LucideIcon } = {
-    LogIn, Zap, Search, Sigma, Star, Calculator, NotebookText, Palette, Beaker
-};
-
-const iconNames = Object.keys(iconMap);
-
 export function HowToUseEditor() {
     const [features, setFeatures] = useState<HowToUseFeature[] | null>(null);
     const [customCategories, setCustomCategories] = useState<CustomHowToUseCategory[]>([]);
@@ -278,21 +272,7 @@ export function HowToUseEditor() {
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="icon" className="text-right">Icon</Label>
-                            <Select value={icon} onValueChange={setIcon}>
-                                <SelectTrigger className="col-span-3">
-                                    <SelectValue placeholder="Select an icon" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {iconNames.map(iconName => (
-                                        <SelectItem key={iconName} value={iconName}>
-                                            <div className="flex items-center gap-2">
-                                                {React.createElement(iconMap[iconName])}
-                                                <span>{iconName}</span>
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Input id="icon" value={icon} onChange={(e) => setIcon(e.target.value)} className="col-span-3" placeholder="Enter a lucide-react icon name"/>
                         </div>
                          <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="category" className="text-right">Category</Label>

@@ -10,7 +10,15 @@ import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import { FAQ, defaultFaqs } from "./help";
 import { useLanguage } from "@/context/language-context";
-import { listenToFaqsFromRtdb, listenToHowToUseFeaturesFromRtdb, HowToUseFeature, HowToUseCategory, defaultFeatures } from "@/services/firestore";
+import { 
+    listenToFaqsFromRtdb, 
+    listenToHowToUseFeaturesFromRtdb, 
+    HowToUseFeature, 
+    HowToUseCategory, 
+    defaultFeatures,
+    listenToCustomHowToUseCategoriesFromRtdb,
+    CustomHowToUseCategory
+} from "@/services/firestore";
 
 const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
     <div className="bg-card p-6 rounded-xl border border-border/80 shadow-sm">
@@ -26,7 +34,7 @@ const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, titl
     </div>
 );
 
-const sectionDetails: Record<HowToUseCategory, { title: string }> = {
+const defaultSectionDetails: Record<HowToUseCategory, { title: string }> = {
     gettingStarted: { title: "Getting Started" },
     unitConverter: { title: "Unit Converter" },
     calculator: { title: "Calculator" },
@@ -39,6 +47,7 @@ export function HowToUse() {
   const router = useRouter();
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [features, setFeatures] = useState<HowToUseFeature[]>([]);
+  const [customCategories, setCustomCategories] = useState<CustomHowToUseCategory[]>([]);
   const { t } = useLanguage();
   
   useEffect(() => {
@@ -48,19 +57,42 @@ export function HowToUse() {
     const unsubscribeFeatures = listenToHowToUseFeaturesFromRtdb((featuresFromDb) => {
         setFeatures(featuresFromDb.length > 0 ? featuresFromDb : defaultFeatures);
     });
+    const unsubscribeCategories = listenToCustomHowToUseCategoriesFromRtdb((cats) => {
+        setCustomCategories(cats || []);
+    });
 
     return () => {
         unsubscribeFaqs();
         unsubscribeFeatures();
+        unsubscribeCategories();
     };
   }, []);
   
+  const allSectionDetails = useMemo(() => {
+    const combined = { ...defaultSectionDetails };
+    customCategories.forEach(cat => {
+        combined[cat.id as HowToUseCategory] = { title: cat.name };
+    });
+    return combined;
+  }, [customCategories]);
+  
   const groupedFeatures = useMemo(() => {
     return features.reduce((acc, feature) => {
-        (acc[feature.category] = acc[feature.category] || []).push(feature);
+        (acc[feature.category as HowToUseCategory] = acc[feature.category as HowToUseCategory] || []).push(feature);
         return acc;
     }, {} as Record<HowToUseCategory, HowToUseFeature[]>);
   }, [features]);
+
+  const orderedCategories = useMemo(() => {
+    return [
+      'gettingStarted',
+      'unitConverter',
+      'calculator',
+      'notepad',
+      'customization',
+      ...customCategories.map(c => c.id)
+    ];
+  }, [customCategories]);
 
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col gap-8 p-4 sm:p-6 pb-12">
@@ -71,13 +103,13 @@ export function HowToUse() {
             <h1 className="text-2xl font-bold text-foreground">How to Use Sutradhaar</h1>
         </header>
         
-        {Object.entries(groupedFeatures).map(([category, featuresInSection]) => {
-            const details = sectionDetails[category as HowToUseCategory];
-            // @ts-ignore
-            if (!details || featuresInSection.length === 0) return null;
+        {orderedCategories.map(categoryKey => {
+            const featuresInSection = groupedFeatures[categoryKey as HowToUseCategory];
+            const details = allSectionDetails[categoryKey as HowToUseCategory];
+            if (!details || !featuresInSection || featuresInSection.length === 0) return null;
 
             return (
-                 <section key={category}>
+                 <section key={categoryKey}>
                     <h2 className="text-xl font-bold mb-4">{details.title}</h2>
                     <div className="space-y-4">
                         {featuresInSection.map(feature => {

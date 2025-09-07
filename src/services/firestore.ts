@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { db, rtdb } from '@/lib/firebase';
@@ -17,7 +16,7 @@ export interface HowToUseFeature {
     id: string;
     title: string;
     description: string;
-    icon: string;
+    icon: string; // Now just the icon name as a string
     category: HowToUseCategory | string;
 }
 
