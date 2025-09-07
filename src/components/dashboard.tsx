@@ -107,7 +107,7 @@ const UpdateCard = ({ update }: any) => (
           </div>
       </div>
       <div className="flex-1 min-h-0">
-        <div className="text-xs text-muted-foreground pt-2 whitespace-normal break-words flex-1 min-h-0">
+        <div className="text-xs text-muted-foreground pt-2 whitespace-normal break-words flex-1 min-h-0 line-clamp-2">
           {update.description}
         </div>
       </div>
@@ -541,7 +541,7 @@ export function Dashboard() {
           <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-foreground">Statistics</h2>
               <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
-                    <Link href="/analytics">View Analytics</Link>
+                    <Link href="/analytics">View Analytics <ArrowRight className="size-4" /></Link>
                 </Button>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -718,4 +718,3 @@ export function Dashboard() {
   );
 }
 
-    
