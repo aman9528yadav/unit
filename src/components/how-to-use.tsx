@@ -5,11 +5,12 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, LogIn, Sigma, Calculator, NotebookText, Star, Settings, Palette, Beaker, Zap, Search, Mic } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import { FAQ, defaultFaqs } from "./help";
 import { useLanguage } from "@/context/language-context";
-import { listenToFaqsFromRtdb } from "@/services/firestore";
+import { listenToFaqsFromRtdb, listenToHowToUseFeaturesFromRtdb, HowToUseFeature, defaultFeatures } from "@/services/firestore";
 
 
 const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
@@ -29,14 +30,46 @@ const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, titl
 export function HowToUse() {
   const router = useRouter();
   const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [features, setFeatures] = useState<HowToUseFeature[]>([]);
   const { t } = useLanguage();
   
   useEffect(() => {
-    const unsubscribe = listenToFaqsFromRtdb((faqsFromDb) => {
+    const unsubscribeFaqs = listenToFaqsFromRtdb((faqsFromDb) => {
         setFaqs(faqsFromDb.length > 0 ? faqsFromDb : defaultFaqs);
     });
-    return () => unsubscribe();
+    const unsubscribeFeatures = listenToHowToUseFeaturesFromRtdb((featuresFromDb) => {
+        setFeatures(featuresFromDb.length > 0 ? featuresFromDb : defaultFeatures);
+    });
+
+    return () => {
+        unsubscribeFaqs();
+        unsubscribeFeatures();
+    };
   }, []);
+  
+  const sections: { [key: string]: HowToUseFeature[] } = {
+    gettingStarted: [],
+    unitConverter: [],
+    calculator: [],
+    notepad: [],
+    customization: [],
+  };
+
+  features.forEach(feature => {
+      // This is a simple grouping logic, you might want a more robust way to categorize features
+      if (['Login', 'Dashboard'].some(keyword => feature.title.includes(keyword))) {
+          sections.gettingStarted.push(feature);
+      } else if (['Search', 'Manual Conversion', 'Favorites'].some(keyword => feature.title.includes(keyword))) {
+          sections.unitConverter.push(feature);
+      } else if (['Calculator'].some(keyword => feature.title.includes(keyword))) {
+          sections.calculator.push(feature);
+      } else if (['Notepad', 'Editing'].some(keyword => feature.title.includes(keyword))) {
+          sections.notepad.push(feature);
+      } else {
+          sections.customization.push(feature);
+      }
+  });
+
 
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col gap-8 p-4 sm:p-6 pb-12">

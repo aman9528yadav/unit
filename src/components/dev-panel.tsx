@@ -506,10 +506,17 @@ export function DevPanel() {
                             </div>
                              <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
                                 <div>
-                                    <Label htmlFor="maintenance-mode">Manage Help Content</Label>
+                                    <Label>Manage Help Content</Label>
                                     <p className='text-xs text-muted-foreground'>Edit the FAQ on the help page.</p>
                                 </div>
                                 <Button onClick={() => router.push('/dev/help')}>Manage</Button>
+                            </div>
+                            <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <div>
+                                    <Label>Manage 'How to Use'</Label>
+                                    <p className='text-xs text-muted-foreground'>Edit the feature list on the how-to-use page.</p>
+                                </div>
+                                <Button onClick={() => router.push('/dev/how-to-use')}>Manage</Button>
                             </div>
                         </CardContent>
                     </Card>
