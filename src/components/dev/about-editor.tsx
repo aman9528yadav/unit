@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Save, Trash2, Edit } from 'lucide-react';
+import { ArrowLeft, Plus, Save, Trash2, Edit, Pencil, User } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,12 +19,16 @@ import {
     setOwnerInfoInRtdb
 } from '@/services/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { ProfilePhotoEditor } from '../profile-photo-editor';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+
 
 export function AboutEditor() {
     const [appInfo, setAppInfo] = useState<AppInfo>({ version: '', build: '', releaseChannel: '', license: '' });
     const [releasePlan, setReleasePlan] = useState<ReleasePlanItem[]>([]);
-    const [ownerInfo, setOwnerInfo] = useState<OwnerInfo>({ name: 'Aman Yadav', imageUrl: 'https://picsum.photos/200/200' });
+    const [ownerInfo, setOwnerInfo] = useState<OwnerInfo>({ name: 'Aman Yadav', imageUrl: '' });
     const [isClient, setIsClient] = useState(false);
+    const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -77,8 +81,24 @@ export function AboutEditor() {
             toast({ title: 'Error', description: 'Could not save changes.', variant: 'destructive' });
         }
     };
+    
+    const handleSavePhoto = (newImage: string | null) => {
+        setOwnerInfo(prev => ({...prev, imageUrl: newImage || ''}));
+        setIsPhotoEditorOpen(false);
+        toast({ title: 'Photo Updated', description: "Click 'Save All' to apply the changes." });
+    }
 
     if (!isClient) return null;
+    
+    if (isPhotoEditorOpen) {
+        return (
+            <ProfilePhotoEditor
+                currentImage={ownerInfo.imageUrl}
+                onSave={handleSavePhoto}
+                onClose={() => setIsPhotoEditorOpen(false)}
+            />
+        );
+    }
 
     return (
         <div className="w-full max-w-lg mx-auto flex flex-col gap-6 p-4 sm:p-6">
@@ -103,9 +123,17 @@ export function AboutEditor() {
                         <Label htmlFor="ownerName">Owner Name</Label>
                         <Input id="ownerName" value={ownerInfo.name} onChange={(e) => handleOwnerInfoChange('name', e.target.value)} />
                     </div>
-                     <div className="space-y-1">
-                        <Label htmlFor="ownerImage">Owner Image URL</Label>
-                        <Input id="ownerImage" value={ownerInfo.imageUrl} onChange={(e) => handleOwnerInfoChange('imageUrl', e.target.value)} />
+                     <div className="space-y-2">
+                        <Label>Owner Photo</Label>
+                        <div className="flex items-center gap-4">
+                           <Avatar className="w-20 h-20">
+                               <AvatarImage src={ownerInfo.imageUrl} alt={ownerInfo.name} />
+                               <AvatarFallback><User /></AvatarFallback>
+                           </Avatar>
+                           <Button variant="outline" onClick={() => setIsPhotoEditorOpen(true)}>
+                               <Pencil className="mr-2 h-4 w-4" /> Change Photo
+                           </Button>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
