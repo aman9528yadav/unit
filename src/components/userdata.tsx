@@ -140,6 +140,9 @@ export function UserData() {
                         <User/>
                     </div>
                     <h1 className="text-xl font-bold">{t('userdata.title')}</h1>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <Link href="/profile/edit"><Pencil className="h-4 w-4"/></Link>
+                    </Button>
                 </div>
                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" asChild><Link href="/help"><HelpCircle className="mr-2 h-4 w-4"/> {t('userdata.help')}</Link></Button>
