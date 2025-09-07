@@ -13,8 +13,8 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
 const CountdownBox = ({ value, label }: { value: number; label: string }) => (
-    <div className="bg-primary/10 p-4 rounded-lg text-primary w-24">
-        <p className="text-4xl font-bold">{String(value).padStart(2, '0')}</p>
+    <div className="bg-primary/10 p-3 rounded-lg text-primary text-center">
+        <p className="text-2xl font-bold">{String(value).padStart(2, '0')}</p>
         <p className="text-xs text-primary/80">{label}</p>
     </div>
 );
