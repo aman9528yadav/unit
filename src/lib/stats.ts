@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { format, startOfWeek, startOfMonth, eachDayOfInterval, eachMonthOfInterval, eachYearOfInterval, startOfYear, endOfYear, subDays } from 'date-fns';
@@ -54,6 +55,8 @@ export const getStats = async (email: string | null, dateRange?: DateRange): Pro
     todaysOps: number;
     totalOps: number;
     savedNotes: number;
+    recycledNotes: number;
+    favoriteConversions: number;
     activity: DailyActivity[];
     totalConversions: number;
     totalCalculations: number;
@@ -73,10 +76,17 @@ export const getStats = async (email: string | null, dateRange?: DateRange): Pro
     const todaysOps = (dailyConversions[today] || 0) + (dailyCalculations[today] || 0) + (dailyDateCalculations[today] || 0);
     const totalOps = totalConversions + totalCalculations + totalDateCalculations;
 
+    // Get note stats
     const notesKey = getUserNotesKey(email);
     const notesData = typeof window !== 'undefined' ? localStorage.getItem(notesKey) : null;
     const notes: Note[] = notesData ? JSON.parse(notesData) : [];
     const savedNotes = notes.filter(note => !note.deletedAt).length;
+    const recycledNotes = notes.filter(note => !!note.deletedAt).length;
+
+    // Get favorite stats
+    const favoritesData = typeof window !== 'undefined' ? localStorage.getItem('favoriteConversions') : null;
+    const favoriteConversions = favoritesData ? JSON.parse(favoritesData).length : 0;
+
 
     // Prepare activity based on date range
     const activity: DailyActivity[] = [];
@@ -108,7 +118,9 @@ export const getStats = async (email: string | null, dateRange?: DateRange): Pro
     return { 
         todaysOps, 
         totalOps, 
-        savedNotes, 
+        savedNotes,
+        recycledNotes,
+        favoriteConversions,
         activity,
         totalConversions,
         totalCalculations,

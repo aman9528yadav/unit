@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
@@ -17,7 +18,10 @@ import {
   TrendingUp,
   CheckCircle,
   XCircle,
-  TrendingDown
+  TrendingDown,
+  NotebookPen,
+  Trash2,
+  Star
 } from "lucide-react";
 import { addDays, format } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -27,7 +31,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { getStats, type DailyActivity } from "@/lib/stats";
 import { LineChart, Line, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart as RechartsBarChart } from "recharts";
 import { useLanguage } from "@/context/language-context";
-import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
 import { getStreakData } from "@/lib/streak";
@@ -56,6 +60,9 @@ export function Analytics() {
         totalConversions: number;
         totalCalculations: number;
         totalDateCalculations: number;
+        savedNotes: number;
+        recycledNotes: number;
+        favoriteConversions: number;
         activity: DailyActivity[];
         currentStreak: number;
         bestStreak: number;
@@ -64,6 +71,9 @@ export function Analytics() {
         totalConversions: 0,
         totalCalculations: 0,
         totalDateCalculations: 0,
+        savedNotes: 0,
+        recycledNotes: 0,
+        favoriteConversions: 0,
         activity: [],
         currentStreak: 0,
         bestStreak: 0,
@@ -89,6 +99,9 @@ export function Analytics() {
             totalConversions: fetchedStats.totalConversions,
             totalCalculations: fetchedStats.totalCalculations,
             totalDateCalculations: fetchedStats.totalDateCalculations,
+            savedNotes: fetchedStats.savedNotes,
+            recycledNotes: fetchedStats.recycledNotes,
+            favoriteConversions: fetchedStats.favoriteConversions,
             activity: fetchedStats.activity,
             currentStreak: streakData.currentStreak,
             bestStreak: streakData.bestStreak,
@@ -202,9 +215,19 @@ export function Analytics() {
               <CardContent><p className="text-4xl font-extrabold text-yellow-500 flex items-center gap-2"><CheckCircle /> {stats.bestStreak} days</p></CardContent>
             </Card>
 
-            <Card className="rounded-2xl shadow-md hover:shadow-lg transition md:col-span-3">
-              <CardHeader><CardTitle>Last Seen</CardTitle></CardHeader>
-              <CardContent><p className="text-4xl font-extrabold text-gray-500 flex items-center gap-2"><XCircle /> {stats.daysNotOpened} days ago</p></CardContent>
+            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
+              <CardHeader><CardTitle>Saved Notes</CardTitle></CardHeader>
+              <CardContent><p className="text-4xl font-extrabold text-blue-500 flex items-center gap-2"><NotebookPen /> {stats.savedNotes}</p></CardContent>
+            </Card>
+            
+            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
+              <CardHeader><CardTitle>Recycle Bin</CardTitle></CardHeader>
+              <CardContent><p className="text-4xl font-extrabold text-gray-500 flex items-center gap-2"><Trash2 /> {stats.recycledNotes}</p></CardContent>
+            </Card>
+
+            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
+              <CardHeader><CardTitle>Favorite Conversions</CardTitle></CardHeader>
+              <CardContent><p className="text-4xl font-extrabold text-pink-500 flex items-center gap-2"><Star /> {stats.favoriteConversions}</p></CardContent>
             </Card>
           </div>
     
