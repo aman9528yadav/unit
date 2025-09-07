@@ -60,7 +60,7 @@ import { listenToNextUpdateInfo, NextUpdateInfo } from "@/services/firestore";
 import { getStreakData, recordVisit } from "@/lib/streak";
 
 
-const ToolButton = ({ icon: Icon, label, href, color }: any) => {
+const ToolButton = ({ icon: Icon, label, href, color, target }: any) => {
     const content = (
         <div className="group aspect-square rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex flex-col items-center justify-center gap-2 shadow-sm text-center">
             <div className={cn("size-12 grid place-items-center rounded-full bg-secondary", color)}>
@@ -69,15 +69,17 @@ const ToolButton = ({ icon: Icon, label, href, color }: any) => {
             <p className="font-semibold text-foreground text-sm">{label}</p>
         </div>
     );
+
     if (href) {
         return (
-            <Link href={href}>
-                {content}
+            <Link href={href} passHref>
+                <a target={target}>{content}</a>
             </Link>
         );
     }
-    return content;
+    return <div onClick={href}>{content}</div>;
 };
+
 
 const UpdateCard = ({ update }: any) => (
     <Card className="bg-card border-border shadow-sm hover:bg-secondary transition-colors w-[240px] flex-shrink-0 flex flex-col p-4">
