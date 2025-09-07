@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon, ArrowRightLeft } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon, ArrowRightLeft, CheckSquare, Baseline, Highlighter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -60,6 +60,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const editorRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const colorInputRef = useRef<HTMLInputElement>(null);
+    const highlightInputRef = useRef<HTMLInputElement>(null);
     const isNewNote = noteId === 'new';
     
     const contentSetRef = useRef(false);
@@ -165,6 +166,10 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
     const handleColorChange = (color: string) => {
       handleFormat('foreColor', color);
+    };
+    
+    const handleHighlightChange = (color: string) => {
+      handleFormat('hiliteColor', color);
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -345,12 +350,18 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('redo')}><Redo /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('bold')}><Bold /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('italic')}><Italic /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('underline')}><Underline /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => epreventDefault()} onClick={() => handleFormat('underline')}><Underline /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('strikeThrough')}><Strikethrough /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={showComingSoonToast}><Link2 /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('insertUnorderedList')}><List /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('insertOrderedList')}><ListOrdered /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('insertHTML', '<div><input type="checkbox" disabled/>&nbsp;</div>')}><CheckSquare /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={showComingSoonToast}><Code2 /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => colorInputRef.current?.click()}><Baseline/></Button>
+                    <input type="color" ref={colorInputRef} onChange={(e) => handleColorChange(e.target.value)} className="w-0 h-0 opacity-0 absolute" />
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => highlightInputRef.current?.click()}><Highlighter/></Button>
+                     <input type="color" ref={highlightInputRef} onChange={(e) => handleHighlightChange(e.target.value)} className="w-0 h-0 opacity-0 absolute" />
+
                     
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -381,36 +392,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                                      <span>px</span>
                                      <Button size="sm" onClick={handleApplyCustomFontSize}>{t('noteEditor.formatting.apply')}</Button>
                                 </div>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon"><Palette /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            {FONT_COLORS.map(item => (
-                                <DropdownMenuItem key={item.name} onSelect={() => handleColorChange(item.color)}>
-                                    <div className="w-4 h-4 rounded-full mr-2 border" style={{ backgroundColor: item.color === 'inherit' ? 'transparent' : item.color, color: item.color }} >
-                                       {item.color !== 'inherit' && <Circle className='w-full h-full'/>}
-                                    </div>
-                                    {t(`noteEditor.colors.${item.name.toLowerCase()}`)}
-                                </DropdownMenuItem>
-                            ))}
-                            <DropdownMenuSeparator/>
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                <label htmlFor="customColor" className="flex items-center gap-2 cursor-pointer">
-                                    <div className="w-4 h-4 rounded-full mr-2 border" style={{ backgroundColor: 'transparent' }} />
-                                    {t('noteEditor.colors.custom')}
-                                    <input 
-                                        id="customColor"
-                                        ref={colorInputRef}
-                                        type="color" 
-                                        className="w-0 h-0 opacity-0"
-                                        onChange={(e) => handleColorChange(e.target.value)}
-                                    />
-                                </label>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
