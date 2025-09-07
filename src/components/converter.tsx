@@ -271,6 +271,12 @@ export function Converter() {
         }
     });
 
+    return () => {
+      unsub();
+    };
+  }, []);
+
+  React.useEffect(() => {
     const itemToRestore = localStorage.getItem("restoreConversion");
     if (itemToRestore) {
         const parsedQuery = offlineParseConversionQuery(itemToRestore, allUnits, conversionCategories);
@@ -279,7 +285,7 @@ export function Converter() {
         }
         localStorage.removeItem("restoreConversion");
     }
-    
+
     const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'userProfile') {
             setProfile(e.newValue ? JSON.parse(e.newValue) : null);
@@ -290,7 +296,6 @@ export function Converter() {
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      unsub();
     };
   }, [allUnits, conversionCategories]);
 
@@ -964,5 +969,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
