@@ -18,13 +18,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { FAQ, defaultFaqs } from '../help';
+import type { FAQ } from '../help';
 import { useRouter } from 'next/navigation';
 import { setFaqs as setFaqsInDb, listenToFaqs } from '@/services/firestore';
 
 
 export function HelpEditor() {
-    const [faqs, setFaqs] = useState<FAQ[]>([]);
+    const [faqs, setFaqs] = useState<FAQ[] | null>(null);
     const [isClient, setIsClient] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingFaq, setEditingFaq] = useState<FAQ | null>(null);
@@ -37,12 +37,13 @@ export function HelpEditor() {
     useEffect(() => {
         setIsClient(true);
         const unsubscribe = listenToFaqs((faqsFromDb) => {
-            setFaqs(faqsFromDb.length > 0 ? faqsFromDb : defaultFaqs);
+            setFaqs(faqsFromDb);
         });
         return () => unsubscribe();
     }, []);
 
     const handleSaveAll = async () => {
+        if (!faqs) return;
         try {
             await setFaqsInDb(faqs);
             toast({ title: "FAQs Saved!", description: "All changes have been saved to the database." });
@@ -64,8 +65,8 @@ export function HelpEditor() {
         setIsDialogOpen(true);
     };
     
-    const handleSaveItem = () => {
-        if (!question || !answer) {
+    const handleSaveItem = async () => {
+        if (!question || !answer || !faqs) {
             toast({ title: "Incomplete Information", description: "Please fill out both question and answer.", variant: "destructive" });
             return;
         }
@@ -77,19 +78,28 @@ export function HelpEditor() {
             const newFaq: FAQ = { id: uuidv4(), question, answer };
             updatedFaqs = [...faqs, newFaq];
         }
-        setFaqs(updatedFaqs);
-        setIsDialogOpen(false);
-    };
-
-    const handleDelete = (faqId: string) => {
-        if (window.confirm("Are you sure you want to delete this FAQ item?")) {
-            const updatedFaqs = faqs.filter(f => f.id !== faqId);
-            setFaqs(updatedFaqs);
-            toast({ title: "FAQ Deleted", description: "The FAQ item has been removed. Click 'Save All Changes' to commit." });
+        
+        try {
+            await setFaqsInDb(updatedFaqs);
+            setFaqs(updatedFaqs); // Update local state to match
+            toast({ title: "Success", description: `FAQ item ${editingFaq ? 'updated' : 'added'}.`});
+            setIsDialogOpen(false);
+        } catch (error) {
+            console.error(error);
+            toast({ title: "Save Failed", description: "Could not save the FAQ item to the database.", variant: "destructive" });
         }
     };
 
-    if (!isClient) {
+    const handleDelete = (faqId: string) => {
+        if (!faqs) return;
+        if (window.confirm("Are you sure you want to delete this FAQ item?")) {
+            const updatedFaqs = faqs.filter(f => f.id !== faqId);
+            setFaqsInDb(updatedFaqs);
+            toast({ title: "FAQ Deleted", description: "The FAQ item has been removed." });
+        }
+    };
+
+    if (!isClient || faqs === null) {
         return null;
     }
 
