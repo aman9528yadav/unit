@@ -249,13 +249,15 @@ export function Converter() {
     const storedProfileData = localStorage.getItem("userProfile");
     const userEmail = storedProfileData ? JSON.parse(storedProfileData).email : null;
     
-    if (storedProfileData) {
-        setProfile(JSON.parse(storedProfileData));
-    }
-    
     updateUserRole(userEmail);
 
     const unsub = listenToUserData(userEmail, (data) => {
+        if (data && data.fullName && data.email) {
+            setProfile(data);
+        } else if (storedProfileData) {
+            setProfile(JSON.parse(storedProfileData));
+        }
+
         if (!data) return;
         setCustomUnits(data.customUnits || []);
         setCustomCategories(data.customCategories || []);

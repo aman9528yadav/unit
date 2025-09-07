@@ -120,16 +120,19 @@ export function Calculator() {
     const storedProfile = localStorage.getItem('userProfile');
     const email = storedProfile ? JSON.parse(storedProfile).email : null;
     
-    if (storedProfile) {
-        const parsedProfile = JSON.parse(storedProfile);
-        setProfile(parsedProfile);
-        updateUserRole(parsedProfile.email);
+    if (email) {
+      updateUserRole(email);
     } else {
-        updateUserRole(null); // Guest user
+      updateUserRole(null); // Guest user
     }
 
     const unsub = listenToUserData(email, (data) => {
-        setRecentCalculations((data?.calculationHistory || []).slice(0, 4));
+      setRecentCalculations((data?.calculationHistory || []).slice(0, 4));
+      if (data && data.fullName && data.email) {
+          setProfile(data);
+      } else if (storedProfile) {
+          setProfile(JSON.parse(storedProfile));
+      }
     });
     
     const savedMode = localStorage.getItem('calculatorMode') as CalculatorMode;
@@ -141,9 +144,6 @@ export function Calculator() {
     const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'calculatorSoundEnabled') {
             setIsSoundEnabled(e.newValue === null ? true : JSON.parse(e.newValue));
-        }
-         if (e.key === 'userProfile') {
-            setProfile(e.newValue ? JSON.parse(e.newValue) : null);
         }
     };
     
