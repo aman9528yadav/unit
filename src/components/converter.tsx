@@ -302,7 +302,9 @@ export function Converter() {
       const storedHistory = localStorage.getItem("conversionHistory");
       let currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
       
-      if (currentHistory.length > 0 && currentHistory[0] === newHistoryEntry) {
+      // Prevent duplicate entries
+      const isDuplicate = currentHistory.length > 0 && currentHistory[0].startsWith(newHistoryEntry.split('|').slice(0, 2).join('|'));
+      if (isDuplicate) {
           return;
       }
       
@@ -311,8 +313,7 @@ export function Converter() {
       localStorage.setItem("conversionHistory", JSON.stringify(currentHistory));
       localStorage.setItem('lastConversion', newHistoryEntry);
 
-      setRecentConversions(currentHistory.slice(0, 4));
-      
+      loadRecentConversions();
   };
 
  const performConversion = () => {
@@ -338,9 +339,9 @@ export function Converter() {
       maximumFractionDigits: 5,
       useGrouping: false,
     });
-
+    
     setOutputValue(formattedResult);
-    handleSaveToHistory(inputValue, fromUnit, toUnit, formattedResult, categoryToUse.name);
+    return { formattedResult, categoryToUse };
   };
 
   React.useEffect(() => {
@@ -376,6 +377,11 @@ export function Converter() {
     const category = conversionCategories.find(c => c.name === categoryName);
     if (category) {
       setSelectedCategory(category);
+      // Reset units to default for the new category
+      setFromUnit(category.units[0].symbol);
+      setToUnit(category.units[1].symbol);
+      setInputValue("1");
+      setOutputValue("");
     }
   };
 
@@ -396,7 +402,10 @@ export function Converter() {
   };
 
   const handleConvertClick = () => {
-    performConversion();
+    const result = performConversion();
+    if(result) {
+        handleSaveToHistory(inputValue, fromUnit, toUnit, result.formattedResult, result.categoryToUse.name);
+    }
   };
   
   const handleToggleFavorite = () => {
@@ -433,7 +442,19 @@ export function Converter() {
             setFromUnit(parsedQuery.fromUnit);
             setToUnit(parsedQuery.toUnit);
             setInputValue(String(parsedQuery.value));
-            performConversion();
+            
+            // Perform conversion after state update
+            React.startTransition(() => {
+                const numValue = parsedQuery.value;
+                const result = category.convert(numValue, parsedQuery.fromUnit, parsedQuery.toUnit, region) as number;
+                 if (result !== undefined && !isNaN(result)) {
+                    const formattedResult = result.toLocaleString(undefined, {
+                        maximumFractionDigits: 5,
+                        useGrouping: false,
+                    });
+                    setOutputValue(formattedResult);
+                 }
+            });
         } else {
             toast({ title: t('converter.toast.cannotRestore'), description: t('converter.toast.regionError', { region }), variant: "destructive" });
         }
@@ -959,3 +980,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
