@@ -210,6 +210,7 @@ export function Converter() {
 
   const [favorites, setFavorites] = useState<string[]>([]);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [recentConversions, setRecentConversions] = useState<string[]>([]);
 
   const imageExportRef = React.useRef<HTMLDivElement>(null);
 
@@ -222,6 +223,12 @@ export function Converter() {
 
   const fromUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === fromUnit), [currentUnits, fromUnit]);
   const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit), [currentUnits, toUnit]);
+  
+  const loadRecentConversions = useCallback(() => {
+    const storedHistory = localStorage.getItem('conversionHistory');
+    const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
+    setRecentConversions(currentHistory.slice(0, 4));
+  }, []);
   
   const loadFavorites = useCallback(() => {
     const storedFavorites = localStorage.getItem("favoriteConversions");
@@ -253,6 +260,7 @@ export function Converter() {
     
     loadSettings();
     loadFavorites();
+    loadRecentConversions();
 
     const itemToRestore = localStorage.getItem("restoreConversion");
     if (itemToRestore) {
@@ -271,6 +279,9 @@ export function Converter() {
          if (e.key === 'favoriteConversions') {
             loadFavorites();
         }
+        if (e.key === 'conversionHistory') {
+           loadRecentConversions();
+        }
     };
     
     window.addEventListener('storage', handleStorageChange);
@@ -278,7 +289,7 @@ export function Converter() {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [profile?.email, allUnits, conversionCategories, loadFavorites]);
+  }, [profile?.email, allUnits, conversionCategories, loadFavorites, loadRecentConversions]);
   
   const getFullHistoryString = (input: string, from: string, to: string, result: string, category: string): string => {
     return `${input} ${from} → ${result} ${to}|${category}|${new Date().toISOString()}`;
@@ -376,6 +387,7 @@ export function Converter() {
     if (conversionResult) {
       const { formattedResult, categoryToUse } = conversionResult;
       handleSaveToHistory(inputValue, fromUnit, toUnit, formattedResult, categoryToUse.name);
+      loadRecentConversions(); // Refresh recent conversions list
     }
   };
   
@@ -885,6 +897,27 @@ export function Converter() {
                 </div>
             </DialogContent>
         </Dialog>
+        
+        {recentConversions.length > 0 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                        <History size={18} />
+                        {t('converter.recentConversions')}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                        {recentConversions.map((calc, i) => (
+                            <li key={i} className="flex justify-between items-center p-2 bg-secondary rounded-md">
+                               <span>{calc.split('|')[0]}</span>
+                               <Button variant="ghost" size="sm" onClick={() => router.push('/history?tab=conversions')}>{t('dashboard.seeAll')}</Button>
+                            </li>
+                        ))}
+                    </ul>
+                </CardContent>
+            </Card>
+        )}
     </div>
   );
 }
