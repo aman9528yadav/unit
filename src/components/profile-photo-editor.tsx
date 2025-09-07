@@ -94,8 +94,6 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
     };
 
     const handleSave = () => {
-        // The onSave callback will handle saving to the Realtime Database.
-        // We no longer update the Firebase Auth profile photoURL here to avoid the length limit error.
         onSave(image);
     };
 
@@ -129,15 +127,15 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
                     </div>
                     <div className="space-y-4">
                         <div className="flex items-center gap-2">
-                             <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
-                                <Upload className="mr-2 h-4 w-4"/> {t('photoEditor.upload')}
+                             <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()}>
+                                <Upload className="h-4 w-4"/>
                              </Button>
                              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/jpeg, image/png" className="hidden" />
-                             <Button variant="outline" className="w-full" onClick={() => setMode("camera")}>
-                                <Camera className="mr-2 h-4 w-4"/> {t('photoEditor.takePhoto')}
+                             <Button variant="outline" size="icon" onClick={() => setMode("camera")}>
+                                <Camera className="h-4 w-4"/>
                              </Button>
-                             <Button variant="outline" className="w-full" onClick={() => setImage(null)}>
-                                <Trash2 className="mr-2 h-4 w-4"/> {t('photoEditor.remove')}
+                             <Button variant="outline" size="icon" onClick={() => setImage(null)}>
+                                <Trash2 className="h-4 w-4"/>
                              </Button>
                         </div>
                         <div>
