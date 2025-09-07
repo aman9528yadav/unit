@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
@@ -6,11 +7,17 @@ import Link from 'next/link';
 import { motion } from "framer-motion";
 import {
   Calculator,
+  Clock3,
+  History,
   NotebookPen,
   Wand2,
+  LayoutGrid,
   Search,
   ArrowRight,
   PlayCircle,
+  BarChart3,
+  TrendingUp,
+  CheckCircle2,
   Moon,
   Sun,
   User,
@@ -31,16 +38,29 @@ import {
   ChevronDown,
   Info,
   Newspaper,
-  Rocket,
-  History
+  Rocket
 } from "lucide-react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/context/theme-context";
+import { getTodaysCalculations, getWeeklyCalculations, getAllTimeCalculations, getAllTimeNotes } from "@/lib/utils";
+import { getStreakData, recordVisit, type StreakData } from "@/lib/streak";
 import { GlobalSearch } from "./global-search";
 import { Notifications } from "./notifications";
 import { useLanguage } from "@/context/language-context";
@@ -52,12 +72,53 @@ import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import { Label } from "./ui/label";
 import { Checkbox } from "./ui/checkbox";
 
-interface UserProfile {
-    fullName: string;
-    email: string;
-    profileImage?: string;
-    [key: string]: any;
+
+interface Note {
+    id: string;
+    deletedAt?: string | null;
 }
+
+const NOTES_STORAGE_KEY_BASE = 'userNotesV2';
+const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : 'guest_userNotesV2';
+
+const getSavedNotesCount = (email: string | null) => {
+    if (typeof window === 'undefined') return 0;
+    const storageKey = getUserNotesKey(email);
+    const savedNotes = localStorage.getItem(storageKey);
+    if (savedNotes) {
+        try {
+            const notes: Note[] = JSON.parse(savedNotes);
+            return notes.filter(note => !note.deletedAt).length;
+        } catch (e) {
+            console.error("Failed to parse notes from storage", e);
+            return 0;
+        }
+    }
+    return 0;
+};
+
+const Stat = ({ icon: Icon, label, value, trend }: any) => (
+  <Card className="bg-card border-border shadow-sm">
+    <CardContent className="p-4">
+      <div className="flex items-center gap-3">
+        <div className="size-10 grid place-items-center rounded-lg bg-secondary text-primary">
+          <Icon className="size-5" />
+        </div>
+        <div className="flex-1">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-xl font-semibold text-foreground">{value}</p>
+            {trend && (
+              <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
+                <TrendingUp className="mr-1 size-3" /> {trend}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
 
 const ToolButton = ({ icon: Icon, label, href, color }: any) => (
     <Link href={href} className="group aspect-square rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex flex-col items-center justify-center gap-2 shadow-sm text-center">
@@ -107,6 +168,13 @@ const RecommendationCard = ({ item }: any) => (
   </motion.div>
 );
 
+interface UserProfile {
+    fullName: string;
+    email: string;
+    profileImage?: string;
+    [key: string]: any;
+}
+
 const Header = ({ name, profile, onProfileClick }: { name: string, profile: UserProfile | null, onProfileClick: () => void }) => {
   const router = useRouter();
   const { t } = useLanguage();
@@ -126,7 +194,7 @@ const Header = ({ name, profile, onProfileClick }: { name: string, profile: User
         <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">{t('dashboard.greeting', { name: name })}</h1>
              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Wand2 className="size-4 text-primary" />
+                <CheckCircle2 className="size-4 text-green-500" />
                 {welcomeMessage}
             </div>
         </div>
@@ -164,11 +232,24 @@ const LanguageToggle = () => {
     );
 };
 
+const ThemeToggle = ({ isDark, onChange }: { isDark: boolean; onChange: (isDark: boolean) => void }) => (
+  <div className="flex items-center gap-3 p-2 rounded-lg border border-border bg-card">
+    <Sun className="size-4 text-yellow-400" />
+    <Switch checked={isDark} onCheckedChange={onChange} />
+    <Moon className="size-4 text-cyan-400" />
+  </div>
+);
+
 export function Dashboard() {
   const { theme, setTheme } = useTheme();
   const { t } = useLanguage();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [todayCalculations, setTodayCalculations] = useState(0);
+  const [allTimeCalculations, setAllTimeCalculations] = useState(0);
+  const [weeklyCalculations, setWeeklyCalculations] = useState<{name: string; value: number}[]>([]);
+  const [savedNotesCount, setSavedNotesCount] = useState(0);
+  const [streakData, setStreakData] = useState<StreakData>({ currentStreak: 0, bestStreak: 0, daysNotOpened: 0 });
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [showMoreTools, setShowMoreTools] = useState(false);
   const [showBetaDialog, setShowBetaDialog] = useState(false);
@@ -176,18 +257,48 @@ export function Dashboard() {
   const router = useRouter();
 
 
+  const updateStats = useCallback(async (email: string | null) => {
+    try {
+        const [today, weekly, allTime, notes, streak] = await Promise.all([
+            getTodaysCalculations(email),
+            getWeeklyCalculations(email),
+            getAllTimeCalculations(email),
+            getAllTimeNotes(email),
+            getStreakData(email)
+        ]);
+        setTodayCalculations(today);
+        setWeeklyCalculations(weekly);
+        setAllTimeCalculations(allTime);
+        setSavedNotesCount(notes);
+        setStreakData(streak);
+    } catch (error) {
+        console.error("Failed to update stats:", error);
+    }
+  }, []);
+
   useEffect(() => {
     setIsClient(true);
     const hasSeenDialog = localStorage.getItem('hasSeenBetaDialog');
     if (!hasSeenDialog) {
         setShowBetaDialog(true);
     }
-     const storedProfile = localStorage.getItem('userProfile');
-    if (storedProfile) {
-        setProfile(JSON.parse(storedProfile));
+    
+    const storedProfile = localStorage.getItem("userProfile");
+    
+    if(storedProfile) {
+        const parsedProfile = JSON.parse(storedProfile);
+        setProfile(parsedProfile);
+        recordVisit(parsedProfile.email); // Record visit for streak tracking
+        updateStats(parsedProfile.email);
+    } else {
+        updateStats(null); // Load guest data
     }
-  }, []);
+  }, [updateStats]);
   
+  const handleThemeChange = (isDark: boolean) => {
+      setTheme(isDark ? 'dark' : 'light');
+  }
+
   const handleProfileClick = () => {
     if (profile) {
       router.push('/profile');
@@ -206,18 +317,20 @@ export function Dashboard() {
       { label: t('dashboard.tools.converter'), icon: Sigma, href: "/converter", color: "text-blue-400" },
       { label: t('dashboard.tools.calculator'), icon: Calculator, href: "/calculator", color: "text-orange-400" },
       { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
+      { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
+      { label: 'Analytics', icon: BarChart3, href: '/analytics', color: 'text-purple-400' },
       { label: 'News', icon: Newspaper, href: '/news', color: 'text-green-400' },
-      { label: 'History', icon: History, href: '/history', color: 'text-purple-400' },
       { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
     ];
     
     const moreTools = [
+        { label: t('dashboard.tools.favorites'), icon: Star, href: '/history?tab=favorites', color: 'text-yellow-500' },
         { label: t('dashboard.tools.dateCalc'), icon: Calendar, href: "/time?tab=date-diff", color: "text-green-400" },
         { label: t('dashboard.tools.timer'), icon: Timer, href: '/time?tab=timer', color: 'text-red-500' },
         { label: t('dashboard.tools.stopwatch'), icon: Hourglass, href: '/time?tab=stopwatch', color: 'text-indigo-500' },
     ];
 
-    const toolsToShow = showMoreTools ? [...quickTools.slice(0, 3), ...moreTools, ...quickTools.slice(3)] : quickTools;
+    const toolsToShow = showMoreTools ? [...quickTools.slice(0, 5), ...moreTools, ...quickTools.slice(5)] : quickTools.slice(0, 6);
 
 
     const recommendations = [
@@ -309,6 +422,13 @@ export function Dashboard() {
     <div className="w-full max-w-lg mx-auto flex flex-col gap-8 py-8">
       <Header name={profile?.fullName || t('dashboard.guest')} profile={profile} onProfileClick={handleProfileClick} />
 
+      <section className="grid grid-cols-2 gap-4">
+        <Stat icon={Calculator} label={t('dashboard.todayOps')} value={String(todayCalculations)} />
+        <Stat icon={Flame} label={t('dashboard.currentStreak')} value={`${streakData.currentStreak} ${t('dashboard.days')}`} />
+        <Stat icon={NotebookPen} label={t('dashboard.savedNotes')} value={String(savedNotesCount)} />
+        <Stat icon={History} label={t('dashboard.allTimeOps')} value={String(allTimeCalculations)} />
+      </section>
+
       <section>
         <Card className="bg-card border-border shadow-sm">
           <CardHeader>
@@ -328,6 +448,36 @@ export function Dashboard() {
                 {showMoreTools ? t('dashboard.showLess') : t('dashboard.showMore')}
                 <ChevronDown className={cn("ml-2 h-4 w-4 transition-transform", showMoreTools && "rotate-180")} />
             </Button>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section>
+        <Card className="overflow-hidden rounded-xl bg-card border-border shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-0">
+            <div>
+              <CardTitle className="text-base text-foreground">{t('dashboard.calculationStats')}</CardTitle>
+              <p className="text-xs text-muted-foreground">{t('dashboard.last7Days')}</p>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={weeklyCalculations} margin={{ left: 0, right: 0, top: 10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} strokeOpacity={0.1} stroke="hsl(var(--border))" />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                  <YAxis allowDecimals={false} width={28} tickLine={false} axisLine={false} stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))" }} />
+                  <Area type="monotone" dataKey="value" strokeWidth={2} stroke="hsl(var(--primary))" fill="url(#fill)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </section>

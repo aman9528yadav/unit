@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -37,6 +38,7 @@ import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flo
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useSearchParams, useRouter } from "next/navigation";
+import { incrementTodaysCalculations, getAllTimeCalculations } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { CustomUnit, CustomCategory } from "./custom-unit-manager";
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -200,12 +202,14 @@ export function Converter() {
   const [inputValue, setInputValue] = React.useState<string>("1");
   const debouncedInputValue = useDebounce(inputValue, 300);
   const [outputValue, setOutputValue] = React.useState<string>("");
+  const [history, setHistory] = React.useState<string[]>([]);
   const [favorites, setFavorites] = React.useState<string[]>([]);
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [region, setRegion] = React.useState<Region>('International');
   const { language, t } = useLanguage();
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
   const [isGraphVisible, setIsGraphVisible] = useState(false);
+  const [showRecentHistory, setShowRecentHistory] = useState(true);
   const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
 
@@ -238,18 +242,29 @@ export function Converter() {
     const storedProfileData = localStorage.getItem("userProfile");
     const userEmail = storedProfileData ? JSON.parse(storedProfileData).email : null;
 
+    const storedHistory = localStorage.getItem("conversionHistory");
     const storedFavorites = localStorage.getItem("favoriteConversions");
     const savedAutoConvert = localStorage.getItem(getUserKey('autoConvert', userEmail));
     const savedCustomUnits = localStorage.getItem(getUserKey('customUnits', userEmail));
     const savedCustomCategories = localStorage.getItem(getUserKey('customCategories', userEmail));
     const savedDefaultRegion = localStorage.getItem(getUserKey('defaultRegion', userEmail));
 
+    if (storedHistory) setHistory(JSON.parse(storedHistory));
     if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
     if (storedProfileData) {
-        setProfile(JSON.parse(storedProfileData));
+        const parsedProfile = JSON.parse(storedProfileData);
+        setProfile(parsedProfile);
+        const calculations = getAllTimeCalculations(parsedProfile.email);
+        if (parsedProfile.email === DEVELOPER_EMAIL) {
+            setUserRole('Owner');
+        } else if (calculations >= PREMIUM_MEMBER_THRESHOLD) {
+            setUserRole('Premium Member');
+        } else {
+            setUserRole('Member');
+        }
+    } else {
+        setUserRole('Member');
     }
-    setUserRole('Member'); // Simplified
-    
     if (savedAutoConvert !== null) setAutoConvert(JSON.parse(savedAutoConvert));
     if (savedCustomUnits) setCustomUnits(JSON.parse(savedCustomUnits));
     if (savedCustomCategories) setCustomCategories(JSON.parse(savedCustomCategories));
@@ -281,6 +296,9 @@ export function Converter() {
         }
         if (e.key === getUserKey('defaultRegion', userEmail) && e.newValue && regions.includes(e.newValue as Region)) {
             setRegion(e.newValue as Region);
+        }
+        if (e.key === 'conversionHistory') {
+            setHistory(JSON.parse(e.newValue || '[]'));
         }
     };
 
@@ -337,47 +355,12 @@ export function Converter() {
 
   React.useEffect(() => {
     if (currentUnits.length > 0) {
-      if (!currentUnits.some(u => u.symbol === fromUnit)) {
-          setFromUnit(currentUnits[0].symbol);
-      }
-      if (!currentUnits.some(u => u.symbol === toUnit)) {
-          setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
-      }
+      setFromUnit(currentUnits[0].symbol);
+      setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
       setInputValue("1");
       setIsGraphVisible(false);
     }
-  }, [selectedCategory, region, currentUnits, fromUnit, toUnit]);
-
-
- const handleSaveToHistory = React.useCallback((val: string, outVal: string) => {
-    const currentUserEmail = JSON.parse(localStorage.getItem('userProfile') || '{}').email || null;
-    const shouldSave = JSON.parse(localStorage.getItem(getUserKey('saveConversionHistory', currentUserEmail)) ?? 'true');
-    
-    if (!shouldSave) return;
-    
-    const numValue = parseFloat(val);
-    if (isNaN(numValue) || !outVal) return;
-
-    const result = parseFloat(outVal.replace(/,/g, ''));
-    if (isNaN(result)) return;
-
-    const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
-    
-    const currentHistory = JSON.parse(localStorage.getItem("conversionHistory") || '[]');
-    
-    if (currentHistory.length > 0 && currentHistory[0] === conversionString) {
-      return;
-    }
-    
-    const newHistory = [conversionString, ...currentHistory];
-    localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
-    localStorage.setItem("lastConversion", conversionString);
-    
-    window.dispatchEvent(new StorageEvent('storage', {
-        key: 'conversionHistory',
-        newValue: JSON.stringify(newHistory),
-    }));
-  }, [fromUnit, toUnit, selectedCategory.name]);
+  }, [selectedCategory, region, currentUnits]);
 
 
  const performConversion = React.useCallback(async (value: string | number, from: string, to: string) => {
@@ -408,7 +391,6 @@ export function Converter() {
 
     const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
     setOutputValue(formattedResult);
-    handleSaveToHistory(String(numValue), formattedResult); // <-- Definitive Fix
 
     if (categoryToUse.name !== 'Temperature') {
         const allUnitsInCategory = categoryToUse.units.filter(u => !u.region || u.region === region);
@@ -425,13 +407,50 @@ export function Converter() {
         setChartData([]);
     }
 
-}, [region, conversionCategories, handleSaveToHistory]);
+}, [region, conversionCategories]);
 
+  
+  const handleSaveToHistory = React.useCallback(() => {
+    const saveConversionHistory = JSON.parse(localStorage.getItem(getUserKey('saveConversionHistory', profile?.email || null)) || 'true');
+    if (!saveConversionHistory) return;
+
+    const numValue = parseFloat(inputValue);
+    const result = parseFloat(outputValue.replace(/,/g, ''));
+    if (isNaN(numValue) || isNaN(result) || outputValue === '') return;
+
+    const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
+    localStorage.setItem('lastConversion', conversionString);
+    
+    setHistory(prevHistory => {
+        const conversionPart = conversionString.split('|')[0];
+        if (prevHistory.some(h => h.startsWith(conversionPart))) {
+            return prevHistory;
+        }
+        incrementTodaysCalculations();
+        const newHistory = [conversionString, ...prevHistory];
+        localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
+        return newHistory;
+    });
+  }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name, profile?.email]);
+
+
+  React.useEffect(() => {
+    if (outputValue) {
+        handleSaveToHistory();
+    }
+  }, [outputValue, handleSaveToHistory]);
   
   useEffect(() => {
     if (!autoConvert) return;
-    performConversion(inputValue, fromUnit, toUnit);
-  }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion, inputValue]);
+  
+    const parsed = offlineParseConversionQuery(searchQuery, allUnits, conversionCategories);
+  
+    if (parsed) {
+      restoreFromParsedQuery(parsed);
+    } else {
+      performConversion(inputValue, fromUnit, toUnit);
+    }
+  }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion, inputValue, allUnits, conversionCategories, searchQuery]);
 
   React.useEffect(() => {
     const numValue = parseFloat(inputValue);
@@ -1006,6 +1025,44 @@ export function Converter() {
                 )}
             </CardContent>
         </Card>
+
+        {history.length > 0 && showRecentHistory && (
+          <Card className="w-full">
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <CardTitle className="flex items-center gap-2"><Clock size={20} />{t('converter.recentConversions')}</CardTitle>
+                    <Button variant="ghost" onClick={() => setShowRecentHistory(false)}><Trash2 className="mr-2 h-4 w-4"/>{t('converter.clear')}</Button>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
+                   {history.slice(0, 4).map((item) => {
+                       const { conversion, categoryName, timestamp } = parseHistoryString(item);
+                       const category = conversionCategories.find(c => c.name === categoryName);
+                       const Icon = category?.icon || Power;
+                       
+                       return (
+                         <div key={item} className="bg-secondary p-3 rounded-lg group relative">
+                            <div className="cursor-pointer" onClick={() => handleRestoreHistory(item)}>
+                               <p className="font-semibold">{conversion}</p>
+                               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                   <Icon size={14}/> 
+                                   <span>{t(`categories.${categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: categoryName })}</span>
+                                   <span>•</span>
+                                   <span>{formatTimestamp(new Date(timestamp))}</span>
+                               </div>
+                            </div>
+                            <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRestoreHistory(item)}><RotateCcw size={14} /></Button>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-destructive/20 hover:text-destructive" onClick={() => setHistory(h => h.filter(i => i !== item))}><Trash2 size={14} /></Button>
+                            </div>
+                         </div>
+                       );
+                   })}
+                </div>
+            </CardContent>
+          </Card>
+      )}
       
        <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
         <AlertDialogContent>

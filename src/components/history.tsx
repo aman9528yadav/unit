@@ -83,38 +83,27 @@ export function History() {
       to: toSymbol,
     };
   };
-  
-  const loadData = () => {
-      const storedHistory = localStorage.getItem("conversionHistory");
-      const storedFavorites = localStorage.getItem("favoriteConversions");
-      if (storedHistory) setHistory(JSON.parse(storedHistory));
-      if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
-  };
-
 
   useEffect(() => {
     setIsClient(true);
-    loadData();
     
-    const handleDataChange = (event: StorageEvent) => {
-        if (event.key === 'conversionHistory' || event.key === 'favoriteConversions') {
-            loadData();
+    const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'conversionHistory') {
+            setHistory(JSON.parse(e.newValue || '[]'));
         }
-    };
-
-    const handleVisibilityChange = () => {
-        if (document.visibilityState === 'visible') {
-            loadData();
+         if (e.key === 'favoriteConversions') {
+            setFavorites(JSON.parse(e.newValue || '[]'));
         }
     };
     
-    window.addEventListener('storage', handleDataChange);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    const storedHistory = localStorage.getItem("conversionHistory");
+    const storedFavorites = localStorage.getItem("favoriteConversions");
+    if (storedHistory) setHistory(JSON.parse(storedHistory));
+    if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
 
-    return () => {
-        window.removeEventListener('storage', handleDataChange);
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+
   }, []);
 
   const handleRestore = (item: string) => {
@@ -123,35 +112,34 @@ export function History() {
   };
   
   const handleClearAll = () => {
-      const targetKey = activeTab === 'history' ? 'conversionHistory' : 'favoriteConversions';
-      localStorage.removeItem(targetKey);
-      // Manually trigger a reload for this component and notify others
-      loadData();
-      window.dispatchEvent(new StorageEvent('storage', { key: targetKey, newValue: '[]' }));
+    if (activeTab === 'history') {
+        setHistory([]);
+        localStorage.removeItem("conversionHistory");
+    }
+    setFavorites([]);
+    localStorage.removeItem("favoriteConversions");
   };
 
   const handleDeleteItem = (itemString: string) => {
     // Remove from history
-    const currentHistory = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
-    const newHistory = currentHistory.filter((h: string) => h !== itemString);
+    const newHistory = history.filter(h => h !== itemString);
+    setHistory(newHistory);
     localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
 
     // Also remove from favorites if it's there
-    const currentFavorites = JSON.parse(localStorage.getItem('favoriteConversions') || '[]');
-    const newFavorites = currentFavorites.filter((fav: string) => !fav.startsWith(itemString.split('|')[0]));
+    const newFavorites = favorites.filter(fav => !fav.startsWith(itemString.split('|')[0]));
+    setFavorites(newFavorites);
     localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
-    
-    loadData(); // Reload data in current tab
-    // Notify other tabs
-    window.dispatchEvent(new StorageEvent('storage', { key: 'conversionHistory', newValue: JSON.stringify(newHistory) }));
-    window.dispatchEvent(new StorageEvent('storage', { key: 'favoriteConversions', newValue: JSON.stringify(newFavorites) }));
     
     setItemToDelete(null);
   };
   
   const itemsToDisplay = activeTab === 'history' 
     ? history 
-    : favorites;
+    : history.filter(item => {
+        const conversionPart = item.split('|')[0];
+        return favorites.some(fav => fav.startsWith(conversionPart));
+      });
     
   const filteredItems = itemsToDisplay.map(parseHistoryString).filter(parsed => {
     const category = conversionCategories.find(c => c.name === parsed.categoryName);
@@ -310,3 +298,6 @@ function HistoryItem({ item, onRestore, onDelete, t, language, activeTab }: { it
         </div>
     )
 }
+    
+
+    
