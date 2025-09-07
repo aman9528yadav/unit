@@ -98,7 +98,7 @@ export default function RootLayout({
   return (
     <ThemeProvider>
       <LanguageProvider>
-            <html lang="en" suppressHydrationWarning>
+            <html lang="en">
             <head>
                 <title>UniConvert</title>
                 <meta name="description" content="A straightforward unit converter app for various measurements." />
@@ -109,7 +109,7 @@ export default function RootLayout({
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
                 <link rel="apple-touch-icon" href="/icon-192x192.png" />
             </head>
-            <body className="font-body antialiased">
+            <body className="font-body antialiased" suppressHydrationWarning>
                 <MaintenanceRedirect>
                 <div className="flex flex-col min-h-screen">
                     <main className="flex-grow">
