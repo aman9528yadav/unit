@@ -3,7 +3,7 @@
 
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 
-type Theme = 'light' | 'dark' | 'custom';
+type Theme = 'light' | 'dark' | 'custom' | 'retro' | 'glass';
 
 type CustomColors = {
     background?: string;
@@ -73,7 +73,7 @@ function hexToHsl(hex: string): string {
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>('light');
-  const [lastNonCustomTheme, setLastNonCustomTheme] = useState< 'light' | 'dark'>('light');
+  const [lastNonCustomTheme, setLastNonCustomTheme] = useState< 'light' | 'dark' | 'retro' | 'glass'>('light');
   const [customTheme, setCustomThemeState] = useState<CustomTheme | null>(null);
 
   useEffect(() => {
@@ -99,7 +99,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const applyTheme = useCallback((themeToApply: Theme, customThemeToApply: CustomTheme | null) => {
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
+    root.classList.remove('light', 'dark', 'retro', 'glass');
 
     const colorProperties: (keyof CustomColors)[] = [
         'background', 'foreground', 'card', 'cardForeground', 'popover', 
@@ -116,7 +116,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
 
     if (themeToApply === 'custom' && customThemeToApply) {
-        root.classList.add(lastNonCustomTheme); // Apply base theme for properties not in custom
+        root.classList.add('light'); // Apply base light theme for properties not in custom
         
         Object.entries(customThemeToApply.colors).forEach(([key, value]) => {
             if (value && /^#[0-9A-F]{6}$/i.test(value)) {
@@ -124,10 +124,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 root.style.setProperty(cssVarName, hexToHsl(value));
             }
         });
-    } else if (themeToApply === 'light' || themeToApply === 'dark') {
+    } else if (['light', 'dark', 'retro', 'glass'].includes(themeToApply)) {
         root.classList.add(themeToApply);
     }
-  }, [lastNonCustomTheme]);
+  }, []);
   
   useEffect(() => {
       applyTheme(theme, customTheme);

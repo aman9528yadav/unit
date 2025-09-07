@@ -9,10 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
+import { signInWithEmailAndPassword, User } from "firebase/auth";
 import { Eye, EyeOff, Info, ArrowRight, Play } from "lucide-react";
 import { logUserEvent } from "@/services/firestore";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/language-context";
 
 
@@ -24,7 +23,6 @@ const handleSuccessfulLogin = async (user: User) => {
         fullName: user.displayName || user.email?.split('@')[0] || "New User",
         email: user.email,
         dob: existingProfile.email === user.email ? existingProfile.dob : '',
-        profileImage: user.photoURL || existingProfile.profileImage || ''
     };
 
     localStorage.setItem("userProfile", JSON.stringify(profile));

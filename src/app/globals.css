@@ -69,6 +69,71 @@ body {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+
+  .retro {
+    --background: 45 30% 95%; /* Creamy white */
+    --foreground: 45 10% 20%; /* Dark brown */
+    --card: 35 40% 90%; /* Light beige */
+    --card-foreground: 45 10% 20%;
+    --popover: 35 40% 90%;
+    --popover-foreground: 45 10% 20%;
+    --primary: 10 60% 50%; /* Burnt orange */
+    --primary-foreground: 45 30% 95%;
+    --secondary: 180 30% 85%; /* Muted teal */
+    --secondary-foreground: 45 10% 20%;
+    --muted: 35 40% 90%;
+    --muted-foreground: 45 10% 40%;
+    --accent: 180 40% 75%;
+    --accent-foreground: 45 10% 20%;
+    --destructive: 0 70% 60%; /* Muted red */
+    --destructive-foreground: 45 30% 95%;
+    --border: 45 10% 70%;
+    --input: 35 40% 90%;
+    --ring: 10 60% 50%;
+    --radius: 0.3rem;
+  }
+
+  .glass {
+    --background: 220 50% 98%;
+    --foreground: 220 40% 10%;
+    --primary: 220 90% 60%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 220 15% 90%;
+    --secondary-foreground: 220 30% 25%;
+    --accent: 220 80% 65%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 220 20% 90%;
+    --input: 220 30% 95%;
+    --ring: 220 90% 60%;
+    --radius: 0.75rem;
+
+    /* Base styles for glassmorphism */
+    --card-bg: hsla(var(--background), 0.5);
+    --card-border: hsla(var(--border), 0.3);
+    
+    /* Apply styles */
+    --card: var(--card-bg);
+    --popover: var(--card-bg);
+    --card-foreground: hsl(var(--foreground));
+    --popover-foreground: hsl(var(--foreground));
+  }
+}
+
+@layer components {
+    .glass {
+        .bg-card {
+            background-color: hsla(240, 10%, 100%, 0.5);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            border-color: hsla(240, 5.9%, 90%, 0.3);
+        }
+        .dark & .bg-card {
+             background-color: hsla(222, 84%, 4.9%, 0.5);
+             border-color: hsla(217, 32.6%, 17.5%, 0.3);
+        }
+    }
 }
 
 @layer base {

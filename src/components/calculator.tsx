@@ -4,12 +4,13 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Delete, Divide, X, Minus, Plus, Equal, Sigma, CalculatorIcon, Home, User, History, Trash2 } from 'lucide-react';
+import { RefreshCw, Delete, Divide, X, Minus, Plus, Equal, Sigma, CalculatorIcon, Home, User, History, Trash2, Lock } from 'lucide-react';
 import type { CalculatorMode } from '../settings';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Avatar, AvatarFallback } from './ui/avatar';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { incrementCalculationCount } from '@/lib/stats';
+import { incrementCalculationCount, getStats } from '@/lib/stats';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 
 const buttonClasses = {
   gray: "bg-muted hover:bg-muted/80 text-foreground",
@@ -37,17 +38,22 @@ const CalculatorButton = ({
   </Button>
 );
 
+const PREMIUM_MEMBER_THRESHOLD = 8000;
+type UserRole = 'Member' | 'Premium Member' | 'Owner';
+
 export function Calculator() {
   const [expression, setExpression] = useState('');
   const [result, setResult] = useState('');
-  const [mode, setMode] = useState<CalculatorMode>('scientific');
+  const [mode, setMode] = useState<CalculatorMode>('basic');
   const [angleMode, setAngleMode] = useState<'deg' | 'rad'>('deg');
   const [isClient, setIsClient] = useState(false);
-  const [profile, setProfile] = useState<{fullName: string, profileImage?: string} | null>(null);
+  const [profile, setProfile] = useState<{fullName: string} | null>(null);
   const router = useRouter();
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [recentCalculations, setRecentCalculations] = useState<string[]>([]);
+  const [userRole, setUserRole] = useState<UserRole>('Member');
+  const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
 
 
   // A simple and safe expression evaluator
@@ -94,12 +100,30 @@ export function Calculator() {
     const currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
     setRecentCalculations(currentHistory.slice(0, 4));
   }
+  
+  const updateUserRole = async (email: string | null) => {
+    if(email === "amanyadavyadav9458@gmail.com") {
+        setUserRole('Owner');
+        return;
+    }
+    const stats = await getStats(email);
+    if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD) {
+        setUserRole('Premium Member');
+    } else {
+        setUserRole('Member');
+    }
+  };
+
 
   useEffect(() => {
     setIsClient(true);
     const storedProfile = localStorage.getItem('userProfile');
     if (storedProfile) {
-        setProfile(JSON.parse(storedProfile));
+        const parsedProfile = JSON.parse(storedProfile);
+        setProfile(parsedProfile);
+        updateUserRole(parsedProfile.email);
+    } else {
+        updateUserRole(null); // Guest user
     }
     
     loadRecentCalculations();
@@ -147,6 +171,10 @@ export function Calculator() {
   };
   
   const handleFunctionClick = (func: string) => {
+    if(userRole === 'Member') {
+        setShowPremiumLockDialog(true);
+        return;
+    }
     playSound();
     setExpression(prev => prev + `${func}(`);
   }
@@ -181,7 +209,10 @@ export function Calculator() {
       const formattedResult = evalResult.toLocaleString(undefined, { maximumFractionDigits: 10, useGrouping: true });
       setResult(formattedResult);
       
-      incrementCalculationCount();
+      const userEmail = profile ? profile.email : null;
+      await incrementCalculationCount();
+      await updateUserRole(userEmail);
+
 
       const historyEntry = `${expression} = ${formattedResult}|${new Date().toISOString()}`;
       const storedHistory = localStorage.getItem('calculationHistory');
@@ -214,15 +245,15 @@ const ScientificLayout = () => (
         {/* Row 1 */}
         <CalculatorButton onClick={handleClear} label="AC" className={buttonClasses.gray} />
         <CalculatorButton onClick={handleBackspace} label={<Delete />} className={buttonClasses.gray} />
-        <CalculatorButton onClick={() => handleButtonClick('(')} label="(" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick(')')} label=")" className={buttonClasses.dark} />
+        <CalculatorButton onClick={() => handleFunctionClick('(')} label="(" className={buttonClasses.dark} />
+        <CalculatorButton onClick={() => handleFunctionClick(')')} label=")" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => { playSound(); setAngleMode(a => a === 'deg' ? 'rad' : 'deg')}} label={angleMode.toUpperCase()} className={buttonClasses.accent} />
 
         {/* Row 2 */}
         <CalculatorButton onClick={() => handleFunctionClick('sin')} label="sin" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleFunctionClick('cos')} label="cos" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleFunctionClick('tan')} label="tan" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('^')} label="xʸ" className={buttonClasses.dark} />
+        <CalculatorButton onClick={() => handleFunctionClick('^')} label="xʸ" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleButtonClick('/')} label={<Divide />} className={buttonClasses.blue} />
 
         {/* Row 3 */}
@@ -247,8 +278,8 @@ const ScientificLayout = () => (
         <CalculatorButton onClick={() => handleButtonClick('+')} label={<Plus />} className={buttonClasses.blue} />
 
         {/* Row 6 */}
-        <CalculatorButton onClick={() => handleButtonClick('π')} label="π" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('e')} label="e" className={buttonClasses.dark} />
+        <CalculatorButton onClick={() => handleFunctionClick('π')} label="π" className={buttonClasses.dark} />
+        <CalculatorButton onClick={() => handleFunctionClick('e')} label="e" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleButtonClick('0')} label="0" className={buttonClasses.dark} />
         <CalculatorButton onClick={() => handleButtonClick('.')} label="." className={buttonClasses.dark} />
         <CalculatorButton onClick={handleCalculate} label={<Equal />} className={buttonClasses.blue} />
@@ -303,7 +334,6 @@ const BasicLayout = () => (
             <Button variant="ghost" className="gap-2" onClick={() => router.push(profile ? '/profile' : '/welcome')}>
                 Hi, {profile?.fullName.split(' ')[0] || 'Guest'}
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={profile?.profileImage} alt={profile?.fullName}/>
                     <AvatarFallback><User /></AvatarFallback>
                 </Avatar>
             </Button>
@@ -353,6 +383,25 @@ const BasicLayout = () => (
                 </CardContent>
             </Card>
         )}
+        <AlertDialog open={showPremiumLockDialog} onOpenChange={setShowPremiumLockDialog}>
+            <AlertDialogContent>
+                <AlertDialogHeader className="items-center text-center">
+                     <div className="p-4 bg-primary/10 rounded-full mb-4">
+                        <Lock className="w-10 h-10 text-primary" />
+                    </div>
+                    <AlertDialogTitle className="text-2xl">Premium Feature Locked</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This feature is available to Premium Members. Complete {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} operations to unlock this feature and more!
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="sm:justify-center flex-col-reverse sm:flex-row gap-2">
+                     <AlertDialogCancel onClick={() => setShowPremiumLockDialog(false)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => router.push('/profile')}>
+                        Check Your Progress
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }

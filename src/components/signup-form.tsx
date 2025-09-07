@@ -2,18 +2,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
-import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, sendEmailVerification, updateProfile, User } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile, User } from "firebase/auth";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { ArrowLeft, Eye, EyeOff, Play, ArrowRight, User as UserIcon } from "lucide-react";
 import { logUserEvent } from "@/services/firestore";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/language-context";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +22,6 @@ const handleSuccessfulSignup = async (user: User) => {
         fullName: user.displayName,
         email: user.email,
         dob: '', // DOB is not available on signup
-        profileImage: user.photoURL || ''
     };
     localStorage.setItem("userProfile", JSON.stringify(profile));
 

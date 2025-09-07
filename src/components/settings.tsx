@@ -23,9 +23,12 @@ import { auth } from "@/lib/firebase";
 import { Region } from "@/lib/conversions";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { getStats } from "@/lib/stats";
 
 
 export type CalculatorMode = 'basic' | 'scientific';
+const PREMIUM_MEMBER_THRESHOLD = 8000;
+type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 const getUserKey = (key: string, email: string | null) => `${email || 'guest'}_${key}`;
 
@@ -43,11 +46,14 @@ const Section = ({ title, children, description }: { title: string, children: Re
     </Card>
 );
 
-const SettingRow = ({ label, description, control, isLink = false, href, children }: { label: string, description?: string, control?: React.ReactNode, isLink?: boolean, href?: string, children?: React.ReactNode }) => {
+const SettingRow = ({ label, description, control, isLink = false, href, children, isLocked = false, onLockClick }: { label: string, description?: string, control?: React.ReactNode, isLink?: boolean, href?: string, children?: React.ReactNode, isLocked?: boolean, onLockClick?: () => void }) => {
     const content = (
         <div className="flex justify-between items-center py-3">
             <div className="flex-1 pr-4">
-                <p className="font-medium">{label}</p>
+                <div className="flex items-center gap-2">
+                    {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
+                    <p className="font-medium">{label}</p>
+                </div>
                 {description && <p className="text-sm text-muted-foreground">{description}</p>}
             </div>
             <div className="flex items-center gap-2">
@@ -57,9 +63,21 @@ const SettingRow = ({ label, description, control, isLink = false, href, childre
         </div>
     );
     
+    const handleWrapperClick = () => {
+        if (isLocked && onLockClick) {
+            onLockClick();
+        } else if (isLink && href) {
+            // Handled by Link component
+        }
+    };
+
+    if (isLink && href && !isLocked) {
+        return <Link href={href}>{content}</Link>;
+    }
+
     return (
-        <div>
-            {isLink && href ? <Link href={href}>{content}</Link> : content}
+        <div onClick={handleWrapperClick} className={isLocked ? 'cursor-pointer' : ''}>
+            {content}
             {children && <div className="pt-3">{children}</div>}
         </div>
     );
@@ -69,6 +87,8 @@ const SettingRow = ({ label, description, control, isLink = false, href, childre
 export function Settings() {
   const [profile, setProfile] = useState<{email: string} | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>('Member');
+  const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -81,7 +101,7 @@ export function Settings() {
   const [saveConversionHistory, setSaveConversionHistory] = useState(true);
   const [defaultRegion, setDefaultRegion] = useState<Region>('International');
 
-  const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>('scientific');
+  const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>('basic');
   const [calculatorSound, setCalculatorSound] = useState(true);
   
   // Local state for theme selector
@@ -93,8 +113,22 @@ export function Settings() {
     const email = storedProfile ? JSON.parse(storedProfile).email : null;
     setProfile(storedProfile ? JSON.parse(storedProfile) : null);
     loadSettings(email);
+    updateUserRole(email);
   }, []);
   
+  const updateUserRole = async (email: string | null) => {
+    if(email === "amanyadavyadav9458@gmail.com") {
+        setUserRole('Owner');
+        return;
+    }
+    const stats = await getStats(email);
+    if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD) {
+        setUserRole('Premium Member');
+    } else {
+        setUserRole('Member');
+    }
+  };
+
   useEffect(() => {
     setSelectedTheme(theme);
   }, [theme]);
@@ -120,6 +154,19 @@ export function Settings() {
   
   const handleSaveChanges = () => {
     const userKey = profile?.email || null;
+    
+    // Only save settings if they are not locked
+    const isPremiumFeatureLocked = userRole === 'Member';
+    if(isPremiumFeatureLocked && (selectedTheme === 'retro' || selectedTheme === 'glass' || calculatorMode === 'scientific')) {
+        setShowPremiumLockDialog(true);
+        // Revert to old settings
+        const oldTheme = localStorage.getItem('theme') || 'light';
+        const oldCalcMode = (localStorage.getItem('calculatorMode') as CalculatorMode) || 'basic';
+        setSelectedTheme(oldTheme as any);
+        setCalculatorMode(oldCalcMode);
+        return;
+    }
+
     localStorage.setItem(getUserKey('notificationsEnabled', userKey), JSON.stringify(notificationsEnabled));
     localStorage.setItem(getUserKey('saveConversionHistory', userKey), JSON.stringify(saveConversionHistory));
     localStorage.setItem(getUserKey('defaultRegion', userKey), defaultRegion);
@@ -149,6 +196,8 @@ export function Settings() {
 
 
   if (!isClient) return null;
+
+  const isPremiumFeatureLocked = userRole === 'Member';
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-6 p-4 sm:p-6">
@@ -180,8 +229,10 @@ export function Settings() {
                                 <SelectContent>
                                     <SelectItem value="light">{t('settings.appearance.themes.light')}</SelectItem>
                                     <SelectItem value="dark">{t('settings.appearance.themes.dark')}</SelectItem>
+                                    <SelectItem value="retro" disabled={isPremiumFeatureLocked}>Retro</SelectItem>
+                                    <SelectItem value="glass" disabled={isPremiumFeatureLocked}>Glass</SelectItem>
                                     {customTheme && (
-                                        <SelectItem value="custom">
+                                        <SelectItem value="custom" disabled={isPremiumFeatureLocked}>
                                             {t('settings.appearance.themes.custom')}
                                         </SelectItem>
                                     )}
@@ -194,6 +245,8 @@ export function Settings() {
                         href="/settings/theme"
                         label={t('settings.appearance.customizeTheme.label')}
                         description={t('settings.appearance.customizeTheme.description')}
+                        isLocked={isPremiumFeatureLocked}
+                        onLockClick={() => setShowPremiumLockDialog(true)}
                         control={
                              <div className="flex items-center gap-2">
                                 <Palette />
@@ -254,6 +307,8 @@ export function Settings() {
                     href="/settings/custom-units"
                     label={t('settings.unitConverter.customUnit.label')}
                     description={t('settings.unitConverter.customUnit.description')}
+                    isLocked={isPremiumFeatureLocked}
+                    onLockClick={() => setShowPremiumLockDialog(true)}
                     control={
                         <div className="flex items-center gap-2">
                             <LayoutGrid />
@@ -271,8 +326,10 @@ export function Settings() {
                      <SettingRow
                         label={t('settings.calculator.mode.label')}
                         description={t('settings.calculator.mode.description')}
+                        isLocked={isPremiumFeatureLocked}
+                        onLockClick={() => setShowPremiumLockDialog(true)}
                         control={
-                            <Select value={calculatorMode} onValueChange={(v) => setCalculatorMode(v as CalculatorMode)}>
+                            <Select value={calculatorMode} onValueChange={(v) => setCalculatorMode(v as CalculatorMode)} disabled={isPremiumFeatureLocked}>
                                 <SelectTrigger className="w-32">
                                     <SelectValue/>
                                 </SelectTrigger>
@@ -316,6 +373,25 @@ export function Settings() {
                 <Button onClick={handleSaveChanges}>{t('settings.data.saveChanges')}</Button>
             </div>
         </footer>
+         <AlertDialog open={showPremiumLockDialog} onOpenChange={setShowPremiumLockDialog}>
+            <AlertDialogContent>
+                <AlertDialogHeader className="items-center text-center">
+                     <div className="p-4 bg-primary/10 rounded-full mb-4">
+                        <Lock className="w-10 h-10 text-primary" />
+                    </div>
+                    <AlertDialogTitle className="text-2xl">Premium Feature Locked</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This feature is available to Premium Members. Complete {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} operations to unlock this feature and more!
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="sm:justify-center flex-col-reverse sm:flex-row gap-2">
+                     <AlertDialogCancel onClick={() => setShowPremiumLockDialog(false)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => router.push('/profile')}>
+                        Check Your Progress
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }

@@ -3,8 +3,8 @@
 "use client";
 
 import { db, rtdb } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, onSnapshot as onFirestoreSnapshot, query, orderBy, Timestamp, doc, setDoc as setFirestoreDoc, getDoc as getFirestoreDoc, updateDoc } from 'firebase/firestore';
-import { ref, set as setRealtimeDb, onValue } from "firebase/database";
+import { collection, addDoc, serverTimestamp, onSnapshot as onFirestoreSnapshot, query, orderBy, Timestamp, doc, setDoc as setFirestoreDoc, getDoc as getFirestoreDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { ref, set as setRealtimeDb, onValue, remove as removeRealtimeDb } from "firebase/database";
 import type { AppNotification } from '@/lib/notifications';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
@@ -54,36 +54,6 @@ export async function sendGlobalNotification(notification: { title: string, desc
 }
 
 /**
- * Sets up a real-time listener for the global notifications collection.
- * @param callback - Function to be called with the notifications array whenever data changes.
- * @returns The unsubscribe function for the listener.
- */
-export function listenToGlobalNotifications(callback: (notifications: Omit<AppNotification, 'read'>[]) => void) {
-    const q = query(collection(db, "notifications"), orderBy("createdAt", "desc"));
-
-    const unsubscribe = onFirestoreSnapshot(q, (querySnapshot) => {
-        const notifications: Omit<AppNotification, 'read'>[] = [];
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const createdAtDate = (data.createdAt as Timestamp)?.toDate() || new Date();
-            
-            notifications.push({
-                id: doc.id,
-                title: data.title,
-                description: data.description,
-                icon: data.icon,
-                createdAt: createdAtDate.toISOString(),
-            });
-        });
-        callback(notifications);
-    }, (error) => {
-        console.error("Error listening to notifications: ", error);
-    });
-
-    return unsubscribe;
-}
-
-/**
  * Sets the global maintenance mode status in Firebase Realtime Database.
  * @param isEnabled - Boolean indicating if maintenance mode should be on or off.
  */
@@ -128,13 +98,25 @@ export async function setBroadcastNotification(info: BroadcastNotification) {
     }
 }
 
-export function listenToBroadcastNotification(callback: (info: BroadcastNotification) => void) {
+export async function deleteBroadcastNotification() {
+    try {
+        const broadcastRef = ref(rtdb, 'settings/broadcastNotification');
+        await removeRealtimeDb(broadcastRef);
+    } catch (error) {
+        console.error("Error deleting broadcast notification:", error);
+        throw error;
+    }
+}
+
+export function listenToBroadcastNotification(callback: (info: BroadcastNotification | null) => void) {
     const broadcastRef = ref(rtdb, 'settings/broadcastNotification');
 
     const unsubscribe = onValue(broadcastRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
             callback(data);
+        } else {
+            callback(null);
         }
     }, (error) => {
         console.error("Error listening to broadcast notification:", error);

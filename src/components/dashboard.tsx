@@ -40,7 +40,7 @@ import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { GlobalSearch } from "./global-search";
 import { Notifications } from "./notifications";
@@ -110,11 +110,10 @@ const RecommendationCard = ({ item }: any) => (
 interface UserProfile {
     fullName: string;
     email: string;
-    profileImage?: string;
     [key: string]: any;
 }
 
-const Header = ({ name, profile, onProfileClick }: { name: string, profile: UserProfile | null, onProfileClick: () => void }) => {
+const Header = ({ name, onProfileClick }: { name: string, onProfileClick: () => void }) => {
   const router = useRouter();
   const { t } = useLanguage();
   const [welcomeMessage, setWelcomeMessage] = useState(t('dashboard.welcome'));
@@ -142,7 +141,6 @@ const Header = ({ name, profile, onProfileClick }: { name: string, profile: User
             <Notifications />
             <Button variant="ghost" size="icon" className="rounded-full" onClick={onProfileClick}>
                 <Avatar className="h-10 w-10 border border-border bg-card text-foreground">
-                <AvatarImage src={profile?.profileImage} alt={profile?.fullName} />
                 <AvatarFallback><UserCircle2 className="size-6" /></AvatarFallback>
                 </Avatar>
             </Button>
@@ -429,7 +427,7 @@ export function Dashboard() {
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-8 py-8">
-      <Header name={profile?.fullName || t('dashboard.guest')} profile={profile} onProfileClick={handleProfileClick} />
+      <Header name={profile?.fullName || t('dashboard.guest')} onProfileClick={handleProfileClick} />
       
       <UpdateBanner />
 

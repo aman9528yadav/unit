@@ -7,15 +7,15 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send, Wrench, Info, Shield } from 'lucide-react';
+import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send, Wrench, Info, Shield, BellOff } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
-import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo, setBroadcastNotification, listenToBroadcastNotification } from '@/services/firestore';
+import { setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo, setBroadcastNotification, listenToBroadcastNotification, deleteBroadcastNotification } from '@/services/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { intervalToDuration, differenceInDays } from 'date-fns';
+import { intervalToDuration } from 'date-fns';
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -126,8 +126,8 @@ export function DevPanel() {
         });
         
         const unsubBroadcast = listenToBroadcastNotification((info) => {
-            setNotificationTitle(info.title || '');
-            setNotificationDescription(info.description || '');
+            setNotificationTitle(info?.title || '');
+            setNotificationDescription(info?.description || '');
         });
 
         return () => {
@@ -219,6 +219,17 @@ export function DevPanel() {
         } catch (error) {
             console.error("Failed to send notification:", error);
             toast({ title: "Broadcast Failed", description: "Could not update notification. Check console for errors.", variant: "destructive" });
+        }
+    };
+
+    const handleDeleteBroadcast = async () => {
+        try {
+            await deleteBroadcastNotification();
+            setNotificationTitle('');
+            setNotificationDescription('');
+            toast({ title: "Broadcast Deleted", description: "The global notification has been removed." });
+        } catch (error) {
+             toast({ title: "Deletion Failed", description: "Could not delete broadcast.", variant: "destructive" });
         }
     };
     
@@ -472,9 +483,14 @@ export function DevPanel() {
                                     rows={3}
                                 />
                             </div>
-                            <Button onClick={handleSendNotification} className="w-full">
-                                Update Notification
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button onClick={handleSendNotification} className="w-full">
+                                    Update Notification
+                                </Button>
+                                <Button onClick={handleDeleteBroadcast} variant="destructive" size="icon" className="flex-shrink-0">
+                                    <BellOff/>
+                                </Button>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>

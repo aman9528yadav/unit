@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Camera, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2 } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,14 +16,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
-import { ProfilePhotoEditor } from "./profile-photo-editor";
 import { useLanguage } from "@/context/language-context";
 
 
 export function ProfileEditForm() {
-  const [profile, setProfile] = useState({ fullName: '', email: '', dob: '', profileImage: '' });
+  const [profile, setProfile] = useState({ fullName: '', email: '', dob: '' });
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -32,7 +29,6 @@ export function ProfileEditForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
   const { t } = useLanguage();
 
 
@@ -58,13 +54,6 @@ export function ProfileEditForm() {
     }
   };
 
-  const handlePhotoSave = (newImage: string | null) => {
-    setProfile(prev => ({ ...prev, profileImage: newImage || '' }));
-    setIsPhotoEditorOpen(false);
-    toast({ title: t('profileEdit.toast.imageReady.title'), description: t('profileEdit.toast.imageReady.description') });
-  };
-
-
   const handleSaveChanges = async () => {
     if (!profile.fullName) {
       toast({ title: t('profileEdit.toast.nameRequired'), variant: "destructive" });
@@ -76,7 +65,6 @@ export function ProfileEditForm() {
       if (user) {
         await updateProfile(user, {
           displayName: profile.fullName,
-          photoURL: profile.profileImage,
         });
 
         const storedProfile = localStorage.getItem("userProfile");
@@ -151,107 +139,88 @@ export function ProfileEditForm() {
         <h1 className="text-xl font-bold">{t('profileEdit.title')}</h1>
       </header>
 
-      <Dialog open={isPhotoEditorOpen} onOpenChange={setIsPhotoEditorOpen}>
-        <Tabs defaultValue="account" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="account">{t('profileEdit.tabs.account')}</TabsTrigger>
-            <TabsTrigger value="security">{t('profileEdit.tabs.security')}</TabsTrigger>
-          </TabsList>
-          <TabsContent value="account">
-            <Card>
-              <CardHeader className="items-center">
-                  <DialogTrigger asChild>
-                    <div className="relative group cursor-pointer">
-                        <Avatar className="w-32 h-32 text-6xl">
-                            <AvatarImage src={profile.profileImage} alt={profile.fullName} />
-                            <AvatarFallback>
-                                <User/>
-                            </AvatarFallback>
-                        </Avatar>
-                        <div 
-                            className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                            <Camera className="text-white w-8 h-8"/>
-                        </div>
-                    </div>
-                  </DialogTrigger>
-                <CardTitle>{t('profileEdit.account.title')}</CardTitle>
-                <CardDescription>{t('profileEdit.account.description')}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="fullName">{t('profileEdit.account.fullName')}</Label>
-                  <Input id="fullName" name="fullName" value={profile.fullName} onChange={handleInputChange} />
-                </div>
-                <div>
-                  <Label htmlFor="email">{t('profileEdit.account.email')}</Label>
-                  <Input id="email" type="email" value={profile.email} disabled />
-                </div>
-                <div>
-                  <Label htmlFor="dob">{t('profileEdit.account.dob')}</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant={"outline"} className="w-full justify-start text-left font-normal">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {profile.dob ? format(new Date(profile.dob), "PPP") : <span>{t('profileEdit.account.pickDate')}</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={profile.dob ? new Date(profile.dob) : undefined}
-                        onSelect={handleDateChange}
-                        captionLayout="dropdown-buttons"
-                        fromYear={1920}
-                        toYear={new Date().getFullYear()}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <Button onClick={handleSaveChanges} className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? t('profileEdit.account.saving') : t('profileEdit.account.save')}
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="security">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('profileEdit.security.title')}</CardTitle>
-                <CardDescription>{t('profileEdit.security.description')}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="relative">
-                  <Label htmlFor="currentPassword">{t('profileEdit.security.currentPassword')}</Label>
-                  <Input id="currentPassword" type={showCurrentPassword ? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-                  <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowCurrentPassword(!showCurrentPassword)}><IconEye show={showCurrentPassword} /></Button>
-                </div>
-                <div className="relative">
-                  <Label htmlFor="newPassword">{t('profileEdit.security.newPassword')}</Label>
-                  <Input id="newPassword" type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-                  <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowNewPassword(!showNewPassword)}><IconEye show={showNewPassword} /></Button>
-                </div>
-                <div className="relative">
-                  <Label htmlFor="confirmPassword">{t('profileEdit.security.confirmPassword')}</Label>
-                  <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-                  <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowConfirmPassword(!showConfirmPassword)}><IconEye show={showConfirmPassword} /></Button>
-                </div>
-                <Button onClick={handleChangePassword} variant="secondary" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? t('profileEdit.security.updating') : t('profileEdit.security.update')}
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-        <DialogContent className="max-w-2xl">
-          <ProfilePhotoEditor
-            currentImage={profile.profileImage}
-            onSave={handlePhotoSave}
-            onClose={() => setIsPhotoEditorOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      <Tabs defaultValue="account" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="account">{t('profileEdit.tabs.account')}</TabsTrigger>
+          <TabsTrigger value="security">{t('profileEdit.tabs.security')}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="account">
+          <Card>
+            <CardHeader className="items-center">
+              <div className="relative group cursor-pointer">
+                  <div className="w-32 h-32 text-6xl rounded-full bg-muted flex items-center justify-center">
+                    <User/>
+                  </div>
+              </div>
+              <CardTitle>{t('profileEdit.account.title')}</CardTitle>
+              <CardDescription>{t('profileEdit.account.description')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="fullName">{t('profileEdit.account.fullName')}</Label>
+                <Input id="fullName" name="fullName" value={profile.fullName} onChange={handleInputChange} />
+              </div>
+              <div>
+                <Label htmlFor="email">{t('profileEdit.account.email')}</Label>
+                <Input id="email" type="email" value={profile.email} disabled />
+              </div>
+              <div>
+                <Label htmlFor="dob">{t('profileEdit.account.dob')}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant={"outline"} className="w-full justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {profile.dob ? format(new Date(profile.dob), "PPP") : <span>{t('profileEdit.account.pickDate')}</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={profile.dob ? new Date(profile.dob) : undefined}
+                      onSelect={handleDateChange}
+                      captionLayout="dropdown-buttons"
+                      fromYear={1920}
+                      toYear={new Date().getFullYear()}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <Button onClick={handleSaveChanges} className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? t('profileEdit.account.saving') : t('profileEdit.account.save')}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="security">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('profileEdit.security.title')}</CardTitle>
+              <CardDescription>{t('profileEdit.security.description')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="relative">
+                <Label htmlFor="currentPassword">{t('profileEdit.security.currentPassword')}</Label>
+                <Input id="currentPassword" type={showCurrentPassword ? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowCurrentPassword(!showCurrentPassword)}><IconEye show={showCurrentPassword} /></Button>
+              </div>
+              <div className="relative">
+                <Label htmlFor="newPassword">{t('profileEdit.security.newPassword')}</Label>
+                <Input id="newPassword" type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowNewPassword(!showNewPassword)}><IconEye show={showNewPassword} /></Button>
+              </div>
+              <div className="relative">
+                <Label htmlFor="confirmPassword">{t('profileEdit.security.confirmPassword')}</Label>
+                <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowConfirmPassword(!showConfirmPassword)}><IconEye show={showConfirmPassword} /></Button>
+              </div>
+              <Button onClick={handleChangePassword} variant="secondary" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? t('profileEdit.security.updating') : t('profileEdit.security.update')}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -260,5 +229,3 @@ export function ProfileEditForm() {
 function IconEye({ show }: {show: boolean}) {
   return show ? <EyeOff /> : <Eye />;
 }
-
-    

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -21,7 +22,7 @@ import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Avatar, AvatarFallback } from "./ui/avatar";
 import { useLanguage } from "@/context/language-context";
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -31,7 +32,6 @@ interface UserProfile {
     email: string;
     birthday: string;
     dob: string;
-    profileImage?: string;
 }
 
 const defaultProfile: UserProfile = {
@@ -39,7 +39,6 @@ const defaultProfile: UserProfile = {
     email: "aman@example.com",
     birthday: "April 1st",
     dob: "1990-04-01",
-    profileImage: '',
 };
 
 export function Profile() {
@@ -114,21 +113,18 @@ export function Profile() {
         </header>
 
         <div className="flex flex-col items-center text-center gap-2 mt-2">
-            <Link href="/profile">
-                <div className="relative w-28 h-28 cursor-pointer">
-                    <Avatar className="w-28 h-28 text-6xl border-4 border-background">
-                        <AvatarImage src={profile.profileImage} alt={profile.fullName} />
-                        <AvatarFallback>
-                            <User />
-                        </AvatarFallback>
-                    </Avatar>
-                    <Button asChild size="icon" className="absolute bottom-0 right-0 rounded-full w-8 h-8">
-                        <Link href="/profile/edit">
-                            <Pencil />
-                        </Link>
-                    </Button>
-                </div>
-            </Link>
+            <div className="relative w-28 h-28 cursor-pointer">
+                <Avatar className="w-28 h-28 text-6xl border-4 border-background">
+                    <AvatarFallback>
+                        <User />
+                    </AvatarFallback>
+                </Avatar>
+                <Button asChild size="icon" className="absolute bottom-0 right-0 rounded-full w-8 h-8">
+                    <Link href="/profile/edit">
+                        <Pencil />
+                    </Link>
+                </Button>
+            </div>
           <h2 className="text-2xl font-bold mt-2">{profile.fullName}</h2>
           <p className="text-sm">{profile.email}</p>
           <p className="text-sm">{t('profile.birthday')}: {profile.birthday}</p>
