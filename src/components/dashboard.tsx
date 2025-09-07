@@ -374,7 +374,8 @@ export function Dashboard() {
         { label: t('dashboard.tools.stopwatch'), icon: Hourglass, href: '/time?tab=stopwatch', color: 'text-indigo-500' },
     ];
 
-    const toolsToShow = showMoreTools ? [...quickTools.slice(0, 4), ...moreTools, ...quickTools.slice(4)] : quickTools;
+    const allTools = [...quickTools, ...moreTools];
+    const toolsToShow = showMoreTools ? allTools : allTools.slice(0, 6);
 
 
     const recommendations = [
@@ -486,7 +487,7 @@ export function Dashboard() {
             <CardTitle>{t('dashboard.quickAccess')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {toolsToShow.map((t) => (
                 <ToolButton key={t.label} {...t} />
               ))}
