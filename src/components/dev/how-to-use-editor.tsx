@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, Plus, Trash2, Edit, Save } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit, Save, LogIn, Zap, Search, Sigma, Star, Calculator, NotebookText, Palette, Beaker, LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -20,39 +20,63 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from 'next/navigation';
-import { setHowToUseFeaturesInRtdb, listenToHowToUseFeaturesFromRtdb, HowToUseFeature, defaultFeatures, HowToUseCategory } from '@/services/firestore';
+import { setHowToUseFeaturesInRtdb, listenToHowToUseFeaturesFromRtdb, HowToUseFeature, defaultFeatures, HowToUseCategory, CustomHowToUseCategory, listenToCustomHowToUseCategoriesFromRtdb, setCustomHowToUseCategoriesInRtdb } from '@/services/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 
 
-const categoryNames: Record<HowToUseCategory, string> = {
-    gettingStarted: 'Getting Started',
-    unitConverter: 'Unit Converter',
-    calculator: 'Calculator',
-    notepad: 'Notepad',
-    customization: 'Customization & Settings',
+const iconMap: { [key: string]: LucideIcon } = {
+    LogIn, Zap, Search, Sigma, Star, Calculator, NotebookText, Palette, Beaker
 };
+
+const iconNames = Object.keys(iconMap);
 
 export function HowToUseEditor() {
     const [features, setFeatures] = useState<HowToUseFeature[] | null>(null);
+    const [customCategories, setCustomCategories] = useState<CustomHowToUseCategory[]>([]);
     const [isClient, setIsClient] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
     const [editingFeature, setEditingFeature] = useState<HowToUseFeature | null>(null);
     
+    // Feature state
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [icon, setIcon] = useState('Zap'); // Default icon
-    const [category, setCategory] = useState<HowToUseCategory>('gettingStarted');
+    const [icon, setIcon] = useState('Zap');
+    const [category, setCategory] = useState<HowToUseCategory | string>('gettingStarted');
+    
+    // New category state
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [newCategoryId, setNewCategoryId] = useState('');
+
     const { toast } = useToast();
     const router = useRouter();
     
     useEffect(() => {
         setIsClient(true);
-        const unsubscribe = listenToHowToUseFeaturesFromRtdb((featuresFromDb) => {
+        const unsubscribeFeatures = listenToHowToUseFeaturesFromRtdb((featuresFromDb) => {
             setFeatures(featuresFromDb);
         });
-        return () => unsubscribe();
+         const unsubscribeCategories = listenToCustomHowToUseCategoriesFromRtdb((cats) => {
+            setCustomCategories(cats);
+        });
+        return () => {
+            unsubscribeFeatures();
+            unsubscribeCategories();
+        };
     }, []);
+
+    const allCategories = useMemo(() => {
+        const baseCategories: {id: HowToUseCategory | string; name: string}[] = [
+            { id: 'gettingStarted', name: 'Getting Started' },
+            { id: 'unitConverter', name: 'Unit Converter' },
+            { id: 'calculator', name: 'Calculator' },
+            { id: 'notepad', name: 'Notepad' },
+            { id: 'customization', name: 'Customization & Settings' },
+        ];
+        const combined = [...baseCategories, ...customCategories];
+        return combined;
+    }, [customCategories]);
 
     const handleSaveAll = async () => {
         if (!features) return;
@@ -80,6 +104,12 @@ export function HowToUseEditor() {
         }
         setIsDialogOpen(true);
     };
+
+    const handleOpenCategoryDialog = () => {
+        setNewCategoryId('');
+        setNewCategoryName('');
+        setIsCategoryDialogOpen(true);
+    }
     
     const handleSaveItem = async () => {
         if (!title || !description || !icon || !category || !features) {
@@ -105,6 +135,21 @@ export function HowToUseEditor() {
         }
     };
 
+    const handleSaveCategory = async () => {
+        if (!newCategoryName || !newCategoryId) {
+            toast({ title: "Incomplete Information", description: "Please fill out both ID and Name.", variant: "destructive" });
+            return;
+        }
+        const updatedCategories = [...customCategories, { id: newCategoryId, name: newCategoryName }];
+        try {
+            await setCustomHowToUseCategoriesInRtdb(updatedCategories);
+            toast({ title: "Category Saved" });
+            setIsCategoryDialogOpen(false);
+        } catch (error) {
+            toast({ title: "Error saving category", variant: "destructive" });
+        }
+    };
+
     const handleDelete = (featureId: string) => {
         if (!features) return;
         if (window.confirm("Are you sure you want to delete this feature?")) {
@@ -117,9 +162,10 @@ export function HowToUseEditor() {
     const groupedFeatures = useMemo(() => {
         if (!features) return {};
         return features.reduce((acc, feature) => {
-            (acc[feature.category] = acc[feature.category] || []).push(feature);
+            const categoryKey = feature.category;
+            (acc[categoryKey] = acc[categoryKey] || []).push(feature);
             return acc;
-        }, {} as Record<HowToUseCategory, HowToUseFeature[]>);
+        }, {} as Record<string, HowToUseFeature[]>);
     }, [features]);
 
     if (!isClient || features === null) {
@@ -136,6 +182,10 @@ export function HowToUseEditor() {
                     <h1 className="text-xl font-bold">Manage 'How to Use'</h1>
                 </div>
                  <div className='flex gap-2'>
+                    <Button size="icon" variant='outline' onClick={handleOpenCategoryDialog}>
+                        <Plus className='h-4 w-4'/>
+                        <Save className='h-4 w-4'/>
+                    </Button>
                     <Button size="icon" onClick={() => handleOpenDialog()}>
                         <Plus />
                     </Button>
@@ -145,14 +195,14 @@ export function HowToUseEditor() {
                  </div>
             </header>
 
-            <div className="flex-grow space-y-2">
-                 <Accordion type="multiple" className="w-full" defaultValue={Object.keys(categoryNames)}>
-                    {Object.entries(groupedFeatures).map(([cat, featuresInCategory]) => (
-                        <AccordionItem value={cat} key={cat}>
-                             <AccordionTrigger className="font-semibold text-lg">{categoryNames[cat as HowToUseCategory]}</AccordionTrigger>
+            <div className="flex-grow space-y-2 overflow-y-auto">
+                 <Accordion type="multiple" className="w-full" defaultValue={allCategories.map(c => c.id)}>
+                    {allCategories.map(cat => (
+                        <AccordionItem value={cat.id} key={cat.id}>
+                             <AccordionTrigger className="font-semibold text-lg">{cat.name}</AccordionTrigger>
                              <AccordionContent>
                                 <div className="space-y-2">
-                                    {featuresInCategory.map((feature) => (
+                                    {(groupedFeatures[cat.id] || []).map((feature) => (
                                          <div key={feature.id} className="bg-card p-4 rounded-lg flex justify-between items-center">
                                             <div className="flex-1 overflow-hidden">
                                                 <p className="font-bold truncate">{feature.title}</p>
@@ -168,6 +218,9 @@ export function HowToUseEditor() {
                                             </div>
                                         </div>
                                     ))}
+                                    {(!groupedFeatures[cat.id] || groupedFeatures[cat.id].length === 0) && (
+                                         <p className="text-sm text-muted-foreground text-center p-4">No features in this category.</p>
+                                    )}
                                 </div>
                             </AccordionContent>
                         </AccordionItem>
@@ -180,6 +233,31 @@ export function HowToUseEditor() {
                     </div>
                 )}
             </div>
+            
+            <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+                <DialogContent>
+                     <DialogHeader>
+                        <DialogTitle>Add New Category</DialogTitle>
+                        <DialogDescription>
+                            Create a new section for the 'How to Use' page.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                         <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="cat-id" className="text-right">Category ID</Label>
+                            <Input id="cat-id" value={newCategoryId} onChange={(e) => setNewCategoryId(e.target.value.replace(/\s+/g, '').toLowerCase())} className="col-span-3" placeholder="e.g., advancedFeatures"/>
+                        </div>
+                         <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="cat-name" className="text-right">Category Name</Label>
+                            <Input id="cat-name" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} className="col-span-3" placeholder="e.g., Advanced Features"/>
+                        </div>
+                    </div>
+                     <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsCategoryDialogOpen(false)}>Cancel</Button>
+                        <Button type="submit" onClick={handleSaveCategory}>Save Category</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent>
@@ -200,17 +278,31 @@ export function HowToUseEditor() {
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="icon" className="text-right">Icon</Label>
-                            <Input id="icon" value={icon} onChange={(e) => setIcon(e.target.value)} className="col-span-3" placeholder="Lucide icon name, e.g., Zap"/>
+                            <Select value={icon} onValueChange={setIcon}>
+                                <SelectTrigger className="col-span-3">
+                                    <SelectValue placeholder="Select an icon" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {iconNames.map(iconName => (
+                                        <SelectItem key={iconName} value={iconName}>
+                                            <div className="flex items-center gap-2">
+                                                {React.createElement(iconMap[iconName])}
+                                                <span>{iconName}</span>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                          <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="category" className="text-right">Category</Label>
-                            <Select value={category} onValueChange={(value) => setCategory(value as HowToUseCategory)}>
+                            <Select value={category} onValueChange={(value) => setCategory(value)}>
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="Select a category" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {Object.entries(categoryNames).map(([key, name]) => (
-                                        <SelectItem key={key} value={key}>{name}</SelectItem>
+                                    {allCategories.map((cat) => (
+                                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -225,3 +317,5 @@ export function HowToUseEditor() {
         </div>
     );
 }
+
+    
