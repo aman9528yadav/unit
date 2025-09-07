@@ -10,7 +10,7 @@ import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Note, NOTES_STORAGE_KEY_BASE } from './notepad';
+import { Note } from './notepad';
 import Image from 'next/image';
 import {
   DropdownMenu,
@@ -21,9 +21,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { useLanguage } from '@/context/language-context';
+import { listenToUserNotes, updateUserNotes } from '@/services/firestore';
 
-
-const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
 
 const FONT_COLORS = [
   { name: 'Default', color: 'inherit' },
@@ -53,6 +52,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
     const { t } = useLanguage();
+    const [allNotes, setAllNotes] = useState<Note[]>([]);
 
 
     const router = useRouter();
@@ -63,8 +63,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const isNewNote = noteId === 'new';
     
     const contentSetRef = useRef(false);
-    const notesKey = getUserNotesKey(profile?.email || null);
-
 
     useEffect(() => {
         setIsClient(true);
@@ -76,11 +74,12 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     }, []);
 
     useEffect(() => {
-        if (!isNewNote && notesKey) {
-            const savedNotes = localStorage.getItem(notesKey);
-            if (savedNotes) {
-                const notes: Note[] = JSON.parse(savedNotes);
-                const noteToEdit = notes.find(note => note.id === noteId);
+        if (!profile) return;
+        
+        const unsubscribe = listenToUserNotes(profile.email, (notesFromDb) => {
+            setAllNotes(notesFromDb);
+            if (!isNewNote) {
+                const noteToEdit = notesFromDb.find(note => note.id === noteId);
                 if (noteToEdit) {
                     setTitle(noteToEdit.title);
                     setContent(noteToEdit.content);
@@ -93,8 +92,11 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     router.push('/notes');
                 }
             }
-        }
-    }, [noteId, isNewNote, router, toast, notesKey, t]);
+        });
+        
+        return () => unsubscribe();
+
+    }, [noteId, isNewNote, router, toast, profile, t]);
 
     useEffect(() => {
         if (editorRef.current && content && !contentSetRef.current) {
@@ -231,8 +233,12 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             return;
         }
 
-        const savedNotes = localStorage.getItem(notesKey);
-        const notes: Note[] = savedNotes ? JSON.parse(savedNotes) : [];
+        if (!profile) {
+            toast({ title: "Error", description: "User profile not found. Cannot save.", variant: "destructive" });
+            return;
+        }
+
+        const notes: Note[] = [...allNotes];
         const now = new Date().toISOString();
 
         if (isNewNote) {
@@ -262,8 +268,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 };
             }
         }
+        
+        updateUserNotes(profile.email, notes);
 
-        localStorage.setItem(notesKey, JSON.stringify(notes));
         const lastNoteString = `${title || 'Untitled Note'}|${new Date().toISOString()}`;
         localStorage.setItem('lastNote', lastNoteString);
         window.dispatchEvent(new StorageEvent('storage', { key: 'lastNote', newValue: lastNoteString }));
@@ -277,16 +284,17 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     };
     
     const handleSoftDelete = () => {
+        if (!profile) return;
+
         if (isNewNote) {
              router.push('/notes');
              return;
         };
-        const savedNotes = localStorage.getItem(notesKey);
-        const notes: Note[] = savedNotes ? JSON.parse(savedNotes) : [];
-        const updatedNotes = notes.map(note => 
+        const updatedNotes = allNotes.map(note => 
             note.id === noteId ? { ...note, deletedAt: new Date().toISOString() } : note
         );
-        localStorage.setItem(notesKey, JSON.stringify(updatedNotes));
+        
+        updateUserNotes(profile.email, updatedNotes);
         setIsDirty(false);
         toast({ title: t('notepad.toast.movedToTrash') });
         router.push('/notes');

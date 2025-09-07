@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -34,6 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { useLanguage } from '@/context/language-context';
+import { listenToUserNotes, updateUserNotes } from '@/services/firestore';
 
 
 export interface Note {
@@ -47,14 +49,6 @@ export interface Note {
     category?: string;
     attachment?: string | null;
 }
-
-export const NOTES_STORAGE_KEY_BASE = 'userNotesV2';
-
-type NoteView = 'all' | 'favorites' | 'trash' | 'category';
-type LayoutView = 'list' | 'card';
-type SortKey = 'updatedAt' | 'createdAt' | 'title';
-
-const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
 
 interface UserProfile {
     fullName: string;
@@ -81,8 +75,10 @@ export function Notepad() {
 
     const { toast } = useToast();
     const router = useRouter();
-    
-    const notesKey = getUserNotesKey(profile?.email || null);
+
+    type NoteView = 'all' | 'favorites' | 'trash' | 'category';
+    type LayoutView = 'list' | 'card';
+    type SortKey = 'updatedAt' | 'createdAt' | 'title';
 
     useEffect(() => {
         setIsClient(true);
@@ -94,86 +90,74 @@ export function Notepad() {
     }, []);
 
     useEffect(() => {
-        loadNotes();
-        // Add event listener for storage changes
-        const handleStorageChange = (event: StorageEvent) => {
-            if (event.key === notesKey) {
-                loadNotes();
-            }
-        };
-        window.addEventListener('storage', handleStorageChange);
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-        };
-    }, [notesKey]);
-    
-    const loadNotes = () => {
-        const savedNotes = localStorage.getItem(notesKey);
-        if (savedNotes) {
-            const parsedNotes: Note[] = JSON.parse(savedNotes);
+        if (!profile) return; // Don't do anything until profile is loaded
+
+        const unsubscribe = listenToUserNotes(profile.email, (notesFromDb) => {
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             
-            const freshNotes = parsedNotes.filter(note => {
+            const freshNotes = notesFromDb.filter(note => {
                 if (note.deletedAt) {
                     return new Date(note.deletedAt) > thirtyDaysAgo;
                 }
                 return true;
             });
-
-            if (freshNotes.length !== parsedNotes.length) {
-                localStorage.setItem(notesKey, JSON.stringify(freshNotes));
-            }
+            
             setNotes(freshNotes);
-        } else {
-            setNotes([]);
-        }
-    }
 
+            if (freshNotes.length !== notesFromDb.length) {
+                updateUserNotes(profile.email, freshNotes);
+            }
+        });
 
-    const updateNotes = (newNotes: Note[]) => {
-        setNotes(newNotes);
-        localStorage.setItem(notesKey, JSON.stringify(newNotes));
-    };
+        return () => unsubscribe();
+    }, [profile]);
+    
 
     const handleSoftDelete = (noteId: string) => {
+        if (!profile) return;
         const updatedNotes = notes.map(note => 
             note.id === noteId ? { ...note, deletedAt: new Date().toISOString() } : note
         );
-        updateNotes(updatedNotes);
+        updateUserNotes(profile.email, updatedNotes);
         toast({ title: t('notepad.toast.movedToTrash') });
     };
     
     const handlePermanentDelete = (noteId: string) => {
+        if (!profile) return;
         const updatedNotes = notes.filter(note => note.id !== noteId);
-        updateNotes(updatedNotes);
+        updateUserNotes(profile.email, updatedNotes);
         toast({ title: t('notepad.toast.permanentlyDeleted') });
     };
 
     const handleRestore = (noteId: string) => {
+        if (!profile) return;
         const updatedNotes = notes.map(note =>
             note.id === noteId ? { ...note, deletedAt: null } : note
         );
-        updateNotes(updatedNotes);
+        updateUserNotes(profile.email, updatedNotes);
         toast({ title: t('notepad.toast.restored') });
     };
 
     const handleToggleFavorite = (noteId: string) => {
+        if (!profile) return;
         const updatedNotes = notes.map(note =>
             note.id === noteId ? { ...note, isFavorite: !note.isFavorite } : note
         );
-        updateNotes(updatedNotes);
+        updateUserNotes(profile.email, updatedNotes);
     };
     
     const handleRestoreAll = () => {
+        if (!profile) return;
         const updatedNotes = notes.map(note => note.deletedAt ? { ...note, deletedAt: null } : note);
-        updateNotes(updatedNotes);
+        updateUserNotes(profile.email, updatedNotes);
         toast({ title: t('notepad.toast.allRestored') });
     };
 
     const handleEmptyTrash = () => {
+        if (!profile) return;
         const updatedNotes = notes.filter(note => !note.deletedAt);
-        updateNotes(updatedNotes);
+        updateUserNotes(profile.email, updatedNotes);
         toast({ title: t('notepad.toast.trashEmptied') });
         setShowEmptyTrashDialog(false);
     };
@@ -454,5 +438,3 @@ export function Notepad() {
         </div>
     );
 }
-
-    

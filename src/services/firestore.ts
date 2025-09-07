@@ -8,6 +8,8 @@ import { ref, set as setRealtimeDb, onValue, remove as removeRealtimeDb, get, up
 import type { AppNotification } from '@/lib/notifications';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
+import type { Note } from '@/components/notepad';
+
 
 export interface HowToUseFeature {
     id: string;
@@ -268,6 +270,43 @@ export function listenToUserData(email: string | null, callback: (data: any) => 
         console.error("Error listening to user data:", error);
         callback({});
     });
+}
+
+// --- USER NOTES (RTDB) ---
+
+/**
+ * Listens for changes to a user's notes in the Realtime Database.
+ * @param email - The user's email. If null, an empty array is returned.
+ * @param callback - The function to call with the notes array.
+ * @returns An unsubscribe function.
+ */
+export function listenToUserNotes(email: string | null, callback: (notes: Note[]) => void) {
+    if (!email) {
+        callback([]);
+        return () => {};
+    }
+    const notesRef = ref(rtdb, `users/${sanitizeEmail(email)}/notes`);
+    return onValue(notesRef, (snapshot) => {
+        callback(snapshot.val() || []);
+    }, (error) => {
+        console.error("Error listening to user notes:", error);
+        callback([]);
+    });
+}
+
+/**
+ * Updates a user's notes in the Realtime Database.
+ * @param email - The user's email. Does nothing if null.
+ * @param notes - The entire array of notes to save.
+ */
+export async function updateUserNotes(email: string | null, notes: Note[]) {
+    if (!email) return;
+    try {
+        const notesRef = ref(rtdb, `users/${sanitizeEmail(email)}/notes`);
+        await setRealtimeDb(notesRef, notes);
+    } catch (error) {
+        console.error("Error updating user notes in RTDB:", error);
+    }
 }
 
 
