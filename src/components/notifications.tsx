@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -14,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getNotificationsWithReadStatus, markAsRead, removeAllNotifications, type AppNotification } from "@/lib/notifications";
-import { listenToGlobalNotifications } from "@/services/firestore";
+import { listenToBroadcastNotification, BroadcastNotification } from "@/services/firestore";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
@@ -28,7 +29,7 @@ const iconMap: { [key in AppNotification['icon']]: React.ReactNode } = {
 }
 
 export function Notifications() {
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [broadcast, setBroadcast] = useState<AppNotification | null>(null);
   const [areNotificationsEnabled, setAreNotificationsEnabled] = useState(true);
   const [profile, setProfile] = useState<{ email: string } | null>(null);
   const [isClient, setIsClient] = useState(false);
@@ -53,17 +54,25 @@ export function Notifications() {
     if (isClient) {
         checkNotificationSetting();
         
-        const unsubscribe = listenToGlobalNotifications((globalNotifications) => {
-          const notificationsWithStatus = getNotificationsWithReadStatus(globalNotifications);
-          setNotifications(notificationsWithStatus);
+        const unsubscribe = listenToBroadcastNotification((info) => {
+            if(info && info.title && info.description && info.createdAt) {
+                const readIds = getReadNotificationIds();
+                setBroadcast({
+                    id: 'global_broadcast',
+                    ...info,
+                    read: readIds.has('global_broadcast') && readIds.has(info.createdAt)
+                });
+            } else {
+                setBroadcast(null);
+            }
         });
 
         const handleStorageChange = (event: StorageEvent) => {
-            // This listens for changes in read status from other tabs
             if (event.key === 'readAppNotifications') {
-                const globalNotifications = notifications.map(({read, ...rest}) => rest); // Get current global data
-                const updatedNotifications = getNotificationsWithReadStatus(globalNotifications);
-                setNotifications(updatedNotifications);
+                 if (broadcast) {
+                    const readIds = getReadNotificationIds();
+                    setBroadcast(b => b ? {...b, read: readIds.has('global_broadcast') && readIds.has(b.createdAt)} : null);
+                 }
             }
             if (event.key === getUserKey('notificationsEnabled', profile?.email || 'guest')) {
                checkNotificationSetting();
@@ -76,33 +85,23 @@ export function Notifications() {
             window.removeEventListener('storage', handleStorageChange);
         };
     }
-  }, [isClient, profile]);
+  }, [isClient, profile, broadcast]);
+  
+  const getReadNotificationIds = (): Set<string> => {
+    const stored = localStorage.getItem('readBroadcasts');
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  };
 
-  const handleMarkAsRead = (id: string) => {
-    markAsRead(id);
-    // Optimistically update the UI without waiting for a re-render from storage event
-    setNotifications(prev => prev.map(n => n.id === id ? {...n, read: true} : n));
+  const handleMarkAsRead = () => {
+    if(!broadcast) return;
+    const readIds = getReadNotificationIds();
+    readIds.add('global_broadcast');
+    readIds.add(broadcast.createdAt); // Mark this specific version as read
+    localStorage.setItem('readBroadcasts', JSON.stringify(Array.from(readIds)));
+    setBroadcast(b => b ? { ...b, read: true } : null);
   };
   
-  const handleRemoveAll = () => {
-      removeAllNotifications();
-      // Optimistically update UI
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      toast({ title: t('notifications.toast.cleared') });
-  }
-
-  const handleMarkAllAsRead = () => {
-    notifications.forEach(n => {
-        if (!n.read) {
-            markAsRead(n.id);
-        }
-    });
-    // Optimistically update UI
-    setNotifications(prev => prev.map(n => ({...n, read: true})));
-    toast({ title: t('notifications.toast.markedAllRead')});
-  };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = broadcast && !broadcast.read ? 1 : 0;
 
   if (!isClient) {
       return (
@@ -128,9 +127,6 @@ export function Notifications() {
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex justify-between items-center p-2">
             <DropdownMenuLabel className="p-0">{t('notifications.title')}</DropdownMenuLabel>
-             {areNotificationsEnabled && unreadCount > 0 && (
-                <Button variant="link" size="sm" onClick={handleMarkAllAsRead} className="h-auto p-0">{t('notifications.markAllRead')}</Button>
-             )}
         </div>
         <DropdownMenuSeparator />
         {!areNotificationsEnabled ? (
@@ -144,29 +140,20 @@ export function Notifications() {
                     </Link>
                 </Button>
             </div>
-        ) : notifications.length > 0 ? (
-          <>
-            {notifications.map((notification) => (
-            <DropdownMenuItem 
-                key={notification.id} 
-                className={`flex items-start gap-3 p-2 cursor-pointer group relative ${!notification.read ? 'bg-accent/20' : ''}`}
-                onSelect={(e) => { e.preventDefault(); handleMarkAsRead(notification.id); }}
-            >
-                <div className="flex-shrink-0 mt-1">{iconMap[notification.icon]}</div>
-                <div className="flex-1">
-                <p className="font-semibold">{notification.title}</p>
-                <p className="text-sm text-muted-foreground">{notification.description}</p>
-                <p className="text-xs text-muted-foreground/80 mt-1">{formatDistanceToNow(new Date(notification.createdAt))} ago</p>
-                </div>
-                 {!notification.read && <div className="w-2 h-2 rounded-full bg-primary self-center"></div>}
-                 {/* Remove button is not part of this implementation as users shouldn't delete global notifications */}
-            </DropdownMenuItem>
-            ))}
-             <DropdownMenuSeparator />
-             <DropdownMenuItem onSelect={handleRemoveAll} className="flex items-center justify-center gap-2 text-muted-foreground">
-                <Trash2 className="w-4 h-4"/> {t('notifications.clearAll')}
-             </DropdownMenuItem>
-          </>
+        ) : broadcast ? (
+          <DropdownMenuItem 
+              key={broadcast.id} 
+              className={`flex items-start gap-3 p-2 cursor-pointer group relative ${!broadcast.read ? 'bg-accent/20' : ''}`}
+              onSelect={(e) => { e.preventDefault(); handleMarkAsRead(); }}
+          >
+              <div className="flex-shrink-0 mt-1">{iconMap[broadcast.icon]}</div>
+              <div className="flex-1">
+              <p className="font-semibold">{broadcast.title}</p>
+              <p className="text-sm text-muted-foreground">{broadcast.description}</p>
+              <p className="text-xs text-muted-foreground/80 mt-1">{formatDistanceToNow(new Date(broadcast.createdAt))} ago</p>
+              </div>
+               {!broadcast.read && <div className="w-2 h-2 rounded-full bg-primary self-center"></div>}
+          </DropdownMenuItem>
         ) : (
              <DropdownMenuItem className="text-center text-muted-foreground" disabled>
                 {t('notifications.noNotifications')}
@@ -176,4 +163,3 @@ export function Notifications() {
     </DropdownMenu>
   );
 }
-

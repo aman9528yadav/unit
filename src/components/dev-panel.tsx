@@ -13,7 +13,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
-import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo } from '@/services/firestore';
+import { sendGlobalNotification, setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo, setBroadcastNotification, listenToBroadcastNotification } from '@/services/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { intervalToDuration, differenceInDays } from 'date-fns';
 
@@ -44,8 +44,8 @@ export function DevPanel() {
     // State for Updates Tab
     const [updateDuration, setUpdateDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const [updateText, setUpdateText] = useState('');
-
-    // Shared State
+    
+    // State for Broadcast Tab
     const [notificationTitle, setNotificationTitle] = useState('');
     const [notificationDescription, setNotificationDescription] = useState('');
     
@@ -113,11 +113,17 @@ export function DevPanel() {
                 setUpdateDuration({ days: 0, hours: 0, minutes: 0, seconds: 0 });
             }
         });
+        
+        const unsubBroadcast = listenToBroadcastNotification((info) => {
+            setNotificationTitle(info.title || '');
+            setNotificationDescription(info.description || '');
+        });
 
         return () => {
             unsubMaintenanceMode();
             unsubUpdateInfo();
             unsubNextUpdateInfo();
+            unsubBroadcast();
         };
     }, [isAuthorized, isAuthenticated]);
     
@@ -178,6 +184,11 @@ export function DevPanel() {
                 targetDate: targetDateTime?.toISOString() ?? null, 
                 updateText: updateText,
             });
+            await sendGlobalNotification({
+                title: "Upcoming Update",
+                description: updateText || "Check out what's new in the updates page!",
+                icon: 'new'
+            })
              toast({ title: 'Next Update Info Saved' });
         } catch(e) {
             toast({ title: 'Error saving next update info', variant: 'destructive' });
@@ -191,17 +202,16 @@ export function DevPanel() {
         }
         
         try {
-            await sendGlobalNotification({ 
+            await setBroadcastNotification({ 
                 title: notificationTitle, 
                 description: notificationDescription,
-                icon: 'new', // Default icon for new broadcasts
+                icon: 'info', 
+                createdAt: new Date().toISOString()
             });
-            setNotificationTitle('');
-            setNotificationDescription('');
-            toast({ title: "Notification Sent!", description: "The broadcast has been sent to all users." });
+            toast({ title: "Notification Updated!", description: "The broadcast has been updated for all users." });
         } catch (error) {
             console.error("Failed to send notification:", error);
-            toast({ title: "Broadcast Failed", description: "Could not send notification. Check console for errors.", variant: "destructive" });
+            toast({ title: "Broadcast Failed", description: "Could not update notification. Check console for errors.", variant: "destructive" });
         }
     };
     
@@ -405,7 +415,7 @@ export function DevPanel() {
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2"><Send /> Notification Broadcaster</CardTitle>
-                            <CardDescription>Send a notification to all active users of the application.</CardDescription>
+                            <CardDescription>Update the global broadcast message for all users.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
@@ -428,7 +438,7 @@ export function DevPanel() {
                                 />
                             </div>
                             <Button onClick={handleSendNotification} className="w-full">
-                                Send Broadcast
+                                Update Notification
                             </Button>
                         </CardContent>
                     </Card>
