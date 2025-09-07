@@ -54,11 +54,23 @@ import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "./ui/t
 import { useDebounce } from "@/hooks/use-debounce";
 
 
+const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
+const PREMIUM_MEMBER_THRESHOLD = 8000;
+type UserRole = 'Member' | 'Premium Member' | 'Owner';
+
+
+const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
 const PREMIUM_REGIONS = ['Japan', 'Korea', 'China', 'Middle East'];
-const regions: Region[] = ['International', 'India', ...PREMIUM_REGIONS];
 
 
 const PREMIUM_CATEGORIES = ['Pressure', 'Energy', 'Currency', 'Fuel Economy'];
+
+interface UserProfile {
+    fullName: string;
+    email: string;
+    profileImage?: string;
+    [key:string]: any;
+}
 
 const getUserKey = (key: string, email: string | null) => {
     if (typeof window === 'undefined') return key;
@@ -123,7 +135,6 @@ export function Converter() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [profile, setProfile] = useState<{fullName: string, email: string, profileImage?: string} | null>(null);
 
   const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
   const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
@@ -189,6 +200,7 @@ export function Converter() {
   const [inputValue, setInputValue] = React.useState<string>("1");
   const debouncedInputValue = useDebounce(inputValue, 300);
   const [outputValue, setOutputValue] = React.useState<string>("");
+  const [history, setHistory] = React.useState<string[]>([]);
   const [favorites, setFavorites] = React.useState<string[]>([]);
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [region, setRegion] = React.useState<Region>('International');
@@ -202,9 +214,11 @@ export function Converter() {
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isSearching, startSearchTransition] = React.useTransition();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [autoConvert, setAutoConvert] = useState(true);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+  const [userRole, setUserRole] = useState<UserRole>('Member');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
@@ -221,24 +235,29 @@ export function Converter() {
   const fromUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === fromUnit), [currentUnits, fromUnit]);
   const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit), [currentUnits, toUnit]);
 
-  useEffect(() => {
-      const storedProfile = localStorage.getItem('userProfile');
-      if (storedProfile) {
-          setProfile(JSON.parse(storedProfile));
-      }
-  }, []);
 
   React.useEffect(() => {
-    const userEmail = profile?.email || null;
+    const storedProfileData = localStorage.getItem("userProfile");
+    const userEmail = storedProfileData ? JSON.parse(storedProfileData).email : null;
 
+    const storedHistory = localStorage.getItem("conversionHistory");
     const storedFavorites = localStorage.getItem("favoriteConversions");
     const savedAutoConvert = localStorage.getItem(getUserKey('autoConvert', userEmail));
     const savedCustomUnits = localStorage.getItem(getUserKey('customUnits', userEmail));
     const savedCustomCategories = localStorage.getItem(getUserKey('customCategories', userEmail));
     const savedDefaultRegion = localStorage.getItem(getUserKey('defaultRegion', userEmail));
 
+    if (storedHistory) setHistory(JSON.parse(storedHistory));
     if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
-
+    if (storedProfileData) {
+        const parsedProfile = JSON.parse(storedProfileData);
+        setProfile(parsedProfile);
+        if (parsedProfile.email === DEVELOPER_EMAIL) {
+            setUserRole('Owner');
+        }
+    } else {
+        setUserRole('Member');
+    }
     if (savedAutoConvert !== null) setAutoConvert(JSON.parse(savedAutoConvert));
     if (savedCustomUnits) setCustomUnits(JSON.parse(savedCustomUnits));
     if (savedCustomCategories) setCustomCategories(JSON.parse(savedCustomCategories));
@@ -270,6 +289,9 @@ export function Converter() {
         }
         if (e.key === getUserKey('defaultRegion', userEmail) && e.newValue && regions.includes(e.newValue as Region)) {
             setRegion(e.newValue as Region);
+        }
+        if (e.key === 'conversionHistory') {
+            setHistory(JSON.parse(e.newValue || '[]'));
         }
     };
 
@@ -334,24 +356,6 @@ export function Converter() {
   }, [selectedCategory, region, currentUnits]);
 
 
- const handleSaveToHistory = React.useCallback((numValue: number, from: string, to: string, result: number, categoryName: string) => {
-    if (isNaN(numValue) || isNaN(result)) return;
-
-    const historyKey = "conversionHistory";
-    const currentHistory = JSON.parse(localStorage.getItem(historyKey) || '[]');
-    const newHistoryString = getFullHistoryString(numValue, from, to, result, categoryName);
-    
-    // Prevent adding duplicate of the very last entry
-    if (currentHistory.length > 0 && currentHistory[0] === newHistoryString) {
-        return;
-    }
-
-    const newHistory = [newHistoryString, ...currentHistory];
-    localStorage.setItem(historyKey, JSON.stringify(newHistory));
-    window.dispatchEvent(new StorageEvent('storage', { key: historyKey, newValue: JSON.stringify(newHistory) }));
-}, []);
-
-
  const performConversion = React.useCallback(async (value: string | number, from: string, to: string) => {
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
     setIsGraphVisible(false);
@@ -380,7 +384,6 @@ export function Converter() {
 
     const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
     setOutputValue(formattedResult);
-    handleSaveToHistory(numValue, from, to, parseFloat(formattedResult), categoryToUse.name);
 
     if (categoryToUse.name !== 'Temperature') {
         const allUnitsInCategory = categoryToUse.units.filter(u => !u.region || u.region === region);
@@ -397,11 +400,38 @@ export function Converter() {
         setChartData([]);
     }
 
-}, [region, conversionCategories, handleSaveToHistory]);
+}, [region, conversionCategories]);
+
   
-  
+  const handleSaveToHistory = React.useCallback(() => {
+    const saveConversionHistory = JSON.parse(localStorage.getItem(getUserKey('saveConversionHistory', profile?.email || null)) || 'true');
+    if (!saveConversionHistory) return;
+
+    const numValue = parseFloat(inputValue);
+    const result = parseFloat(outputValue.replace(/,/g, ''));
+    if (isNaN(numValue) || isNaN(result) || outputValue === '') return;
+
+    const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
+    localStorage.setItem('lastConversion', conversionString);
+    
+    setHistory(prevHistory => {
+        const conversionPart = conversionString.split('|')[0];
+        if (prevHistory.some(h => h.startsWith(conversionPart))) {
+            return prevHistory;
+        }
+        const newHistory = [conversionString, ...prevHistory];
+        localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
+        return newHistory;
+    });
+  }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name, profile?.email]);
 
 
+  React.useEffect(() => {
+    if (outputValue) {
+        handleSaveToHistory();
+    }
+  }, [outputValue, handleSaveToHistory]);
+  
   useEffect(() => {
     if (!autoConvert) return;
   
@@ -473,7 +503,11 @@ export function Converter() {
   };
 
   const handleRegionChange = (newRegion: string) => {
-    setRegion(newRegion as Region);
+    if (isPremiumFeatureLocked && PREMIUM_REGIONS.includes(newRegion)) {
+        setShowPremiumLockDialog(true);
+    } else {
+        setRegion(newRegion as Region);
+    }
   }
 
   const handleSwapUnits = () => {
@@ -586,7 +620,11 @@ export function Converter() {
   };
   
    const handleShareClick = () => {
+    if (isPremiumFeatureLocked) {
+      setShowPremiumLockDialog(true);
+    } else {
       setShowShareDialog(true);
+    }
   };
 
   const handleExportAsTxt = () => {
@@ -652,8 +690,16 @@ export function Converter() {
     }
   };
   
+  const isPremiumFeatureLocked = userRole === 'Member';
+
   const handleCategorySelect = (e: React.MouseEvent, categoryName: string) => {
+    const isLocked = isPremiumFeatureLocked && PREMIUM_CATEGORIES.includes(categoryName);
+    if (isLocked) {
+      e.preventDefault();
+      setShowPremiumLockDialog(true);
+    } else {
       handleCategoryChange(categoryName);
+    }
   };
 
  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -736,22 +782,6 @@ export function Converter() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-  
-  const [history, setHistory] = useState<string[]>([]);
-   useEffect(() => {
-        const handleStorageChange = () => {
-            const storedHistory = localStorage.getItem("conversionHistory");
-            if (storedHistory) {
-                setHistory(JSON.parse(storedHistory));
-            }
-        };
-
-        handleStorageChange(); // Initial load
-
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
-    }, []);
-
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-4">
@@ -840,7 +870,7 @@ export function Converter() {
                             </SelectTrigger>
                             <SelectContent>
                                 {regions.map(r => {
-                                    const isLocked = false;
+                                    const isLocked = isPremiumFeatureLocked && PREMIUM_REGIONS.includes(r);
                                     return (
                                         <SelectItem key={r} value={r} disabled={isLocked}>
                                             <div className="flex items-center gap-2">
@@ -869,7 +899,7 @@ export function Converter() {
                                <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 p-2">
                                        {conversionCategories.map(cat => {
-                                           const isLocked = false;
+                                           const isLocked = isPremiumFeatureLocked && PREMIUM_CATEGORIES.includes(cat.name);
                                            const categoryItem = (
                                                <DropdownMenuItem
                                                    key={cat.name}
@@ -1135,3 +1165,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
