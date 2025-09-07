@@ -246,9 +246,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 id: uuidv4(),
                 title,
                 content: currentContent,
-                isFavorite,
-                category,
-                attachment,
+                isFavorite: isFavorite || false,
+                category: category || '',
+                attachment: attachment || null,
                 createdAt: now,
                 updatedAt: now,
                 deletedAt: null
@@ -261,9 +261,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     ...notes[noteIndex],
                     title,
                     content: currentContent,
-                    isFavorite,
-                    category,
-                    attachment,
+                    isFavorite: isFavorite || false,
+                    category: category || '',
+                    attachment: attachment || null,
                     updatedAt: now,
                 };
             }
@@ -470,3 +470,4 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
+

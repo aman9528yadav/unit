@@ -44,10 +44,10 @@ export interface Note {
     content: string;
     createdAt: string;
     updatedAt:string;
-    isFavorite?: boolean;
-    deletedAt?: string | null;
-    category?: string;
-    attachment?: string | null;
+    isFavorite: boolean;
+    deletedAt: string | null;
+    category: string;
+    attachment: string | null;
 }
 
 interface UserProfile {
@@ -438,3 +438,4 @@ export function Notepad() {
         </div>
     );
 }
+
