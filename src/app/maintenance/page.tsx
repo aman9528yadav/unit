@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Wrench, Clock, Settings, Zap, Hourglass } from "lucide-react";
+import { Wrench, Clock, Settings, Zap, Hourglass, Bug, Rocket, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from '@/components/ui/button';
@@ -31,10 +31,18 @@ const FeatureCard = ({ icon: Icon, title, description }: { icon: React.ElementTy
     </Card>
 );
 
+const maintenanceTypeMap = {
+    "Security": { icon: Shield, title: "Security Update", description: "Applying the latest security patches to keep your data safe." },
+    "Feature Update": { icon: Rocket, title: "New Features", description: "We're launching exciting new features for you to enjoy." },
+    "Bug Fixes": { icon: Bug, title: "Bug Squashing", description: "Ironing out some wrinkles to improve your experience." },
+    "Performance": { icon: Zap, title: "Performance Boost", description: "Making the app faster and more responsive." }
+};
+
 
 export default function MaintenancePage() {
   const [targetDate, setTargetDate] = useState<Date | null>(null);
   const [updateText, setUpdateText] = useState<string | null>(null);
+  const [maintenanceType, setMaintenanceType] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<Duration & { totalDays?: number } | null>(null);
 
   useEffect(() => {
@@ -50,6 +58,7 @@ export default function MaintenancePage() {
             setTargetDate(null);
         }
         setUpdateText(info.updateText || "General improvements and bug fixes.");
+        setMaintenanceType(info.maintenanceType || "Performance");
     });
     
     return () => unsubscribe();
@@ -76,6 +85,8 @@ export default function MaintenancePage() {
 
     return () => clearInterval(timer);
   }, [targetDate]);
+  
+  const typeDetails = maintenanceTypeMap[maintenanceType as keyof typeof maintenanceTypeMap] || maintenanceTypeMap['Performance'];
 
 
   return (
@@ -93,7 +104,7 @@ export default function MaintenancePage() {
         <div className="space-y-2">
             <h1 className="text-4xl md:text-5xl font-bold text-foreground">We'll Be Back Soon!</h1>
             <p className="text-muted-foreground max-w-2xl">
-              Our website is currently undergoing scheduled maintenance. We're working hard to improve your experience. Thank you for your patience.
+              {updateText}
             </p>
         </div>
 
@@ -113,9 +124,9 @@ export default function MaintenancePage() {
                 description="We're working as quickly as possible to restore service"
             />
              <FeatureCard 
-                icon={Settings}
-                title="System Updates"
-                description="Installing important security and performance updates"
+                icon={typeDetails.icon}
+                title={typeDetails.title}
+                description={typeDetails.description}
             />
              <FeatureCard 
                 icon={Zap}

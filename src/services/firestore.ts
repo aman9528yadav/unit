@@ -101,6 +101,7 @@ export async function setGlobalMaintenanceMode(isEnabled: boolean) {
 export interface UpdateInfo {
   targetDate: string | null;
   updateText: string | null;
+  maintenanceType: string | null;
 }
 
 /**
@@ -130,11 +131,12 @@ export function listenToUpdateInfo(callback: (info: UpdateInfo) => void) {
         const info: UpdateInfo = {
             targetDate: data?.targetDate || null,
             updateText: data?.updateText || null,
+            maintenanceType: data?.maintenanceType || null,
         };
         callback(info);
     }, (error) => {
         console.error("Error listening to update info:", error);
-        callback({ targetDate: null, updateText: null }); // Default on error
+        callback({ targetDate: null, updateText: null, maintenanceType: null }); // Default on error
     });
 
     return unsubscribe;
@@ -167,9 +169,8 @@ export function listenToGlobalMaintenanceMode(
 const mergeData = (onlineData: any, localData: any) => {
     const merged = { ...onlineData };
     for (const key in localData) {
-        if (typeof localData[key] === 'object' && localData[key] !== null && !Array.isArray(localData[key])) {
-             // For objects like dailyCalculations
-            merged[key] = { ...(onlineData[key] || {}), ...localData[key] };
+        if (key === 'dailyCalculations' && typeof localData[key] === 'object' && localData[key] !== null) {
+            merged[key] = { ...(onlineData[key] || {}) };
              for(const date in localData[key]) {
                  merged[key][date] = (onlineData[key]?.[date] || 0) + localData[key][date];
              }
