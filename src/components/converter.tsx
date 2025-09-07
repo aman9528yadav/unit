@@ -293,10 +293,11 @@ export function Converter() {
     const conversion = `${value} ${from} → ${result} ${to}`;
     const timestamp = new Date().toISOString();
     return `${conversion}|${categoryName}|${timestamp}`;
-  }
+  };
 
-  const handleSaveToHistory = useCallback((valueStr: string, from: string, to: string, resultStr: string, category: string) => {
-      const shouldSaveKey = getUserKey('saveConversionHistory', profile?.email || null);
+  const handleSaveToHistory = (valueStr: string, from: string, to: string, resultStr: string, category: string) => {
+      const userEmail = profile?.email || null;
+      const shouldSaveKey = getUserKey('saveConversionHistory', userEmail);
       const shouldSave = JSON.parse(localStorage.getItem(shouldSaveKey) ?? 'true');
 
       if (!shouldSave) return;
@@ -306,7 +307,6 @@ export function Converter() {
       const storedHistory = localStorage.getItem("conversionHistory");
       let currentHistory = storedHistory ? JSON.parse(storedHistory) : [];
       
-      // Prevent adding if it's identical to the most recent entry
       if (currentHistory.length > 0 && currentHistory[0] === newHistoryEntry) {
           return;
       }
@@ -316,68 +316,45 @@ export function Converter() {
       localStorage.setItem("conversionHistory", JSON.stringify(currentHistory));
       localStorage.setItem('lastConversion', newHistoryEntry);
 
-      // Manually update recent conversions state for immediate UI feedback
       setRecentConversions(currentHistory.slice(0, 4));
-
-      window.dispatchEvent(new StorageEvent('storage', { key: 'conversionHistory', newValue: JSON.stringify(currentHistory) }));
       
       incrementTodaysCalculations();
-  }, [profile?.email]);
-
+  };
 
  const performConversion = useCallback(() => {
     const numValue = parseFloat(inputValue);
-    setIsGraphVisible(false);
-
     if (isNaN(numValue) || !fromUnit || !toUnit) {
-        setOutputValue("");
-        setChartData([]);
-        return;
+      setOutputValue("");
+      return;
     }
 
     const categoryToUse = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit) && c.units.some(u => u.symbol === toUnit));
-
     if (!categoryToUse) {
-        setOutputValue("");
-        setChartData([]);
-        return;
+      setOutputValue("");
+      return;
     }
 
-    // `convert` can be a promise, but we'll handle it synchronously for now
     const result = categoryToUse.convert(numValue, fromUnit, toUnit, region) as number;
-
-
     if (result === undefined || isNaN(result)) {
-        setOutputValue("");
-        setChartData([]);
-        return;
-    }
-
-    const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
-    setOutputValue(formattedResult);
-
-    if (categoryToUse.name !== 'Temperature') {
-        const allUnitsInCategory = categoryToUse.units.filter(u => !u.region || u.region === region);
-        const newChartData = allUnitsInCategory.map((unit) => {
-            const convertedValue = categoryToUse.convert(numValue, fromUnit, unit.symbol, region) as number;
-            return { 
-                name: unit.symbol, 
-                value: parseFloat(convertedValue.toFixed(5)) 
-            };
-        });
-        setChartData(newChartData);
-    } else {
-        setChartData([]);
+      setOutputValue("");
+      return;
     }
     
+    const formattedResult = result.toLocaleString(undefined, {
+      maximumFractionDigits: 5,
+      useGrouping: false,
+    });
+
+    setOutputValue(formattedResult);
     handleSaveToHistory(inputValue, fromUnit, toUnit, formattedResult, categoryToUse.name);
-}, [inputValue, fromUnit, toUnit, region, conversionCategories, handleSaveToHistory]);
+  }, [inputValue, fromUnit, toUnit, region, conversionCategories, profile?.email]);
+
   
   useEffect(() => {
     if (autoConvert) {
       performConversion();
     }
-  }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion]);
+  }, [debouncedInputValue, fromUnit, toUnit, region, autoConvert, performConversion]);
 
   React.useEffect(() => {
     if (!outputValue) {
@@ -997,5 +974,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
