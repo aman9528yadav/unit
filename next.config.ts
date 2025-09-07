@@ -71,6 +71,12 @@ const nextConfig: NextConfig = {
         hostname: 'static.wixstatic.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'plus.unsplash.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
@@ -84,7 +90,3 @@ const nextConfig: NextConfig = {
 const exportConfig = process.env.NODE_ENV === 'production' ? withPWA(nextConfig) : nextConfig;
 
 export default exportConfig;
-
-    
-
-    
