@@ -1,7 +1,9 @@
 
+
 "use client";
 
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { listenToUserData } from '@/services/firestore';
 
 type Theme = 'light' | 'dark' | 'custom' | 'retro' | 'glass' | 'nord' | 'rose-pine';
 
@@ -77,23 +79,25 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [customTheme, setCustomThemeState] = useState<CustomTheme | null>(null);
 
   useEffect(() => {
+    const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
+    
+    // Initial load from localStorage for non-logged-in users or for faster initial paint
     const savedTheme = localStorage.getItem('theme') as Theme | null;
     const savedCustomTheme = localStorage.getItem('customTheme');
-    
-    const initialTheme = savedTheme || 'light';
-    
-    setThemeState(initialTheme);
-    if(initialTheme !== 'custom') {
-        setLastNonCustomTheme(initialTheme);
-    }
+    if (savedTheme) setThemeState(savedTheme);
+    if (savedCustomTheme) setCustomThemeState(JSON.parse(savedCustomTheme));
 
-    if (savedCustomTheme) {
-      try {
-        setCustomThemeState(JSON.parse(savedCustomTheme));
-      } catch (e) {
-        console.error("Failed to parse custom theme from localStorage", e);
-        setCustomThemeState(null);
-      }
+    if (userEmail) {
+        const unsubscribe = listenToUserData(userEmail, (data) => {
+            const userSettings = data?.settings || {};
+            if (userSettings.theme) {
+                setThemeState(userSettings.theme);
+            }
+            if (userSettings.customTheme) {
+                setCustomThemeState(userSettings.customTheme);
+            }
+        });
+        return () => unsubscribe();
     }
   }, []);
 
@@ -138,13 +142,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (newTheme !== 'custom') {
       setLastNonCustomTheme(newTheme);
     }
-    localStorage.setItem('theme', newTheme);
+    // We don't save to localStorage here anymore, handleSaveChanges in settings will update DB.
   };
 
   const setCustomTheme = (newCustomTheme: CustomTheme | null) => {
     setCustomThemeState(newCustomTheme);
     if (newCustomTheme) {
-      localStorage.setItem('customTheme', JSON.stringify(newCustomTheme));
       if (theme !== 'custom') {
         setTheme('custom');
       }
@@ -152,7 +155,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const resetCustomTheme = () => {
-    localStorage.removeItem('customTheme');
     setCustomThemeState(null);
     if (theme === 'custom') {
       setTheme(lastNonCustomTheme);

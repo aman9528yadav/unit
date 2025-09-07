@@ -27,13 +27,13 @@ import { getStats } from "@/lib/stats";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { cn } from "@/lib/utils";
 import { Label } from "./ui/label";
+import { listenToUserData, updateUserData } from "@/services/firestore";
 
 
 export type CalculatorMode = 'basic' | 'scientific';
 const PREMIUM_MEMBER_THRESHOLD = 8000;
 type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
-const getUserKey = (key: string, email: string | null) => `${email || 'guest'}_${key}`;
 
 const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
 
@@ -141,8 +141,23 @@ export function Settings() {
     const storedProfile = localStorage.getItem('userProfile');
     const email = storedProfile ? JSON.parse(storedProfile).email : null;
     setProfile(storedProfile ? JSON.parse(storedProfile) : null);
-    loadSettings(email);
     updateUserRole(email);
+
+    if (email) {
+        const unsub = listenToUserData(email, (data) => {
+            const userSettings = data?.settings || {};
+            setNotificationsEnabled(userSettings.notificationsEnabled ?? true);
+            setSaveConversionHistory(userSettings.saveConversionHistory ?? true);
+            if (userSettings.defaultRegion && regions.includes(userSettings.defaultRegion)) {
+                setDefaultRegion(userSettings.defaultRegion);
+            }
+            if (userSettings.calculatorMode) setCalculatorMode(userSettings.calculatorMode);
+            setCalculatorSound(userSettings.calculatorSound ?? true);
+
+            // Contexts will handle their own state from the listener
+        });
+        return () => unsub();
+    }
   }, []);
   
   const updateUserRole = async (email: string | null) => {
@@ -161,28 +176,12 @@ export function Settings() {
   useEffect(() => {
     setSelectedTheme(theme);
   }, [theme]);
-
-  const loadSettings = (email: string | null) => {
-    const notifications = localStorage.getItem(getUserKey('notificationsEnabled', email));
-    setNotificationsEnabled(notifications === null ? true : JSON.parse(notifications));
-
-    const saveConv = localStorage.getItem(getUserKey('saveConversionHistory', email));
-    setSaveConversionHistory(saveConv === null ? true : JSON.parse(saveConv));
-    
-    const region = localStorage.getItem(getUserKey('defaultRegion', email));
-    if (region && regions.includes(region as Region)) {
-      setDefaultRegion(region as Region);
-    }
-
-    const calcMode = localStorage.getItem('calculatorMode') as CalculatorMode;
-    if (calcMode) setCalculatorMode(calcMode);
-
-    const calcSound = localStorage.getItem('calculatorSoundEnabled');
-    setCalculatorSound(calcSound === null ? true : JSON.parse(calcSound));
-  };
   
   const handleSaveChanges = () => {
-    const userKey = profile?.email || null;
+    if (!profile) {
+        toast({ title: "Error", description: "You must be logged in to save settings.", variant: "destructive" });
+        return;
+    }
     
     const isPremiumFeatureLocked = userRole === 'Member';
     const isThemeLocked = isPremiumFeatureLocked && (selectedTheme === 'retro' || selectedTheme === 'glass' || selectedTheme === 'nord' || selectedTheme === 'rose-pine' || selectedTheme === 'custom');
@@ -190,34 +189,47 @@ export function Settings() {
 
     if(isThemeLocked || isCalcModeLocked) {
         setShowPremiumLockDialog(true);
-        const oldTheme = localStorage.getItem('theme') || 'light';
-        const oldCalcMode = (localStorage.getItem('calculatorMode') as CalculatorMode) || 'basic';
-        setSelectedTheme(oldTheme as any);
-        if (isCalcModeLocked) setCalculatorMode(oldCalcMode);
+        // Revert to last saved values
+        setSelectedTheme(theme);
+        if (isCalcModeLocked) {
+             const savedMode = localStorage.getItem('calculatorMode') as CalculatorMode || 'basic';
+             setCalculatorMode(savedMode);
+        }
         return;
     }
 
-    localStorage.setItem(getUserKey('notificationsEnabled', userKey), JSON.stringify(notificationsEnabled));
-    localStorage.setItem(getUserKey('saveConversionHistory', userKey), JSON.stringify(saveConversionHistory));
-    localStorage.setItem(getUserKey('defaultRegion', userKey), defaultRegion);
-    localStorage.setItem('calculatorMode', calculatorMode);
-    localStorage.setItem('calculatorSoundEnabled', JSON.stringify(calculatorSound));
-    setTheme(selectedTheme);
-    
-    // Dispatch storage events to notify other components/tabs
-    window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('notificationsEnabled', userKey), newValue: JSON.stringify(notificationsEnabled) }));
-    window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('saveConversionHistory', userKey), newValue: JSON.stringify(saveConversionHistory) }));
-    window.dispatchEvent(new StorageEvent('storage', { key: getUserKey('defaultRegion', userKey), newValue: defaultRegion }));
-    window.dispatchEvent(new StorageEvent('storage', { key: 'calculatorMode', newValue: calculatorMode }));
-    window.dispatchEvent(new StorageEvent('storage', { key: 'calculatorSoundEnabled', newValue: JSON.stringify(calculatorSound) }));
-    window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: selectedTheme }));
+    const settingsToSave = {
+        language,
+        theme: selectedTheme,
+        customTheme: theme === 'custom' ? customTheme : null,
+        notificationsEnabled,
+        saveConversionHistory,
+        defaultRegion,
+        calculatorMode,
+        calculatorSound
+    };
 
+    updateUserData(profile.email, { settings: settingsToSave });
 
     toast({ title: t('settings.data.toast.saved.title'), description: t('settings.data.toast.saved.description')});
   };
 
   const handleClearData = () => {
     localStorage.clear();
+    if (profile) {
+        updateUserData(profile.email, {
+            conversionHistory: [],
+            calculationHistory: [],
+            favoriteConversions: [],
+            notes: [],
+            dailyStats: {},
+            totalConversions: 0,
+            totalCalculations: 0,
+            totalDateCalculations: 0,
+            userVisitHistory: [],
+            streakData: { currentStreak: 0, bestStreak: 0, daysNotOpened: 0 }
+        });
+    }
     toast({ title: t('settings.data.toast.cleared.title'), description: t('settings.data.toast.cleared.description') });
     setTimeout(() => {
       router.push('/welcome');

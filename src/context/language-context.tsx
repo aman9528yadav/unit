@@ -1,10 +1,12 @@
 
+
 "use client";
 
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import en from '@/locales/en.json';
 import hi from '@/locales/hi.json';
 import { get } from 'lodash';
+import { listenToUserData } from '@/services/firestore';
 
 const translations = { en, hi };
 
@@ -26,11 +28,22 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'hi')) {
       setLanguageState(savedLanguage);
     }
+
+    const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
+    if (userEmail) {
+        const unsubscribe = listenToUserData(userEmail, (data) => {
+            const userSettings = data?.settings || {};
+            if (userSettings.language && (userSettings.language === 'en' || userSettings.language === 'hi')) {
+                setLanguageState(userSettings.language);
+            }
+        });
+        return () => unsubscribe();
+    }
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('language', lang);
+    // Don't save to localStorage directly, settings page will handle DB update
   };
 
   const t = useCallback((key: string, params?: { [key: string]: string | number }): string => {
