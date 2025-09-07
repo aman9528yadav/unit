@@ -28,8 +28,8 @@ export function AboutEditor() {
         setIsClient(true);
         const unsubscribe = listenToAboutInfoFromRtdb((data) => {
             if (data) {
-                setAppInfo(data.appInfo);
-                setReleasePlan(data.releasePlan);
+                setAppInfo(data.appInfo || { version: '', build: '', releaseChannel: '', license: '' });
+                setReleasePlan(data.releasePlan || []);
             }
         });
         return () => unsubscribe();
