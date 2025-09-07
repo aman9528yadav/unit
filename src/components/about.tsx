@@ -121,22 +121,6 @@ export function About() {
             </div>
         </section>
 
-        {/* Action Buttons Section */}
-        <section className="mt-12 w-full grid grid-cols-2 gap-4">
-            <Button asChild size="lg" variant="outline">
-                <Link href="/updates">
-                    <FileClock className="mr-2 h-5 w-5" />
-                    Updates
-                </Link>
-            </Button>
-             <Button asChild size="lg" variant="outline">
-                <Link href="/how-to-use">
-                    <Info className="mr-2 h-5 w-5" />
-                    How to Use
-                </Link>
-            </Button>
-        </section>
-
         {/* App Info Section */}
         <section className="mt-12 grid md:grid-cols-2 gap-8 w-full">
           <div className="bg-white shadow-lg rounded-2xl p-4 hover:shadow-xl transition">
@@ -263,6 +247,38 @@ export function About() {
           </div>
         </section>
 
+        <section className="mt-16 w-full">
+            <h2 className="text-3xl font-bold text-center text-gray-800 mb-10">
+                Learn More
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Link href="/updates">
+                    <motion.div 
+                        className="bg-white shadow-lg rounded-2xl p-6 h-40 flex flex-col items-center justify-center hover:shadow-xl transition text-center group"
+                        whileHover={{ y: -5 }}
+                    >
+                        <div className="text-indigo-500 mb-3 group-hover:scale-110 transition-transform">
+                            <FileClock className="w-10 h-10" />
+                        </div>
+                        <p className="text-lg font-semibold text-gray-800">Updates</p>
+                        <p className="text-sm text-muted-foreground">See the latest features.</p>
+                    </motion.div>
+                </Link>
+                <Link href="/how-to-use">
+                    <motion.div 
+                        className="bg-white shadow-lg rounded-2xl p-6 h-40 flex flex-col items-center justify-center hover:shadow-xl transition text-center group"
+                        whileHover={{ y: -5 }}
+                    >
+                        <div className="text-indigo-500 mb-3 group-hover:scale-110 transition-transform">
+                            <Info className="w-10 h-10" />
+                        </div>
+                        <p className="text-lg font-semibold text-gray-800">How to Use</p>
+                        <p className="text-sm text-muted-foreground">Learn about the app.</p>
+                    </motion.div>
+                </Link>
+            </div>
+        </section>
+
         {/* Legal Section */}
          <section className="mt-16 w-full">
             <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Legal</h2>
@@ -302,3 +318,5 @@ export function About() {
     </motion.div>
   );
 }
+
+    
