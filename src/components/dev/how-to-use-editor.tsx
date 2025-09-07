@@ -26,9 +26,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '..
 import * as LucideIcons from 'lucide-react';
 
 
-const iconNames = Object.keys(LucideIcons).filter(key => typeof (LucideIcons as any)[key] === 'object' && key[0] === key[0].toUpperCase());
-
-
 export function HowToUseEditor() {
     const [features, setFeatures] = useState<HowToUseFeature[] | null>(null);
     const [customCategories, setCustomCategories] = useState<CustomHowToUseCategory[]>([]);
@@ -280,21 +277,7 @@ export function HowToUseEditor() {
                         </div>
                          <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="icon" className="text-right">Icon</Label>
-                            <Select value={icon} onValueChange={(value) => setIcon(value)}>
-                                <SelectTrigger className="col-span-3">
-                                    <SelectValue placeholder="Select an icon" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {iconNames.map((iconName) => (
-                                        <SelectItem key={iconName} value={iconName}>
-                                            <div className="flex items-center gap-2">
-                                                {React.createElement((LucideIcons as any)[iconName], { className: "w-4 h-4" })}
-                                                <span>{iconName}</span>
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Input id="icon" value={icon} onChange={(e) => setIcon(e.target.value)} className="col-span-3" placeholder="e.g. Paperclip"/>
                         </div>
                          <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="category" className="text-right">Category</Label>
@@ -319,4 +302,3 @@ export function HowToUseEditor() {
         </div>
     );
 }
-

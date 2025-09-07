@@ -35,7 +35,7 @@ const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, titl
     </div>
 );
 
-const defaultSectionDetails: Record<HowToUseCategory, { title: string }> = {
+const defaultSectionDetails: Record<string, { title: string }> = {
     gettingStarted: { title: "Getting Started" },
     unitConverter: { title: "Unit Converter" },
     calculator: { title: "Calculator" },

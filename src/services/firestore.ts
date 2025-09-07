@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { db, rtdb } from '@/lib/firebase';
@@ -140,15 +139,11 @@ export async function setCustomHowToUseCategoriesInRtdb(categories: CustomHowToU
     }
 }
 
-export function listenToCustomHowToUseCategoriesFromRtdb(callback: (categories: CustomHowToUseCategory[]) => void) {
+export function listenToCustomHowToUseCategoriesFromRtdb(callback: (categories: CustomHowToUseCategory[] | null) => void) {
     const categoriesRef = ref(rtdb, 'app-content/customHowToUseCategories');
     return onValue(categoriesRef, (snapshot) => {
         const data = snapshot.val();
-        if (data && Array.isArray(data)) {
-            callback(data);
-        } else {
-            callback([]);
-        }
+        callback(data || []);
     }, (error) => {
         console.error("Error listening to custom HowToUse categories from RTDB:", error);
         callback([]);
