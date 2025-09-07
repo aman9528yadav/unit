@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send, Wrench, Info } from 'lucide-react';
+import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send, Wrench, Info, Shield } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
@@ -19,7 +19,7 @@ import { intervalToDuration, differenceInDays } from 'date-fns';
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
-const DEFAULT_DEV_PASSWORD = "121312";
+let DEFAULT_DEV_PASSWORD = "121312";
 
 interface UserProfile {
     email: string;
@@ -44,11 +44,16 @@ export function DevPanel() {
     // State for Updates Tab
     const [updateDuration, setUpdateDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const [updateText, setUpdateText] = useState('');
-    
+    const [showUpdateOnDashboard, setShowUpdateOnDashboard] = useState(false);
+
     // State for Broadcast Tab
     const [notificationTitle, setNotificationTitle] = useState('');
     const [notificationDescription, setNotificationDescription] = useState('');
     
+    // State for Security Tab
+    const [currentDevPassword, setCurrentDevPassword] = useState('');
+    const [newDevPassword, setNewDevPassword] = useState('');
+
     const router = useRouter();
     const { toast } = useToast();
 
@@ -63,6 +68,11 @@ export function DevPanel() {
                 setIsAuthorized(true);
             }
         }
+        const savedDevPassword = localStorage.getItem('developerPassword');
+        if (savedDevPassword) {
+            DEFAULT_DEV_PASSWORD = savedDevPassword;
+        }
+
     }, []);
     
      useEffect(() => {
@@ -95,6 +105,7 @@ export function DevPanel() {
 
         const unsubNextUpdateInfo = listenToNextUpdateInfo((info) => {
             setUpdateText(info.updateText || '');
+            setShowUpdateOnDashboard(info.showOnDashboard || false);
             if (info.targetDate) {
                 const target = new Date(info.targetDate);
                 const now = new Date();
@@ -183,12 +194,8 @@ export function DevPanel() {
              await setNextUpdateInfo({ 
                 targetDate: targetDateTime?.toISOString() ?? null, 
                 updateText: updateText,
+                showOnDashboard: showUpdateOnDashboard,
             });
-            await sendGlobalNotification({
-                title: "Upcoming Update",
-                description: updateText || "Check out what's new in the updates page!",
-                icon: 'new'
-            })
              toast({ title: 'Next Update Info Saved' });
         } catch(e) {
             toast({ title: 'Error saving next update info', variant: 'destructive' });
@@ -226,6 +233,22 @@ export function DevPanel() {
             console.error("Failed to toggle maintenance mode:", error);
             toast({ title: "Update Failed", description: "Could not change maintenance mode status.", variant: "destructive" });
         }
+    };
+
+    const handleDevPasswordChange = () => {
+        if (!currentDevPassword || !newDevPassword) {
+            toast({ title: "Error", description: "Please fill both password fields.", variant: "destructive" });
+            return;
+        }
+        if (currentDevPassword !== DEFAULT_DEV_PASSWORD) {
+            toast({ title: "Incorrect Password", description: "The current password is wrong.", variant: "destructive" });
+            return;
+        }
+        localStorage.setItem('developerPassword', newDevPassword);
+        DEFAULT_DEV_PASSWORD = newDevPassword;
+        setCurrentDevPassword('');
+        setNewDevPassword('');
+        toast({ title: "Success", description: "Developer password has been updated." });
     };
 
     if (!isClient) {
@@ -286,11 +309,12 @@ export function DevPanel() {
             </header>
 
             <Tabs defaultValue="maintenance" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="maintenance"><Timer /></TabsTrigger>
                     <TabsTrigger value="updates"><ServerCog /></TabsTrigger>
                     <TabsTrigger value="broadcast"><Send /></TabsTrigger>
                     <TabsTrigger value="data"><Trash2 /></TabsTrigger>
+                    <TabsTrigger value="security"><Shield /></TabsTrigger>
                 </TabsList>
                 <TabsContent value="maintenance" className="mt-4">
                     <Card>
@@ -376,6 +400,17 @@ export function DevPanel() {
                             <CardTitle className="flex items-center gap-2"><ServerCog /> Updates Page</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <div>
+                                    <Label htmlFor="show-update-banner">Show Update Banner on Dashboard</Label>
+                                    <p className='text-xs text-muted-foreground'>Toggles the countdown banner for all users.</p>
+                                </div>
+                                <Switch
+                                    id="show-update-banner"
+                                    checked={showUpdateOnDashboard}
+                                    onCheckedChange={setShowUpdateOnDashboard}
+                                />
+                            </div>
                             <div>
                                 <Label>Set Countdown Duration</Label>
                                 <div className="grid grid-cols-2 gap-4">
@@ -460,6 +495,38 @@ export function DevPanel() {
                                 </div>
                                 <Button onClick={() => router.push('/dev/help')}>Manage</Button>
                             </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="security" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Shield /> Security</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <Label htmlFor="currentDevPassword">Current Dev Password</Label>
+                                <Input 
+                                    id="currentDevPassword" 
+                                    type="password"
+                                    value={currentDevPassword}
+                                    onChange={(e) => setCurrentDevPassword(e.target.value)}
+                                    placeholder="Enter current password" 
+                                />
+                            </div>
+                             <div>
+                                <Label htmlFor="newDevPassword">New Dev Password</Label>
+                                <Input 
+                                    id="newDevPassword"
+                                    type="password"
+                                    value={newDevPassword}
+                                    onChange={(e) => setNewDevPassword(e.target.value)}
+                                    placeholder="Enter new password"
+                                />
+                            </div>
+                            <Button onClick={handleDevPasswordChange} className="w-full">
+                                Change Dev Password
+                            </Button>
                         </CardContent>
                     </Card>
                 </TabsContent>

@@ -50,17 +50,25 @@ export function Notifications() {
     setAreNotificationsEnabled(enabled === null ? true : JSON.parse(enabled));
   }
   
+  const getReadBroadcastId = (): string | null => {
+    return localStorage.getItem('readBroadcastId');
+  };
+  
+  const markBroadcastAsRead = (id: string) => {
+     localStorage.setItem('readBroadcastId', id);
+  }
+
   useEffect(() => {
     if (isClient) {
         checkNotificationSetting();
         
         const unsubscribe = listenToBroadcastNotification((info) => {
             if(info && info.title && info.description && info.createdAt) {
-                const readIds = getReadNotificationIds();
+                const readId = getReadBroadcastId();
                 setBroadcast({
                     id: 'global_broadcast',
                     ...info,
-                    read: readIds.has('global_broadcast') && readIds.has(info.createdAt)
+                    read: readId === info.createdAt,
                 });
             } else {
                 setBroadcast(null);
@@ -68,10 +76,10 @@ export function Notifications() {
         });
 
         const handleStorageChange = (event: StorageEvent) => {
-            if (event.key === 'readAppNotifications') {
+            if (event.key === 'readBroadcastId') {
                  if (broadcast) {
-                    const readIds = getReadNotificationIds();
-                    setBroadcast(b => b ? {...b, read: readIds.has('global_broadcast') && readIds.has(b.createdAt)} : null);
+                    const readId = getReadBroadcastId();
+                    setBroadcast(b => b ? {...b, read: readId === b.createdAt} : null);
                  }
             }
             if (event.key === getUserKey('notificationsEnabled', profile?.email || 'guest')) {
@@ -87,17 +95,10 @@ export function Notifications() {
     }
   }, [isClient, profile, broadcast]);
   
-  const getReadNotificationIds = (): Set<string> => {
-    const stored = localStorage.getItem('readBroadcasts');
-    return stored ? new Set(JSON.parse(stored)) : new Set();
-  };
 
   const handleMarkAsRead = () => {
     if(!broadcast) return;
-    const readIds = getReadNotificationIds();
-    readIds.add('global_broadcast');
-    readIds.add(broadcast.createdAt); // Mark this specific version as read
-    localStorage.setItem('readBroadcasts', JSON.stringify(Array.from(readIds)));
+    markBroadcastAsRead(broadcast.createdAt);
     setBroadcast(b => b ? { ...b, read: true } : null);
   };
   
@@ -113,7 +114,7 @@ export function Notifications() {
 
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={(open) => { if (!open && broadcast && !broadcast.read) { handleMarkAsRead() }}}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell />
@@ -140,10 +141,10 @@ export function Notifications() {
                     </Link>
                 </Button>
             </div>
-        ) : broadcast ? (
+        ) : broadcast && !broadcast.read ? (
           <DropdownMenuItem 
               key={broadcast.id} 
-              className={`flex items-start gap-3 p-2 cursor-pointer group relative ${!broadcast.read ? 'bg-accent/20' : ''}`}
+              className={`flex items-start gap-3 p-2 cursor-pointer group relative`}
               onSelect={(e) => { e.preventDefault(); handleMarkAsRead(); }}
           >
               <div className="flex-shrink-0 mt-1">{iconMap[broadcast.icon]}</div>
@@ -152,7 +153,6 @@ export function Notifications() {
               <p className="text-sm text-muted-foreground">{broadcast.description}</p>
               <p className="text-xs text-muted-foreground/80 mt-1">{formatDistanceToNow(new Date(broadcast.createdAt))} ago</p>
               </div>
-               {!broadcast.read && <div className="w-2 h-2 rounded-full bg-primary self-center"></div>}
           </DropdownMenuItem>
         ) : (
              <DropdownMenuItem className="text-center text-muted-foreground" disabled>

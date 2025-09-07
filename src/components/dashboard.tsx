@@ -55,7 +55,8 @@ import { Checkbox } from "./ui/checkbox";
 import { getStats, type DailyActivity } from "@/lib/stats";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { format } from "date-fns";
+import { format, intervalToDuration } from "date-fns";
+import { listenToNextUpdateInfo, NextUpdateInfo } from "@/services/firestore";
 
 
 const ToolButton = ({ icon: Icon, label, href, color }: any) => (
@@ -181,6 +182,77 @@ const StatCard = ({ title, value, icon: Icon, color }: { title: string, value: s
         <p className="text-sm text-muted-foreground mt-2">{title}</p>
     </Card>
 );
+
+const CountdownBox = ({ value, label }: { value: number; label: string }) => (
+    <div className="bg-primary/10 p-3 rounded-lg text-primary text-center">
+        <p className="text-2xl font-bold">{String(value).padStart(2, '0')}</p>
+        <p className="text-xs text-primary/80">{label}</p>
+    </div>
+);
+
+
+function UpdateBanner() {
+    const [updateInfo, setUpdateInfo] = useState<NextUpdateInfo | null>(null);
+    const [timeLeft, setTimeLeft] = useState<Duration | null>(null);
+    const { t } = useLanguage();
+
+    useEffect(() => {
+        const unsubscribe = listenToNextUpdateInfo((info) => {
+            setUpdateInfo(info);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        if (!updateInfo?.targetDate) {
+            setTimeLeft(null);
+            return;
+        }
+
+        const targetDate = new Date(updateInfo.targetDate);
+        const timer = setInterval(() => {
+            const now = new Date();
+            if (targetDate > now) {
+                setTimeLeft(intervalToDuration({ start: now, end: targetDate }));
+            } else {
+                setTimeLeft(null);
+                clearInterval(timer);
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [updateInfo?.targetDate]);
+
+    if (!updateInfo?.showOnDashboard || !timeLeft) {
+        return null;
+    }
+
+    return (
+        <Card className="bg-primary/5 border-primary/20">
+            <CardHeader>
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2"><Timer className="text-primary"/> Next Update In</CardTitle>
+                    <Link href="/updates">
+                         <Button variant="ghost" size="sm">Details <ArrowRight className="ml-2 h-4 w-4"/></Button>
+                    </Link>
+                </div>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+                <div className="flex gap-2 sm:gap-4 justify-center">
+                    <CountdownBox value={timeLeft.days ?? 0} label="Days" />
+                    <CountdownBox value={timeLeft.hours ?? 0} label="Hours" />
+                    <CountdownBox value={timeLeft.minutes ?? 0} label="Minutes" />
+                    <CountdownBox value={timeLeft.seconds ?? 0} label="Seconds" />
+                </div>
+                 {updateInfo.updateText && (
+                    <p className="text-center text-sm text-muted-foreground">
+                        {updateInfo.updateText}
+                    </p>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
 
 
 export function Dashboard() {
@@ -359,6 +431,8 @@ export function Dashboard() {
     <div className="w-full max-w-lg mx-auto flex flex-col gap-8 py-8">
       <Header name={profile?.fullName || t('dashboard.guest')} profile={profile} onProfileClick={handleProfileClick} />
       
+      <UpdateBanner />
+
       <section>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
              <StatCard title="Today's Ops" value={String(stats.todaysOps)} icon={TrendingUp} color="text-green-500 bg-green-500/10" />

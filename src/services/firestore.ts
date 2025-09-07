@@ -108,6 +108,7 @@ export interface UpdateInfo {
 export interface NextUpdateInfo {
   targetDate: string | null;
   updateText: string | null;
+  showOnDashboard?: boolean;
 }
 
 export interface BroadcastNotification {
@@ -132,16 +133,11 @@ export function listenToBroadcastNotification(callback: (info: BroadcastNotifica
 
     const unsubscribe = onValue(broadcastRef, (snapshot) => {
         const data = snapshot.val();
-        const info: BroadcastNotification = {
-            title: data?.title || null,
-            description: data?.description || null,
-            icon: data?.icon || 'info',
-            createdAt: data?.createdAt || new Date().toISOString()
-        };
-        callback(info);
+        if (data) {
+            callback(data);
+        }
     }, (error) => {
         console.error("Error listening to broadcast notification:", error);
-        callback({ title: null, description: null, icon: 'info', createdAt: new Date().toISOString() } as any);
     });
 
     return unsubscribe;
@@ -215,11 +211,12 @@ export function listenToNextUpdateInfo(callback: (info: NextUpdateInfo) => void)
         const info: NextUpdateInfo = {
             targetDate: data?.targetDate || null,
             updateText: data?.updateText || null,
+            showOnDashboard: data?.showOnDashboard || false,
         };
         callback(info);
     }, (error) => {
         console.error("Error listening to next update info:", error);
-        callback({ targetDate: null, updateText: null }); // Default on error
+        callback({ targetDate: null, updateText: null, showOnDashboard: false }); // Default on error
     });
 
     return unsubscribe;

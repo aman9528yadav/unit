@@ -1,10 +1,14 @@
 
 "use client";
 
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, LogIn, Sigma, Calculator, NotebookText, Star, Settings, Palette, Beaker, Zap, Search, Mic } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
+import { FAQ, defaultFaqs, FAQ_STORAGE_KEY } from "./help";
+import { useLanguage } from "@/context/language-context";
 
 const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
     <div className="bg-card p-6 rounded-xl border border-border/80 shadow-sm">
@@ -22,6 +26,28 @@ const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, titl
 
 export function HowToUse() {
   const router = useRouter();
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const { t } = useLanguage();
+  
+  useEffect(() => {
+    const storedFaqs = localStorage.getItem(FAQ_STORAGE_KEY);
+    if (storedFaqs) {
+        setFaqs(JSON.parse(storedFaqs));
+    } else {
+        setFaqs(defaultFaqs);
+        localStorage.setItem(FAQ_STORAGE_KEY, JSON.stringify(defaultFaqs));
+    }
+
+    const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === FAQ_STORAGE_KEY && e.newValue) {
+            setFaqs(JSON.parse(e.newValue));
+        }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+
+  }, []);
+
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col gap-8 p-4 sm:p-6 pb-12">
         <header className="flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm py-4 z-10 -mx-4 px-4">
@@ -106,8 +132,24 @@ export function HowToUse() {
             </div>
         </section>
 
+         <section>
+            <h2 className="text-xl font-bold mb-4">Frequently Asked Questions</h2>
+             <div className="bg-card p-6 rounded-xl space-y-2 text-muted-foreground">
+                <Accordion type="single" collapsible className="w-full">
+                {faqs.map((faq) => (
+                    <AccordionItem value={faq.id} key={faq.id}>
+                    <AccordionTrigger>{faq.question}</AccordionTrigger>
+                    <AccordionContent>
+                        <div dangerouslySetInnerHTML={{ __html: faq.answer }} />
+                    </AccordionContent>
+                    </AccordionItem>
+                ))}
+                </Accordion>
+            </div>
+        </section>
+
         <footer className="text-center mt-8">
-            <p className="text-muted-foreground">Still have questions? Check the <Link href="/help" className="text-primary hover:underline">FAQ</Link> or <a href="https://docs.google.com/forms/d/e/1FAIpQLSc-FH5ANa1HRR9sE6OUSRD8HVsZw6JNGWdbwK-5jrUywLnNbQ/viewform?usp=dialog" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Contact Us</a>.</p>
+            <p className="text-muted-foreground">Still have questions? <a href="https://docs.google.com/forms/d/e/1FAIpQLSc-FH5ANa1HRR9sE6OUSRD8HVsZw6JNGWdbwK-5jrUywLnNbQ/viewform?usp=dialog" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Contact Us</a>.</p>
         </footer>
     </div>
   );
