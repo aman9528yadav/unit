@@ -221,19 +221,29 @@ export function DevPanel() {
                 <p className="text-muted-foreground">Tools for testing and debugging.</p>
             </header>
 
-            <Tabs defaultValue="updates" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="updates"><Timer /></TabsTrigger>
+            <Tabs defaultValue="maintenance" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="maintenance"><Timer /></TabsTrigger>
                     <TabsTrigger value="broadcast"><Send /></TabsTrigger>
                     <TabsTrigger value="data"><Trash2 /></TabsTrigger>
-                    <TabsTrigger value="general"><Wrench /></TabsTrigger>
                 </TabsList>
-                <TabsContent value="updates" className="mt-4">
+                <TabsContent value="maintenance" className="mt-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><Timer /> Update Management</CardTitle>
+                            <CardTitle className="flex items-center gap-2"><Timer /> Maintenance & Updates</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <div>
+                                    <Label htmlFor="maintenance-mode">Enable Maintenance Mode</Label>
+                                    <p className='text-xs text-muted-foreground'>Redirects all users to maintenance site.</p>
+                                </div>
+                                <Switch
+                                    id="maintenance-mode"
+                                    checked={isMaintenanceMode}
+                                    onCheckedChange={handleMaintenanceModeToggle}
+                                />
+                            </div>
                             <div>
                                 <Label>Set Countdown Duration</Label>
                                 <div className="grid grid-cols-2 gap-4">
@@ -328,26 +338,6 @@ export function DevPanel() {
                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
                                 <p>Clear all app data</p>
                                 <Button variant="destructive" onClick={handleClearLocalStorage}>Clear Local Storage</Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                 <TabsContent value="general" className="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><Wrench /> General Controls</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                <div>
-                                    <Label htmlFor="maintenance-mode">Enable Maintenance Mode</Label>
-                                    <p className='text-xs text-muted-foreground'>Redirects all users to maintenance site.</p>
-                                </div>
-                                <Switch
-                                    id="maintenance-mode"
-                                    checked={isMaintenanceMode}
-                                    onCheckedChange={handleMaintenanceModeToggle}
-                                />
                             </div>
                              <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
                                 <div>
