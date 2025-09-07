@@ -398,8 +398,8 @@ export function Converter() {
     localStorage.setItem('lastConversion', conversionString);
     
     setHistory(prevHistory => {
-        const conversionPart = conversionString.split('|')[0];
-        if (prevHistory.some(h => h.startsWith(conversionPart))) {
+        // Prevent adding duplicate of the very last entry, which helps with auto-convert
+        if (prevHistory.length > 0 && prevHistory[0].split('|')[0] === conversionString.split('|')[0]) {
             return prevHistory;
         }
         const newHistory = [conversionString, ...prevHistory];
@@ -1127,5 +1127,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    

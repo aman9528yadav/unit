@@ -107,6 +107,7 @@ export function History() {
 
     const list = tab === 'history' ? history : favorites;
     const filteredList = list.filter(item => {
+        if (!item || typeof item !== 'string') return false;
         const { conversion, categoryName } = parseHistoryString(item);
         const matchesSearch = conversion.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
         const matchesCategory = categoryFilter === 'all' || categoryName === categoryFilter;
@@ -210,5 +211,3 @@ export function History() {
         </div>
     );
 }
-
-    
