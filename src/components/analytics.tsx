@@ -284,7 +284,7 @@ export function Analytics() {
                     <CardDescription>A complete overview of all your stats.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                         {visibleStatCards.map((cardProps, index) => (
                             <StatCard key={index} {...cardProps} />
                         ))}
