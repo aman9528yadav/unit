@@ -228,6 +228,18 @@ export function Settings() {
   if (!isClient) return null;
 
   const isPremiumFeatureLocked = userRole === 'Member';
+  
+  const themes = [
+      { name: 'Light', value: 'light', isLocked: false },
+      { name: 'Dark', value: 'dark', isLocked: false },
+      { name: 'Retro', value: 'retro', isLocked: isPremiumFeatureLocked },
+      { name: 'Glass', value: 'glass', isLocked: isPremiumFeatureLocked },
+      { name: 'Nord', value: 'nord', isLocked: isPremiumFeatureLocked },
+      { name: 'Rose Pine', value: 'rose-pine', isLocked: isPremiumFeatureLocked },
+  ]
+  if(customTheme) {
+      themes.push({ name: 'Custom', value: 'custom', isLocked: isPremiumFeatureLocked });
+  }
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-6 p-4 sm:p-6">
@@ -250,28 +262,36 @@ export function Settings() {
             </Section>
             <TooltipProvider>
                 <Section title={t('settings.appearance.title')}>
-                     <SettingRow
-                        label={t('settings.appearance.themeMode.label')}
-                        description={t('settings.appearance.themeMode.description')}
-                        control={
-                            <Select value={selectedTheme} onValueChange={(v) => setSelectedTheme(v as any)}>
-                                <SelectTrigger className="w-32"><SelectValue/></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="light">{t('settings.appearance.themes.light')}</SelectItem>
-                                    <SelectItem value="dark">{t('settings.appearance.themes.dark')}</SelectItem>
-                                    <SelectItem value="retro" disabled={isPremiumFeatureLocked}>Retro</SelectItem>
-                                    <SelectItem value="glass" disabled={isPremiumFeatureLocked}>Glass</SelectItem>
-                                    <SelectItem value="nord" disabled={isPremiumFeatureLocked}>Nord</SelectItem>
-                                    <SelectItem value="rose-pine" disabled={isPremiumFeatureLocked}>Rosé Pine</SelectItem>
-                                    {customTheme && (
-                                        <SelectItem value="custom" disabled={isPremiumFeatureLocked}>
-                                            {t('settings.appearance.themes.custom')}
-                                        </SelectItem>
-                                    )}
-                                </SelectContent>
-                            </Select>
-                        }
-                    />
+                     <div className="p-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {themes.map(themeItem => (
+                            <div 
+                                key={themeItem.value} 
+                                onClick={() => {
+                                    if(themeItem.isLocked) {
+                                        setShowPremiumLockDialog(true);
+                                    } else {
+                                        setSelectedTheme(themeItem.value as any)
+                                    }
+                                }}
+                                className={cn(
+                                    "relative rounded-lg border-2 cursor-pointer aspect-[3/4]",
+                                    selectedTheme === themeItem.value ? 'border-primary' : 'border-border'
+                                )}
+                            >
+                                <div className="absolute inset-0 overflow-hidden rounded-md">
+                                    <ThemePreview theme={themeItem.value} />
+                                </div>
+                                 {themeItem.isLocked && (
+                                     <div className="absolute inset-0 bg-background/60 flex items-center justify-center rounded-md">
+                                        <Lock className="w-6 h-6 text-foreground" />
+                                    </div>
+                                 )}
+                                <div className="absolute bottom-0 w-full p-1.5 bg-background/50 backdrop-blur-sm text-center">
+                                    <p className="text-xs font-semibold">{themeItem.name}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                      <SettingRow
                         isLink
                         href="/settings/theme"
@@ -285,14 +305,6 @@ export function Settings() {
                             </div>
                         }
                     />
-                     <div className="p-4 bg-muted/50 rounded-lg my-4">
-                        <Label className="text-sm font-medium mb-2 block text-center">Live Theme Preview</Label>
-                        <div className="mx-auto w-[200px] h-[400px] bg-gray-800 rounded-[20px] p-2 border-4 border-gray-900 shadow-xl overflow-hidden">
-                            <div className="w-full h-full rounded-[12px] overflow-hidden">
-                                <ThemePreview theme={selectedTheme}/>
-                            </div>
-                        </div>
-                    </div>
                 </Section>
             </TooltipProvider>
 
