@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { db, rtdb } from '@/lib/firebase';
@@ -314,11 +313,21 @@ export async function updateUserNotes(email: string | null, notes: Note[]) {
 type HistoryType = 'conversionHistory' | 'calculationHistory' | 'favoriteConversions';
 
 async function addToHistory(email: string, historyType: HistoryType, item: string) {
-    const userRef = ref(rtdb, `users/${sanitizeEmail(email)}/${historyType}`);
-    const snapshot = await get(userRef);
-    const currentHistory = snapshot.val() || [];
-    const newHistory = [item, ...currentHistory].slice(0, 100); // Keep last 100 items
-    await setRealtimeDb(userRef, newHistory);
+    if (!email) return;
+    try {
+        const userRef = ref(rtdb, `users/${sanitizeEmail(email)}/${historyType}`);
+        const snapshot = await get(userRef);
+        let currentHistory: string[] = snapshot.val();
+        
+        if (!Array.isArray(currentHistory)) {
+            currentHistory = [];
+        }
+
+        const newHistory = [item, ...currentHistory].slice(0, 100); // Keep last 100 items
+        await setRealtimeDb(userRef, newHistory);
+    } catch (error) {
+        console.error(`Error adding to ${historyType}:`, error);
+    }
 }
 
 export const addConversionToHistory = (email: string, item: string) => addToHistory(email, 'conversionHistory', item);
@@ -343,3 +352,5 @@ export async function clearAllHistory(email: string, historyType: HistoryType) {
 export async function setFavorites(email: string, favorites: string[]) {
      await setRealtimeDb(ref(rtdb, `users/${sanitizeEmail(email)}/favoriteConversions`), favorites);
 }
+
+    
