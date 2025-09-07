@@ -47,6 +47,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuFooter,
 } from "@/components/ui/dropdown-menu";
 import { useDebounce } from "@/hooks/use-debounce";
 import { incrementConversionCount, getStats } from "@/lib/stats";
@@ -351,12 +352,16 @@ export function Converter() {
 
 
   const handleCategoryChange = (categoryName: string) => {
+    const isLocked = isPremiumFeatureLocked && PREMIUM_CATEGORIES.includes(categoryName);
+    if (isLocked) {
+        setShowPremiumLockDialog(true);
+        return;
+    }
     const category = conversionCategories.find(c => c.name === categoryName);
     if (category) {
       setSelectedCategory(category);
-      // Reset units to default for the new category
       setFromUnit(category.units[0].symbol);
-      setToUnit(category.units[1].symbol);
+      setToUnit(category.units.length > 1 ? category.units[1].symbol : category.units[0].symbol);
       setInputValue("1");
       setOutputValue("");
     }
@@ -524,16 +529,6 @@ export function Converter() {
   };
   
   const isPremiumFeatureLocked = userRole === 'Member';
-
-  const handleCategorySelect = (e: React.MouseEvent, categoryName: string) => {
-    const isLocked = isPremiumFeatureLocked && PREMIUM_CATEGORIES.includes(categoryName);
-    if (isLocked) {
-      e.preventDefault();
-      setShowPremiumLockDialog(true);
-    } else {
-      handleCategoryChange(categoryName);
-    }
-  };
 
   const handleToggleFavorite = () => {
     if (!outputValue || !profile?.email) return;
@@ -745,46 +740,26 @@ export function Converter() {
                         </Select>
                     </div>
                     <div>
-                       <Label className="flex items-center gap-2 mb-2"><LayoutGrid size={16}/>{t('converter.category')}</Label>
-                           <DropdownMenu>
-                               <DropdownMenuTrigger asChild>
-                                   <Button variant="outline" className="w-full justify-between">
-                                      <div className="flex items-center gap-2">
-                                        <selectedCategory.icon className="mr-2 h-4 w-4" />
-                                        {t(`categories.${selectedCategory.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: selectedCategory.name })}
-                                      </div>
-                                      <ChevronDown className="h-4 w-4 opacity-50" />
-                                   </Button>
-                               </DropdownMenuTrigger>
-                               <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
-                                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 p-2">
-                                       {conversionCategories.map(cat => {
-                                           const isLocked = isPremiumFeatureLocked && PREMIUM_CATEGORIES.includes(cat.name);
-                                           const categoryItem = (
-                                               <DropdownMenuItem
-                                                   key={cat.name}
-                                                   disabled={isLocked}
-                                                   onSelect={(e) => handleCategorySelect(e as unknown as React.MouseEvent, cat.name)}
-                                                   className="flex flex-col items-center justify-center h-20 gap-1"
-                                               >
-                                                   <cat.icon className="w-6 h-6" />
-                                                   <span className="text-xs text-center">{t(`categories.${cat.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat.name })}</span>
-                                                   {isLocked && <Lock className="absolute w-3 h-3 top-2 right-2 text-muted-foreground" />}
-                                               </DropdownMenuItem>
-                                           );
-
-                                           if (isLocked) {
-                                               return (
-                                                    <div key={cat.name} onClick={(e) => handleCategorySelect(e, cat.name)}>
-                                                        {categoryItem}
-                                                    </div>
-                                               );
-                                           }
-                                           return categoryItem;
-                                       })}
-                                   </div>
-                               </DropdownMenuContent>
-                           </DropdownMenu>
+                        <Label className="flex items-center gap-2 mb-2"><LayoutGrid size={16}/>{t('converter.category')}</Label>
+                        <Select value={selectedCategory.name} onValueChange={handleCategoryChange}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {conversionCategories.map(cat => {
+                                    const isLocked = isPremiumFeatureLocked && PREMIUM_CATEGORIES.includes(cat.name);
+                                    return (
+                                        <SelectItem key={cat.name} value={cat.name} disabled={isLocked}>
+                                            <div className="flex items-center gap-2">
+                                                {isLocked && <Lock className="w-3 h-3" />}
+                                                <cat.icon className="w-4 h-4" />
+                                                {t(`categories.${cat.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat.name })}
+                                            </div>
+                                        </SelectItem>
+                                    );
+                                })}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
                 
