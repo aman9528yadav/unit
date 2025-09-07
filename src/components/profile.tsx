@@ -29,6 +29,7 @@ import { useLanguage } from "@/context/language-context";
 import { getStats } from "@/lib/stats";
 import { Badge } from "./ui/badge";
 import { motion } from "framer-motion";
+import { listenToUserData } from "@/services/firestore";
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 const PREMIUM_MEMBER_THRESHOLD = 8000;
@@ -73,27 +74,33 @@ export function Profile() {
 
   useEffect(() => {
     setIsClient(true);
-    const storedProfile = localStorage.getItem("userProfile");
-    if (storedProfile) {
-      const parsed = JSON.parse(storedProfile);
-       if (parsed.dob && !isNaN(new Date(parsed.dob).getTime())) {
-        parsed.birthday = format(new Date(parsed.dob), "MMMM do");
-      }
-      setProfile(parsed);
-      updateUserRole(parsed.email);
-    } else {
-        router.replace('/welcome');
-    }
+    
+    const userEmail = auth.currentUser?.email || (localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null);
 
-    const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'userProfile' && e.newValue) {
-            const newProfile = JSON.parse(e.newValue);
-            setProfile(newProfile);
-            updateUserRole(newProfile.email);
+    if (!userEmail) {
+        router.replace('/welcome');
+        return;
+    }
+    
+    const unsub = listenToUserData(userEmail, (data) => {
+        if (!data) {
+             router.replace('/welcome');
+             return;
         }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+        const userProfile = {
+            fullName: data.fullName || auth.currentUser?.displayName || 'Guest',
+            email: userEmail,
+            profileImage: data.profileImage || auth.currentUser?.photoURL,
+            dob: data.dob,
+            birthday: data.dob ? format(new Date(data.dob), "MMMM do") : ''
+        };
+        setProfile(userProfile);
+        updateUserRole(userEmail);
+        
+        localStorage.setItem("userProfile", JSON.stringify(userProfile));
+    });
+
+    return () => unsub();
 
   }, [router]);
 

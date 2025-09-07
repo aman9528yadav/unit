@@ -267,6 +267,11 @@ export interface AboutInfo {
     releasePlan: ReleasePlanItem[];
 }
 
+export interface OwnerInfo {
+    name: string;
+    imageUrl: string;
+}
+
 export async function setAboutInfoInRtdb(info: AboutInfo) {
     try {
         const aboutRef = ref(rtdb, 'app-content/aboutInfo');
@@ -283,6 +288,26 @@ export function listenToAboutInfoFromRtdb(callback: (info: AboutInfo | null) => 
         callback(snapshot.val());
     }, (error) => {
         console.error("Error listening to About Info from RTDB:", error);
+        callback(null);
+    });
+}
+
+export async function setOwnerInfoInRtdb(info: OwnerInfo) {
+    try {
+        const ownerRef = ref(rtdb, 'app-content/ownerInfo');
+        await setRealtimeDb(ownerRef, info);
+    } catch (error) {
+        console.error("Error saving Owner Info to RTDB:", error);
+        throw error;
+    }
+}
+
+export function listenToOwnerInfoFromRtdb(callback: (info: OwnerInfo | null) => void) {
+    const ownerRef = ref(rtdb, 'app-content/ownerInfo');
+    return onValue(ownerRef, (snapshot) => {
+        callback(snapshot.val());
+    }, (error) => {
+        console.error("Error listening to Owner Info from RTDB:", error);
         callback(null);
     });
 }

@@ -11,6 +11,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertTitle, AlertDescription } from "./ui/alert";
 import { Label } from "./ui/label";
 import { useLanguage } from "@/context/language-context";
+import { auth } from "@/lib/firebase";
+import { updateProfile } from "firebase/auth";
+import { updateUserData } from "@/services/firestore";
 
 
 const defaultAvatars = [
@@ -90,7 +93,11 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
         }
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
+        const user = auth.currentUser;
+        if (user) {
+            await updateProfile(user, { photoURL: image });
+        }
         onSave(image);
     };
 

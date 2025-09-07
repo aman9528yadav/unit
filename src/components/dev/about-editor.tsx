@@ -13,31 +13,47 @@ import {
     listenToAboutInfoFromRtdb, 
     setAboutInfoInRtdb, 
     type AppInfo, 
-    type ReleasePlanItem 
+    type ReleasePlanItem,
+    type OwnerInfo,
+    listenToOwnerInfoFromRtdb,
+    setOwnerInfoInRtdb
 } from '@/services/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
 export function AboutEditor() {
     const [appInfo, setAppInfo] = useState<AppInfo>({ version: '', build: '', releaseChannel: '', license: '' });
     const [releasePlan, setReleasePlan] = useState<ReleasePlanItem[]>([]);
+    const [ownerInfo, setOwnerInfo] = useState<OwnerInfo>({ name: 'Aman Yadav', imageUrl: 'https://picsum.photos/200/200' });
     const [isClient, setIsClient] = useState(false);
     const router = useRouter();
     const { toast } = useToast();
 
     useEffect(() => {
         setIsClient(true);
-        const unsubscribe = listenToAboutInfoFromRtdb((data) => {
+        const unsubscribeAbout = listenToAboutInfoFromRtdb((data) => {
             if (data) {
                 setAppInfo(data.appInfo || { version: '', build: '', releaseChannel: '', license: '' });
                 setReleasePlan(data.releasePlan || []);
             }
         });
-        return () => unsubscribe();
+         const unsubscribeOwner = listenToOwnerInfoFromRtdb((data) => {
+            if (data) {
+                setOwnerInfo(data);
+            }
+        });
+        return () => {
+            unsubscribeAbout();
+            unsubscribeOwner();
+        };
     }, []);
 
     const handleAppInfoChange = (field: keyof AppInfo, value: string) => {
         setAppInfo(prev => ({ ...prev, [field]: value }));
     };
+    
+    const handleOwnerInfoChange = (field: keyof OwnerInfo, value: string) => {
+        setOwnerInfo(prev => ({...prev, [field]: value}));
+    }
 
     const handleReleasePlanChange = (id: string, field: keyof Omit<ReleasePlanItem, 'id'>, value: string) => {
         setReleasePlan(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
@@ -54,6 +70,7 @@ export function AboutEditor() {
     const handleSaveChanges = async () => {
         try {
             await setAboutInfoInRtdb({ appInfo, releasePlan });
+            await setOwnerInfoInRtdb(ownerInfo);
             toast({ title: 'Success!', description: 'About page content has been saved.' });
         } catch (error) {
             console.error("Failed to save about info:", error);
@@ -76,6 +93,22 @@ export function AboutEditor() {
                     <Save className="mr-2 h-4 w-4" /> Save All
                 </Button>
             </header>
+
+             <Card>
+                <CardHeader>
+                    <CardTitle>Owner Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <div className="space-y-1">
+                        <Label htmlFor="ownerName">Owner Name</Label>
+                        <Input id="ownerName" value={ownerInfo.name} onChange={(e) => handleOwnerInfoChange('name', e.target.value)} />
+                    </div>
+                     <div className="space-y-1">
+                        <Label htmlFor="ownerImage">Owner Image URL</Label>
+                        <Input id="ownerImage" value={ownerInfo.imageUrl} onChange={(e) => handleOwnerInfoChange('imageUrl', e.target.value)} />
+                    </div>
+                </CardContent>
+            </Card>
 
             <Card>
                 <CardHeader>

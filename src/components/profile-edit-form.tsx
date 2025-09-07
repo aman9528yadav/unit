@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/language-context";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { ProfilePhotoEditor } from "./profile-photo-editor";
+import { updateUserData } from "@/services/firestore";
 
 
 interface UserProfile {
@@ -82,6 +83,13 @@ export function ProfileEditForm() {
           photoURL: profile.profileImage
         });
 
+        // Save to RTDB
+        await updateUserData(user.email, {
+            fullName: profile.fullName,
+            dob: profile.dob,
+            profileImage: profile.profileImage,
+        });
+
         localStorage.setItem("userProfile", JSON.stringify(profile));
         window.dispatchEvent(new StorageEvent('storage', { key: 'userProfile', newValue: JSON.stringify(profile) }));
         
@@ -96,8 +104,17 @@ export function ProfileEditForm() {
     }
   };
   
-  const handleSavePhoto = (newImage: string | null) => {
-    setProfile(prev => ({ ...prev!, profileImage: newImage || '' }));
+  const handleSavePhoto = async (newImage: string | null) => {
+    const updatedProfile = { ...profile, profileImage: newImage || '' };
+    setProfile(updatedProfile);
+    
+    if (auth.currentUser?.email) {
+      await updateUserData(auth.currentUser.email, { profileImage: newImage || '' });
+    }
+    
+    localStorage.setItem("userProfile", JSON.stringify(updatedProfile));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'userProfile', newValue: JSON.stringify(updatedProfile) }));
+    
     toast({ title: t('profileEdit.toast.imageReady.title'), description: t('profileEdit.toast.imageReady.description') });
     setIsPhotoEditorOpen(false);
   };
@@ -112,7 +129,7 @@ export function ProfileEditForm() {
       return;
     }
     if (newPassword.length < 6) {
-        toast({ title: t('profileEdit.toast.passwordTooShort.title'), description: t('profileEdit.toast.passwordTooShort.description'), variant: "destructive" });
+        toast({ title: t('profileEdit.toast.passwordTooShort.title'), description: t('profileEdit.toast.passwordTooShort.description', {min: 6}), variant: "destructive" });
         return;
     }
 
@@ -261,5 +278,3 @@ export function ProfileEditForm() {
 function IconEye({ show }: {show: boolean}) {
   return show ? <EyeOff /> : <Eye />;
 }
-
-    

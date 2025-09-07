@@ -8,7 +8,7 @@ import { ArrowLeft, BarChart, Calendar, Lightbulb, Code, Sparkles, Globe, Wrench
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { listenToAboutInfoFromRtdb, AppInfo, ReleasePlanItem } from "@/services/firestore";
+import { listenToAboutInfoFromRtdb, AppInfo, ReleasePlanItem, listenToOwnerInfoFromRtdb, OwnerInfo } from "@/services/firestore";
 import { Skeleton } from "./ui/skeleton";
 
 const defaultAppInfo: AppInfo = {
@@ -16,6 +16,11 @@ const defaultAppInfo: AppInfo = {
     build: '2025.09.01',
     releaseChannel: 'Beta',
     license: 'MIT',
+};
+
+const defaultOwnerInfo: OwnerInfo = {
+    name: 'Aman Yadav',
+    imageUrl: 'https://picsum.photos/200/200',
 };
 
 const defaultReleasePlan: ReleasePlanItem[] = [
@@ -45,15 +50,23 @@ export function About() {
   const router = useRouter();
   const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
   const [releasePlan, setReleasePlan] = useState<ReleasePlanItem[] | null>(null);
+  const [ownerInfo, setOwnerInfo] = useState<OwnerInfo | null>(null);
 
 
   useEffect(() => {
-    const unsubscribe = listenToAboutInfoFromRtdb((data) => {
+    const unsubscribeAbout = listenToAboutInfoFromRtdb((data) => {
         setAppInfo(data?.appInfo || defaultAppInfo);
         setReleasePlan(data?.releasePlan || defaultReleasePlan);
     });
+    
+    const unsubscribeOwner = listenToOwnerInfoFromRtdb((data) => {
+        setOwnerInfo(data || defaultOwnerInfo);
+    });
 
-    return () => unsubscribe();
+    return () => {
+        unsubscribeAbout();
+        unsubscribeOwner();
+    }
   }, []);
 
   const features = [
@@ -272,20 +285,22 @@ export function About() {
         {/* Credits Section */}
         <section className="mt-16 w-full text-center">
           <h2 className="text-3xl font-bold text-gray-800 mb-10">Credits</h2>
-          <div className="flex flex-wrap justify-center gap-8">
-            <div className="flex flex-col items-center">
-              <Image 
-                src="https://picsum.photos/200/200"
-                alt="Aman Yadav"
-                width={120}
-                height={120}
-                className="rounded-full object-cover border-4 border-white shadow-lg"
-                data-ai-hint="man portrait"
-              />
-              <h3 className="mt-3 text-lg font-semibold text-indigo-600">Aman Yadav</h3>
-              <p className="text-gray-600 text-sm">Founder & Engineer</p>
-            </div>
-          </div>
+          {ownerInfo ? (
+              <div className="flex flex-wrap justify-center gap-8">
+                <div className="flex flex-col items-center">
+                  <Image 
+                    src={ownerInfo.imageUrl}
+                    alt={ownerInfo.name}
+                    width={120}
+                    height={120}
+                    className="rounded-full object-cover border-4 border-white shadow-lg"
+                    data-ai-hint="man portrait"
+                  />
+                  <h3 className="mt-3 text-lg font-semibold text-indigo-600">{ownerInfo.name}</h3>
+                  <p className="text-gray-600 text-sm">Founder & Engineer</p>
+                </div>
+              </div>
+          ) : <Skeleton className="h-40 w-full" />}
         </section>
 
         {/* About Owner Section */}
@@ -293,7 +308,7 @@ export function About() {
           <h2 className="text-3xl font-bold text-gray-800 mb-6">About the Owner</h2>
           <div className="bg-white rounded-2xl shadow-lg p-4">
             <p className="text-gray-600 leading-relaxed text-lg">
-              Hi, I'm <span className="font-semibold text-indigo-600">Aman Yadav</span>, the founder and engineer behind Sutradhaar.
+              Hi, I'm <span className="font-semibold text-indigo-600">{ownerInfo?.name || 'Aman Yadav'}</span>, the founder and engineer behind Sutradhaar.
               My vision with this project is to create a simple yet powerful productivity tool that helps people save time,
               focus on their work, and achieve more with ease.
             </p>

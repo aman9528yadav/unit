@@ -119,20 +119,23 @@ export function Updates() {
             const Icon = (LucideIcons as any)[update.icon] || LucideIcons.Rocket;
             return (
               <div key={index} className="mb-6 relative">
-                  <div className="flex items-center mb-2">
+                  <div className="flex items-start mb-2">
                       <div className="absolute left-[-18px] top-1 p-2 rounded-full border-4 border-background" style={{ backgroundColor: update.bgColor, color: update.textColor }}>
                           <Icon className="w-5 h-5" />
                       </div>
-                      <div className="ml-8">
+                      <div className="ml-8 flex-1">
                         <p className="font-semibold text-foreground leading-tight">{update.title}</p>
                         <p className="text-xs text-muted-foreground">
-                            {update.version} • {isClient ? format(new Date(update.date), "d MMM yyyy") : ''}
+                            {isClient ? format(new Date(update.date), "d MMM yyyy") : ''}
                         </p>
                       </div>
                   </div>
                   <div className="bg-card p-4 rounded-xl ml-8">
                       <p className="text-sm text-muted-foreground">{update.description}</p>
                   </div>
+                   <div className="ml-8 mt-2 flex justify-end">
+                       <span className="text-xs font-medium text-muted-foreground border rounded-full px-2 py-0.5">{update.version}</span>
+                   </div>
               </div>
             )
         })}
