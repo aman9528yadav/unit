@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -99,6 +98,12 @@ export function HowToUse() {
     return [...defaultOrder, ...customOrder];
   }, [customCategories]);
 
+  // Helper to convert a string to PascalCase
+  const toPascalCase = (str: string) => {
+    if (!str) return '';
+    return str.replace(/(^\w|-\w)/g, (c) => c.replace('-', '').toUpperCase());
+  };
+
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col gap-8 p-4 sm:p-6 pb-12">
         <header className="flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-sm py-4 z-10 -mx-4 px-4">
@@ -118,7 +123,8 @@ export function HowToUse() {
                     <h2 className="text-xl font-bold mb-4">{details.title}</h2>
                     <div className="space-y-4">
                         {featuresInSection.map(feature => {
-                             const Icon = (LucideIcons as any)[feature.icon] || LucideIcons.Zap;
+                             const pascalCaseIconName = toPascalCase(feature.icon);
+                             const Icon = (LucideIcons as any)[pascalCaseIconName] || LucideIcons.Zap;
                              return (
                                 <FeatureCard 
                                     key={feature.id}
