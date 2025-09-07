@@ -3,8 +3,9 @@
 "use client";
 
 import { format, eachDayOfInterval, subDays } from 'date-fns';
-import { updateUserData, getUserData } from '@/services/firestore';
+import { updateUserData, getUserData, rtdb } from '@/services/firestore';
 import { NOTES_STORAGE_KEY_BASE, type Note } from '@/components/notepad';
+import { ref, runTransaction } from 'firebase/database';
 
 const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
 
@@ -13,23 +14,35 @@ const incrementStat = async (field: 'totalConversions' | 'totalCalculations' | '
     if (!userEmail) return;
 
     const today = format(new Date(), 'yyyy-MM-dd');
-    
-    // We can't just increment, we need to read the current value first.
-    const userData = await getUserData(userEmail);
+    const dailyField = `daily${field.charAt(10).toUpperCase()}${field.slice(11)}`;
 
-    const dataToUpdate: {[key: string]: any} = {};
+    const sanitizedEmail = userEmail.replace(/[.#$[\]]/g, '_');
+    const userRef = ref(rtdb, `users/${sanitizedEmail}`);
 
-    // Increment total count
-    dataToUpdate[field] = (userData[field] || 0) + 1;
-
-    // Increment daily count
-    const dailyField = `daily${field.charAt(10).toUpperCase()}${field.slice(11)}`; // e.g., dailyConversions
-    const dailyData = userData[dailyField] || {};
-    dailyData[today] = (dailyData[today] || 0) + 1;
-    dataToUpdate[dailyField] = dailyData;
-    
-    await updateUserData(userEmail, dataToUpdate);
+    // Use a transaction to safely increment both total and daily counts
+    await runTransaction(userRef, (currentUserData) => {
+        if (currentUserData) {
+            // Increment total count
+            currentUserData[field] = (currentUserData[field] || 0) + 1;
+            
+            // Increment daily count
+            if (!currentUserData[dailyField]) {
+                currentUserData[dailyField] = {};
+            }
+            currentUserData[dailyField][today] = (currentUserData[dailyField][today] || 0) + 1;
+        } else {
+            // If user data doesn't exist, create it
+            return {
+                [field]: 1,
+                [dailyField]: {
+                    [today]: 1
+                }
+            };
+        }
+        return currentUserData;
+    });
 };
+
 
 export const incrementConversionCount = () => {
     incrementStat('totalConversions');
@@ -63,6 +76,9 @@ export const processUserDataForStats = (userData: any, email: string | null): {
     totalCalculations: number;
     totalDateCalculations: number;
 } => {
+    if (!userData) {
+        userData = {};
+    }
     const today = format(new Date(), 'yyyy-MM-dd');
 
     const dailyConversions = userData.dailyConversions || {};
