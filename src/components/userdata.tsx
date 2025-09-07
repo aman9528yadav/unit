@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/context/language-context";
 import { getStats } from "@/lib/stats";
 import { ProfilePhotoEditor } from "./profile-photo-editor";
+import { listenToUserData } from "@/services/firestore";
 
 
 interface UserProfile {
@@ -63,15 +64,38 @@ export function UserData() {
 
     useEffect(() => {
         setIsClient(true);
-        const storedProfile = localStorage.getItem('userProfile');
-        if (storedProfile) {
-            const parsedProfile = JSON.parse(storedProfile);
-            setProfile(parsedProfile);
-            loadSettings(parsedProfile.email);
-            updateUserRoleAndStats(parsedProfile.email);
-        } else if (typeof window !== 'undefined') {
-            router.push('/welcome');
+        const userEmail = auth.currentUser?.email || (localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null);
+    
+        if (!userEmail) {
+            router.replace('/welcome');
+            return;
         }
+
+        const unsub = listenToUserData(userEmail, (data) => {
+            if (!data) {
+                router.replace('/welcome');
+                return;
+            }
+            const userProfile: UserProfile = {
+                fullName: data.fullName || auth.currentUser?.displayName || 'Guest',
+                email: userEmail,
+                profileImage: data.profileImage,
+            };
+            setProfile(userProfile);
+            
+            const userSettings = data.settings || {};
+             setSettings({
+                theme: userSettings.theme?.charAt(0).toUpperCase() + userSettings.theme?.slice(1) || 'System',
+                defaultRegion: userSettings.defaultRegion || 'International',
+                saveHistory: userSettings.saveConversionHistory ?? true,
+                autoConvert: userSettings.autoConvert ?? true,
+            });
+
+            updateUserRoleAndStats(userEmail);
+        });
+
+        return () => unsub();
+
     }, [router]);
 
     const updateUserRoleAndStats = async (email: string | null) => {
@@ -87,23 +111,6 @@ export function UserData() {
         } else {
             setUserRole('Member');
         }
-    };
-
-
-    const loadSettings = (email: string | null) => {
-        const getUserKey = (key: string, userEmail: string | null) => `${userEmail || 'guest'}_${key}`;
-
-        const theme = localStorage.getItem('theme') || 'system';
-        const defaultRegion = localStorage.getItem(getUserKey('defaultRegion', email)) || 'International';
-        const saveHistoryRaw = localStorage.getItem(getUserKey('saveConversionHistory', email));
-        const autoConvertRaw = localStorage.getItem(getUserKey('autoConvert', email));
-
-        setSettings({
-            theme: theme.charAt(0).toUpperCase() + theme.slice(1),
-            defaultRegion,
-            saveHistory: saveHistoryRaw === null ? true : JSON.parse(saveHistoryRaw),
-            autoConvert: autoConvertRaw === null ? true : JSON.parse(autoConvertRaw),
-        });
     };
     
     const handleLogout = () => {

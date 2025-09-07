@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/language-context";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { ProfilePhotoEditor } from "./profile-photo-editor";
-import { updateUserData } from "@/services/firestore";
+import { updateUserData, listenToUserData } from "@/services/firestore";
 
 
 interface UserProfile {
@@ -30,7 +30,7 @@ interface UserProfile {
 }
 
 export function ProfileEditForm() {
-  const [profile, setProfile] = useState<UserProfile>({ fullName: '', email: '', dob: '' });
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -48,29 +48,52 @@ export function ProfileEditForm() {
 
   useEffect(() => {
     setIsClient(true);
-    const storedProfile = localStorage.getItem("userProfile");
-    if (storedProfile) {
-      const parsedProfile = JSON.parse(storedProfile);
-      setProfile({
-        ...parsedProfile,
-        dob: parsedProfile.dob || '', // Ensure dob is not undefined
-      });
+    const userEmail = auth.currentUser?.email || (localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null);
+    
+    if (!userEmail) {
+      router.replace('/welcome');
+      return;
     }
-  }, []);
+
+    const unsub = listenToUserData(userEmail, (data) => {
+      if (!data) {
+        // This might happen on first load before RTDB is populated, rely on auth object
+        const currentUser = auth.currentUser;
+        if(currentUser) {
+            setProfile({
+                fullName: currentUser.displayName || '',
+                email: currentUser.email || '',
+                dob: '',
+                profileImage: currentUser.photoURL || ''
+            });
+        }
+        return;
+      };
+      setProfile({
+        fullName: data.fullName || '',
+        email: userEmail,
+        dob: data.dob || '',
+        profileImage: data.profileImage || '',
+      });
+    });
+
+    return () => unsub();
+  }, [router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!profile) return;
     const { name, value } = e.target;
-    setProfile(prev => ({ ...prev, [name]: value }));
+    setProfile(prev => prev ? ({ ...prev, [name]: value }) : null);
   };
 
   const handleDateChange = (date: Date | undefined) => {
-    if (date) {
-      setProfile(prev => ({ ...prev, dob: format(date, 'yyyy-MM-dd') }));
+    if (date && profile) {
+      setProfile(prev => prev ? ({ ...prev, dob: format(date, 'yyyy-MM-dd') }) : null);
     }
   };
 
   const handleSaveChanges = async () => {
-    if (!profile.fullName) {
+    if (!profile || !profile.fullName) {
       toast({ title: t('profileEdit.toast.nameRequired'), variant: "destructive" });
       return;
     }
@@ -104,6 +127,7 @@ export function ProfileEditForm() {
   };
   
   const handleSavePhoto = async (newImage: string | null) => {
+    if (!profile) return;
     const updatedProfile = { ...profile, profileImage: newImage || '' };
     setProfile(updatedProfile);
     
@@ -159,7 +183,7 @@ export function ProfileEditForm() {
   };
 
 
-  if (!isClient) {
+  if (!isClient || !profile) {
     return null; 
   }
   
