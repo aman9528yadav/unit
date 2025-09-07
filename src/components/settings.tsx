@@ -153,8 +153,6 @@ export function Settings() {
             }
             if (userSettings.calculatorMode) setCalculatorMode(userSettings.calculatorMode);
             setCalculatorSound(userSettings.calculatorSound ?? true);
-
-            // Contexts will handle their own state from the listener
         });
         return () => unsub();
     }
@@ -189,11 +187,9 @@ export function Settings() {
 
     if(isThemeLocked || isCalcModeLocked) {
         setShowPremiumLockDialog(true);
-        // Revert to last saved values
         setSelectedTheme(theme);
         if (isCalcModeLocked) {
-             const savedMode = localStorage.getItem('calculatorMode') as CalculatorMode || 'basic';
-             setCalculatorMode(savedMode);
+            setCalculatorMode('basic');
         }
         return;
     }
@@ -459,3 +455,5 @@ export function Settings() {
     </div>
   );
 }
+
+    

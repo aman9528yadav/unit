@@ -24,12 +24,14 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [language, setLanguageState] = useState<Language>('en');
 
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') as Language;
-    if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'hi')) {
+    const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
+    
+    // Initial load from localStorage for non-logged-in users or for faster initial paint
+    const savedLanguage = localStorage.getItem('language') as Language | null;
+    if (savedLanguage) {
       setLanguageState(savedLanguage);
     }
-
-    const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
+    
     if (userEmail) {
         const unsubscribe = listenToUserData(userEmail, (data) => {
             const userSettings = data?.settings || {};
@@ -43,7 +45,6 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    // Don't save to localStorage directly, settings page will handle DB update
   };
 
   const t = useCallback((key: string, params?: { [key: string]: string | number }): string => {
@@ -73,3 +74,5 @@ export const useLanguage = () => {
   }
   return context;
 };
+
+    
