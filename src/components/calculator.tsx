@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { incrementCalculationCount, getStats } from '@/lib/stats';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { addCalculationToHistory, deleteCalculationFromHistory, listenToUserData } from '@/services/firestore';
+import { addCalculationToHistory, deleteCalculationFromHistory, listenToUserData, CALCULATION_HISTORY_KEY } from '@/services/firestore';
 
 const buttonClasses = {
   gray: "bg-muted hover:bg-muted/80 text-foreground",
@@ -227,6 +227,13 @@ export function Calculator() {
 
       localStorage.setItem('lastCalculation', historyStringForStorage);
       window.dispatchEvent(new StorageEvent('storage', { key: 'lastCalculation', newValue: historyStringForStorage }));
+      
+      // Update local storage for immediate reflection in other components if needed
+      const localHistoryKey = CALCULATION_HISTORY_KEY(userEmail);
+      const localHistory = JSON.parse(localStorage.getItem(localHistoryKey) || '[]');
+      const newLocalHistory = [historyStringForStorage, ...localHistory].slice(0, 100);
+      localStorage.setItem(localHistoryKey, JSON.stringify(newLocalHistory));
+      window.dispatchEvent(new StorageEvent('storage', { key: localHistoryKey, newValue: JSON.stringify(newLocalHistory)}));
 
 
     } catch (error) {

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { db, rtdb } from '@/lib/firebase';
@@ -310,9 +311,15 @@ export async function updateUserNotes(email: string | null, notes: Note[]) {
 
 
 // --- HISTORY AND FAVORITES ---
-type HistoryType = 'conversionHistory' | 'calculationHistory' | 'favoriteConversions';
+export type HistoryType = 'conversionHistory' | 'calculationHistory' | 'favoriteConversions';
 
-async function addToHistory(email: string, historyType: HistoryType, item: string) {
+// Centralize local storage key generation
+export const CONVERSION_HISTORY_KEY = (email: string | null) => email ? `${email}_conversionHistory` : 'guest_conversionHistory';
+export const CALCULATION_HISTORY_KEY = (email: string | null) => email ? `${email}_calculationHistory` : 'guest_calculationHistory';
+export const FAVORITES_HISTORY_KEY = (email: string | null) => email ? `${email}_favoriteConversions` : 'guest_favoriteConversions';
+
+
+async function addToHistory(email: string | null, historyType: HistoryType, item: string) {
     if (!email) return;
     try {
         const userRef = ref(rtdb, `users/${sanitizeEmail(email)}/${historyType}`);
@@ -330,12 +337,13 @@ async function addToHistory(email: string, historyType: HistoryType, item: strin
     }
 }
 
-export const addConversionToHistory = (email: string, item: string) => addToHistory(email, 'conversionHistory', item);
-export const addCalculationToHistory = (email: string, item: string) => addToHistory(email, 'calculationHistory', item);
-export const addFavoriteToHistory = (email: string, item: string) => addToHistory(email, 'favoriteConversions', item);
+export const addConversionToHistory = (email: string | null, item: string) => addToHistory(email, 'conversionHistory', item);
+export const addCalculationToHistory = (email: string | null, item: string) => addToHistory(email, 'calculationHistory', item);
+export const addFavoriteToHistory = (email: string | null, item: string) => addToHistory(email, 'favoriteConversions', item);
 
 
-export async function deleteHistoryItem(email: string, historyType: HistoryType, itemToDelete: string) {
+export async function deleteHistoryItem(email: string | null, historyType: HistoryType, itemToDelete: string) {
+    if(!email) return;
     const userRef = ref(rtdb, `users/${sanitizeEmail(email)}/${historyType}`);
     const snapshot = await get(userRef);
     const currentHistory = snapshot.val() || [];
@@ -344,13 +352,13 @@ export async function deleteHistoryItem(email: string, historyType: HistoryType,
 }
 
 
-export async function clearAllHistory(email: string, historyType: HistoryType) {
+export async function clearAllHistory(email: string | null, historyType: HistoryType) {
+    if(!email) return;
     await setRealtimeDb(ref(rtdb, `users/${sanitizeEmail(email)}/${historyType}`), []);
 }
 
 
-export async function setFavorites(email: string, favorites: string[]) {
+export async function setFavorites(email: string | null, favorites: string[]) {
+     if(!email) return;
      await setRealtimeDb(ref(rtdb, `users/${sanitizeEmail(email)}/favoriteConversions`), favorites);
 }
-
-    

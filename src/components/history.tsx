@@ -32,7 +32,14 @@ import { format, formatDistanceToNow, parseISO, isValid } from 'date-fns';
 import { enUS, hi } from 'date-fns/locale';
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLanguage } from "@/context/language-context";
-import { listenToUserData, clearAllHistory, deleteHistoryItem } from "@/services/firestore";
+import { 
+    listenToUserData, 
+    clearAllHistory, 
+    deleteHistoryItem,
+    CONVERSION_HISTORY_KEY,
+    CALCULATION_HISTORY_KEY,
+    FAVORITES_HISTORY_KEY,
+} from "@/services/firestore";
 
 
 interface HistoryItemData {
@@ -55,13 +62,11 @@ const parseHistoryString = (item: string, type: HistoryItemData['type']): Histor
         return { type, fullString: item, display: parts[0], timestamp: parts[1] };
     }
     // Handle legacy items without timestamps
-    if (parts.length < (type === 'conversion' ? 3 : 2)) {
-         return { type, fullString: item, display: parts[0], categoryName: type === 'conversion' ? parts[1] : undefined, timestamp: new Date(0).toISOString() };
+    if (parts.length < (type === 'conversion' || type === 'favorite' ? 3 : 2)) {
+         return { type, fullString: item, display: parts[0], categoryName: (type === 'conversion' || type === 'favorite') ? parts[1] : undefined, timestamp: new Date(0).toISOString() };
     }
     return null;
 }
-
-const getUserKey = (key: string, email: string | null) => `${email || 'guest'}_${key}`;
 
 export function History() {
   const [conversionHistory, setConversionHistory] = useState<HistoryItemData[]>([]);
@@ -87,13 +92,9 @@ export function History() {
     }
     
     // Load initial data from localStorage for instant UI
-    const localConvKey = getUserKey('conversionHistory', userEmail);
-    const localCalcKey = getUserKey('calculationHistory', userEmail);
-    const localFavKey = getUserKey('favoriteConversions', userEmail);
-    
-    const localConvHistory = JSON.parse(localStorage.getItem(localConvKey) || '[]');
-    const localCalcHistory = JSON.parse(localStorage.getItem(localCalcKey) || '[]');
-    const localFavorites = JSON.parse(localStorage.getItem(localFavKey) || '[]');
+    const localConvHistory = JSON.parse(localStorage.getItem(CONVERSION_HISTORY_KEY(userEmail)) || '[]');
+    const localCalcHistory = JSON.parse(localStorage.getItem(CALCULATION_HISTORY_KEY(userEmail)) || '[]');
+    const localFavorites = JSON.parse(localStorage.getItem(FAVORITES_HISTORY_KEY(userEmail)) || '[]');
     
     setConversionHistory(localConvHistory.map((s: string) => parseHistoryString(s, 'conversion')).filter(Boolean as any));
     setCalculationHistory(localCalcHistory.map((s: string) => parseHistoryString(s, 'calculation')).filter(Boolean as any));
@@ -109,11 +110,10 @@ export function History() {
         setCalculationHistory(calcHistory.map(s => parseHistoryString(s, 'calculation')).filter(Boolean as any));
         setFavorites(favs.map(s => parseHistoryString(s, 'favorite')).filter(Boolean as any));
 
-        // Also update local storage when RTDB changes
-        localStorage.setItem(localConvKey, JSON.stringify(convHistory));
-        localStorage.setItem(localCalcKey, JSON.stringify(calcHistory));
-        localStorage.setItem(localFavKey, JSON.stringify(favs));
-
+        // Also update local storage when RTDB changes to keep them in sync
+        localStorage.setItem(CONVERSION_HISTORY_KEY(userEmail), JSON.stringify(convHistory));
+        localStorage.setItem(CALCULATION_HISTORY_KEY(userEmail), JSON.stringify(calcHistory));
+        localStorage.setItem(FAVORITES_HISTORY_KEY(userEmail), JSON.stringify(favs));
     });
     
     return () => unsub();
@@ -288,5 +288,3 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
         </div>
     )
 }
-
-    
