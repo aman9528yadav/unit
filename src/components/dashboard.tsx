@@ -72,8 +72,8 @@ const ToolButton = ({ icon: Icon, label, href, color, target }: any) => {
 
     if (href) {
         return (
-            <Link href={href} passHref>
-                <a target={target}>{content}</a>
+            <Link href={href} target={target}>
+                {content}
             </Link>
         );
     }
