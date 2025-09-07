@@ -51,7 +51,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useDebounce } from "@/hooks/use-debounce";
 import { incrementConversionCount, getStats } from "@/lib/stats";
-import { listenToUserData, addConversionToHistory, addFavoriteToHistory, setFavorites, deleteHistoryItem } from "@/services/firestore";
+import { listenToUserData, addConversionToHistory, setFavorites as setFavoritesInDb, deleteHistoryItem } from "@/services/firestore";
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -543,7 +543,7 @@ export function Converter() {
       : [...favorites, currentConversionString];
 
     setFavorites(newFavorites);
-    setFavorites(profile.email, newFavorites);
+    setFavoritesInDb(profile.email, newFavorites);
     
     if (favorites.includes(currentConversionString)) {
         toast({ title: t('converter.toast.favRemoved') });
