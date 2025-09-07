@@ -200,14 +200,12 @@ export function Converter() {
   const [inputValue, setInputValue] = React.useState<string>("1");
   const debouncedInputValue = useDebounce(inputValue, 300);
   const [outputValue, setOutputValue] = React.useState<string>("");
-  const [history, setHistory] = React.useState<string[]>([]);
   const [favorites, setFavorites] = React.useState<string[]>([]);
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [region, setRegion] = React.useState<Region>('International');
   const { language, t } = useLanguage();
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
   const [isGraphVisible, setIsGraphVisible] = useState(false);
-  const [showRecentHistory, setShowRecentHistory] = useState(true);
   const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
 
@@ -248,14 +246,10 @@ export function Converter() {
 
     if (storedFavorites) setFavorites(JSON.parse(storedFavorites));
     if (storedProfileData) {
-        const parsedProfile = JSON.parse(storedProfileData);
-        setProfile(parsedProfile);
-        if (parsedProfile.email === DEVELOPER_EMAIL) {
-            setUserRole('Owner');
-        }
-    } else {
-        setUserRole('Member');
+        setProfile(JSON.parse(storedProfileData));
     }
+    setUserRole('Member'); // Simplified
+    
     if (savedAutoConvert !== null) setAutoConvert(JSON.parse(savedAutoConvert));
     if (savedCustomUnits) setCustomUnits(JSON.parse(savedCustomUnits));
     if (savedCustomCategories) setCustomCategories(JSON.parse(savedCustomCategories));
@@ -343,45 +337,47 @@ export function Converter() {
 
   React.useEffect(() => {
     if (currentUnits.length > 0) {
-      setFromUnit(currentUnits[0].symbol);
-      setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
+      if (!currentUnits.some(u => u.symbol === fromUnit)) {
+          setFromUnit(currentUnits[0].symbol);
+      }
+      if (!currentUnits.some(u => u.symbol === toUnit)) {
+          setToUnit(currentUnits.length > 1 ? currentUnits[1].symbol : currentUnits[0].symbol);
+      }
       setInputValue("1");
       setIsGraphVisible(false);
     }
-  }, [selectedCategory, region, currentUnits]);
+  }, [selectedCategory, region, currentUnits, fromUnit, toUnit]);
 
 
- const handleSaveToHistory = React.useCallback(() => {
-    // This logic is now completely self-contained.
+ const handleSaveToHistory = React.useCallback((val: string, outVal: string) => {
     const currentUserEmail = JSON.parse(localStorage.getItem('userProfile') || '{}').email || null;
     const shouldSave = JSON.parse(localStorage.getItem(getUserKey('saveConversionHistory', currentUserEmail)) ?? 'true');
     
     if (!shouldSave) return;
     
-    const numValue = parseFloat(inputValue);
-    if (isNaN(numValue) || !outputValue) return;
+    const numValue = parseFloat(val);
+    if (isNaN(numValue) || !outVal) return;
 
-    const result = parseFloat(outputValue.replace(/,/g, ''));
+    const result = parseFloat(outVal.replace(/,/g, ''));
     if (isNaN(result)) return;
 
     const conversionString = getFullHistoryString(numValue, fromUnit, toUnit, result, selectedCategory.name);
     
     const currentHistory = JSON.parse(localStorage.getItem("conversionHistory") || '[]');
     
-    // Only add if it's not an exact duplicate of the most recent entry.
-    // This is the key fix for the auto-convert spam issue.
-    if (currentHistory.length === 0 || currentHistory[0] !== conversionString) {
-      const newHistory = [conversionString, ...currentHistory];
-      localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
-      localStorage.setItem("lastConversion", conversionString);
-      
-      // Manually dispatch a storage event so this tab and other tabs can react.
-      window.dispatchEvent(new StorageEvent('storage', {
-          key: 'conversionHistory',
-          newValue: JSON.stringify(newHistory),
-      }));
+    if (currentHistory.length > 0 && currentHistory[0] === conversionString) {
+      return;
     }
-  }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory.name]);
+    
+    const newHistory = [conversionString, ...currentHistory];
+    localStorage.setItem("conversionHistory", JSON.stringify(newHistory));
+    localStorage.setItem("lastConversion", conversionString);
+    
+    window.dispatchEvent(new StorageEvent('storage', {
+        key: 'conversionHistory',
+        newValue: JSON.stringify(newHistory),
+    }));
+  }, [fromUnit, toUnit, selectedCategory.name]);
 
 
  const performConversion = React.useCallback(async (value: string | number, from: string, to: string) => {
@@ -412,6 +408,7 @@ export function Converter() {
 
     const formattedResult = result.toLocaleString(undefined, { maximumFractionDigits: 5, useGrouping: false });
     setOutputValue(formattedResult);
+    handleSaveToHistory(String(numValue), formattedResult); // <-- Definitive Fix
 
     if (categoryToUse.name !== 'Temperature') {
         const allUnitsInCategory = categoryToUse.units.filter(u => !u.region || u.region === region);
@@ -428,26 +425,13 @@ export function Converter() {
         setChartData([]);
     }
 
-}, [region, conversionCategories]);
+}, [region, conversionCategories, handleSaveToHistory]);
 
-  
-  React.useEffect(() => {
-    if (outputValue) {
-        handleSaveToHistory();
-    }
-  }, [outputValue, handleSaveToHistory]);
   
   useEffect(() => {
     if (!autoConvert) return;
-  
-    const parsed = offlineParseConversionQuery(searchQuery, allUnits, conversionCategories);
-  
-    if (parsed) {
-      restoreFromParsedQuery(parsed);
-    } else {
-      performConversion(inputValue, fromUnit, toUnit);
-    }
-  }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion, inputValue, allUnits, conversionCategories, searchQuery]);
+    performConversion(inputValue, fromUnit, toUnit);
+  }, [debouncedInputValue, fromUnit, toUnit, autoConvert, performConversion, inputValue]);
 
   React.useEffect(() => {
     const numValue = parseFloat(inputValue);
@@ -1022,44 +1006,6 @@ export function Converter() {
                 )}
             </CardContent>
         </Card>
-
-        {history.length > 0 && showRecentHistory && (
-          <Card className="w-full">
-            <CardHeader>
-                <div className="flex justify-between items-center">
-                    <CardTitle className="flex items-center gap-2"><Clock size={20} />{t('converter.recentConversions')}</CardTitle>
-                    <Button variant="ghost" onClick={() => setShowRecentHistory(false)}><Trash2 className="mr-2 h-4 w-4"/>{t('converter.clear')}</Button>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
-                   {history.slice(0, 4).map((item) => {
-                       const { conversion, categoryName, timestamp } = parseHistoryString(item);
-                       const category = conversionCategories.find(c => c.name === categoryName);
-                       const Icon = category?.icon || Power;
-                       
-                       return (
-                         <div key={item} className="bg-secondary p-3 rounded-lg group relative">
-                            <div className="cursor-pointer" onClick={() => handleRestoreHistory(item)}>
-                               <p className="font-semibold">{conversion}</p>
-                               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                   <Icon size={14}/> 
-                                   <span>{t(`categories.${categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: categoryName })}</span>
-                                   <span>•</span>
-                                   <span>{formatTimestamp(new Date(timestamp))}</span>
-                               </div>
-                            </div>
-                            <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRestoreHistory(item)}><RotateCcw size={14} /></Button>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-destructive/20 hover:text-destructive" onClick={() => setHistory(h => h.filter(i => i !== item))}><Trash2 size={14} /></Button>
-                            </div>
-                         </div>
-                       );
-                   })}
-                </div>
-            </CardContent>
-          </Card>
-      )}
       
        <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
         <AlertDialogContent>

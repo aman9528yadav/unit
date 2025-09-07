@@ -96,16 +96,24 @@ export function History() {
     setIsClient(true);
     loadData();
     
-    const handleDataChange = () => loadData();
+    const handleDataChange = (event: StorageEvent) => {
+        if (event.key === 'conversionHistory' || event.key === 'favoriteConversions') {
+            loadData();
+        }
+    };
+
+    const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+            loadData();
+        }
+    };
     
-    // Listen for custom storage events from the converter
     window.addEventListener('storage', handleDataChange);
-    // Also listen for when the tab becomes visible again
-    document.addEventListener('visibilitychange', handleDataChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
         window.removeEventListener('storage', handleDataChange);
-        document.removeEventListener('visibilitychange', handleDataChange);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
@@ -117,6 +125,8 @@ export function History() {
   const handleClearAll = () => {
       const targetKey = activeTab === 'history' ? 'conversionHistory' : 'favoriteConversions';
       localStorage.removeItem(targetKey);
+      // Manually trigger a reload for this component and notify others
+      loadData();
       window.dispatchEvent(new StorageEvent('storage', { key: targetKey, newValue: '[]' }));
   };
 
@@ -131,6 +141,8 @@ export function History() {
     const newFavorites = currentFavorites.filter((fav: string) => !fav.startsWith(itemString.split('|')[0]));
     localStorage.setItem("favoriteConversions", JSON.stringify(newFavorites));
     
+    loadData(); // Reload data in current tab
+    // Notify other tabs
     window.dispatchEvent(new StorageEvent('storage', { key: 'conversionHistory', newValue: JSON.stringify(newHistory) }));
     window.dispatchEvent(new StorageEvent('storage', { key: 'favoriteConversions', newValue: JSON.stringify(newFavorites) }));
     
