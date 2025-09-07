@@ -156,7 +156,7 @@ export function Analytics() {
           </div>
     
           {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
               <CardHeader><CardTitle>Total Conversions</CardTitle></CardHeader>
               <CardContent>
@@ -202,7 +202,7 @@ export function Analytics() {
               <CardContent><p className="text-4xl font-extrabold text-yellow-500 flex items-center gap-2"><CheckCircle /> {stats.bestStreak} days</p></CardContent>
             </Card>
 
-            <Card className="rounded-2xl shadow-md hover:shadow-lg transition col-span-1 md:col-span-2">
+            <Card className="rounded-2xl shadow-md hover:shadow-lg transition">
               <CardHeader><CardTitle>Last Seen</CardTitle></CardHeader>
               <CardContent><p className="text-4xl font-extrabold text-gray-500 flex items-center gap-2"><XCircle /> {stats.daysNotOpened} days ago</p></CardContent>
             </Card>
