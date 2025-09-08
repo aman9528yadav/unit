@@ -13,7 +13,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
-import { setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo, setBroadcastNotification, listenToBroadcastNotification, deleteBroadcastNotification, listenToWelcomeContent, setWelcomeContent } from '@/services/firestore';
+import { setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo, setBroadcastNotification, listenToBroadcastNotification, deleteBroadcastNotification, listenToWelcomeContent, setWelcomeContent, setBetaWelcomeMessage, listenToBetaWelcomeMessage } from '@/services/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { intervalToDuration } from 'date-fns';
 
@@ -53,6 +53,9 @@ export function DevPanel() {
     // State for UI Content Tab
     const [welcomeTitle, setWelcomeTitle] = useState('');
     const [welcomeDescription, setWelcomeDescription] = useState('');
+    const [betaWelcomeTitle, setBetaWelcomeTitle] = useState('');
+    const [betaWelcomeDescription, setBetaWelcomeDescription] = useState('');
+
 
     // State for Security Tab
     const [currentDevPassword, setCurrentDevPassword] = useState('');
@@ -139,12 +142,18 @@ export function DevPanel() {
             setWelcomeDescription(content?.description || '');
         });
 
+        const unsubBetaWelcome = listenToBetaWelcomeMessage((content) => {
+            setBetaWelcomeTitle(content?.title || '');
+            setBetaWelcomeDescription(content?.description || '');
+        });
+
         return () => {
             unsubMaintenanceMode();
             unsubUpdateInfo();
             unsubNextUpdateInfo();
             unsubBroadcast();
             unsubWelcomeContent();
+            unsubBetaWelcome();
         };
     }, [isAuthorized, isAuthenticated]);
     
@@ -279,6 +288,15 @@ export function DevPanel() {
             toast({ title: 'Welcome Content Updated' });
         } catch (error) {
              toast({ title: "Update Failed", description: "Could not update welcome content.", variant: "destructive" });
+        }
+    };
+    
+    const handleSetBetaWelcome = async () => {
+        try {
+            await setBetaWelcomeMessage({ title: betaWelcomeTitle, description: betaWelcomeDescription });
+            toast({ title: 'Beta Welcome Content Updated' });
+        } catch (error) {
+             toast({ title: "Update Failed", description: "Could not update beta welcome content.", variant: "destructive" });
         }
     };
 
@@ -591,6 +609,29 @@ export function DevPanel() {
                                 />
                             </div>
                             <Button onClick={handleSetWelcomeContent} className="w-full">Save Welcome Content</Button>
+                            
+                            <hr className="my-4" />
+
+                            <div>
+                                <Label htmlFor="betaWelcomeTitle">Beta Welcome Title</Label>
+                                <Input 
+                                    id="betaWelcomeTitle" 
+                                    value={betaWelcomeTitle}
+                                    onChange={(e) => setBetaWelcomeTitle(e.target.value)}
+                                    placeholder="e.g., Welcome to the Beta!"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="betaWelcomeDescription">Beta Welcome Description</Label>
+                                <Textarea 
+                                    id="betaWelcomeDescription" 
+                                    value={betaWelcomeDescription}
+                                    onChange={(e) => setBetaWelcomeDescription(e.target.value)}
+                                    placeholder="e.g., Thanks for testing..."
+                                    rows={3}
+                                />
+                            </div>
+                            <Button onClick={handleSetBetaWelcome} className="w-full">Save Beta Welcome Content</Button>
                         </CardContent>
                     </Card>
                 </TabsContent>

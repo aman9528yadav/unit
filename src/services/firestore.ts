@@ -358,6 +358,29 @@ export interface WelcomeContent {
     description: string;
 }
 
+export interface BetaWelcomeMessage {
+    title: string;
+    description: string;
+}
+
+export async function setBetaWelcomeMessage(content: BetaWelcomeMessage) {
+    try {
+        const refPath = ref(rtdb, 'settings/betaWelcomeMessage');
+        await setRealtimeDb(refPath, content);
+    } catch (error) {
+        console.error("Error setting beta welcome message:", error);
+        throw error;
+    }
+}
+
+export function listenToBetaWelcomeMessage(callback: (content: BetaWelcomeMessage | null) => void) {
+    const refPath = ref(rtdb, 'settings/betaWelcomeMessage');
+    return onValue(refPath, (snapshot) => {
+        callback(snapshot.val());
+    });
+}
+
+
 export async function setWelcomeContent(content: WelcomeContent) {
     try {
         const welcomeRef = ref(rtdb, 'settings/welcomeContent');

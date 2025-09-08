@@ -60,7 +60,7 @@ import { DailyActivity, processUserDataForStats } from "@/lib/stats";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { format, intervalToDuration } from "date-fns";
-import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData, listenToUpdatesFromRtdb, UpdateItem, listenToDashboardWelcomeMessage, setDashboardWelcomeMessage } from "@/services/firestore";
+import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData, listenToUpdatesFromRtdb, UpdateItem, listenToDashboardWelcomeMessage, setDashboardWelcomeMessage, BetaWelcomeMessage, listenToBetaWelcomeMessage } from "@/services/firestore";
 import { getStreakData, recordVisit, StreakData } from "@/lib/streak";
 
 
@@ -240,6 +240,10 @@ export function Dashboard() {
   const [doNotShowAgain, setDoNotShowAgain] = useState(false);
   const [showFeatureDialog, setShowFeatureDialog] = useState(false);
   const [featureDialogContent, setFeatureDialogContent] = useState({ title: '', description: '' });
+  const [betaWelcome, setBetaWelcome] = useState<BetaWelcomeMessage>({
+    title: 'Welcome to Sutradhaar Beta!',
+    description: "Thank you for trying out the beta version. The app is currently in Phase 1 of testing. If you encounter any issues or have feedback, please don't hesitate to contact me. I apologize for any inconvenience.\n\n- Aman"
+  });
   const router = useRouter();
 
   const [stats, setStats] = useState<{
@@ -276,6 +280,12 @@ export function Dashboard() {
             setRecentUpdates(sortedUpdates);
         });
 
+        const unsubBetaWelcome = listenToBetaWelcomeMessage((content) => {
+            if (content) {
+                setBetaWelcome(content);
+            }
+        });
+
         const unsub = listenToUserData(userEmail, (userData) => {
             const processedStats = processUserDataForStats(userData, userEmail);
             setStats(processedStats);
@@ -303,6 +313,7 @@ export function Dashboard() {
             window.removeEventListener('storage', handleStorageChange);
             unsub();
             unsubUpdates();
+            unsubBetaWelcome();
         }
     }, []);
   
@@ -528,11 +539,9 @@ export function Dashboard() {
             >
               <Rocket className="w-8 h-8 text-primary" />
             </motion.div>
-            <AlertDialogTitle className="text-2xl">Welcome to Sutradhaar Beta!</AlertDialogTitle>
+            <AlertDialogTitle className="text-2xl">{betaWelcome.title}</AlertDialogTitle>
             <AlertDialogDescription className="max-w-md whitespace-pre-wrap text-center">
-              Thank you for trying out the beta version. The app is currently in Phase 1 of testing. If you encounter any issues or have feedback, please don't hesitate to contact me. I apologize for any inconvenience.
-              <br/><br/>
-              - Aman
+              {betaWelcome.description}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex items-center space-x-2 my-4 justify-center">
