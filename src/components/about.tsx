@@ -124,7 +124,7 @@ export function About() {
             <p className="text-card-foreground/80">Happy Users</p>
           </motion.div>
           <motion.div whileHover={{ scale: 1.1 }} className="text-center bg-card rounded-2xl shadow-xl p-6 border-t-4 border-accent">
-            <p className="text-3xl sm:text-4xl font-bold text-accent-foreground">1M+</p>
+            <p className="text-3xl sm:text-4xl font-bold text-foreground">1M+</p>
             <p className="text-card-foreground/80">Calculations Done</p>
           </motion.div>
         </div>
@@ -178,7 +178,7 @@ export function About() {
           whileHover={{ scale: 1.1, rotate: 2 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowConfetti(true)}
-          className="px-6 py-3 rounded-full bg-gradient-to-r from-primary to-accent text-white font-bold shadow-lg flex items-center gap-2 mx-auto"
+          className="px-6 py-3 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold shadow-lg flex items-center gap-2 mx-auto"
         >
           <Star className="w-5 h-5" /> Click for WOW!
         </motion.button>
@@ -227,26 +227,24 @@ export function About() {
       </motion.div>
 
       {/* Footer Links */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 gap-8 text-center">
+       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 gap-8 text-center">
         <div className="bg-card p-6 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-transform">
           <h3 className="font-semibold mb-3 text-primary flex justify-center items-center gap-2"><BookOpen className="w-5 h-5" /> Learn More</h3>
-          <Link href="/updates" className="block hover:text-accent cursor-pointer">Updates</Link>
-          <Link href="/how-to-use" className="block hover:text-accent cursor-pointer">How to Use</Link>
+          <Link href="/updates" className="block text-foreground hover:text-accent cursor-pointer">Updates</Link>
+          <Link href="/how-to-use" className="block text-foreground hover:text-accent cursor-pointer">How to Use</Link>
         </div>
         <div className="bg-card p-6 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-transform">
           <h3 className="font-semibold mb-3 text-primary flex justify-center items-center gap-2"><ShieldCheck className="w-5 h-5" /> Legal</h3>
-          <Link href="#" className="block hover:text-accent cursor-pointer">Terms of Service</Link>
-          <Link href="/privacy-policy" className="block hover:text-accent cursor-pointer">Privacy Policy</Link>
-          <Link href="#" className="block hover:text-accent cursor-pointer">Open Source</Link>
+          <Link href="#" className="block text-foreground hover:text-accent cursor-pointer">Terms of Service</Link>
+          <Link href="/privacy-policy" className="block text-foreground hover:text-accent cursor-pointer">Privacy Policy</Link>
+          <Link href="#" className="block text-foreground hover:text-accent cursor-pointer">Open Source</Link>
         </div>
         <div className="bg-card p-6 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-transform">
           <h3 className="font-semibold mb-3 text-primary flex justify-center items-center gap-2"><LifeBuoy className="w-5 h-5" /> Support</h3>
-          <a href="https://aman9528.wixstudio.com/my-site-3/aman" target="_blank" rel="noopener noreferrer" className="block hover:text-accent cursor-pointer flex justify-center items-center gap-2"><Mail className="w-4 h-4" /> Contact Us</a>
-          <a href="https://aman9528.wixstudio.com/my-site-3" target="_blank" rel="noopener noreferrer" className="block hover:text-accent cursor-pointer flex justify-center items-center gap-2"><AlertTriangle className="w-4 h-4" /> Report an Issue</a>
+          <a href="https://aman9528.wixstudio.com/my-site-3/aman" target="_blank" rel="noopener noreferrer" className="block text-foreground hover:text-accent cursor-pointer flex justify-center items-center gap-2"><Mail className="w-4 h-4" /> Contact Us</a>
+          <a href="https://aman9528.wixstudio.com/my-site-3" target="_blank" rel="noopener noreferrer" className="block text-foreground hover:text-accent cursor-pointer flex justify-center items-center gap-2"><AlertTriangle className="w-4 h-4" /> Report an Issue</a>
         </div>
       </motion.div>
     </div>
   );
 }
-
-    
