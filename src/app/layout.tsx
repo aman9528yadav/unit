@@ -21,6 +21,8 @@ import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCir
 import { Logo } from '@/components/logo';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Label } from './ui/label';
+import { motion, PanInfo } from 'framer-motion';
+
 
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean | null>(null);
@@ -155,6 +157,74 @@ function SidebarSelectors() {
     )
 }
 
+function PageContent({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [profile, setProfile] = useState<Partial<UserData> | null>(null);
+  const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
+  const noHeaderPaths = ['/welcome', '/signup', '/forgot-password', '/getting-started', '/maintenance', '/logout', '/profile/success'];
+  const devPaths = /^\/dev(\/.*)?$/;
+  const [isCalculatorFullScreen, setIsCalculatorFullScreen] = useState(false);
+
+  useEffect(() => {
+    const checkFullScreen = () => {
+        if (pathname === '/calculator') {
+             const isFullScreen = document.body.classList.contains('calculator-fullscreen');
+             setIsCalculatorFullScreen(isFullScreen);
+        } else {
+            setIsCalculatorFullScreen(false);
+        }
+    }
+    checkFullScreen();
+
+    const observer = new MutationObserver(checkFullScreen);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect();
+  }, [pathname]);
+  
+  useEffect(() => {
+    const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
+    if (userEmail) {
+        const unsub = listenToUserData(userEmail, (data) => {
+            setProfile(data);
+        });
+        return () => unsub();
+    }
+     const unsubAppInfo = listenToAboutInfoFromRtdb((data) => {
+      if (data?.appInfo) {
+        setAppInfo(data.appInfo);
+      }
+    });
+
+    return () => unsubAppInfo();
+  }, []);
+
+  const hideHeader = noHeaderPaths.includes(pathname) || devPaths.test(pathname) || isCalculatorFullScreen;
+
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    // Navigate back if swiped right with enough velocity
+    if (info.offset.x > 100 && info.velocity.x > 200) {
+      router.back();
+    }
+  };
+
+  return (
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.1}
+        onDragEnd={handleDragEnd}
+        className={cn("w-full flex-grow flex flex-col", "max-w-[415px] relative bg-background")}
+      >
+          {!hideHeader && (
+              <Header />
+          )}
+          {children}
+      </motion.div>
+  )
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -222,12 +292,7 @@ export default function RootLayout({
                 <MaintenanceRedirect>
                   <SidebarProvider>
                       <div className="flex min-h-screen items-center justify-center">
-                          <div className={cn("w-full flex-grow flex flex-col", "max-w-[415px] relative")}>
-                              {!hideHeader && (
-                                  <Header />
-                              )}
-                              {children}
-                          </div>
+                          <PageContent>{children}</PageContent>
                       </div>
                       <Sidebar>
                           <SidebarContent className="p-4 flex flex-col items-center justify-center">
