@@ -601,7 +601,17 @@ export interface UserData {
  * @returns The user data object.
  */
 export async function getUserData(email: string | null): Promise<UserData> {
-    if (!email) return {} as UserData;
+    if (!email) {
+        // For guest users, aggregate data from localStorage
+        const guestData: Partial<UserData> = {};
+        const notes = localStorage.getItem('guest_notes');
+        const conversionHistory = localStorage.getItem('guest_conversionHistory');
+        const calculationHistory = localStorage.getItem('guest_calculationHistory');
+        if (notes) guestData.notes = JSON.parse(notes);
+        if (conversionHistory) guestData.conversionHistory = JSON.parse(conversionHistory);
+        if (calculationHistory) guestData.calculationHistory = JSON.parse(calculationHistory);
+        return guestData as UserData;
+    }
     try {
         const userRef = ref(rtdb, `users/${sanitizeEmail(email)}`);
         const snapshot = await get(userRef);
@@ -624,8 +634,6 @@ export async function updateUserData(email: string | null, data: Partial<UserDat
     try {
         const userRef = ref(rtdb, `users/${sanitizeEmail(email)}`);
         const snapshot = await get(userRef);
-        // We use a merge-like behavior by getting existing data first.
-        // `update` in RTDB also merges, but this ensures we have a local representation if needed.
         const existingData = snapshot.val() || {};
         const newData = { ...existingData, ...data };
         
@@ -643,9 +651,29 @@ export async function updateUserData(email: string | null, data: Partial<UserDat
  * @returns An unsubscribe function.
  */
 export function listenToUserData(email: string | null, callback: (data: UserData) => void) {
-    if (!email) {
-        callback({} as UserData); // Return empty object for guests
-        return () => {}; // Return a no-op unsubscribe function
+     if (!email) {
+        const guestData = {
+            notes: JSON.parse(localStorage.getItem('guest_notes') || '[]'),
+            conversionHistory: JSON.parse(localStorage.getItem('guest_conversionHistory') || '[]'),
+            calculationHistory: JSON.parse(localStorage.getItem('guest_calculationHistory') || '[]'),
+            favoriteConversions: JSON.parse(localStorage.getItem('guest_favoriteConversions') || '[]'),
+        } as UserData;
+        callback(guestData);
+
+        const storageHandler = (e: StorageEvent) => {
+             if (e.key === 'guest_notes' || e.key === 'guest_conversionHistory' || e.key === 'guest_calculationHistory' || e.key === 'guest_favoriteConversions') {
+                const updatedGuestData = {
+                    notes: JSON.parse(localStorage.getItem('guest_notes') || '[]'),
+                    conversionHistory: JSON.parse(localStorage.getItem('guest_conversionHistory') || '[]'),
+                    calculationHistory: JSON.parse(localStorage.getItem('guest_calculationHistory') || '[]'),
+                    favoriteConversions: JSON.parse(localStorage.getItem('guest_favoriteConversions') || '[]'),
+                } as UserData;
+                callback(updatedGuestData);
+            }
+        };
+
+        window.addEventListener('storage', storageHandler);
+        return () => window.removeEventListener('storage', storageHandler);
     }
     const userRef = ref(rtdb, `users/${sanitizeEmail(email)}`);
     return onValue(userRef, (snapshot) => {
@@ -666,9 +694,17 @@ export function listenToUserData(email: string | null, callback: (data: UserData
  */
 export function listenToUserNotes(email: string | null, callback: (notes: Note[]) => void) {
     if (!email) {
-        callback([]);
-        return () => {};
+        const localNotes = localStorage.getItem('guest_notes');
+        callback(localNotes ? JSON.parse(localNotes) : []);
+        const storageHandler = (e: StorageEvent) => {
+            if (e.key === 'guest_notes') {
+                callback(e.newValue ? JSON.parse(e.newValue) : []);
+            }
+        };
+        window.addEventListener('storage', storageHandler);
+        return () => window.removeEventListener('storage', storageHandler);
     }
+
     const notesRef = ref(rtdb, `users/${sanitizeEmail(email)}/notes`);
     return onValue(notesRef, (snapshot) => {
         callback(snapshot.val() || []);
@@ -684,7 +720,11 @@ export function listenToUserNotes(email: string | null, callback: (notes: Note[]
  * @param notes - The entire array of notes to save.
  */
 export async function updateUserNotes(email: string | null, notes: Note[]) {
-    if (!email) return;
+    if (!email) {
+        localStorage.setItem('guest_notes', JSON.stringify(notes));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'guest_notes', newValue: JSON.stringify(notes) }));
+        return;
+    }
     try {
         const notesRef = ref(rtdb, `users/${sanitizeEmail(email)}/notes`);
         await setRealtimeDb(notesRef, notes);
@@ -698,13 +738,20 @@ export async function updateUserNotes(email: string | null, notes: Note[]) {
 export type HistoryType = 'conversionHistory' | 'calculationHistory' | 'favoriteConversions';
 
 // Centralize local storage key generation
-export const CONVERSION_HISTORY_KEY = (email: string | null) => email ? `${email}_conversionHistory` : 'guest_conversionHistory';
-export const CALCULATION_HISTORY_KEY = (email: string | null) => email ? `${email}_calculationHistory` : 'guest_calculationHistory';
-export const FAVORITES_HISTORY_KEY = (email: string | null) => email ? `${email}_favoriteConversions` : 'guest_favoriteConversions';
+const getHistoryKey = (email: string | null, historyType: HistoryType) => email ? `${email}_${historyType}` : `guest_${historyType}`;
 
 
 async function addToHistory(email: string | null, historyType: HistoryType, item: string) {
-    if (!email) return;
+    const key = getHistoryKey(email, historyType);
+    
+    if (!email) {
+        const currentHistory = JSON.parse(localStorage.getItem(key) || '[]');
+        const newHistory = [item, ...currentHistory].slice(0, 100);
+        localStorage.setItem(key, JSON.stringify(newHistory));
+        window.dispatchEvent(new StorageEvent('storage', { key, newValue: JSON.stringify(newHistory) }));
+        return;
+    }
+
     try {
         const userRef = ref(rtdb, `users/${sanitizeEmail(email)}/${historyType}`);
         const snapshot = await get(userRef);
@@ -727,7 +774,14 @@ export const addFavoriteToHistory = (email: string | null, item: string) => addT
 
 
 export async function deleteHistoryItem(email: string | null, historyType: HistoryType, itemToDelete: string) {
-    if(!email) return;
+    const key = getHistoryKey(email, historyType);
+    if(!email) {
+         const currentHistory = JSON.parse(localStorage.getItem(key) || '[]');
+         const newHistory = currentHistory.filter((item: string) => item !== itemToDelete);
+         localStorage.setItem(key, JSON.stringify(newHistory));
+         window.dispatchEvent(new StorageEvent('storage', { key, newValue: JSON.stringify(newHistory) }));
+         return;
+    }
     const userRef = ref(rtdb, `users/${sanitizeEmail(email)}/${historyType}`);
     const snapshot = await get(userRef);
     const currentHistory = snapshot.val() || [];
@@ -737,12 +791,61 @@ export async function deleteHistoryItem(email: string | null, historyType: Histo
 
 
 export async function clearAllHistory(email: string | null, historyType: HistoryType) {
-    if(!email) return;
+    const key = getHistoryKey(email, historyType);
+    if(!email) {
+        localStorage.setItem(key, '[]');
+        window.dispatchEvent(new StorageEvent('storage', { key, newValue: '[]' }));
+        return;
+    }
     await setRealtimeDb(ref(rtdb, `users/${sanitizeEmail(email)}/${historyType}`), []);
 }
 
 
 export async function setFavorites(email: string | null, favorites: string[]) {
-     if(!email) return;
+     const key = getHistoryKey(email, 'favoriteConversions');
+     if(!email) {
+        localStorage.setItem(key, JSON.stringify(favorites));
+        window.dispatchEvent(new StorageEvent('storage', { key, newValue: JSON.stringify(favorites) }));
+        return;
+     }
      await setRealtimeDb(ref(rtdb, `users/${sanitizeEmail(email)}/favoriteConversions`), favorites);
+}
+
+
+export const mergeLocalDataWithFirebase = async (email: string) => {
+    if (!email) return;
+
+    const guestNotes = JSON.parse(localStorage.getItem('guest_notes') || '[]');
+    const guestConvHistory = JSON.parse(localStorage.getItem('guest_conversionHistory') || '[]');
+    const guestCalcHistory = JSON.parse(localStorage.getItem('guest_calculationHistory') || '[]');
+    const guestFavs = JSON.parse(localStorage.getItem('guest_favoriteConversions') || '[]');
+    
+    if (guestNotes.length === 0 && guestConvHistory.length === 0 && guestCalcHistory.length === 0 && guestFavs.length === 0) {
+        return; // No guest data to merge
+    }
+
+    const userData = await getUserData(email);
+
+    // Merge notes
+    const mergedNotes = merge(userData.notes || [], guestNotes);
+
+    // Merge histories (prepend guest history and take unique items, limit to 100)
+    const mergedConvHistory = [...new Set([...guestConvHistory, ...(userData.conversionHistory || [])])].slice(0, 100);
+    const mergedCalcHistory = [...new Set([...guestCalcHistory, ...(userData.calculationHistory || [])])].slice(0, 100);
+    const mergedFavs = [...new Set([...guestFavs, ...(userData.favoriteConversions || [])])];
+    
+    const dataToUpdate = {
+        notes: mergedNotes,
+        conversionHistory: mergedConvHistory,
+        calculationHistory: mergedCalcHistory,
+        favoriteConversions: mergedFavs,
+    };
+    
+    await updateUserData(email, dataToUpdate);
+
+    // Clear guest data from local storage
+    localStorage.removeItem('guest_notes');
+    localStorage.removeItem('guest_conversionHistory');
+    localStorage.removeItem('guest_calculationHistory');
+    localStorage.removeItem('guest_favoriteConversions');
 }

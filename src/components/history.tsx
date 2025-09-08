@@ -36,9 +36,6 @@ import {
     listenToUserData, 
     clearAllHistory, 
     deleteHistoryItem,
-    CONVERSION_HISTORY_KEY,
-    CALCULATION_HISTORY_KEY,
-    FAVORITES_HISTORY_KEY,
 } from "@/services/firestore";
 
 
@@ -73,6 +70,7 @@ export function History() {
   const [calculationHistory, setCalculationHistory] = useState<HistoryItemData[]>([]);
   const [favorites, setFavorites] = useState<HistoryItemData[]>([]);
   const [profile, setProfile] = useState<{email: string} | null>(null);
+  const [isClient, setIsClient] = useState(false);
   
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -83,6 +81,7 @@ export function History() {
 
 
   useEffect(() => {
+    setIsClient(true);
     const storedProfile = localStorage.getItem("userProfile");
     const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
     if(storedProfile) {
@@ -258,8 +257,8 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
                         <RotateCcw className="h-4 w-4"/>
                     </Button>
                  }
-                <Button size="icon" variant="destructive" className="h-7 w-7" onClick={onDelete}>
-                    <Trash2 className="h-4 w-4"/>
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onDelete}>
+                    <Trash2 className="h-4 w-4 text-destructive"/>
                 </Button>
             </div>
         </div>
