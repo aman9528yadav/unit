@@ -83,7 +83,7 @@ const allNavLinks = [
     { href: "/time?tab=stopwatch", label: "Stopwatch", icon: Hourglass, requiresAuth: false },
     { href: "/time?tab=date-diff", label: "Date Calc", icon: Calendar, requiresAuth: false },
     { href: "/premium", label: "Go Premium", icon: Crown, requiresAuth: false },
-    { href: "/news", label: "News", icon: Newspaper, requiresAuth: false },
+    { href: "https://aman9528.wixstudio.com/my-site-3", label: "News", icon: Newspaper, isExternal: true, requiresAuth: false },
     { href: "/profile", label: "Profile", icon: User, requiresAuth: true },
     { href: "/settings", label: "Settings", icon: Settings, requiresAuth: true },
     { href: "/updates", label: "Updates", icon: Rocket, requiresAuth: false },
