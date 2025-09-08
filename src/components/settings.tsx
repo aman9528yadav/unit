@@ -251,11 +251,9 @@ export function Settings() {
   if (!isClient) return null;
 
   const isFeatureLocked = (featureId: string, isPremiumByDefault: boolean) => {
-    const isLockedByFlag = featureLocks[featureId]; // Can be true, false, or undefined
-    if (isLockedByFlag === true) return true; // Remotely locked
-    if (isLockedByFlag === false) return false; // Remotely unlocked
-
-    // If undefined, fallback to default premium logic
+    const isLockedByFlag = featureLocks[featureId];
+    if (isLockedByFlag === true) return true;
+    if (isLockedByFlag === false) return false;
     return isPremiumByDefault && userRole === 'Member';
   };
 
