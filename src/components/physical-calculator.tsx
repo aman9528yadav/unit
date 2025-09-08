@@ -42,7 +42,6 @@ export function PhysicalCalculator({ isFullScreen, onFullScreenToggle }: { isFul
     const [recentCalculations, setRecentCalculations] = useState<string[]>([]);
     const [soundEnabled, setSoundEnabled] = useState(true);
     const router = useRouter();
-    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
         const storedProfile = localStorage.getItem("userProfile");
@@ -59,17 +58,8 @@ export function PhysicalCalculator({ isFullScreen, onFullScreenToggle }: { isFul
         }
     }, []);
 
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            audioRef.current = new Audio('/keypress.mp3');
-        }
-    }, [])
-
     const playSound = () => {
-        if (soundEnabled && audioRef.current) {
-            audioRef.current.currentTime = 0;
-            audioRef.current.play().catch(e => console.error("Error playing sound:", e));
-        }
+        // Audio playback removed to fix error
     };
 
 

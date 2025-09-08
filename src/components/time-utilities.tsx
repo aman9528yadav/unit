@@ -76,8 +76,6 @@ function PomodoroTimer() {
     const progress = totalDuration > 0 ? ((minutes * 60 + seconds) / totalDuration) * 100 : 0;
 
 
-    const audioRef = React.useRef<HTMLAudioElement>(null);
-
     const switchMode = React.useCallback((newMode: typeof mode, userInitiated = false) => {
         setIsActive(!userInitiated);
         let newMinutes: number;
@@ -95,9 +93,6 @@ function PomodoroTimer() {
         setSeconds(0);
 
         if (!userInitiated) { // Auto-switch
-             if (audioRef.current) {
-                audioRef.current.play().catch(e => console.error("Error playing sound:", e));
-             }
              const endTime = new Date().getTime() + newMinutes * 60 * 1000;
              localStorage.setItem('pomodoroState', JSON.stringify({
                  endTime: endTime,
@@ -251,7 +246,6 @@ function PomodoroTimer() {
 
     return (
         <Card className="w-full text-center">
-             <audio ref={audioRef} src="/alarm.mp3" preload="auto"></audio>
             <CardHeader>
                  <div className="flex justify-center gap-2 mb-4">
                     <Button variant={mode === 'work' ? 'secondary' : 'ghost'} onClick={() => switchMode('work', true)}>{t('timePage.pomodoro.pomodoro')}</Button>
