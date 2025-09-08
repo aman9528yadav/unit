@@ -237,14 +237,8 @@ export function Dashboard() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [showMoreTools, setShowMoreTools] = useState(false);
-  const [showBetaDialog, setShowBetaDialog] = useState(false);
-  const [doNotShowAgain, setDoNotShowAgain] = useState(false);
   const [showFeatureDialog, setShowFeatureDialog] = useState(false);
   const [featureDialogContent, setFeatureDialogContent] = useState({ title: '', description: '' });
-  const [betaWelcome, setBetaWelcome] = useState<BetaWelcomeMessage>({
-    title: 'Welcome to Sutradhaar Beta!',
-    description: "Thank you for trying out the beta version. The app is currently in Phase 1 of testing. If you encounter any issues or have feedback, please don't hesitate to contact me. I apologize for any inconvenience.\n\n- Aman"
-  });
   const router = useRouter();
 
   const [stats, setStats] = useState<{
@@ -281,12 +275,6 @@ export function Dashboard() {
             setRecentUpdates(sortedUpdates);
         });
 
-        const unsubBetaWelcome = listenToBetaWelcomeMessage((content) => {
-            if (content) {
-                setBetaWelcome(content);
-            }
-        });
-
         const unsub = listenToUserData(userEmail, (userData) => {
             const processedStats = processUserDataForStats(userData, userEmail);
             setStats(processedStats);
@@ -304,28 +292,15 @@ export function Dashboard() {
             }
         };
         
-        const hasSeenDialog = localStorage.getItem('hasSeenBetaDialog');
-        if (!hasSeenDialog) {
-            setShowBetaDialog(true);
-        }
-        
         window.addEventListener('storage', handleStorageChange);
         return () => {
             window.removeEventListener('storage', handleStorageChange);
             unsub();
             unsubUpdates();
-            unsubBetaWelcome();
         }
     }, []);
   
   
-  const handleBetaDialogClose = () => {
-      if (doNotShowAgain) {
-          localStorage.setItem('hasSeenBetaDialog', 'true');
-      }
-      setShowBetaDialog(false);
-  };
-
   const openFeatureDialog = (title: string, description: string) => {
     setFeatureDialogContent({ title, description });
     setShowFeatureDialog(true);
@@ -531,38 +506,6 @@ export function Dashboard() {
       </AlertDialogContent>
     </AlertDialog>
     
-    <AlertDialog open={showBetaDialog} onOpenChange={setShowBetaDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader className="items-center text-center">
-            <motion.div 
-                className="p-3 bg-primary/10 rounded-full mb-4 w-fit"
-                animate={{ rotate: [0, -15, 15, -15, 15, 0], y: [0, -10, 0] }}
-                transition={{ duration: 0.8, ease: "easeInOut", repeat: Infinity, repeatDelay: 2 }}
-            >
-              <Rocket className="w-8 h-8 text-primary" />
-            </motion.div>
-            <AlertDialogTitle className="text-2xl">{betaWelcome.title}</AlertDialogTitle>
-            <AlertDialogDescription className="max-w-md whitespace-pre-wrap text-center">
-              {betaWelcome.description}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex items-center space-x-2 my-4 justify-center">
-            <Checkbox id="dont-show-again" checked={doNotShowAgain} onCheckedChange={(checked) => setDoNotShowAgain(checked as boolean)} />
-            <Label htmlFor="dont-show-again" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Don't show this message again
-            </Label>
-          </div>
-          <AlertDialogFooter className="grid grid-cols-2 gap-2">
-              <Button asChild variant="outline">
-                  <Link href="/about"><Info className="mr-2 h-4 w-4"/> About App</Link>
-              </Button>
-              <Button asChild variant="outline">
-                  <Link href="/how-to-use"><BookOpen className="mr-2 h-4 w-4"/> How to Use</Link>
-              </Button>
-              <AlertDialogAction onClick={handleBetaDialogClose} className="col-span-2">Got it!</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
       
       <AlertDialog open={showFeatureDialog} onOpenChange={setShowFeatureDialog}>
         <AlertDialogContent>
@@ -587,5 +530,3 @@ export function Dashboard() {
     </motion.div>
   );
 }
-
-    

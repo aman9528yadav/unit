@@ -38,11 +38,18 @@ export default function Home() {
     useEffect(() => {
         const storedProfile = localStorage.getItem("userProfile");
         const hasSkippedLogin = sessionStorage.getItem("hasSkippedLogin");
+        const hasSeenGettingStarted = localStorage.getItem("hasSeenGettingStarted");
+        const hasNavigatedFromGettingStarted = sessionStorage.getItem("hasNavigatedFromGettingStarted");
         const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
 
         if (!userEmail && !hasSkippedLogin) {
             router.replace('/welcome');
             setAuthStatus('unauthenticated');
+            return;
+        }
+
+        if (!hasSeenGettingStarted && !hasNavigatedFromGettingStarted) {
+            router.replace('/getting-started');
             return;
         }
 

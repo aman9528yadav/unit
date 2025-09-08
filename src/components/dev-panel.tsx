@@ -53,8 +53,8 @@ export function DevPanel() {
     // State for UI Content Tab
     const [welcomeTitle, setWelcomeTitle] = useState('');
     const [welcomeDescription, setWelcomeDescription] = useState('');
-    const [betaWelcomeTitle, setBetaWelcomeTitle] = useState('');
-    const [betaWelcomeDescription, setBetaWelcomeDescription] = useState('');
+    const [gettingStartedTitle, setGettingStartedTitle] = useState('');
+    const [gettingStartedDescription, setGettingStartedDescription] = useState('');
 
 
     // State for Security Tab
@@ -143,8 +143,8 @@ export function DevPanel() {
         });
 
         const unsubBetaWelcome = listenToBetaWelcomeMessage((content) => {
-            setBetaWelcomeTitle(content?.title || '');
-            setBetaWelcomeDescription(content?.description || '');
+            setGettingStartedTitle(content?.title || '');
+            setGettingStartedDescription(content?.description || '');
         });
 
         return () => {
@@ -293,10 +293,10 @@ export function DevPanel() {
     
     const handleSetBetaWelcome = async () => {
         try {
-            await setBetaWelcomeMessage({ title: betaWelcomeTitle, description: betaWelcomeDescription });
-            toast({ title: 'Beta Welcome Content Updated' });
+            await setBetaWelcomeMessage({ title: gettingStartedTitle, description: gettingStartedDescription });
+            toast({ title: 'Getting Started Content Updated' });
         } catch (error) {
-             toast({ title: "Update Failed", description: "Could not update beta welcome content.", variant: "destructive" });
+             toast({ title: "Update Failed", description: "Could not update Getting Started content.", variant: "destructive" });
         }
     };
 
@@ -560,7 +560,19 @@ export function DevPanel() {
                             <CardTitle className="flex items-center gap-2"><MessageSquare /> UI Content</CardTitle>
                             <CardDescription>Manage dynamic text shown in the app.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                         <CardContent className="space-y-4">
+                            <div className="space-y-2 p-3 bg-secondary rounded-lg">
+                                <Label>Getting Started Page</Label>
+                                <Input value={gettingStartedTitle} onChange={(e) => setGettingStartedTitle(e.target.value)} placeholder="Getting Started Title" />
+                                <Textarea value={gettingStartedDescription} onChange={(e) => setGettingStartedDescription(e.target.value)} placeholder="Getting Started Description" />
+                                <Button onClick={handleSetBetaWelcome} size="sm" className="w-full">Save Getting Started Content</Button>
+                            </div>
+                            <div className="space-y-2 p-3 bg-secondary rounded-lg">
+                                <Label>Welcome Page</Label>
+                                <Input value={welcomeTitle} onChange={(e) => setWelcomeTitle(e.target.value)} placeholder="Welcome Title" />
+                                <Textarea value={welcomeDescription} onChange={(e) => setWelcomeDescription(e.target.value)} placeholder="Welcome Description" />
+                                <Button onClick={handleSetWelcomeContent} size="sm" className="w-full">Save Welcome Content</Button>
+                            </div>
                              <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
                                 <div>
                                     <Label>Manage Help Content</Label>
