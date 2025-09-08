@@ -67,32 +67,27 @@ export function NoteViewer({ noteId }: { noteId: string }) {
 
         try {
             const canvas = await html2canvas(noteContentRef.current, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
-            
-            const pdf = new jsPDF({
-                orientation: 'p',
-                unit: 'px',
-                format: [canvas.width, canvas.height]
-            });
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    toast({ title: "Sharing Failed", description: "Could not create image from note.", variant: "destructive" });
+                    return;
+                }
+                const file = new File([blob], `${note.title || 'note'}.png`, { type: 'image/png' });
 
-            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-            const pdfBlob = pdf.blob;
-
-            const file = new File([pdfBlob], `${note.title || 'note'}.pdf`, { type: 'application/pdf' });
-
-            if (navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    title: note.title || 'Shared Note',
-                    text: `Here's a note from Sutradhaar: ${note.title}`,
-                    files: [file],
-                });
-            } else {
-                toast({ title: "Cannot Share PDF", description: "Your browser does not support sharing PDF files.", variant: "destructive" });
-            }
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: note.title || 'Shared Note',
+                        text: `Here's a note from Sutradhaar: ${note.title}`,
+                        files: [file],
+                    });
+                } else {
+                    toast({ title: "Cannot Share Image", description: "Your browser does not support sharing images.", variant: "destructive" });
+                }
+            }, 'image/png');
 
         } catch (error) {
             console.error('Error sharing note:', error);
-            toast({ title: "Sharing Failed", description: "Could not share the note as a PDF.", variant: "destructive" });
+            toast({ title: "Sharing Failed", description: "Could not share the note as an image.", variant: "destructive" });
         }
     };
 

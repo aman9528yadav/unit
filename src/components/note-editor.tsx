@@ -378,27 +378,22 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
         try {
             const canvas = await html2canvas(contentEl, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
-            
-            const pdf = new jsPDF({
-                orientation: 'p',
-                unit: 'px',
-                format: [canvas.width, canvas.height]
-            });
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    toast({ title: "Sharing Failed", description: "Could not create image from note.", variant: "destructive" });
+                    return;
+                }
+                const file = new File([blob], `${title || 'note'}.png`, { type: 'image/png' });
 
-            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-            const pdfBlob = pdf.blob;
-
-            const file = new File([pdfBlob], `${title || 'note'}.pdf`, { type: 'application/pdf' });
-
-            if (navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    title: title || 'Shared Note',
-                    files: [file],
-                });
-            } else {
-                toast({ title: "Cannot Share PDF", variant: "destructive" });
-            }
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: title || 'Shared Note',
+                        files: [file],
+                    });
+                } else {
+                    toast({ title: "Cannot Share Image", description: "Your browser does not support sharing images.", variant: "destructive" });
+                }
+            }, 'image/png');
         } catch (error) {
             console.error('Error sharing note:', error);
             toast({ title: "Sharing Failed", variant: "destructive" });
