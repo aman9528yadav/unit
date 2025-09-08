@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
-import { Search, StickyNote, History, HelpCircle, Settings, X, CornerDownLeft, ArrowRightLeft, Loader2, Sigma, LayoutGrid } from 'lucide-react';
+import { Search, StickyNote, History, HelpCircle, Settings, X, CornerDownLeft, ArrowRightLeft, Loader2, Sigma, LayoutGrid, Languages } from 'lucide-react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Note } from './notepad';
 import { FAQ } from './help';
@@ -20,7 +20,7 @@ import { listenToUserData, UserData } from '@/services/firestore';
 
 
 interface SearchResult {
-  type: 'Note' | 'History' | 'Help' | 'Setting' | 'Conversion' | 'Unit' | 'Category';
+  type: 'Note' | 'History' | 'Help' | 'Setting' | 'Conversion' | 'Unit' | 'Category' | 'Translation';
   title: string;
   description?: string;
   id: string;
@@ -154,7 +154,16 @@ export function GlobalSearch() {
     const lowerQuery = debouncedQuery.toLowerCase();
     const allResults: SearchResult[] = [];
 
-    // Search Conversion first
+    // Add translation result first
+    allResults.push({
+        type: 'Translation',
+        title: `Translate "${debouncedQuery}"`,
+        description: 'Open in AI Translator',
+        id: 'translation-query',
+        href: '/translator',
+    });
+
+    // Search Conversion
     const parsedConversion = offlineParseConversionQuery(debouncedQuery, allUnits, conversionCategories);
     if (parsedConversion) {
       allResults.push({
@@ -245,6 +254,9 @@ export function GlobalSearch() {
     if (result.type === 'History' || result.type === 'Conversion') {
         localStorage.setItem('restoreConversion', result.type === 'Conversion' ? query : result.id);
     }
+    if (result.type === 'Translation') {
+        localStorage.setItem('translateQuery', query);
+    }
     if (result.type === 'Category') {
       const category = conversionCategories.find(c => c.name === result.id);
       if (category) {
@@ -275,6 +287,7 @@ export function GlobalSearch() {
       case 'Conversion': return <ArrowRightLeft className="w-5 h-5 text-purple-500" />;
       case 'Category': return <LayoutGrid className="w-5 h-5 text-indigo-500" />;
       case 'Unit': return <Sigma className="w-5 h-5 text-orange-500" />;
+      case 'Translation': return <Languages className="w-5 h-5 text-teal-500" />;
       default: return null;
     }
   };

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
@@ -32,6 +32,14 @@ export function Translator() {
     const [targetLanguage, setTargetLanguage] = useState('Hindi');
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
+
+    useEffect(() => {
+        const queryToTranslate = localStorage.getItem('translateQuery');
+        if (queryToTranslate) {
+            setInputText(queryToTranslate);
+            localStorage.removeItem('translateQuery');
+        }
+    }, []);
 
     const handleTranslate = () => {
         if (!inputText.trim()) {
