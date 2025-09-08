@@ -5,13 +5,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Home, User, Settings, Languages, Sigma, Calculator, NotebookPen, History as HistoryIcon, Timer, ArrowLeft, HelpCircle } from "lucide-react";
+import { Home, User, Settings, Languages, Sigma, Calculator, NotebookPen, History as HistoryIcon, Timer, ArrowLeft, HelpCircle, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLanguage } from "@/context/language-context";
 import { listenToUserData, UserData } from "@/services/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Notifications } from "./notifications";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
+import { GlobalSearch } from "./global-search";
 
 interface UserProfile {
     fullName: string;
@@ -50,7 +51,7 @@ export function Header() {
     const defaultPage = userData?.settings?.defaultPage || 'dashboard';
 
     // Correctly determine if the current page is the effective "home" page.
-    const isHomePage = (defaultPage === 'dashboard' && pathname === '/') || (pathname === `/${defaultPage}`);
+    const isHomePage = (pathname === '/') || (pathname === `/${defaultPage}`);
 
     
     useEffect(() => {
@@ -105,6 +106,7 @@ export function Header() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <GlobalSearch />
                     <LanguageToggle />
                     <Notifications />
                     <Button variant="ghost" size="icon" className="rounded-full" onClick={handleProfileClick}>

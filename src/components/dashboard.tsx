@@ -47,7 +47,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { GlobalSearch } from "./global-search";
 import { Notifications } from "./notifications";
 import { useLanguage } from "@/context/language-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
@@ -393,9 +392,7 @@ export function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
     >
-        <section>
-          <GlobalSearch />
-        </section>
+        
       <UpdateBanner />
 
       <section>

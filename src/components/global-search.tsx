@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Search, StickyNote, History, HelpCircle, Settings, X, CornerDownLeft, ArrowRightLeft, Loader2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Note } from './notepad';
@@ -15,6 +16,7 @@ import { conversionCategories as baseConversionCategories, Unit, ConversionCateg
 import { CustomCategory, CustomUnit } from './custom-unit-manager';
 import { useLanguage } from '@/context/language-context';
 import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow.ts";
+import { listenToUserData, UserData } from '@/services/firestore';
 
 
 interface SearchResult {
@@ -74,13 +76,12 @@ export const offlineParseConversionQuery = (query: string, allUnits: Unit[], cat
 
 
 export function GlobalSearch() {
-  const [isFocused, setIsFocused] = useState(false);
+  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [profile, setProfile] = useState<{ email: string } | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const debouncedQuery = useDebounce(query, 300);
   const router = useRouter();
-  const searchContainerRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
   
   const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
@@ -124,20 +125,18 @@ export function GlobalSearch() {
 
 
   useEffect(() => {
+    if (!open) return;
     const storedProfile = localStorage.getItem('userProfile');
     const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
-
-    if (storedProfile) {
-      setProfile(JSON.parse(storedProfile));
-    }
     
-    const savedCustomUnits = localStorage.getItem(`${userEmail || 'guest'}_customUnits`);
-    const savedCustomCategories = localStorage.getItem(`${userEmail || 'guest'}_customCategories`);
+    const unsub = listenToUserData(userEmail, (data) => {
+        setUserData(data);
+        setCustomUnits(data?.customUnits || []);
+        setCustomCategories(data?.customCategories || []);
+    });
 
-    if (savedCustomUnits) setCustomUnits(JSON.parse(savedCustomUnits));
-    if (savedCustomCategories) setCustomCategories(JSON.parse(savedCustomCategories));
-
-  }, [isFocused]);
+    return () => unsub();
+  }, [open]);
 
   const search = useCallback(() => {
     if (!debouncedQuery) {
@@ -167,63 +166,43 @@ export function GlobalSearch() {
       });
     }
 
-
     // Search Notes
-    const notesKey = getUserNotesKey(profile?.email || null);
-    const notesData = localStorage.getItem(notesKey);
-    if (notesData) {
-      try {
-        const notes: Note[] = JSON.parse(notesData);
-        notes
-          .filter(n => !n.deletedAt && (n.title.toLowerCase().includes(lowerQuery) || n.content.toLowerCase().includes(lowerQuery)))
-          .forEach(n => allResults.push({
+    const notes = userData?.notes || [];
+    notes
+        .filter(n => !n.deletedAt && (n.title.toLowerCase().includes(lowerQuery) || n.content.toLowerCase().includes(lowerQuery)))
+        .forEach(n => allResults.push({
             type: 'Note',
             title: n.title || t('globalSearch.results.note.untitled'),
             description: n.content.replace(/<[^>]*>?/gm, '').substring(0, 100),
             id: n.id,
             href: `/notes/edit/${n.id}`,
-          }));
-      } catch (e) {
-        console.error("Failed to parse notes:", e);
-      }
-    }
+        }));
 
     // Search History
-    const historyData = localStorage.getItem('conversionHistory');
-    if (historyData) {
-      try {
-        const history: string[] = JSON.parse(historyData);
-        history
-          .filter(h => h.toLowerCase().includes(lowerQuery))
-          .forEach(h => allResults.push({
+    const conversionHistory = userData?.conversionHistory || [];
+    conversionHistory
+        .filter(h => h.toLowerCase().includes(lowerQuery))
+        .forEach(h => allResults.push({
             type: 'History',
             title: h.split('|')[0],
             id: h,
             href: `/converter`,
-          }));
-      } catch (e) {
-        console.error("Failed to parse history:", e);
-      }
-    }
+        }));
 
-    // Search Help/FAQs
-    const faqData = localStorage.getItem('faqs');
+    // Search Help/FAQs from RTDB
+    const faqData = userData?.faqs; // Assuming faqs are part of userdata now
     if (faqData) {
-      try {
-        const faqs: FAQ[] = JSON.parse(faqData);
-        faqs
-          .filter(f => f.question.toLowerCase().includes(lowerQuery) || f.answer.toLowerCase().includes(lowerQuery))
-          .forEach(f => allResults.push({
+        faqData
+          .filter((f: FAQ) => f.question.toLowerCase().includes(lowerQuery) || f.answer.toLowerCase().includes(lowerQuery))
+          .forEach((f: FAQ) => allResults.push({
             type: 'Help',
             title: f.question,
             description: f.answer.replace(/<[^>]*>?/gm, '').substring(0, 100),
             id: f.id,
             href: '/help',
           }));
-      } catch (e) {
-        console.error("Failed to parse FAQs:", e);
-      }
     }
+
 
     // Search Settings
     SETTINGS_PAGES
@@ -231,28 +210,18 @@ export function GlobalSearch() {
       .forEach(p => allResults.push({ ...p, id: p.href, type: 'Setting' }));
 
     setResults(allResults);
-  }, [debouncedQuery, profile, allUnits, conversionCategories, t]);
+  }, [debouncedQuery, userData, allUnits, conversionCategories, t]);
 
   useEffect(() => {
     search();
   }, [search]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        setIsFocused(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
   
   const handleSelectResult = (result: SearchResult) => {
     if (result.type === 'History' || result.type === 'Conversion') {
         localStorage.setItem('restoreConversion', result.type === 'Conversion' ? query : result.id);
     }
     router.push(result.href);
-    setIsFocused(false);
+    setOpen(false);
     setQuery('');
   }
 
@@ -268,23 +237,26 @@ export function GlobalSearch() {
   };
 
   return (
-    <div className="relative w-full" ref={searchContainerRef}>
-        <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input 
-                placeholder={t('globalSearch.placeholder')}
-                className="pl-10 h-11 rounded-lg bg-secondary border-border text-foreground placeholder-muted-foreground w-full" 
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onFocus={() => setIsFocused(true)}
-                 onKeyDown={(e) => e.key === 'Enter' && results.length > 0 && handleSelectResult(results[0])}
-            />
-             <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground p-1.5 border border-border rounded-md">⌘K</div>
-        </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+            <Button variant="ghost" size="icon">
+                <Search />
+            </Button>
+        </DialogTrigger>
+        <DialogContent className="p-0 gap-0 max-w-lg">
+            <div className="flex items-center gap-2 p-4 border-b">
+                <Search className="size-5 text-muted-foreground" />
+                <Input 
+                    placeholder={t('globalSearch.placeholder')}
+                    className="border-none focus-visible:ring-0 h-auto p-0" 
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && results.length > 0 && handleSelectResult(results[0])}
+                    autoFocus
+                />
+            </div>
 
-      {isFocused && (
-        <div className="absolute top-full mt-2 w-full bg-card rounded-lg border shadow-lg z-50 max-h-[400px] overflow-y-auto">
-            <div className="p-4">
+             <div className="p-4 max-h-[400px] overflow-y-auto">
                 {debouncedQuery && results.length > 0 ? (
                     <ul className="space-y-2">
                         {results.map((result) => (
@@ -308,8 +280,7 @@ export function GlobalSearch() {
                     <p className="text-center text-muted-foreground py-8">{t('globalSearch.prompt')}</p>
                 )}
             </div>
-        </div>
-      )}
-    </div>
+        </DialogContent>
+    </Dialog>
   );
 }
