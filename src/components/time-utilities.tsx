@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useSearchParams } from "next/navigation";
 import { incrementDateCalculationCount } from "@/lib/stats";
+import { cn } from "@/lib/utils";
 
 // --- Web Worker Code ---
 // This code will be run in a separate thread to ensure timers work in the background.
@@ -66,6 +67,14 @@ function PomodoroTimer() {
         longBreakLength: 15,
         pomodorosUntilLongBreak: 4,
     });
+    
+    const totalDuration = 
+        mode === 'work' ? settings.pomodoroLength * 60 
+      : mode === 'shortBreak' ? settings.shortBreakLength * 60
+      : settings.longBreakLength * 60;
+      
+    const progress = ((minutes * 60 + seconds) / totalDuration) * 100;
+
 
     const audioRef = React.useRef<HTMLAudioElement>(null);
 
@@ -244,17 +253,29 @@ function PomodoroTimer() {
         <Card className="w-full text-center">
              <audio ref={audioRef} src="/alarm.mp3" preload="auto"></audio>
             <CardHeader>
-                <div className="flex justify-center gap-2 mb-4">
+                 <div className="flex justify-center gap-2 mb-4">
                     <Button variant={mode === 'work' ? 'secondary' : 'ghost'} onClick={() => switchMode('work', true)}>{t('timePage.pomodoro.pomodoro')}</Button>
                     <Button variant={mode === 'shortBreak' ? 'secondary' : 'ghost'} onClick={() => switchMode('shortBreak', true)}>{t('timePage.pomodoro.shortBreak')}</Button>
                     <Button variant={mode === 'longBreak' ? 'secondary' : 'ghost'} onClick={() => switchMode('longBreak', true)}>{t('timePage.pomodoro.longBreak')}</Button>
                 </div>
-                <div className="text-7xl font-bold tracking-tighter">
-                    {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-                </div>
-                 <p className="text-muted-foreground">{t('timePage.pomodoro.cyclesCompleted', { count: pomodoros })}</p>
             </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4">
+            <CardContent className="flex flex-col items-center gap-6">
+                <div className="relative w-64 h-64 rounded-full flex items-center justify-center bg-muted shadow-inner">
+                    <div className="absolute inset-0 rounded-full overflow-hidden">
+                         <div 
+                            className={cn(
+                                "absolute bottom-0 left-0 w-full h-full bg-primary/20 transition-all duration-500 ease-linear",
+                                 mode === 'shortBreak' && 'bg-green-500/20',
+                                 mode === 'longBreak' && 'bg-blue-500/20'
+                            )}
+                            style={{ height: `${100 - progress}%` }}
+                         />
+                    </div>
+                    <div className="relative z-10 text-6xl font-bold tracking-tighter text-foreground">
+                        {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                    </div>
+                </div>
+                <p className="text-muted-foreground">{t('timePage.pomodoro.cyclesCompleted', { count: pomodoros })}</p>
                  <div className="flex items-center gap-4">
                     <Button onClick={toggle} className="w-24 h-12 text-lg">
                         {isActive ? <Pause/> : <Play/>}
