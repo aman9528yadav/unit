@@ -161,7 +161,7 @@ const SidebarMenuButton = React.forwardRef<
     <button
       ref={ref}
       className={cn(
-        "text-center text-2xl font-semibold text-background transition-colors hover:text-primary",
+        "text-center text-2xl font-semibold text-black transition-colors hover:text-primary",
         {
           "text-primary": isActive,
         },
