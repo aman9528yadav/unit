@@ -117,7 +117,6 @@ export function ProfileEditForm() {
       if (user) {
         await updateProfile(user, {
           displayName: profile.fullName,
-          photoURL: profile.profileImage
         });
         
         const skillsArray = skillsString.split(',').map(s => s.trim()).filter(Boolean);
