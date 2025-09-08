@@ -10,6 +10,7 @@ import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import type { Note } from '@/components/notepad';
 import * as LucideIcons from 'lucide-react';
+import { conversionCategories as baseConversionCategories } from '@/lib/conversions';
 
 
 export type HowToUseCategory = 'gettingStarted' | 'unitConverter' | 'calculator' | 'notepad' | 'customization';
@@ -387,6 +388,11 @@ export interface PremiumInfoContent {
     howToUpgrade: string;
 }
 
+export type FeatureLocks = {
+    [featureId: string]: boolean; // e.g., { 'Category:Currency': true, 'Theme:retro': true }
+};
+
+
 const defaultPremiumInfo: PremiumInfoContent = {
     title: "Unlock Premium",
     description: "Upgrade to a Premium Membership to unlock exclusive features and enhance your productivity.",
@@ -538,6 +544,21 @@ export async function deleteBroadcastNotification() {
 export function listenToBroadcastNotification(callback: (info: BroadcastNotification | null) => void) {
     return onValue(ref(rtdb, 'settings/broadcastNotification'), (snapshot) => {
         callback(snapshot.val());
+    });
+}
+
+export async function setFeatureLocks(locks: FeatureLocks) {
+    try {
+        await setRealtimeDb(ref(rtdb, 'settings/featureLocks'), locks);
+    } catch (error) {
+        console.error("Error setting feature locks:", error);
+        throw error;
+    }
+}
+
+export function listenToFeatureLocks(callback: (locks: FeatureLocks | null) => void) {
+    return onValue(ref(rtdb, 'settings/featureLocks'), (snapshot) => {
+        callback(snapshot.val() || {});
     });
 }
 

@@ -51,7 +51,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useDebounce } from "@/hooks/use-debounce";
 import { incrementConversionCount, getStats } from "@/lib/stats";
-import { listenToUserData, addConversionToHistory, setFavorites as setFavoritesInDb, deleteHistoryItem } from "@/services/firestore";
+import { listenToUserData, addConversionToHistory, setFavorites as setFavoritesInDb, deleteHistoryItem, listenToFeatureLocks, FeatureLocks } from "@/services/firestore";
 import { getStreakData } from "@/lib/streak";
 import { offlineParseConversionQuery } from "./global-search";
 
@@ -162,6 +162,7 @@ export function Converter() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>('Member');
+  const [featureLocks, setFeatureLocks] = useState<FeatureLocks>({});
   
   const [favorites, setFavorites] = useState<string[]>([]);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -225,8 +226,11 @@ export function Converter() {
         }
     });
 
+    const unsubLocks = listenToFeatureLocks(setFeatureLocks);
+
     return () => {
       unsub();
+      unsubLocks();
     };
   }, []);
 
@@ -305,12 +309,22 @@ export function Converter() {
     window.dispatchEvent(new StorageEvent('storage', { key: localHistoryKey, newValue: JSON.stringify(newLocalHistory) }));
   };
 
+  const isFeatureLocked = (featureId: string, isPremiumByDefault: boolean) => {
+    const isLockedByFlag = featureLocks[featureId]; // Can be true, false, or undefined
+    if (isLockedByFlag === true) return true; // Remotely locked
+    if (isLockedByFlag === false) return false; // Remotely unlocked
+
+    // If undefined, fallback to default premium logic
+    return isPremiumByDefault && userRole === 'Member';
+  };
+
   const handleCategoryChange = (categoryName: string) => {
-    const isLocked = isPremiumFeatureLocked && PREMIUM_CATEGORIES.includes(categoryName);
-    if (isLocked) {
+    const isPremiumCategory = PREMIUM_CATEGORIES.includes(categoryName);
+    if (isFeatureLocked(`Category:${categoryName}`, isPremiumCategory)) {
         setShowPremiumLockDialog(true);
         return;
     }
+
     const category = conversionCategories.find(c => c.name === categoryName);
     if (category) {
       setSelectedCategory(category);
@@ -322,8 +336,8 @@ export function Converter() {
   };
 
   const handleRegionChange = (newRegion: string) => {
-    const isLocked = isPremiumFeatureLocked && PREMIUM_REGIONS.includes(newRegion as Region);
-    if (isLocked) {
+    const isPremiumRegion = PREMIUM_REGIONS.includes(newRegion as Region);
+    if (isFeatureLocked(`Region:${newRegion}`, isPremiumRegion)) {
         setShowPremiumLockDialog(true);
     } else {
         setRegion(newRegion as Region);
@@ -416,7 +430,7 @@ export function Converter() {
   };
   
    const handleShareClick = () => {
-    if (isPremiumFeatureLocked) {
+    if (isFeatureLocked('Share', true)) { // Assuming share is a premium feature
       setShowPremiumLockDialog(true);
     } else {
       handleShareAsImage();
@@ -479,8 +493,6 @@ export function Converter() {
     }
   };
   
-  const isPremiumFeatureLocked = userRole === 'Member';
-
   const handleToggleFavorite = () => {
     if (!outputValue || !profile?.email) return;
 
@@ -537,9 +549,9 @@ export function Converter() {
                             </SelectTrigger>
                             <SelectContent>
                                 {regions.map(r => {
-                                    const isLocked = isPremiumFeatureLocked && PREMIUM_REGIONS.includes(r);
+                                    const isLocked = isFeatureLocked(`Region:${r}`, PREMIUM_REGIONS.includes(r));
                                     return (
-                                        <SelectItem key={r} value={r} disabled={isLocked}>
+                                        <SelectItem key={r} value={r} disabled={isLocked} onSelect={(e) => { if (isLocked) e.preventDefault(); }}>
                                             <div className="flex items-center gap-2">
                                                 {isLocked && <Star className="w-3 h-3 text-muted-foreground" />}
                                                 {r}
@@ -558,9 +570,9 @@ export function Converter() {
                             </SelectTrigger>
                             <SelectContent>
                                 {conversionCategories.map(cat => {
-                                    const isLocked = isPremiumFeatureLocked && PREMIUM_CATEGORIES.includes(cat.name);
+                                    const isLocked = isFeatureLocked(`Category:${cat.name}`, PREMIUM_CATEGORIES.includes(cat.name));
                                     return (
-                                        <SelectItem key={cat.name} value={cat.name} disabled={isLocked}>
+                                        <SelectItem key={cat.name} value={cat.name} disabled={isLocked} onSelect={(e) => { if (isLocked) e.preventDefault(); }}>
                                             <div className="flex items-center gap-2">
                                                 {isLocked && <Star className="w-3 h-3 text-muted-foreground" />}
                                                 <cat.icon className="w-4 h-4" />

@@ -1,11 +1,12 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music, Sigma, Home, Rocket, Crown, HelpCircle, Star } from "lucide-react";
+import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music, Sigma, Home, Rocket, Crown, HelpCircle, Star, Flag } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { useTheme, type CustomTheme } from "@/context/theme-context";
 import {
@@ -26,7 +27,7 @@ import { getStats } from "@/lib/stats";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { cn } from "@/lib/utils";
 import { Label } from "./ui/label";
-import { listenToUserData, updateUserData } from "@/services/firestore";
+import { listenToUserData, updateUserData, listenToFeatureLocks, FeatureLocks } from "@/services/firestore";
 import { getStreakData } from "@/lib/streak";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import { PremiumInfoDialog } from "./premium-info-dialog";
@@ -112,6 +113,7 @@ export function Settings() {
   const [userRole, setUserRole] = useState<UserRole>('Member');
   const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
   const [isPremiumInfoOpen, setIsPremiumInfoOpen] = useState(false);
+  const [featureLocks, setFeatureLocks] = useState<FeatureLocks>({});
   const { toast } = useToast();
   const router = useRouter();
 
@@ -155,7 +157,11 @@ export function Settings() {
             setShowGettingStarted(userSettings.showGettingStarted ?? true);
             setCalculatorSound(userSettings.calculatorSound ?? true);
         });
-        return () => unsub();
+        const unsubLocks = listenToFeatureLocks(setFeatureLocks);
+        return () => {
+            unsub();
+            unsubLocks();
+        };
     }
   }, []);
   
@@ -182,20 +188,7 @@ export function Settings() {
         toast({ title: "Error", description: "You must be logged in to save settings.", variant: "destructive" });
         return;
     }
-    
-    const isPremiumFeatureLocked = userRole === 'Member';
-    const isThemeLocked = isPremiumFeatureLocked && (selectedTheme === 'retro' || selectedTheme === 'glass' || selectedTheme === 'nord' || selectedTheme === 'rose-pine' || selectedTheme === 'custom' || selectedTheme === 'sutradhaar');
-    const isCalcModeLocked = isPremiumFeatureLocked && calculatorMode === 'scientific';
 
-    if(isThemeLocked || isCalcModeLocked) {
-        setShowPremiumLockDialog(true);
-        setSelectedTheme(theme);
-        if (isCalcModeLocked) {
-            setCalculatorMode('basic');
-        }
-        return;
-    }
-    
     setTheme(selectedTheme as any);
 
     const settingsToSave = {
@@ -243,20 +236,33 @@ export function Settings() {
 
   if (!isClient) return null;
 
-  const isPremiumFeatureLocked = userRole === 'Member';
+  const isFeatureLocked = (featureId: string, isPremiumByDefault: boolean) => {
+    const isLockedByFlag = featureLocks[featureId]; // Can be true, false, or undefined
+    if (isLockedByFlag === true) return true; // Remotely locked
+    if (isLockedByFlag === false) return false; // Remotely unlocked
+
+    // If undefined, fallback to default premium logic
+    return isPremiumByDefault && userRole === 'Member';
+  };
+
   
   const themes = [
-      { name: 'Light', value: 'light', isLocked: false },
-      { name: 'Dark', value: 'dark', isLocked: false },
-      { name: 'Sutradhaar', value: 'sutradhaar', isLocked: isPremiumFeatureLocked },
-      { name: 'Retro', value: 'retro', isLocked: isPremiumFeatureLocked },
-      { name: 'Glass', value: 'glass', isLocked: isPremiumFeatureLocked },
-      { name: 'Nord', value: 'nord', isLocked: isPremiumFeatureLocked },
-      { name: 'Rose Pine', value: 'rose-pine', isLocked: isPremiumFeatureLocked },
+      { name: 'Light', value: 'light', isPremium: false },
+      { name: 'Dark', value: 'dark', isPremium: false },
+      { name: 'Sutradhaar', value: 'sutradhaar', isPremium: true },
+      { name: 'Retro', value: 'retro', isPremium: true },
+      { name: 'Glass', value: 'glass', isPremium: true },
+      { name: 'Nord', value: 'nord', isPremium: true },
+      { name: 'Rose Pine', value: 'rose-pine', isPremium: true },
   ]
   if(customTheme) {
-      themes.push({ name: 'Custom', value: 'custom', isLocked: isPremiumFeatureLocked });
+      themes.push({ name: 'Custom', value: 'custom', isPremium: true });
   }
+
+  const isCustomizeThemeLocked = isFeatureLocked('Theme:custom', true);
+  const isScientificModeLocked = isFeatureLocked('Calculator:scientific', true);
+  const isCustomUnitsLocked = isFeatureLocked('CustomUnits', true);
+
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-6 p-4 sm:p-6">
@@ -311,7 +317,8 @@ export function Settings() {
                                         value={selectedTheme}
                                         onValueChange={(v) => {
                                             const themeItem = themes.find(t => t.value === v);
-                                            if (themeItem?.isLocked) {
+                                            const isLocked = isFeatureLocked(`Theme:${v}`, themeItem?.isPremium ?? false);
+                                            if (isLocked) {
                                                 setShowPremiumLockDialog(true);
                                             } else {
                                                 setSelectedTheme(v);
@@ -323,9 +330,9 @@ export function Settings() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             {themes.map((themeItem) => (
-                                                <SelectItem key={themeItem.value} value={themeItem.value} disabled={themeItem.isLocked}>
+                                                <SelectItem key={themeItem.value} value={themeItem.value} onSelect={(e) => { if (isFeatureLocked(`Theme:${themeItem.value}`, themeItem.isPremium)) e.preventDefault(); }}>
                                                     <div className="flex items-center gap-2">
-                                                        {themeItem.isLocked && <Star className="w-3 h-3 text-muted-foreground"/>}
+                                                        {themeItem.isPremium && <Star className={cn("w-3 h-3", isFeatureLocked(`Theme:${themeItem.value}`, themeItem.isPremium) ? "text-muted-foreground" : "text-yellow-500 fill-yellow-400")} />}
                                                         {themeItem.name}
                                                     </div>
                                                 </SelectItem>
@@ -346,7 +353,7 @@ export function Settings() {
                             label={t('settings.appearance.customizeTheme.label')}
                             description={t('settings.appearance.customizeTheme.description')}
                             isPremium
-                            isLocked={isPremiumFeatureLocked}
+                            isLocked={isCustomizeThemeLocked}
                             onLockClick={() => setShowPremiumLockDialog(true)}
                         />
                     </AccordionContent>
@@ -444,7 +451,7 @@ export function Settings() {
                             label={t('settings.unitConverter.customUnit.label')}
                             description={t('settings.unitConverter.customUnit.description')}
                             isPremium
-                            isLocked={isPremiumFeatureLocked}
+                            isLocked={isCustomUnitsLocked}
                             onLockClick={() => setShowPremiumLockDialog(true)}
                         />
                          <SettingRow
@@ -465,14 +472,14 @@ export function Settings() {
                         </div>
                     </AccordionTrigger>
                     <AccordionContent className="p-0 bg-card border-t-0 rounded-b-lg border mt-[-8px] pt-2">
-                        <div onClick={() => isPremiumFeatureLocked && setShowPremiumLockDialog(true)} className={cn(isPremiumFeatureLocked && "cursor-pointer")}>
+                        <div onClick={() => isScientificModeLocked && setShowPremiumLockDialog(true)} className={cn(isScientificModeLocked && "cursor-pointer")}>
                             <SettingRow
                                 label={t('settings.calculator.mode.label')}
                                 description={t('settings.calculator.mode.description')}
                                 isPremium
-                                isLocked={isPremiumFeatureLocked}
+                                isLocked={isScientificModeLocked}
                                 control={
-                                    <Select value={calculatorMode} onValueChange={(v) => setCalculatorMode(v as CalculatorMode)} disabled={isPremiumFeatureLocked}>
+                                    <Select value={calculatorMode} onValueChange={(v) => { if(!isScientificModeLocked) setCalculatorMode(v as CalculatorMode) }} disabled={isScientificModeLocked}>
                                         <SelectTrigger className="w-32">
                                             <SelectValue/>
                                         </SelectTrigger>
