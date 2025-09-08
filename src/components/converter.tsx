@@ -445,27 +445,38 @@ export function Converter() {
      }
   }
 
-
-  const handleShareAsText = async () => {
-    if (!outputValue) {
-      toast({ title: t('converter.toast.nothingToShare'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
-      return;
+  const handleShareAsImage = async () => {
+    if (!outputValue || !imageExportRef.current) {
+        toast({ title: t('converter.toast.nothingToShare'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
+        return;
     }
-    
-    const conversionString = `${inputValue} ${fromUnit} → ${outputValue} ${toUnit}`;
+    if (!navigator.share || !navigator.canShare) {
+        toast({ title: t('converter.toast.notSupported'), description: t('converter.toast.webShareApi'), variant: "destructive" });
+        return;
+    }
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: t('converter.share.title'),
-          text: conversionString,
-        });
-      } catch (error) {
-        console.error('Error sharing:', error);
+    try {
+        const canvas = await html2canvas(imageExportRef.current, { backgroundColor: null, scale: 3 });
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+                throw new Error("Canvas to Blob conversion failed");
+            }
+            const file = new File([blob], `conversion.png`, { type: 'image/png' });
+            
+            if (navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: t('converter.share.title'),
+                    text: `${inputValue} ${fromUnit} → ${outputValue} ${toUnit}`,
+                    files: [file],
+                });
+            } else {
+                 toast({ title: "Cannot share image", description: "Your browser does not support sharing files.", variant: "destructive" });
+            }
+        }, 'image/png');
+
+    } catch (error) {
+        console.error('Error sharing image:', error);
         toast({ title: t('converter.toast.shareFailed'), description: t('converter.toast.couldNotShare'), variant: "destructive" });
-      }
-    } else {
-      toast({ title: t('converter.toast.notSupported'), description: t('converter.toast.webShareApi'), variant: "destructive" });
     }
   };
   
@@ -473,7 +484,7 @@ export function Converter() {
     if (isPremiumFeatureLocked) {
       setShowPremiumLockDialog(true);
     } else {
-      handleShareAsText();
+      handleShareAsImage();
     }
   };
 
@@ -953,5 +964,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
