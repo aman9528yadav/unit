@@ -104,6 +104,8 @@ function SidebarSelectors() {
         }
     }, [])
 
+    const isGuest = !profile;
+
     const handleThemeChange = (newTheme: string) => {
         setTheme(newTheme as any);
         if (profile?.email) {
@@ -133,7 +135,7 @@ function SidebarSelectors() {
         <div className="grid grid-cols-2 gap-4 w-[250px] mb-8">
             <div>
                  <Label className="text-xs text-black/70">Theme</Label>
-                 <Select value={theme} onValueChange={handleThemeChange}>
+                 <Select value={theme} onValueChange={handleThemeChange} disabled={isGuest}>
                     <SelectTrigger className="h-8 text-black bg-white/50 border-black/20">
                         <SelectValue />
                     </SelectTrigger>
@@ -144,7 +146,7 @@ function SidebarSelectors() {
             </div>
              <div>
                 <Label className="text-xs text-black/70">Language</Label>
-                <Select value={language} onValueChange={handleLanguageChange}>
+                <Select value={language} onValueChange={handleLanguageChange} disabled={isGuest}>
                      <SelectTrigger className="h-8 text-black bg-white/50 border-black/20">
                         <SelectValue />
                     </SelectTrigger>
