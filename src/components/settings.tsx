@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -29,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { Label } from "./ui/label";
 import { listenToUserData, updateUserData } from "@/services/firestore";
 import { getStreakData } from "@/lib/streak";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 
 
 export type CalculatorMode = 'basic' | 'scientific';
@@ -40,21 +40,10 @@ type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
 
-const Section = ({ title, children, description }: { title: string, children: React.ReactNode, description?: string }) => (
-    <Card>
-        <CardHeader>
-            <CardTitle>{title}</CardTitle>
-            {description && <CardDescription>{description}</CardDescription>}
-        </CardHeader>
-        <CardContent className="divide-y divide-border">
-            {children}
-        </CardContent>
-    </Card>
-);
 
 const SettingRow = ({ label, description, control, isLink = false, href, children, isLocked = false, onLockClick }: { label:string, description?:string, control?:React.ReactNode, isLink?:boolean, href?:string, children?:React.ReactNode, isLocked?:boolean, onLockClick?:()=>void }) => {
     const content = (
-        <div className="flex justify-between items-center py-3">
+        <div className="flex justify-between items-center py-4">
             <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2">
                     {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
@@ -78,11 +67,11 @@ const SettingRow = ({ label, description, control, isLink = false, href, childre
     };
 
     if (isLink && href && !isLocked) {
-        return <Link href={href}>{content}</Link>;
+        return <Link href={href} className="px-4 border-b last:border-b-0">{content}</Link>;
     }
 
     return (
-        <div onClick={handleWrapperClick} className={isLocked ? 'cursor-pointer' : ''}>
+        <div onClick={handleWrapperClick} className={cn("px-4 border-b last:border-b-0", isLocked ? 'cursor-pointer' : '')}>
             {content}
             {children && <div className="pt-3">{children}</div>}
         </div>
@@ -277,197 +266,236 @@ export function Settings() {
         </header>
 
         <div className="flex flex-col gap-6">
-             <Section title={t('settings.account.title')}>
-                <SettingRow
-                    isLink
-                    href="/profile/edit"
-                    label={t('settings.account.editProfile.label')}
-                    description={t('settings.account.editProfile.description')}
-                    control={<User />}
-                />
-            </Section>
-            <TooltipProvider>
-                <Section title={t('settings.appearance.title')}>
-                    <div className="p-4 space-y-4">
-                        <div className="grid grid-cols-2 gap-4 items-end">
+            <Accordion type="single" collapsible defaultValue="item-1" className="w-full space-y-4">
+                <AccordionItem value="item-1" className="border-none">
+                    <AccordionTrigger className="p-4 bg-card rounded-lg border">
+                         <div className='flex items-center gap-4'>
+                            <User />
                             <div>
-                                <Label>{t('settings.appearance.themeMode.label')}</Label>
-                                <Select
-                                    value={selectedTheme}
-                                    onValueChange={(v) => {
-                                        const themeItem = themes.find(t => t.value === v);
-                                        if (themeItem?.isLocked) {
-                                            setShowPremiumLockDialog(true);
-                                        } else {
-                                            setSelectedTheme(v);
-                                        }
-                                    }}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a theme" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {themes.map((themeItem) => (
-                                            <SelectItem key={themeItem.value} value={themeItem.value} disabled={themeItem.isLocked}>
-                                                <div className="flex items-center gap-2">
-                                                    {themeItem.isLocked && <Lock className="w-3 h-3"/>}
-                                                    {themeItem.name}
-                                                </div>
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                               <p className="font-semibold text-base text-left">Account</p>
                             </div>
-                            <div className="mx-auto w-[150px] h-[200px] bg-gray-800 rounded-lg p-1.5 border-2 border-gray-900 shadow-lg overflow-hidden">
-                                <div className="w-full h-full rounded-md overflow-hidden">
-                                    <ThemePreview theme={selectedTheme} />
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-0 bg-card border-t-0 rounded-b-lg border mt-[-8px] pt-2">
+                         <SettingRow
+                            isLink
+                            href="/profile/edit"
+                            label={t('settings.account.editProfile.label')}
+                            description={t('settings.account.editProfile.description')}
+                        />
+                    </AccordionContent>
+                </AccordionItem>
+                
+                 <AccordionItem value="item-2" className="border-none">
+                    <AccordionTrigger className="p-4 bg-card rounded-lg border">
+                         <div className='flex items-center gap-4'>
+                            <Palette />
+                            <div>
+                               <p className="font-semibold text-base text-left">Appearance</p>
+                            </div>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-4 bg-card border-t-0 rounded-b-lg border mt-[-8px] pt-2">
+                        <div className="p-4 space-y-4">
+                            <div className="grid grid-cols-2 gap-4 items-end">
+                                <div>
+                                    <Label>{t('settings.appearance.themeMode.label')}</Label>
+                                    <Select
+                                        value={selectedTheme}
+                                        onValueChange={(v) => {
+                                            const themeItem = themes.find(t => t.value === v);
+                                            if (themeItem?.isLocked) {
+                                                setShowPremiumLockDialog(true);
+                                            } else {
+                                                setSelectedTheme(v);
+                                            }
+                                        }}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a theme" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {themes.map((themeItem) => (
+                                                <SelectItem key={themeItem.value} value={themeItem.value} disabled={themeItem.isLocked}>
+                                                    <div className="flex items-center gap-2">
+                                                        {themeItem.isLocked && <Lock className="w-3 h-3"/>}
+                                                        {themeItem.name}
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="mx-auto w-[150px] h-[200px] bg-gray-800 rounded-lg p-1.5 border-2 border-gray-900 shadow-lg overflow-hidden">
+                                    <div className="w-full h-full rounded-md overflow-hidden">
+                                        <ThemePreview theme={selectedTheme} />
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                     <SettingRow
-                        isLink
-                        href="/settings/theme"
-                        label={t('settings.appearance.customizeTheme.label')}
-                        description={t('settings.appearance.customizeTheme.description')}
-                        isLocked={isPremiumFeatureLocked}
-                        onLockClick={() => setShowPremiumLockDialog(true)}
-                        control={
-                             <div className="flex items-center gap-2">
-                                <Palette />
+                         <SettingRow
+                            isLink
+                            href="/settings/theme"
+                            label={t('settings.appearance.customizeTheme.label')}
+                            description={t('settings.appearance.customizeTheme.description')}
+                            isLocked={isPremiumFeatureLocked}
+                            onLockClick={() => setShowPremiumLockDialog(true)}
+                        />
+                    </AccordionContent>
+                </AccordionItem>
+                
+                 <AccordionItem value="item-3" className="border-none">
+                    <AccordionTrigger className="p-4 bg-card rounded-lg border">
+                         <div className='flex items-center gap-4'>
+                            <SlidersHorizontal />
+                            <div>
+                               <p className="font-semibold text-base text-left">General</p>
                             </div>
-                        }
-                    />
-                </Section>
-            </TooltipProvider>
-
-            <Section title={t('settings.general.title')}>
-                 <SettingRow
-                    label={t('settings.general.notifications.label')}
-                    description={notificationsEnabled ? t('settings.general.notifications.description_on') : t('settings.general.notifications.description_off')}
-                    control={<Switch checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />}
-                />
-                 <SettingRow
-                    label={t('settings.general.language.label')}
-                    description={t('settings.general.language.description')}
-                    control={
-                         <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'hi')}>
-                            <SelectTrigger className="w-32"><SelectValue/></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="en">English</SelectItem>
-                                <SelectItem value="hi">हिन्दी</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    }
-                />
-                 <SettingRow
-                    label="Default Home Page"
-                    description="Choose the first page you see"
-                    control={
-                         <Select value={defaultPage} onValueChange={(value) => setDefaultPage(value as DefaultPage)}>
-                            <SelectTrigger className="w-40"><SelectValue/></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="dashboard">Dashboard</SelectItem>
-                                <SelectItem value="converter">Converter</SelectItem>
-                                <SelectItem value="calculator">Calculator</SelectItem>
-                                <SelectItem value="notes">Notes</SelectItem>
-                                <SelectItem value="time">Timer</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    }
-                />
-                <SettingRow
-                    label="Show Getting Started"
-                    description="Display the intro screen on next launch"
-                    control={<Switch checked={showGettingStarted} onCheckedChange={setShowGettingStarted} />}
-                />
-                {profile?.email === "amanyadavyadav9458@gmail.com" && (
-                  <SettingRow
-                      isLink
-                      href="/dev"
-                      label={t('settings.general.developer.label')}
-                      description={t('settings.general.developer.description')}
-                      control={<Code />}
-                  />
-                )}
-            </Section>
-
-             <Section title={t('settings.unitConverter.title')} description={t('settings.unitConverter.description')}>
-                 <SettingRow
-                    label={t('settings.unitConverter.defaultRegion')}
-                    control={
-                        <Select value={defaultRegion} onValueChange={(v) => setDefaultRegion(v as Region)}>
-                            <SelectTrigger className="w-48">
-                                <SelectValue placeholder="Select a region" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {regions.map(r => (
-                                    <SelectItem key={r} value={r}>{r}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    }
-                 />
-                 <SettingRow
-                    isLink
-                    href="/settings/custom-units"
-                    label={t('settings.unitConverter.customUnit.label')}
-                    description={t('settings.unitConverter.customUnit.description')}
-                    isLocked={isPremiumFeatureLocked}
-                    onLockClick={() => setShowPremiumLockDialog(true)}
-                    control={
-                        <div className="flex items-center gap-2">
-                            <LayoutGrid />
                         </div>
-                    }
-                />
-                 <SettingRow
-                    label={t('settings.unitConverter.saveHistory.label')}
-                    description={t('settings.unitConverter.saveHistory.description')}
-                    control={<Switch checked={saveConversionHistory} onCheckedChange={setSaveConversionHistory} />}
-                />
-            </Section>
-            <TooltipProvider>
-                <Section title={t('settings.calculator.title')}>
-                     <SettingRow
-                        label={t('settings.calculator.mode.label')}
-                        description={t('settings.calculator.mode.description')}
-                        isLocked={isPremiumFeatureLocked}
-                        onLockClick={() => setShowPremiumLockDialog(true)}
-                        control={
-                            <Select value={calculatorMode} onValueChange={(v) => setCalculatorMode(v as CalculatorMode)} disabled={isPremiumFeatureLocked}>
-                                <SelectTrigger className="w-32">
-                                    <SelectValue/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="basic">{t('settings.calculator.modes.basic')}</SelectItem>
-                                    <SelectItem value="scientific">{t('settings.calculator.modes.scientific')}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        }
-                    />
-                    <SettingRow
-                        label="Calculator Style"
-                        description="Choose your preferred calculator design"
-                        control={
-                            <Select value={calculatorTheme} onValueChange={(v) => setCalculatorTheme(v as CalculatorTheme)}>
-                                <SelectTrigger className="w-32">
-                                    <SelectValue/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="original">Original</SelectItem>
-                                    <SelectItem value="physical">Physical</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        }
-                    />
-                     <SettingRow
-                        label={t('settings.calculator.keypressSound.label')}
-                        description={t('settings.calculator.keypressSound.description')}
-                        control={<Switch checked={calculatorSound} onCheckedChange={setCalculatorSound} />}
-                    />
-                </Section>
-            </TooltipProvider>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-0 bg-card border-t-0 rounded-b-lg border mt-[-8px] pt-2">
+                        <SettingRow
+                            label={t('settings.general.notifications.label')}
+                            description={notificationsEnabled ? t('settings.general.notifications.description_on') : t('settings.general.notifications.description_off')}
+                            control={<Switch checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />}
+                        />
+                         <SettingRow
+                            label={t('settings.general.language.label')}
+                            description={t('settings.general.language.description')}
+                            control={
+                                 <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'hi')}>
+                                    <SelectTrigger className="w-32"><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="en">English</SelectItem>
+                                        <SelectItem value="hi">हिन्दी</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            }
+                        />
+                         <SettingRow
+                            label="Default Home Page"
+                            description="Choose the first page you see"
+                            control={
+                                 <Select value={defaultPage} onValueChange={(value) => setDefaultPage(value as DefaultPage)}>
+                                    <SelectTrigger className="w-40"><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="dashboard">Dashboard</SelectItem>
+                                        <SelectItem value="converter">Converter</SelectItem>
+                                        <SelectItem value="calculator">Calculator</SelectItem>
+                                        <SelectItem value="notes">Notes</SelectItem>
+                                        <SelectItem value="time">Timer</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            }
+                        />
+                        <SettingRow
+                            label="Show Getting Started"
+                            description="Display the intro screen on next launch"
+                            control={<Switch checked={showGettingStarted} onCheckedChange={setShowGettingStarted} />}
+                        />
+                        {profile?.email === "amanyadavyadav9458@gmail.com" && (
+                          <SettingRow
+                              isLink
+                              href="/dev"
+                              label={t('settings.general.developer.label')}
+                              description={t('settings.general.developer.description')}
+                              control={<Code />}
+                          />
+                        )}
+                    </AccordionContent>
+                </AccordionItem>
+                
+                 <AccordionItem value="item-4" className="border-none">
+                    <AccordionTrigger className="p-4 bg-card rounded-lg border">
+                         <div className='flex items-center gap-4'>
+                            <Sigma />
+                            <div>
+                               <p className="font-semibold text-base text-left">Unit Converter</p>
+                            </div>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-0 bg-card border-t-0 rounded-b-lg border mt-[-8px] pt-2">
+                        <SettingRow
+                            label={t('settings.unitConverter.defaultRegion')}
+                            control={
+                                <Select value={defaultRegion} onValueChange={(v) => setDefaultRegion(v as Region)}>
+                                    <SelectTrigger className="w-48">
+                                        <SelectValue placeholder="Select a region" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {regions.map(r => (
+                                            <SelectItem key={r} value={r}>{r}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            }
+                         />
+                         <SettingRow
+                            isLink
+                            href="/settings/custom-units"
+                            label={t('settings.unitConverter.customUnit.label')}
+                            description={t('settings.unitConverter.customUnit.description')}
+                            isLocked={isPremiumFeatureLocked}
+                            onLockClick={() => setShowPremiumLockDialog(true)}
+                        />
+                         <SettingRow
+                            label={t('settings.unitConverter.saveHistory.label')}
+                            description={t('settings.unitConverter.saveHistory.description')}
+                            control={<Switch checked={saveConversionHistory} onCheckedChange={setSaveConversionHistory} />}
+                        />
+                    </AccordionContent>
+                </AccordionItem>
+
+                 <AccordionItem value="item-5" className="border-none">
+                    <AccordionTrigger className="p-4 bg-card rounded-lg border">
+                         <div className='flex items-center gap-4'>
+                            <CalculatorIcon />
+                            <div>
+                               <p className="font-semibold text-base text-left">Calculator</p>
+                            </div>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-0 bg-card border-t-0 rounded-b-lg border mt-[-8px] pt-2">
+                         <SettingRow
+                            label={t('settings.calculator.mode.label')}
+                            description={t('settings.calculator.mode.description')}
+                            isLocked={isPremiumFeatureLocked}
+                            onLockClick={() => setShowPremiumLockDialog(true)}
+                            control={
+                                <Select value={calculatorMode} onValueChange={(v) => setCalculatorMode(v as CalculatorMode)} disabled={isPremiumFeatureLocked}>
+                                    <SelectTrigger className="w-32">
+                                        <SelectValue/>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="basic">{t('settings.calculator.modes.basic')}</SelectItem>
+                                        <SelectItem value="scientific">{t('settings.calculator.modes.scientific')}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            }
+                        />
+                        <SettingRow
+                            label="Calculator Style"
+                            description="Choose your preferred calculator design"
+                            control={
+                                <Select value={calculatorTheme} onValueChange={(v) => setCalculatorTheme(v as CalculatorTheme)}>
+                                    <SelectTrigger className="w-32">
+                                        <SelectValue/>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="original">Original</SelectItem>
+                                        <SelectItem value="physical">Physical</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            }
+                        />
+                         <SettingRow
+                            label={t('settings.calculator.keypressSound.label')}
+                            description={t('settings.calculator.keypressSound.description')}
+                            control={<Switch checked={calculatorSound} onCheckedChange={setCalculatorSound} />}
+                        />
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
         </div>
         
         <footer className="flex justify-between items-center gap-4 mt-4">

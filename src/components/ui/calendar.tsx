@@ -19,29 +19,15 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
-  const [month, setMonth] = React.useState(props.month || props.defaultMonth || new Date());
-
-  React.useEffect(() => {
-    if (props.month) {
-      setMonth(props.month);
-    }
-  }, [props.month]);
-
-
   return (
     <DayPicker
-      month={month}
-      onMonthChange={(date) => {
-        setMonth(date);
-        props.onMonthChange?.(date);
-      }}
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
         caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
+        caption_label: "text-sm font-medium hidden",
         caption_dropdowns: "flex justify-center gap-1",
         nav: "space-x-1 flex items-center",
         nav_button: cn(
@@ -65,7 +51,7 @@ function Calendar({
           "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
         day_today: "bg-accent text-accent-foreground",
         day_outside:
-          "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
+          "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
         day_disabled: "text-muted-foreground opacity-50",
         day_range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
@@ -75,58 +61,41 @@ function Calendar({
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
-        Dropdown: (props: DropdownProps) => {
-          const { fromYear, toYear } = props;
-
-          const options: React.ReactNode[] = [];
-          if (props.name === 'months') {
-            const months = Array.from({ length: 12 }, (_, i) => new Date(1970, i));
-            for (const month of months) {
-               options.push(
-                <SelectItem key={month.getMonth()} value={month.getMonth().toString()}>
-                  {format(month, 'MMM')}
-                </SelectItem>
-              );
-            }
-          } else if (props.name === 'years') {
-             const from = fromYear ?? 1900;
-             const to = toYear ?? new Date().getFullYear();
-              for (let i = from; i <= to; i++) {
-                options.push(
-                  <SelectItem key={i} value={i.toString()}>{i}</SelectItem>
-                );
-              }
+        Dropdown: ({ value, onChange, children, ...props }: DropdownProps) => {
+          const options = React.Children.toArray(
+            children
+          ) as React.ReactElement<React.HTMLProps<HTMLOptionElement>>[]
+          const selected = options.find((child) => child.props.value === value)
+          const handleChange = (value: string) => {
+            const changeEvent = {
+              target: { value },
+            } as React.ChangeEvent<HTMLSelectElement>
+            onChange?.(changeEvent)
           }
-          
-          const currentMonth = month || new Date();
-
           return (
             <Select
-              onValueChange={(newValue: string) => {
-                const newDate = new Date(currentMonth);
-                if (props.name === 'months') {
-                  newDate.setMonth(parseInt(newValue));
-                } else if (props.name === 'years') {
-                  newDate.setFullYear(parseInt(newValue));
-                }
-                setMonth(newDate);
-                const anonChange = props.onChange as ((date: Date) => void) | undefined;
-                anonChange?.(newDate);
+              value={value?.toString()}
+              onValueChange={(value) => {
+                handleChange(value)
               }}
-              value={props.name === 'months' ? currentMonth.getMonth().toString() : currentMonth.getFullYear().toString()}
             >
-              <SelectTrigger>
-                <SelectValue>
-                   {props.name === 'months' ? format(currentMonth, 'MMM') : currentMonth.getFullYear()}
-                </SelectValue>
+              <SelectTrigger className="pr-1.5 focus:ring-0">
+                <SelectValue>{selected?.props?.children}</SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper">
                 <ScrollArea className="h-48">
-                  {options}
+                  {options.map((option, id: number) => (
+                    <SelectItem
+                      key={`${option.props.value}-${id}`}
+                      value={option.props.value?.toString() ?? ""}
+                    >
+                      {option.props.children}
+                    </SelectItem>
+                  ))}
                 </ScrollArea>
               </SelectContent>
             </Select>
-          );
+          )
         },
       }}
       {...props}
