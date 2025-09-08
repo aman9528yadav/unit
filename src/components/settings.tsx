@@ -146,7 +146,9 @@ export function Settings() {
     const storedProfile = localStorage.getItem('userProfile');
     const email = storedProfile ? JSON.parse(storedProfile).email : null;
     setProfile(storedProfile ? JSON.parse(storedProfile) : null);
-    
+
+    const unsubLocks = listenToFeatureLocks(setFeatureLocks);
+
     if (email) {
         updateUserRole(email);
         const unsub = listenToUserData(email, (data) => {
@@ -163,13 +165,12 @@ export function Settings() {
             setShowGettingStarted(userSettings.showGettingStarted ?? true);
             setCalculatorSound(userSettings.calculatorSound ?? true);
         });
-        const unsubLocks = listenToFeatureLocks(setFeatureLocks);
+        
         return () => {
             unsub();
             unsubLocks();
         };
     } else {
-        const unsubLocks = listenToFeatureLocks(setFeatureLocks);
         return () => unsubLocks();
     }
   }, []);

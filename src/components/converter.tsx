@@ -203,6 +203,8 @@ export function Converter() {
     const userEmail = storedProfileData ? JSON.parse(storedProfileData).email : null;
     
     updateUserRole(userEmail);
+    
+    const unsubLocks = listenToFeatureLocks(setFeatureLocks);
 
     const unsub = listenToUserData(userEmail, (data) => {
         if (data && data.fullName && data.email) {
@@ -225,8 +227,6 @@ export function Converter() {
           setRegion(savedDefaultRegion as Region);
         }
     });
-
-    const unsubLocks = listenToFeatureLocks(setFeatureLocks);
 
     return () => {
       unsub();
