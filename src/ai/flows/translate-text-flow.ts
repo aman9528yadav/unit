@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -19,7 +20,10 @@ export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
 
 const SuggestionSchema = z.object({
     word: z.string().describe("The suggested word or phrase."),
-    meaning: z.string().describe("The meaning or context for the suggestion.")
+    meaning: z.object({
+        sourceLanguage: z.string().describe("The meaning of the word in the original (source) language."),
+        targetLanguage: z.string().describe("The meaning of the word in the new (target) language.")
+    }).describe("The meaning or context for the suggestion in both languages.")
 });
 
 const TranslateTextOutputSchema = z.object({
@@ -43,7 +47,8 @@ const prompt = ai.definePrompt({
 Text to translate:
 "{{text}}"
 
-After providing the primary translation in the 'translatedText' field, also provide a few alternative word or phrase suggestions in the 'suggestions' array. For each suggestion, include the word/phrase and its specific meaning or context.
+After providing the primary translation in the 'translatedText' field, also provide a few alternative word or phrase suggestions in the 'suggestions' array. 
+For each suggestion, provide the word itself, and then provide its meaning in BOTH the original source language and the target language within the 'meaning' object.
 If no suggestions are applicable, return an empty array for suggestions.
 `,
 });

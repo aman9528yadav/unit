@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useTransition } from 'react';
@@ -141,19 +142,22 @@ export function Translator() {
                         </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {translationResult.suggestions.map((suggestion, index) => (
-                                <div key={index} className="bg-secondary p-3 rounded-lg flex justify-between items-start">
-                                    <div className="flex-1">
+                                <div key={index} className="bg-secondary p-3 rounded-lg flex flex-col gap-2">
+                                    <div className="flex justify-between items-start">
                                         <p className="font-bold text-primary">{suggestion.word}</p>
-                                        <p className="text-sm text-muted-foreground">{suggestion.meaning}</p>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={() => handleCopyToClipboard(suggestion.word)}
+                                        >
+                                            <Copy className="w-4 h-4"/>
+                                        </Button>
                                     </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8"
-                                        onClick={() => handleCopyToClipboard(suggestion.word)}
-                                    >
-                                        <Copy className="w-4 h-4"/>
-                                    </Button>
+                                    <div className="text-sm text-muted-foreground space-y-1">
+                                        <p><strong>Source:</strong> {suggestion.meaning.sourceLanguage}</p>
+                                        <p><strong>{targetLanguage}:</strong> {suggestion.meaning.targetLanguage}</p>
+                                    </div>
                                 </div>
                             ))}
                         </div>
