@@ -132,7 +132,7 @@ export function ProfileEditForm() {
             skills: skillsArray,
         };
 
-        await updateUserData(user.email, profileToSave);
+        await updateUserData(user.email!, profileToSave);
 
         localStorage.setItem("userProfile", JSON.stringify(profileToSave));
         window.dispatchEvent(new StorageEvent('storage', { key: 'userProfile', newValue: JSON.stringify(profileToSave) }));
@@ -281,24 +281,24 @@ export function ProfileEditForm() {
                 <div className="space-y-5 text-left">
                   <div>
                     <Label className="text-sm font-medium">Full Name</Label>
-                    <Input name="fullName" type="text" value={profile.fullName} onChange={handleInputChange} className="mt-1" />
+                    <Input name="fullName" type="text" value={profile.fullName || ''} onChange={handleInputChange} className="mt-1" />
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Email</Label>
-                    <Input type="email" value={profile.email} disabled className="mt-1 bg-gray-100" />
+                    <Input type="email" value={profile.email || ''} disabled className="mt-1 bg-gray-100" />
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Phone Number</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <Phone size={18} className="text-gray-500" />
-                      <Input name="phone" type="tel" value={profile.phone} onChange={handleInputChange} />
+                      <Input name="phone" type="tel" value={profile.phone || ''} onChange={handleInputChange} />
                     </div>
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Address</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <MapPin size={18} className="text-gray-500" />
-                      <Input name="address" type="text" value={profile.address} onChange={handleInputChange} />
+                      <Input name="address" type="text" value={profile.address || ''} onChange={handleInputChange} />
                     </div>
                   </div>
                   <div>
@@ -326,28 +326,28 @@ export function ProfileEditForm() {
                     <Label className="text-sm font-medium">LinkedIn</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <Linkedin size={18} className="text-gray-500" />
-                      <Input name="linkedin" type="url" value={profile.linkedin} onChange={handleInputChange} />
+                      <Input name="linkedin" type="url" value={profile.linkedin || ''} onChange={handleInputChange} />
                     </div>
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Twitter</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <Twitter size={18} className="text-gray-500" />
-                      <Input name="twitter" type="url" value={profile.twitter} onChange={handleInputChange} />
+                      <Input name="twitter" type="url" value={profile.twitter || ''} onChange={handleInputChange} />
                     </div>
                   </div>
                   <div>
                     <Label className="text-sm font-medium">GitHub</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <Github size={18} className="text-gray-500" />
-                      <Input name="github" type="url" value={profile.github} onChange={handleInputChange} />
+                      <Input name="github" type="url" value={profile.github || ''} onChange={handleInputChange} />
                     </div>
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Instagram</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <Instagram size={18} className="text-gray-500" />
-                      <Input name="instagram" type="url" value={profile.instagram} onChange={handleInputChange} />
+                      <Input name="instagram" type="url" value={profile.instagram || ''} onChange={handleInputChange} />
                     </div>
                   </div>
                 </div>
