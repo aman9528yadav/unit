@@ -18,11 +18,17 @@ const categoryIcons: { [key: string]: React.ElementType } = {
   "Face Issue": AlertTriangle,
 };
 
+const CountdownBox = ({ value, label }: { value: number; label: string }) => (
+    <div className="bg-primary/10 p-3 rounded-lg text-primary text-center">
+        <p className="text-2xl font-bold">{String(value).padStart(2, '0')}</p>
+        <p className="text-xs text-primary/80">{label}</p>
+    </div>
+);
+
+
 export function Updates() {
-  const [targetDate, setTargetDate] = useState<Date | null>(null);
+  const [nextUpdateInfo, setNextUpdateInfo] = useState<NextUpdateInfo | null>(null);
   const [timeLeft, setTimeLeft] = useState<Duration & { totalDays?: number } | null>(null);
-  const [timerFinished, setTimerFinished] = useState(false);
-  const [updateText, setUpdateText] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
   const { t } = useLanguage();
@@ -38,20 +44,7 @@ export function Updates() {
     if(!isClient) return;
     
     const unsubscribe = listenToNextUpdateInfo((info: NextUpdateInfo) => {
-        if (info.targetDate) {
-            const date = new Date(info.targetDate);
-             if (!isNaN(date.getTime()) && date > new Date()) {
-                setTargetDate(date);
-                setTimerFinished(false);
-            } else {
-                setTargetDate(null);
-                if (info.targetDate) setTimerFinished(true);
-            }
-        } else {
-            setTargetDate(null);
-             setTimerFinished(false);
-        }
-       setUpdateText(info.updateText || "General improvements and bug fixes.");
+        setNextUpdateInfo(info);
     });
 
     return () => unsubscribe();
@@ -59,10 +52,12 @@ export function Updates() {
 
 
   useEffect(() => {
-    if (!targetDate || !isClient) {
+    if (!nextUpdateInfo?.targetDate || !isClient) {
       setTimeLeft(null);
       return;
     }
+
+    const targetDate = new Date(nextUpdateInfo.targetDate);
 
     const timer = setInterval(() => {
       const now = new Date();
@@ -72,16 +67,18 @@ export function Updates() {
         setTimeLeft({ ...duration, totalDays });
       } else {
         setTimeLeft(null);
-        setTargetDate(null);
-        setTimerFinished(true);
         clearInterval(timer);
       }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [targetDate, isClient]);
+  }, [nextUpdateInfo, isClient]);
   
   const sortedUpdates = [...updates].sort((a,b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+  
+  const isTimerFinished = nextUpdateInfo?.targetDate && new Date(nextUpdateInfo.targetDate) < new Date();
+  const Icon = categoryIcons[nextUpdateInfo?.category || ''] || Rocket;
+  const categoryTitle = nextUpdateInfo?.category === 'Custom' ? nextUpdateInfo.customCategoryTitle : nextUpdateInfo?.category;
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6">
@@ -99,33 +96,29 @@ export function Updates() {
                 <h2 className="text-lg font-bold text-foreground">{t('updates.countdown.title')}</h2>
             </div>
             <div className="grid grid-cols-4 gap-2">
-                <div className='bg-background p-3 rounded-lg'>
-                    <p className="text-3xl font-bold">{timeLeft.totalDays}</p>
-                    <p className="text-xs text-muted-foreground">{t('updates.countdown.days')}</p>
-                </div>
-                <div className='bg-background p-3 rounded-lg'>
-                    <p className="text-3xl font-bold">{String(timeLeft.hours || 0).padStart(2, '0')}</p>
-                    <p className="text-xs text-muted-foreground">{t('updates.countdown.hours')}</p>
-                </div>
-                 <div className='bg-background p-3 rounded-lg'>
-                    <p className="text-3xl font-bold">{String(timeLeft.minutes || 0).padStart(2, '0')}</p>
-                    <p className="text-xs text-muted-foreground">{t('updates.countdown.minutes')}</p>
-                </div>
-                 <div className='bg-background p-3 rounded-lg'>
-                    <p className="text-3xl font-bold">{String(timeLeft.seconds || 0).padStart(2, '0')}</p>
-                    <p className="text-xs text-muted-foreground">{t('updates.countdown.seconds')}</p>
-                </div>
+                <CountdownBox value={timeLeft.days ?? 0} label={t('updates.countdown.days')} />
+                <CountdownBox value={timeLeft.hours ?? 0} label={t('updates.countdown.hours')} />
+                <CountdownBox value={timeLeft.minutes ?? 0} label={t('updates.countdown.minutes')} />
+                <CountdownBox value={timeLeft.seconds ?? 0} label={t('updates.countdown.seconds')} />
             </div>
-             {updateText && (
+             {categoryTitle && (
+                <div className="mt-4 flex justify-center">
+                    <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground p-2 px-4 rounded-full text-sm font-medium">
+                        <Icon className="w-5 h-5 text-primary" />
+                        <span>{categoryTitle}</span>
+                    </div>
+                </div>
+            )}
+             {nextUpdateInfo?.updateText && (
                 <div className="mt-4 text-left p-4 bg-secondary rounded-lg">
                     <h3 className="font-semibold mb-2 text-foreground">{t('updates.countdown.expect')}</h3>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{updateText}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{nextUpdateInfo.updateText}</p>
                 </div>
             )}
         </div>
       )}
 
-      {isClient && timerFinished && (
+      {isClient && isTimerFinished && (
         <div className="border p-4 rounded-lg flex items-center gap-4 bg-green-100 border-green-200 text-green-800">
             <CheckCircle className="w-6 h-6" />
             <p className="font-semibold">Congratulations! The new update is now live. Enjoy the new features.</p>
