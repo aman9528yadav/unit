@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { Header } from '@/components/header';
+import { cn } from '@/lib/utils';
 
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean | null>(null);
@@ -114,8 +115,8 @@ export default function RootLayout({
             </head>
             <body className="font-body antialiased" suppressHydrationWarning>
                 <MaintenanceRedirect>
-                <div className="flex flex-col min-h-screen">
-                    <div className="flex-grow flex flex-col items-center">
+                <div className="flex flex-col min-h-screen items-center">
+                    <div className={cn("w-full flex-grow flex flex-col", "max-w-[389px]")}>
                          {!hideHeader && (
                             <Header />
                         )}
