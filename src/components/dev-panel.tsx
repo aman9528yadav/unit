@@ -12,7 +12,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Switch } from './ui/switch';
-import { setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo, setBroadcastNotification, listenToBroadcastNotification, deleteBroadcastNotification, listenToWelcomeContent, setWelcomeContent, setBetaWelcomeMessage, listenToBetaWelcomeMessage, listenToPremiumInfoContent, setPremiumInfoContent, PremiumInfoContent, PremiumTier, setFeatureLocks, listenToFeatureLocks, FeatureLocks } from '@/services/firestore';
+import { setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo, setBroadcastNotification, listenToBroadcastNotification, deleteBroadcastNotification, listenToWelcomeContent, setWelcomeContent, setBetaWelcomeMessage, listenToBetaWelcomeMessage, listenToPremiumInfoContent, setPremiumInfoContent, PremiumInfoContent, PremiumTier, setFeatureLocks, listenToFeatureLocks, FeatureLocks, defaultPremiumInfo } from '@/services/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { intervalToDuration } from 'date-fns';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
@@ -58,13 +58,7 @@ export function DevPanel() {
     const [notificationDescription, setNotificationDescription] = useState('');
     
     // State for Premium Info Tab
-    const [premiumInfoContent, setPremiumInfoContent] = useState<PremiumInfoContent>({
-        title: '',
-        description: '',
-        memberTier: { title: '', features: [] },
-        premiumTier: { title: '', features: [] },
-        howToUpgrade: ''
-    });
+    const [premiumInfoContent, setPremiumInfoContent] = useState<PremiumInfoContent>(defaultPremiumInfo);
 
     // State for Security Tab
     const [currentDevPassword, setCurrentDevPassword] = useState('');
