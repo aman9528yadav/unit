@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -77,6 +76,7 @@ export function Header() {
                             className="flex items-center gap-2"
                         >
                              <Notifications />
+                             <h1 className="font-bold text-lg">Sutradhaar</h1>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -91,9 +91,9 @@ export function Header() {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="w-full max-w-xs"
+                                className="w-full max-w-xs flex justify-center"
                             >
-                                <Button variant="ghost" className="w-full justify-center gap-2" onClick={() => setIsSearchActive(true)}>
+                                <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsSearchActive(true)}>
                                    <Search className="text-muted-foreground"/>
                                </Button>
                            </motion.div>
