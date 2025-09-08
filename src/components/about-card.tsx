@@ -59,8 +59,8 @@ export function AboutCard() {
                         value={
                             <div className="flex items-center gap-2">
                                 <Button asChild variant="outline" size="sm">
-                                    <a href="mailto:amanyadavyadav9458@gmail.com">
-                                        <Mail className="mr-2 h-3 w-3"/> Email
+                                    <a href="https://aman9528.wixstudio.com/my-site-3/aman" target="_blank" rel="noopener noreferrer">
+                                        <Mail className="mr-2 h-3 w-3"/> Contact
                                     </a>
                                 </Button>
                                 <Button asChild variant="outline" size="sm">
