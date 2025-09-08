@@ -3,6 +3,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { cn } from "@/lib/utils";
+import { incrementCalculationCount } from '@/lib/stats';
+import { addCalculationToHistory } from '@/services/firestore';
 
 const CalculatorButton = ({
   onClick,
@@ -36,6 +38,24 @@ export function Calculator() {
     const [previousOperand, setPreviousOperand] = useState('');
     const [operation, setOperation] = useState<string | undefined>(undefined);
     const [memory, setMemory] = useState(0);
+    const [profile, setProfile] = useState<{email: string} | null>(null);
+
+    useEffect(() => {
+        const storedProfile = localStorage.getItem("userProfile");
+        if (storedProfile) {
+            setProfile(JSON.parse(storedProfile));
+        }
+    }, []);
+
+    const handleSaveToHistory = (calculation: string, result: string) => {
+        if (!profile?.email) return;
+        const historyString = `${calculation} = ${result}|${new Date().toISOString()}`;
+        addCalculationToHistory(profile.email, historyString);
+        incrementCalculationCount();
+        
+        localStorage.setItem('lastCalculation', historyString);
+        window.dispatchEvent(new StorageEvent('storage', { key: 'lastCalculation', newValue: historyString }));
+    };
 
     const handleButtonClick = (value: string) => {
         const buttonActions: { [key: string]: () => void } = {
@@ -53,7 +73,7 @@ export function Calculator() {
                 }
             },
             '=': () => {
-                if (previousOperand === '' || operation === undefined) return;
+                if (previousOperand === '' || operation === undefined || currentOperand === '') return;
                 let result;
                 const prev = parseFloat(previousOperand);
                 const curr = parseFloat(currentOperand);
@@ -66,18 +86,29 @@ export function Calculator() {
                     case '%': result = prev % curr; break;
                     default: return;
                 }
-                setCurrentOperand(String(result));
+                const resultString = String(result);
+                handleSaveToHistory(`${previousOperand} ${operation} ${currentOperand}`, resultString);
+                setCurrentOperand(resultString);
                 setPreviousOperand('');
                 setOperation(undefined);
             },
             '√': () => {
-                setCurrentOperand(String(Math.sqrt(parseFloat(currentOperand))));
+                const operand = parseFloat(currentOperand);
+                const result = Math.sqrt(operand);
+                handleSaveToHistory(`√(${operand})`, String(result));
+                setCurrentOperand(String(result));
             },
             'x²': () => {
-                setCurrentOperand(String(parseFloat(currentOperand) ** 2));
+                const operand = parseFloat(currentOperand);
+                const result = operand ** 2;
+                handleSaveToHistory(`(${operand})²`, String(result));
+                setCurrentOperand(String(result));
             },
             '1/x': () => {
-                setCurrentOperand(String(1 / parseFloat(currentOperand)));
+                const operand = parseFloat(currentOperand);
+                const result = 1 / operand;
+                handleSaveToHistory(`1/(${operand})`, String(result));
+                setCurrentOperand(String(result));
             },
             '±': () => {
                 setCurrentOperand(String(parseFloat(currentOperand) * -1));
@@ -109,7 +140,11 @@ export function Calculator() {
     };
 
     const handleOperation = (op: string) => {
-        if (currentOperand === '') return;
+        if (currentOperand === '' && previousOperand === '') return;
+        if (currentOperand === '' && previousOperand !== '') {
+            setOperation(op);
+            return;
+        }
         if (previousOperand !== '') {
            handleButtonClick('=');
         }
