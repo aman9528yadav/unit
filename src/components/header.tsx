@@ -48,7 +48,6 @@ export function Header() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [userData, setUserData] = useState<UserData | null>(null);
 
-    const pageInfo = pageTitles[pathname] || { title: 'Sutradhaar', icon: Home };
     const defaultPage = userData?.settings?.defaultPage || 'dashboard';
 
     // A page is only the "home" page if it's the root and the default is dashboard,
@@ -91,15 +90,13 @@ export function Header() {
 
     return (
         <header className="sticky top-0 z-40 w-full max-w-lg border-b bg-background/80 backdrop-blur-sm py-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-2">
                  <div className="flex items-center gap-2 mr-auto">
                     {!isHomePage && (
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
                     )}
-                    <pageInfo.icon className="h-5 w-5 text-primary" />
-                    <h1 className="text-base font-bold tracking-tight text-foreground">{pageInfo.title}</h1>
                 </div>
 
                 <div className="flex items-center gap-1">
