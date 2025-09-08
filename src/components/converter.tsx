@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -202,7 +201,6 @@ export function Converter() {
   const [region, setRegion] = React.useState<Region>('International');
   const { language, t } = useLanguage();
   const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
-  const [showShareDialog, setShowShareDialog] = useState(false);
 
 
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -475,7 +473,7 @@ export function Converter() {
     if (isPremiumFeatureLocked) {
       setShowPremiumLockDialog(true);
     } else {
-      setShowShareDialog(true);
+      handleShareAsText();
     }
   };
 
@@ -873,24 +871,6 @@ export function Converter() {
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
-        <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>{t('converter.export.title')}</DialogTitle>
-                </DialogHeader>
-                <div className="flex flex-col gap-4">
-                    <Button onClick={handleShareAsText}>
-                        <Share2 className="mr-2 h-4 w-4" /> {t('converter.export.shareSystem')}
-                    </Button>
-                    <Button onClick={handleExportAsTxt} variant="secondary">
-                        <FileText className="mr-2 h-4 w-4" /> {t('converter.export.asTXT')}
-                    </Button>
-                    <Button onClick={handleExportAsImage} variant="secondary">
-                        <ImageIcon className="mr-2 h-4 w-4" /> {t('converter.export.asImage')}
-                    </Button>
-                </div>
-            </DialogContent>
-        </Dialog>
         
         {recentConversions.length > 0 && (
             <Card>
@@ -973,3 +953,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
