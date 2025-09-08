@@ -15,6 +15,7 @@ import { Switch } from './ui/switch';
 import { setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo, setBroadcastNotification, listenToBroadcastNotification, deleteBroadcastNotification, listenToWelcomeContent, setWelcomeContent, setBetaWelcomeMessage, listenToBetaWelcomeMessage } from '@/services/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { intervalToDuration } from 'date-fns';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -404,285 +405,319 @@ export function DevPanel() {
                     <p className="text-muted-foreground">Tools for testing and debugging.</p>
                 </div>
             </header>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Timer /> Maintenance Mode</CardTitle>
-                    <CardDescription>Control the application's maintenance page and countdown timer.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                        <div>
-                            <Label htmlFor="maintenance-mode">Enable Maintenance Mode</Label>
-                            <p className='text-xs text-muted-foreground'>Redirects all users to the maintenance site.</p>
-                        </div>
-                        <Switch
-                            id="maintenance-mode"
-                            checked={isMaintenanceMode}
-                            onCheckedChange={handleMaintenanceModeToggle}
-                        />
-                    </div>
-                    <div>
-                        <Label>Set Countdown Duration</Label>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="days-m" className="text-xs">Days</Label>
-                                <Input id="days-m" type="number" value={maintenanceDuration.days} onChange={(e) => handleMaintenanceDurationChange('days', e.target.value)} placeholder="0" />
-                            </div>
-                            <div>
-                                <Label htmlFor="hours-m" className="text-xs">Hours</Label>
-                                <Input id="hours-m" type="number" value={maintenanceDuration.hours} onChange={(e) => handleMaintenanceDurationChange('hours', e.target.value)} placeholder="0" />
-                            </div>
-                            <div>
-                                <Label htmlFor="minutes-m" className="text-xs">Minutes</Label>
-                                <Input id="minutes-m" type="number" value={maintenanceDuration.minutes} onChange={(e) => handleMaintenanceDurationChange('minutes', e.target.value)} placeholder="0" />
-                            </div>
-                            <div>
-                                <Label htmlFor="seconds-m" className="text-xs">Seconds</Label>
-                                <Input id="seconds-m" type="number" value={maintenanceDuration.seconds} onChange={(e) => handleMaintenanceDurationChange('seconds', e.target.value)} placeholder="0" />
-                            </div>
-                        </div>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="maintenanceText" className="flex items-center gap-2"><NotebookText /> Maintenance Details</Label>
-                        <Textarea 
-                            id="maintenanceText"
-                            value={maintenanceText}
-                            onChange={(e) => setMaintenanceText(e.target.value)}
-                            placeholder="Describe what's happening during maintenance..."
-                            rows={3}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="maintenanceType" className="flex items-center gap-2"><Wrench /> Maintenance Type</Label>
-                        <Select value={maintenanceType} onValueChange={setMaintenanceType}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Security">Security</SelectItem>
-                                <SelectItem value="Feature Update">Feature Update</SelectItem>
-                                <SelectItem value="Bug Fixes">Bug Fixes</SelectItem>
-                                <SelectItem value="Performance">Performance</SelectItem>
-                                <SelectItem value="Custom">Custom</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    {maintenanceType === 'Custom' && (
-                        <div className="space-y-2">
-                            <Label htmlFor="customMaintenanceTitle" className="flex items-center gap-2"><Info /> Custom Title</Label>
-                            <Input 
-                                id="customMaintenanceTitle"
-                                value={customMaintenanceTitle}
-                                onChange={(e) => setCustomMaintenanceTitle(e.target.value)}
-                                placeholder="e.g., Database Migration"
-                            />
-                        </div>
-                    )}
-                    <div className="space-y-2">
-                        <Label htmlFor="updateStatus" className="flex items-center gap-2"><Info /> Post-Update Status</Label>
-                        <Select value={updateStatus} onValueChange={(v) => setUpdateStatus(v as any)}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="inprogress">In Progress</SelectItem>
-                                <SelectItem value="success">Success</SelectItem>
-                                <SelectItem value="failed">Failed</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="successMessage">Success Message</Label>
-                        <Input id="successMessage" value={successMessage} onChange={(e) => setSuccessMessage(e.target.value)} placeholder="e.g., Update successful!" />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="failureMessage">Failure Message</Label>
-                        <Input id="failureMessage" value={failureMessage} onChange={(e) => setFailureMessage(e.target.value)} placeholder="e.g., Update failed." />
-                    </div>
-                </CardContent>
-                 <CardFooter className="gap-2">
-                    <Button variant="outline" onClick={handleClearMaintenanceInfo} className="w-full">Clear</Button>
-                    <Button onClick={handleSetMaintenanceInfo} className="w-full">Save</Button>
-                </CardFooter>
-            </Card>
             
-            <Card>
-                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><ServerCog /> Dashboard Update Banner</CardTitle>
-                    <CardDescription>Manage the upcoming update countdown banner on the dashboard.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                        <div>
-                            <Label htmlFor="show-update-banner">Show Update Banner on Dashboard</Label>
-                            <p className='text-xs text-muted-foreground'>Toggles the countdown banner for all users.</p>
-                        </div>
-                        <Switch
-                            id="show-update-banner"
-                            checked={showUpdateOnDashboard}
-                            onCheckedChange={setShowUpdateOnDashboard}
-                        />
-                    </div>
-                    <div>
-                        <Label>Set Countdown Duration</Label>
-                        <div className="grid grid-cols-2 gap-4">
+            <Accordion type="single" collapsible className="w-full space-y-4">
+                <AccordionItem value="maintenance">
+                    <AccordionTrigger className="p-4 bg-card rounded-lg border">
+                        <div className='flex items-center gap-4'>
+                            <Timer />
                             <div>
-                                <Label htmlFor="days-u" className="text-xs">Days</Label>
-                                <Input id="days-u" type="number" value={updateDuration.days} onChange={(e) => handleUpdateDurationChange('days', e.target.value)} placeholder="0" />
-                            </div>
-                            <div>
-                                <Label htmlFor="hours-u" className="text-xs">Hours</Label>
-                                <Input id="hours-u" type="number" value={updateDuration.hours} onChange={(e) => handleUpdateDurationChange('hours', e.target.value)} placeholder="0" />
-                            </div>
-                            <div>
-                                <Label htmlFor="minutes-u" className="text-xs">Minutes</Label>
-                                <Input id="minutes-u" type="number" value={updateDuration.minutes} onChange={(e) => handleUpdateDurationChange('minutes', e.target.value)} placeholder="0" />
-                            </div>
-                            <div>
-                                <Label htmlFor="seconds-u" className="text-xs">Seconds</Label>
-                                <Input id="seconds-u" type="number" value={updateDuration.seconds} onChange={(e) => handleUpdateDurationChange('seconds', e.target.value)} placeholder="0" />
+                               <p className="font-semibold text-base text-left">Maintenance Mode</p>
+                               <p className="text-sm text-muted-foreground text-left">Control app-wide maintenance state.</p>
                             </div>
                         </div>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="updateCategory" className="flex items-center gap-2"><Wrench /> Banner Category</Label>
-                        <Select value={updateCategory} onValueChange={setUpdateCategory}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="New Feature">New Feature</SelectItem>
-                                <SelectItem value="Bug Fix">Bug Fix</SelectItem>
-                                <SelectItem value="Face Issue">Face Issue</SelectItem>
-                                <SelectItem value="Security">Security</SelectItem>
-                                <SelectItem value="Custom">Custom</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    {updateCategory === 'Custom' && (
-                        <div className="space-y-2">
-                            <Label htmlFor="customUpdateCategoryTitle" className="flex items-center gap-2"><Info /> Custom Title</Label>
-                            <Input
-                                id="customUpdateCategoryTitle"
-                                value={customUpdateCategoryTitle}
-                                onChange={(e) => setCustomUpdateCategoryTitle(e.target.value)}
-                                placeholder="e.g., Performance Boost"
-                            />
+                    </AccordionTrigger>
+                    <AccordionContent className="p-4 bg-card border-t-0 rounded-b-lg border">
+                        <div className="space-y-4">
+                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <div>
+                                    <Label htmlFor="maintenance-mode">Enable Maintenance Mode</Label>
+                                    <p className='text-xs text-muted-foreground'>Redirects all users to the maintenance site.</p>
+                                </div>
+                                <Switch
+                                    id="maintenance-mode"
+                                    checked={isMaintenanceMode}
+                                    onCheckedChange={handleMaintenanceModeToggle}
+                                />
+                            </div>
+                            <div>
+                                <Label>Set Countdown Duration</Label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="days-m" className="text-xs">Days</Label>
+                                        <Input id="days-m" type="number" value={maintenanceDuration.days} onChange={(e) => handleMaintenanceDurationChange('days', e.target.value)} placeholder="0" />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="hours-m" className="text-xs">Hours</Label>
+                                        <Input id="hours-m" type="number" value={maintenanceDuration.hours} onChange={(e) => handleMaintenanceDurationChange('hours', e.target.value)} placeholder="0" />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="minutes-m" className="text-xs">Minutes</Label>
+                                        <Input id="minutes-m" type="number" value={maintenanceDuration.minutes} onChange={(e) => handleMaintenanceDurationChange('minutes', e.target.value)} placeholder="0" />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="seconds-m" className="text-xs">Seconds</Label>
+                                        <Input id="seconds-m" type="number" value={maintenanceDuration.seconds} onChange={(e) => handleMaintenanceDurationChange('seconds', e.target.value)} placeholder="0" />
+                                    </div>
+                                </div>
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="maintenanceText" className="flex items-center gap-2"><NotebookText /> Maintenance Details</Label>
+                                <Textarea 
+                                    id="maintenanceText"
+                                    value={maintenanceText}
+                                    onChange={(e) => setMaintenanceText(e.target.value)}
+                                    placeholder="Describe what's happening during maintenance..."
+                                    rows={3}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="maintenanceType" className="flex items-center gap-2"><Wrench /> Maintenance Type</Label>
+                                <Select value={maintenanceType} onValueChange={setMaintenanceType}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Security">Security</SelectItem>
+                                        <SelectItem value="Feature Update">Feature Update</SelectItem>
+                                        <SelectItem value="Bug Fixes">Bug Fixes</SelectItem>
+                                        <SelectItem value="Performance">Performance</SelectItem>
+                                        <SelectItem value="Custom">Custom</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            {maintenanceType === 'Custom' && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="customMaintenanceTitle" className="flex items-center gap-2"><Info /> Custom Title</Label>
+                                    <Input 
+                                        id="customMaintenanceTitle"
+                                        value={customMaintenanceTitle}
+                                        onChange={(e) => setCustomMaintenanceTitle(e.target.value)}
+                                        placeholder="e.g., Database Migration"
+                                    />
+                                </div>
+                            )}
+                            <div className="space-y-2">
+                                <Label htmlFor="updateStatus" className="flex items-center gap-2"><Info /> Post-Update Status</Label>
+                                <Select value={updateStatus} onValueChange={(v) => setUpdateStatus(v as any)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="inprogress">In Progress</SelectItem>
+                                        <SelectItem value="success">Success</SelectItem>
+                                        <SelectItem value="failed">Failed</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="successMessage">Success Message</Label>
+                                <Input id="successMessage" value={successMessage} onChange={(e) => setSuccessMessage(e.target.value)} placeholder="e.g., Update successful!" />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="failureMessage">Failure Message</Label>
+                                <Input id="failureMessage" value={failureMessage} onChange={(e) => setFailureMessage(e.target.value)} placeholder="e.g., Update failed." />
+                            </div>
+                            <div className="flex gap-2">
+                                <Button variant="outline" onClick={handleClearMaintenanceInfo} className="w-full">Clear</Button>
+                                <Button onClick={handleSetMaintenanceInfo} className="w-full">Save</Button>
+                            </div>
                         </div>
-                    )}
-                     <div className="space-y-2">
-                        <Label htmlFor="updateText" className="flex items-center gap-2"><NotebookText /> Upcoming Feature Details</Label>
-                        <Textarea 
-                            id="updateText"
-                            value={updateText}
-                            onChange={(e) => setUpdateText(e.target.value)}
-                            placeholder="Describe what's coming in the next update..."
-                            rows={3}
-                        />
-                    </div>
-                </CardContent>
-                 <CardFooter className="gap-2">
-                    <Button variant="outline" onClick={handleClearUpdateInfo} className="w-full">Clear</Button>
-                    <Button onClick={handleSetUpdateInfo} className="w-full">Save</Button>
-                </CardFooter>
-            </Card>
+                    </AccordionContent>
+                </AccordionItem>
+                
+                 <AccordionItem value="dashboard-banner">
+                    <AccordionTrigger className="p-4 bg-card rounded-lg border">
+                         <div className='flex items-center gap-4'>
+                            <ServerCog />
+                            <div>
+                               <p className="font-semibold text-base text-left">Dashboard Banner</p>
+                               <p className="text-sm text-muted-foreground text-left">Manage the upcoming update banner.</p>
+                            </div>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-4 bg-card border-t-0 rounded-b-lg border">
+                         <div className="space-y-4">
+                            <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <div>
+                                    <Label htmlFor="show-update-banner">Show Update Banner on Dashboard</Label>
+                                    <p className='text-xs text-muted-foreground'>Toggles the countdown banner for all users.</p>
+                                </div>
+                                <Switch
+                                    id="show-update-banner"
+                                    checked={showUpdateOnDashboard}
+                                    onCheckedChange={setShowUpdateOnDashboard}
+                                />
+                            </div>
+                            <div>
+                                <Label>Set Countdown Duration</Label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="days-u" className="text-xs">Days</Label>
+                                        <Input id="days-u" type="number" value={updateDuration.days} onChange={(e) => handleUpdateDurationChange('days', e.target.value)} placeholder="0" />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="hours-u" className="text-xs">Hours</Label>
+                                        <Input id="hours-u" type="number" value={updateDuration.hours} onChange={(e) => handleUpdateDurationChange('hours', e.target.value)} placeholder="0" />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="minutes-u" className="text-xs">Minutes</Label>
+                                        <Input id="minutes-u" type="number" value={updateDuration.minutes} onChange={(e) => handleUpdateDurationChange('minutes', e.target.value)} placeholder="0" />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="seconds-u" className="text-xs">Seconds</Label>
+                                        <Input id="seconds-u" type="number" value={updateDuration.seconds} onChange={(e) => handleUpdateDurationChange('seconds', e.target.value)} placeholder="0" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="updateCategory" className="flex items-center gap-2"><Wrench /> Banner Category</Label>
+                                <Select value={updateCategory} onValueChange={setUpdateCategory}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="New Feature">New Feature</SelectItem>
+                                        <SelectItem value="Bug Fix">Bug Fix</SelectItem>
+                                        <SelectItem value="Face Issue">Face Issue</SelectItem>
+                                        <SelectItem value="Security">Security</SelectItem>
+                                        <SelectItem value="Custom">Custom</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            {updateCategory === 'Custom' && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="customUpdateCategoryTitle" className="flex items-center gap-2"><Info /> Custom Title</Label>
+                                    <Input
+                                        id="customUpdateCategoryTitle"
+                                        value={customUpdateCategoryTitle}
+                                        onChange={(e) => setCustomUpdateCategoryTitle(e.target.value)}
+                                        placeholder="e.g., Performance Boost"
+                                    />
+                                </div>
+                            )}
+                             <div className="space-y-2">
+                                <Label htmlFor="updateText" className="flex items-center gap-2"><NotebookText /> Upcoming Feature Details</Label>
+                                <Textarea 
+                                    id="updateText"
+                                    value={updateText}
+                                    onChange={(e) => setUpdateText(e.target.value)}
+                                    placeholder="Describe what's coming in the next update..."
+                                    rows={3}
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                <Button variant="outline" onClick={handleClearUpdateInfo} className="w-full">Clear</Button>
+                                <Button onClick={handleSetUpdateInfo} className="w-full">Save</Button>
+                            </div>
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+                
+                <AccordionItem value="notification">
+                    <AccordionTrigger className="p-4 bg-card rounded-lg border">
+                         <div className='flex items-center gap-4'>
+                            <Send />
+                            <div>
+                               <p className="font-semibold text-base text-left">Global Notification</p>
+                               <p className="text-sm text-muted-foreground text-left">Update the broadcast message for all users.</p>
+                            </div>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-4 bg-card border-t-0 rounded-b-lg border">
+                         <div className="space-y-4">
+                            <div>
+                                <Label htmlFor="notificationTitle">Title</Label>
+                                <Input 
+                                    id="notificationTitle" 
+                                    value={notificationTitle}
+                                    onChange={(e) => setNotificationTitle(e.target.value)}
+                                    placeholder="e.g., New Feature!"
+                                />
+                            </div>
+                             <div>
+                                <Label htmlFor="notificationDescription">Description</Label>
+                                <Textarea 
+                                    id="notificationDescription"
+                                    value={notificationDescription}
+                                    onChange={(e) => setNotificationDescription(e.target.value)}
+                                    placeholder="Describe the notification..."
+                                    rows={3}
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                <Button onClick={handleSendNotification} className="w-full">
+                                    Update Notification
+                                </Button>
+                                <Button onClick={handleDeleteBroadcast} variant="destructive" size="icon" className="flex-shrink-0">
+                                    <BellOff/>
+                                </Button>
+                            </div>
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+                
+                 <AccordionItem value="content">
+                    <AccordionTrigger className="p-4 bg-card rounded-lg border">
+                        <div className='flex items-center gap-4'>
+                            <MessageSquare />
+                            <div>
+                               <p className="font-semibold text-base text-left">Content Management</p>
+                               <p className="text-sm text-muted-foreground text-left">Edit dynamic text and content for various pages.</p>
+                            </div>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-4 bg-card border-t-0 rounded-b-lg border">
+                         <div className="space-y-2">
+                            <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <Label>Getting Started & About Pages</Label>
+                                <Button onClick={() => router.push('/dev/about')}>Manage</Button>
+                            </div>
+                            <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <Label>Help & How-to-Use Pages</Label>
+                                <Button onClick={() => router.push('/dev/how-to-use')}>Manage</Button>
+                            </div>
+                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                                <Label>Updates Page</Label>
+                                <Button onClick={() => router.push('/dev/updates')}>Manage</Button>
+                            </div>
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
 
-             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Send /> Global Notification</CardTitle>
-                    <CardDescription>Update the broadcast message for all users.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div>
-                        <Label htmlFor="notificationTitle">Title</Label>
-                        <Input 
-                            id="notificationTitle" 
-                            value={notificationTitle}
-                            onChange={(e) => setNotificationTitle(e.target.value)}
-                            placeholder="e.g., New Feature!"
-                        />
-                    </div>
-                     <div>
-                        <Label htmlFor="notificationDescription">Description</Label>
-                        <Textarea 
-                            id="notificationDescription"
-                            value={notificationDescription}
-                            onChange={(e) => setNotificationDescription(e.target.value)}
-                            placeholder="Describe the notification..."
-                            rows={3}
-                        />
-                    </div>
-                    <div className="flex gap-2">
-                        <Button onClick={handleSendNotification} className="w-full">
-                            Update Notification
-                        </Button>
-                        <Button onClick={handleDeleteBroadcast} variant="destructive" size="icon" className="flex-shrink-0">
-                            <BellOff/>
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
-
-             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><MessageSquare /> Content Management</CardTitle>
-                    <CardDescription>Edit dynamic text and content for various pages.</CardDescription>
-                </CardHeader>
-                 <CardContent className="space-y-2">
-                    <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                        <Label>Getting Started Page</Label>
-                        <Button onClick={() => router.push('/dev/about')}>Manage</Button>
-                    </div>
-                    <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                        <Label>Help & How-to-Use Pages</Label>
-                        <Button onClick={() => router.push('/dev/how-to-use')}>Manage</Button>
-                    </div>
-                     <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                        <Label>Updates Page</Label>
-                        <Button onClick={() => router.push('/dev/updates')}>Manage</Button>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Shield /> Security & Data</CardTitle>
-                     <CardDescription>Manage developer access and clear local data.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div>
-                        <Label htmlFor="currentDevPassword">Current Dev Password</Label>
-                        <Input 
-                            id="currentDevPassword" 
-                            type="password"
-                            value={currentDevPassword}
-                            onChange={(e) => setCurrentDevPassword(e.target.value)}
-                            placeholder="Enter current password" 
-                        />
-                    </div>
-                     <div>
-                        <Label htmlFor="newDevPassword">New Dev Password</Label>
-                        <Input 
-                            id="newDevPassword"
-                            type="password"
-                            value={newDevPassword}
-                            onChange={(e) => setNewDevPassword(e.target.value)}
-                            placeholder="Enter new password"
-                        />
-                    </div>
-                    <Button onClick={handleDevPasswordChange} className="w-full">
-                        Change Dev Password
-                    </Button>
-                </CardContent>
-                <CardFooter>
-                     <Button onClick={handleClearLocalStorage} variant="destructive" className="w-full">
-                        <Trash2 className="mr-2 h-4 w-4"/> Clear All Local Storage
-                    </Button>
-                </CardFooter>
-            </Card>
+                 <AccordionItem value="security">
+                    <AccordionTrigger className="p-4 bg-card rounded-lg border">
+                        <div className='flex items-center gap-4'>
+                            <Shield />
+                            <div>
+                               <p className="font-semibold text-base text-left">Security & Data</p>
+                               <p className="text-sm text-muted-foreground text-left">Manage developer access and clear local data.</p>
+                            </div>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-4 bg-card border-t-0 rounded-b-lg border">
+                        <div className="space-y-4">
+                            <div>
+                                <Label htmlFor="currentDevPassword">Current Dev Password</Label>
+                                <Input 
+                                    id="currentDevPassword" 
+                                    type="password"
+                                    value={currentDevPassword}
+                                    onChange={(e) => setCurrentDevPassword(e.target.value)}
+                                    placeholder="Enter current password" 
+                                />
+                            </div>
+                             <div>
+                                <Label htmlFor="newDevPassword">New Dev Password</Label>
+                                <Input 
+                                    id="newDevPassword"
+                                    type="password"
+                                    value={newDevPassword}
+                                    onChange={(e) => setNewDevPassword(e.target.value)}
+                                    placeholder="Enter new password"
+                                />
+                            </div>
+                            <Button onClick={handleDevPasswordChange} className="w-full">
+                                Change Dev Password
+                            </Button>
+                             <Button onClick={handleClearLocalStorage} variant="destructive" className="w-full">
+                                <Trash2 className="mr-2 h-4 w-4"/> Clear All Local Storage
+                            </Button>
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
         </div>
     );
 }
 
-    
