@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
-import { Tabs, TabsList, TabsContent } from './ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { useLanguage } from '@/context/language-context';
 import { listenToUserData, listenToUserNotes, updateUserNotes, UserData } from '@/services/firestore';
 import { Label } from './ui/label';
