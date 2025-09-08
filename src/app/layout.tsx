@@ -4,11 +4,11 @@
 
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
-import { LanguageProvider } from '@/context/language-context';
-import { ThemeProvider } from '@/context/theme-context';
+import { LanguageProvider, useLanguage } from '@/context/language-context';
+import { ThemeProvider, useTheme } from '@/context/theme-context';
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { listenToGlobalMaintenanceMode, UserData, listenToUserData, listenToAboutInfoFromRtdb, AppInfo } from '@/services/firestore';
+import { listenToGlobalMaintenanceMode, UserData, listenToUserData, listenToAboutInfoFromRtdb, AppInfo, updateUserData } from '@/services/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
@@ -19,6 +19,8 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X, User, Info, Newspaper, Rocket, Palette, Languages } from 'lucide-react';
 import { Logo } from '@/components/logo';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Label } from './ui/label';
 
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean | null>(null);
@@ -83,6 +85,72 @@ const navLinks = [
     { href: "/about", label: "About", icon: Info },
     { href: "/how-to-use", label: "Help", icon: HelpCircle },
 ]
+
+function SidebarSelectors() {
+    const { language, setLanguage } = useLanguage();
+    const { theme, setTheme, customTheme } = useTheme();
+    const [profile, setProfile] = useState<{email:string} | null>(null);
+
+    useEffect(() => {
+        const storedProfile = localStorage.getItem("userProfile");
+        if (storedProfile) {
+            setProfile(JSON.parse(storedProfile));
+        }
+    }, [])
+
+    const handleThemeChange = (newTheme: string) => {
+        setTheme(newTheme as any);
+        if (profile?.email) {
+            updateUserData(profile.email, { settings: { theme: newTheme } });
+        }
+    }
+    
+    const handleLanguageChange = (newLang: string) => {
+        setLanguage(newLang as 'en' | 'hi');
+         if (profile?.email) {
+            updateUserData(profile.email, { settings: { language: newLang } });
+        }
+    }
+
+    const themes = [
+      { name: 'Light', value: 'light' },
+      { name: 'Dark', value: 'dark' },
+      { name: 'Sutradhaar', value: 'sutradhaar' },
+      { name: 'Retro', value: 'retro' },
+      { name: 'Glass', value: 'glass' },
+      { name: 'Nord', value: 'nord' },
+      { name: 'Rose Pine', value: 'rose-pine' },
+      ...(customTheme ? [{ name: 'Custom', value: 'custom' }] : [])
+    ];
+
+    return (
+        <div className="absolute top-4 right-4 grid grid-cols-2 gap-4 w-[250px]">
+            <div>
+                 <Label className="text-xs text-black/70">Theme</Label>
+                 <Select value={theme} onValueChange={handleThemeChange}>
+                    <SelectTrigger className="h-8 text-black bg-white/50 border-black/20">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {themes.map(t => <SelectItem key={t.value} value={t.value}>{t.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+             <div>
+                <Label className="text-xs text-black/70">Language</Label>
+                <Select value={language} onValueChange={handleLanguageChange}>
+                     <SelectTrigger className="h-8 text-black bg-white/50 border-black/20">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="hi">Hindi</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+    )
+}
 
 export default function RootLayout({
   children,
@@ -160,13 +228,14 @@ export default function RootLayout({
                       </div>
                       <Sidebar>
                           <SidebarContent className="p-4">
-                               <div className="absolute top-2">
+                               <div className="absolute top-2 left-2">
                                 <SidebarClose asChild>
                                   <Button variant="ghost" size="icon" className="text-black hover:bg-black/10 rounded-full">
                                     <X className="h-6 w-6" />
                                   </Button>
                                 </SidebarClose>
                               </div>
+                              <SidebarSelectors />
                               <div className="text-center text-black mb-8">
                                 <h2 className="text-xl font-medium">Welcome back,</h2>
                                 <p className="text-3xl font-bold">{profile?.fullName || 'Guest'}</p>
