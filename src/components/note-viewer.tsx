@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Edit, File } from 'lucide-react';
+import { ArrowLeft, Edit, File, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Note } from './notepad';
@@ -13,6 +13,8 @@ import { useLanguage } from '@/context/language-context';
 import { listenToUserNotes } from '@/services/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface UserProfile {
     fullName: string;
@@ -27,6 +29,7 @@ export function NoteViewer({ noteId }: { noteId: string }) {
     const router = useRouter();
     const { toast } = useToast();
     const { t } = useLanguage();
+    const noteContentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const storedProfile = localStorage.getItem('userProfile');
@@ -53,6 +56,45 @@ export function NoteViewer({ noteId }: { noteId: string }) {
         return () => unsubscribe();
 
     }, [noteId, router, toast, profile, t]);
+
+    const handleShare = async () => {
+        if (!note || !noteContentRef.current) return;
+
+        if (!navigator.share || !navigator.canShare) {
+            toast({ title: "Sharing Not Supported", description: "Your browser does not support the Web Share API.", variant: "destructive" });
+            return;
+        }
+
+        try {
+            const canvas = await html2canvas(noteContentRef.current, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            
+            const pdf = new jsPDF({
+                orientation: 'p',
+                unit: 'px',
+                format: [canvas.width, canvas.height]
+            });
+
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            const pdfBlob = pdf.blob;
+
+            const file = new File([pdfBlob], `${note.title || 'note'}.pdf`, { type: 'application/pdf' });
+
+            if (navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: note.title || 'Shared Note',
+                    text: `Here's a note from Sutradhaar: ${note.title}`,
+                    files: [file],
+                });
+            } else {
+                toast({ title: "Cannot Share PDF", description: "Your browser does not support sharing PDF files.", variant: "destructive" });
+            }
+
+        } catch (error) {
+            console.error('Error sharing note:', error);
+            toast({ title: "Sharing Failed", description: "Could not share the note as a PDF.", variant: "destructive" });
+        }
+    };
 
     const renderAttachment = () => {
         if (!note?.attachment) return null;
@@ -93,6 +135,9 @@ export function NoteViewer({ noteId }: { noteId: string }) {
                     <ArrowLeft />
                 </Button>
                 <div className="flex items-center gap-2">
+                     <Button variant="outline" size="icon" onClick={handleShare}>
+                        <Share2 className="h-4 w-4" />
+                    </Button>
                      <Button asChild>
                         <Link href={`/notes/edit/${note.id}`}>
                             <Edit className="mr-2 h-4 w-4" />
@@ -102,23 +147,25 @@ export function NoteViewer({ noteId }: { noteId: string }) {
                 </div>
             </header>
             
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-3xl font-bold break-words">{note.title || t('notepad.untitled')}</CardTitle>
-                    {note.category && (
-                        <div className="flex gap-2 pt-2">
-                             <Badge variant="secondary">{note.category}</Badge>
-                        </div>
-                    )}
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    {renderAttachment()}
-                    <div 
-                        className="prose dark:prose-invert max-w-none"
-                        dangerouslySetInnerHTML={{ __html: note.content }}
-                    />
-                </CardContent>
-            </Card>
+            <div ref={noteContentRef}>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-3xl font-bold break-words">{note.title || t('notepad.untitled')}</CardTitle>
+                        {note.category && (
+                            <div className="flex gap-2 pt-2">
+                                 <Badge variant="secondary">{note.category}</Badge>
+                            </div>
+                        )}
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {renderAttachment()}
+                        <div 
+                            className="prose dark:prose-invert max-w-none"
+                            dangerouslySetInnerHTML={{ __html: note.content }}
+                        />
+                    </CardContent>
+                </Card>
+            </div>
 
         </div>
     );

@@ -1,12 +1,11 @@
 
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon, ArrowRightLeft, CheckSquare, Baseline, Highlighter, File, Lock, Unlock, KeyRound } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon, ArrowRightLeft, CheckSquare, Baseline, Highlighter, File, Lock, Unlock, KeyRound, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +23,8 @@ import { useLanguage } from '@/context/language-context';
 import { listenToUserNotes, updateUserNotes, listenToUserData, UserData } from '@/services/firestore';
 import { cn } from '@/lib/utils';
 import { Label } from './ui/label';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 
 const FONT_COLORS = [
@@ -365,6 +366,44 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             router.back();
         }
     };
+
+    const handleShare = async () => {
+        const contentEl = editorRef.current;
+        if (!contentEl) return;
+
+        if (!navigator.share || !navigator.canShare) {
+            toast({ title: "Sharing Not Supported", variant: "destructive" });
+            return;
+        }
+
+        try {
+            const canvas = await html2canvas(contentEl, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            
+            const pdf = new jsPDF({
+                orientation: 'p',
+                unit: 'px',
+                format: [canvas.width, canvas.height]
+            });
+
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            const pdfBlob = pdf.blob;
+
+            const file = new File([pdfBlob], `${title || 'note'}.pdf`, { type: 'application/pdf' });
+
+            if (navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: title || 'Shared Note',
+                    files: [file],
+                });
+            } else {
+                toast({ title: "Cannot Share PDF", variant: "destructive" });
+            }
+        } catch (error) {
+            console.error('Error sharing note:', error);
+            toast({ title: "Sharing Failed", variant: "destructive" });
+        }
+    };
     
     const renderAttachment = () => {
         if (!attachment) return null;
@@ -411,6 +450,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <ArrowLeft />
                 </Button>
                 <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" onClick={handleShare}>
+                        <Share2 />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={handleLockToggle} className={cn(isLocked && "bg-primary/10 text-primary")}>
                        {isLocked ? <Lock /> : <Unlock/>}
                     </Button>
