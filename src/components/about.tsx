@@ -30,9 +30,9 @@ const defaultReleasePlan: ReleasePlanItem[] = [
 ];
 
 const DetailRow = ({ label, value }: { label: string, value: string }) => (
-    <div className="flex justify-between items-center py-2 text-sm">
-        <p className="text-muted-foreground">{label}</p>
-        <p className="font-semibold text-foreground">{value}</p>
+    <div className="flex justify-between items-center py-3">
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className="font-semibold text-foreground text-right">{value}</p>
     </div>
 );
 
@@ -104,12 +104,12 @@ export function About() {
         animate={{ opacity: 0.2 }}
       >
         <motion.div
-          className="absolute top-20 left-1/4 w-40 h-40 bg-primary/50 rounded-full blur-3xl"
+          className="absolute top-20 left-1/4 w-40 h-40 bg-primary/20 rounded-full blur-3xl"
           animate={{ y: [0, 30, 0] }}
           transition={{ repeat: Infinity, duration: 6 }}
         />
         <motion.div
-          className="absolute bottom-20 right-1/4 w-56 h-56 bg-accent/50 rounded-full blur-3xl"
+          className="absolute bottom-20 right-1/4 w-56 h-56 bg-accent/20 rounded-full blur-3xl"
           animate={{ y: [0, -40, 0] }}
           transition={{ repeat: Infinity, duration: 8 }}
         />
@@ -161,13 +161,13 @@ export function About() {
                 {releasePlan.map((item, index) => (
                     <div key={item.id} className="ml-6">
                         <div className={`absolute -left-3.5 w-6 h-6 ${index % 2 === 0 ? 'bg-primary' : 'bg-accent'} rounded-full border-4 border-background`}></div>
-                        <h3 className={`font-semibold ${index % 2 === 0 ? 'text-primary' : 'text-accent'} flex items-start gap-2 cursor-pointer`} onClick={() => toggleExpand(item.id)}>
+                        <div className="flex items-start gap-2 cursor-pointer" onClick={() => toggleExpand(item.id)}>
                             <div className="flex-1">
-                                📝 {item.title}
+                                <h3 className="font-semibold text-primary">📝 {item.title}</h3>
                                 <span className="block text-xs font-normal text-muted-foreground">{item.date}</span>
                             </div>
-                            {expandedItems[item.id] ? <ChevronUp className="w-4 h-4 mt-1" /> : <ChevronDown className="w-4 h-4 mt-1" />}
-                        </h3>
+                            {expandedItems[item.id] ? <ChevronUp className="w-4 h-4 mt-1 text-primary" /> : <ChevronDown className="w-4 h-4 mt-1 text-primary" />}
+                        </div>
                         {expandedItems[item.id] && (
                             <motion.div className="text-foreground/80 mt-2 whitespace-pre-line" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                                {item.description}
