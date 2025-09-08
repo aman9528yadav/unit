@@ -160,7 +160,6 @@ export function DevPanel() {
             }
         });
 
-        const unsubFeatureLocks = listenToFeatureLocks(setFeatureLocks);
 
         return () => {
             unsubMaintenanceMode();
@@ -168,7 +167,6 @@ export function DevPanel() {
             unsubNextUpdateInfo();
             unsubBroadcast();
             unsubPremiumInfo();
-            unsubFeatureLocks();
         };
     }, [isAuthorized, isAuthenticated]);
     
@@ -370,19 +368,6 @@ export function DevPanel() {
         toast({ title: "Success", description: "Developer password has been updated." });
     };
 
-    const handleFeatureLockToggle = (featureId: string, isLocked: boolean) => {
-        setFeatureLocks(prev => ({ ...prev, [featureId]: isLocked }));
-    };
-
-    const handleSaveFeatureLocks = async () => {
-        try {
-            await setFeatureLocks(featureLocks);
-            toast({ title: "Feature Locks Saved", description: "Real-time feature flags have been updated." });
-        } catch (error) {
-            toast({ title: "Error Saving Locks", variant: "destructive" });
-        }
-    };
-
     if (!isClient) {
         return null;
     }
@@ -433,9 +418,6 @@ export function DevPanel() {
         );
     }
     
-    const premiumCategories = ['Pressure', 'Energy', 'Currency', 'Fuel Economy'];
-    const premiumThemes = ['retro', 'glass', 'nord', 'rose-pine', 'sutradhaar', 'custom'];
-
 
     return (
         <div className="w-full max-w-lg mx-auto flex flex-col gap-6 p-4">
@@ -450,53 +432,6 @@ export function DevPanel() {
             </header>
             
             <Accordion type="single" collapsible className="w-full space-y-4">
-                 <AccordionItem value="feature-flags">
-                    <AccordionTrigger className="p-4 bg-card rounded-lg border">
-                        <div className='flex items-center gap-4'>
-                            <Flag />
-                            <div>
-                               <p className="font-semibold text-base text-left">Feature Flags</p>
-                               <p className="text-sm text-muted-foreground text-left">Remotely lock or unlock features.</p>
-                            </div>
-                        </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="p-4 bg-card border-t-0 rounded-b-lg border">
-                        <div className="space-y-4">
-                             <div>
-                                <h4 className="font-semibold mb-2">Converter Categories</h4>
-                                <div className="space-y-2">
-                                    {baseConversionCategories.map(cat => (
-                                        <div key={`cat-${cat.name}`} className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                            <Label htmlFor={`lock-${cat.name}`}>{cat.name}</Label>
-                                            <Switch
-                                                id={`lock-${cat.name}`}
-                                                checked={featureLocks[`Category:${cat.name}`] ?? false}
-                                                onCheckedChange={(checked) => handleFeatureLockToggle(`Category:${cat.name}`, checked)}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div>
-                                <h4 className="font-semibold mb-2">Themes</h4>
-                                <div className="space-y-2">
-                                     {premiumThemes.map(theme => (
-                                        <div key={`theme-${theme}`} className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                            <Label htmlFor={`lock-theme-${theme}`} className="capitalize">{theme}</Label>
-                                            <Switch
-                                                id={`lock-theme-${theme}`}
-                                                checked={featureLocks[`Theme:${theme}`] ?? false}
-                                                onCheckedChange={(checked) => handleFeatureLockToggle(`Theme:${theme}`, checked)}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <Button onClick={handleSaveFeatureLocks} className="w-full">Save Feature Locks</Button>
-                        </div>
-                    </AccordionContent>
-                </AccordionItem>
-
                 <AccordionItem value="maintenance">
                     <AccordionTrigger className="p-4 bg-card rounded-lg border">
                         <div className='flex items-center gap-4'>

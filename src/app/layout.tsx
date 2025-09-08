@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { SidebarProvider, Sidebar, SidebarClose, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X, User, Info, Newspaper, Rocket, Palette, Languages } from 'lucide-react';
+import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X, User, Info, Newspaper, Rocket, Palette, Languages, Hourglass, Calendar, Mail } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Label } from './ui/label';
@@ -77,13 +77,16 @@ const navLinks = [
     { href: "/notes", label: "Notes", icon: NotebookPen },
     { href: "/translator", label: "AI Translator", icon: Languages },
     { href: "/history", label: "History", icon: History },
-    { href: "/time", label: "Timer", icon: Timer },
+    { href: "/time?tab=timer", label: "Timer", icon: Timer },
+    { href: "/time?tab=stopwatch", label: "Stopwatch", icon: Hourglass },
+    { href: "/time?tab=date-diff", label: "Date Calc", icon: Calendar },
     { href: "/news", label: "News", icon: Newspaper },
     { href: "/profile", label: "Profile", icon: User },
     { href: "/settings", label: "Settings", icon: Settings },
     { href: "/updates", label: "Updates", icon: Rocket },
     { href: "/about", label: "About", icon: Info },
     { href: "/how-to-use", label: "Help", icon: HelpCircle },
+     { href: "https://aman9528.wixstudio.com/my-site-3/aman", label: "Contact Us", icon: Mail, isExternal: true },
 ]
 
 function SidebarSelectors() {

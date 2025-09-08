@@ -241,8 +241,7 @@ export function About() {
         </div>
         <div className="bg-card p-6 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-transform">
           <h3 className="font-semibold mb-3 text-primary flex justify-center items-center gap-2"><LifeBuoy className="w-5 h-5" /> Support</h3>
-          <Link href="/how-to-use" className="block hover:text-accent cursor-pointer flex justify-center items-center gap-2"><Globe className="w-4 h-4" /> Help Center</Link>
-          <a href="mailto:amanyadavyadav9458@gmail.com" className="block hover:text-accent cursor-pointer flex justify-center items-center gap-2"><Mail className="w-4 h-4" /> Contact Us</a>
+          <a href="https://aman9528.wixstudio.com/my-site-3/aman" target="_blank" rel="noopener noreferrer" className="block hover:text-accent cursor-pointer flex justify-center items-center gap-2"><Mail className="w-4 h-4" /> Contact Us</a>
           <a href="https://aman9528.wixstudio.com/my-site-3" target="_blank" rel="noopener noreferrer" className="block hover:text-accent cursor-pointer flex justify-center items-center gap-2"><AlertTriangle className="w-4 h-4" /> Report an Issue</a>
         </div>
       </motion.div>

@@ -43,13 +43,13 @@ type UserRole = 'Member' | 'Premium Member' | 'Owner';
 const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
 
 
-const SettingRow = ({ label, description, control, isLink = false, href, children, isLocked = false, onLockClick, isPremium = false }: { label:string, description?:string, control?:React.ReactNode, isLink?:boolean, href?:string, children?:React.ReactNode, isLocked?:boolean, onLockClick?:()=>void, isPremium?: boolean }) => {
+const SettingRow = ({ label, description, control, isLink = false, href, children, onLockClick, isPremium = false }: { label:string, description?:string, control?:React.ReactNode, isLink?:boolean, href?:string, children?:React.ReactNode, onLockClick?:()=>void, isPremium?: boolean }) => {
     const content = (
         <div className="flex justify-between items-center py-4">
             <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2">
                     {isPremium && (
-                         <Star className={cn("h-4 w-4", isLocked ? 'text-muted-foreground' : 'text-yellow-400 fill-yellow-400')} />
+                         <Star className={cn("h-4 w-4 text-yellow-400 fill-yellow-400")} />
                     )}
                     <p className="font-medium">{label}</p>
                 </div>
@@ -62,24 +62,13 @@ const SettingRow = ({ label, description, control, isLink = false, href, childre
         </div>
     );
     
-    const handleWrapperClick = (e: React.MouseEvent) => {
-        if (isLocked && onLockClick) {
-            e.preventDefault();
-            e.stopPropagation();
-            onLockClick();
-        }
-    };
 
-    if (isLink && href && !isLocked) {
+    if (isLink && href) {
         return <Link href={href} className="px-4 border-b last:border-b-0 block">{content}</Link>;
-    }
-    
-    if (isLink && href && isLocked) {
-         return <div onClick={handleWrapperClick} className="px-4 border-b last:border-b-0 block cursor-pointer">{content}</div>;
     }
 
     return (
-        <div onClick={handleWrapperClick} className={cn("px-4 border-b last:border-b-0", isLocked ? 'cursor-pointer' : '')}>
+        <div className="px-4 border-b last:border-b-0">
             {content}
             {children && <div className="pt-3">{children}</div>}
         </div>
@@ -119,7 +108,6 @@ export function Settings() {
   const [userRole, setUserRole] = useState<UserRole>('Member');
   const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
   const [isPremiumInfoOpen, setIsPremiumInfoOpen] = useState(false);
-  const [featureLocks, setFeatureLocks] = useState<FeatureLocks>({});
   const { toast } = useToast();
   const router = useRouter();
 
@@ -147,8 +135,6 @@ export function Settings() {
     const email = storedProfile ? JSON.parse(storedProfile).email : null;
     setProfile(storedProfile ? JSON.parse(storedProfile) : null);
 
-    const unsubLocks = listenToFeatureLocks(setFeatureLocks);
-
     if (email) {
         updateUserRole(email);
         const unsub = listenToUserData(email, (data) => {
@@ -168,10 +154,7 @@ export function Settings() {
         
         return () => {
             unsub();
-            unsubLocks();
         };
-    } else {
-        return () => unsubLocks();
     }
   }, []);
   
@@ -249,14 +232,6 @@ export function Settings() {
 
 
   if (!isClient) return null;
-
-  const isFeatureLocked = (featureId: string, isPremiumByDefault: boolean) => {
-    const isLockedByFlag = featureLocks[featureId];
-    if (isLockedByFlag === true) return true;
-    if (isLockedByFlag === false) return false;
-    return isPremiumByDefault && userRole === 'Member';
-  };
-
   
   const themes = [
       { name: 'Light', value: 'light', isPremium: false },
@@ -271,9 +246,9 @@ export function Settings() {
       themes.push({ name: 'Custom', value: 'custom', isPremium: true });
   }
 
-  const isCustomizeThemeLocked = isFeatureLocked('Theme:custom', true);
-  const isScientificModeLocked = isFeatureLocked('Calculator:scientific', true);
-  const isCustomUnitsLocked = isFeatureLocked('CustomUnits', true);
+  const isCustomizeThemeLocked = userRole === 'Member';
+  const isScientificModeLocked = userRole === 'Member';
+  const isCustomUnitsLocked = userRole === 'Member';
 
 
   return (
@@ -329,8 +304,7 @@ export function Settings() {
                                         value={selectedTheme}
                                         onValueChange={(v) => {
                                             const themeItem = themes.find(t => t.value === v);
-                                            const isLocked = isFeatureLocked(`Theme:${v}`, themeItem?.isPremium ?? false);
-                                            if (isLocked) {
+                                            if (themeItem?.isPremium && userRole === 'Member') {
                                                 setShowPremiumLockDialog(true);
                                             } else {
                                                 setSelectedTheme(v);
@@ -342,9 +316,9 @@ export function Settings() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             {themes.map((themeItem) => (
-                                                <SelectItem key={themeItem.value} value={themeItem.value} onSelect={(e) => { if (isFeatureLocked(`Theme:${themeItem.value}`, themeItem.isPremium)) {e.preventDefault(); setShowPremiumLockDialog(true); }}}>
+                                                <SelectItem key={themeItem.value} value={themeItem.value} onSelect={(e) => { if (themeItem.isPremium && userRole === 'Member') {e.preventDefault(); setShowPremiumLockDialog(true); }}}>
                                                     <div className="flex items-center gap-2">
-                                                        {themeItem.isPremium && <Star className={cn("w-3 h-3", isFeatureLocked(`Theme:${themeItem.value}`, themeItem.isPremium) ? "text-muted-foreground" : "text-yellow-500 fill-yellow-400")} />}
+                                                        {themeItem.isPremium && <Star className={cn("w-3 h-3", (themeItem.isPremium && userRole === 'Member') ? "text-muted-foreground" : "text-yellow-500 fill-yellow-400")} />}
                                                         {themeItem.name}
                                                     </div>
                                                 </SelectItem>
@@ -365,7 +339,6 @@ export function Settings() {
                             label={t('settings.appearance.customizeTheme.label')}
                             description={t('settings.appearance.customizeTheme.description')}
                             isPremium
-                            isLocked={isCustomizeThemeLocked}
                             onLockClick={() => setShowPremiumLockDialog(true)}
                         />
                     </AccordionContent>
@@ -463,7 +436,6 @@ export function Settings() {
                             label={t('settings.unitConverter.customUnit.label')}
                             description={t('settings.unitConverter.customUnit.description')}
                             isPremium
-                            isLocked={isCustomUnitsLocked}
                             onLockClick={() => setShowPremiumLockDialog(true)}
                         />
                          <SettingRow
@@ -489,10 +461,9 @@ export function Settings() {
                                 label={t('settings.calculator.mode.label')}
                                 description={t('settings.calculator.mode.description')}
                                 isPremium
-                                isLocked={isScientificModeLocked}
                                 onLockClick={() => setShowPremiumLockDialog(true)}
                                 control={
-                                    <Select value={calculatorMode} onValueChange={(v) => { if(!isScientificModeLocked) setCalculatorMode(v as CalculatorMode) }} disabled={isScientificModeLocked}>
+                                    <Select value={calculatorMode} onValueChange={(v) => { if(!isScientificModeLocked) setCalculatorMode(v as CalculatorMode) }}>
                                         <SelectTrigger className="w-32">
                                             <SelectValue/>
                                         </SelectTrigger>

@@ -150,10 +150,10 @@ export function UserData() {
                         <h2 className="text-xl font-semibold flex items-center justify-center gap-2">
                             {fullName}
                         </h2>
-                        <p className="text-sm text-gray-500">{email}</p>
                          <div className={cn("inline-flex items-center gap-1 mt-2 px-2 py-1 rounded-full text-xs font-semibold", roleConfig[userRole].color, "bg-secondary")}>
                             <RoleIcon size={14} /> {userRole}
                          </div>
+                        <p className="text-sm text-gray-500">{email}</p>
 
                         <div className="mt-6 space-y-3 text-left">
                             {phone && <div className="flex justify-between items-center"><span className="font-medium flex items-center gap-2"><Phone size={14} /> Phone</span><span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{phone}</span></div>}
@@ -245,4 +245,3 @@ export function UserData() {
         </div>
     );
 }
-
