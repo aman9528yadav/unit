@@ -35,9 +35,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import { useLanguage } from '@/context/language-context';
-import { listenToUserData, listenToUserNotes, updateUserNotes, UserData } from '@/services/firestore';
+import { listenToUserData, listenToUserNotes, updateUserNotes, UserData, updateUserData as updateUserDataInDb } from '@/services/firestore';
 import { Label } from './ui/label';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
 
@@ -172,11 +172,20 @@ export function Notepad() {
             toast({ title: "Please enter your login password", variant: "destructive" });
             return;
         }
+
+        const user = auth.currentUser;
+        if (!user) {
+            toast({ title: "Authentication error", description: "No user is currently signed in.", variant: "destructive" });
+            return;
+        }
+
         try {
-            await signInWithEmailAndPassword(auth, profile.email, loginPassword);
+            const credential = EmailAuthProvider.credential(profile.email, loginPassword);
+            await reauthenticateWithCredential(user, credential);
             setResetStep('new_pass');
             toast({ title: "Verification Successful", description: "You can now set a new note password." });
         } catch (error) {
+            console.error("Reauthentication failed", error);
             toast({ title: "Incorrect Login Password", description: "The password you entered for your account is incorrect.", variant: "destructive" });
         } finally {
             setLoginPassword('');
@@ -193,8 +202,7 @@ export function Notepad() {
             return;
         }
         if (profile?.email) {
-            await updateUserNotes(profile.email, allNotes); // Save other changes first
-            await updateUserNotes(profile.email, { ...userData, notePassword: newNotePassword });
+            await updateUserDataInDb(profile.email, { notePassword: newNotePassword });
             toast({ title: "Note Password Reset Successfully" });
             closeAndResetPasswordDialog();
         }
