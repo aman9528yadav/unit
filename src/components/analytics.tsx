@@ -37,14 +37,14 @@ import { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { DailyActivity, processUserDataForStats } from "@/lib/stats";
-import { LineChart, Line, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart as RechartsBarChart, Legend } from "recharts";
+import { LineChart, Line, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart as RechartsBarChart, Legend, Sector } from "recharts";
 import { useLanguage } from "@/context/language-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
 import { getStreakData, StreakData } from "@/lib/streak";
 import { cn } from "@/lib/utils";
-import { listenToUserData } from "@/services/firestore";
+import { listenToUserData, UserData } from "@/services/firestore";
 
 
 type ChartType = "bar" | "line";
@@ -84,6 +84,51 @@ const StatCard = ({ title, value, icon, change, changeType, description }: { tit
     </Card>
 );
 
+const renderActiveShape = (props: any) => {
+  const RADIAN = Math.PI / 180;
+  const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
+  const sin = Math.sin(-RADIAN * midAngle);
+  const cos = Math.cos(-RADIAN * midAngle);
+  const sx = cx + (outerRadius + 6) * cos;
+  const sy = cy + (outerRadius + 6) * sin;
+  const mx = cx + (outerRadius + 20) * cos;
+  const my = cy + (outerRadius + 20) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * 12;
+  const ey = my;
+  const textAnchor = cos >= 0 ? 'start' : 'end';
+
+  return (
+    <g>
+      <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill} className="font-bold text-lg">
+        {payload.name}
+      </text>
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
+      <Sector
+        cx={cx}
+        cy={cy}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        innerRadius={outerRadius + 4}
+        outerRadius={outerRadius + 8}
+        fill={fill}
+      />
+      <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
+      <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
+      <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="hsl(var(--foreground))" className="text-sm">{`${value} ops`}</text>
+      <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} fill="hsl(var(--muted-foreground))" className="text-xs">
+        {`(${(percent * 100).toFixed(2)}%)`}
+      </text>
+    </g>
+  );
+};
 
 
 export function Analytics() {
@@ -113,9 +158,11 @@ export function Analytics() {
     });
     const [lastActivities, setLastActivities] = useState<LastActivityItem[]>([]);
     const [showAllStats, setShowAllStats] = useState(false);
+    const [activeIndex, setActiveIndex] = useState(0);
 
 
-    const loadLastActivities = useCallback((conversionHistory: string[] = []) => {
+    const loadLastActivities = useCallback((userData: UserData) => {
+        const conversionHistory = userData.conversionHistory || [];
         const localActivities: (LastActivityItem | null)[] = [
             { key: 'lastCalculation', name: 'Calculator', icon: Calculator },
             { key: 'lastNote', name: 'Note Edited', icon: NotebookPen },
@@ -137,11 +184,10 @@ export function Analytics() {
 
 
         const sortedActivities = localActivities
-            .filter((a): a is LastActivityItem => a !== null && a.timestamp !== undefined)
+            .filter((a): a is LastActivityItem => a !== null && a.timestamp !== undefined && isValid(parseISO(a.timestamp)))
             .sort((a, b) => {
                 const dateA = new Date(a.timestamp).getTime();
                 const dateB = new Date(b.timestamp).getTime();
-                if(isNaN(dateA) || isNaN(dateB)) return 0;
                 return dateB - dateA;
             });
 
@@ -153,22 +199,23 @@ export function Analytics() {
         const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
         
         const unsub = listenToUserData(userEmail, (userData) => {
-            const processed = processUserDataForStats(userData, userEmail);
-            setStats(processed);
-            
-            // Recalculate streak based on latest visit history
-            if (userEmail) {
-                getStreakData(userEmail).then(setStreakData);
+            if (userData) {
+                const processed = processUserDataForStats(userData, userEmail);
+                setStats(processed);
+                
+                if (userEmail) {
+                    getStreakData(userEmail).then(setStreakData);
+                }
+                
+                loadLastActivities(userData);
             }
-            
-            // Load activities with the latest conversion history from the database
-            loadLastActivities(userData.conversionHistory);
         });
         
         const handleStorageChange = (e: StorageEvent) => {
             if (['lastCalculation', 'lastNote', 'lastDateCalc', 'lastTimer', 'lastStopwatch'].includes(e.key || '')) {
-                // Re-load local activities, assuming conversion history is already up-to-date from the listener
-                listenToUserData(userEmail, (userData) => loadLastActivities(userData.conversionHistory));
+                listenToUserData(userEmail, (userData) => {
+                    if (userData) loadLastActivities(userData);
+                });
             }
         }
         window.addEventListener('storage', handleStorageChange);
@@ -275,7 +322,11 @@ export function Analytics() {
         { name: 'Notes', value: stats.savedNotes },
     ];
     
-    const PIE_COLORS = ['#6366f1', '#f97316', '#3b82f6'];
+    const PIE_COLORS = ['#06b6d4', '#ec4899', '#8b5cf6'];
+    
+    const onPieEnter = useCallback((_: any, index: number) => {
+        setActiveIndex(index);
+    }, []);
 
 
     return (
@@ -405,33 +456,24 @@ export function Analytics() {
                 <CardContent className="h-96">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
-                            <Tooltip formatter={(value, name) => [`${value} ops`, name]}/>
-                            <Legend />
                             <Pie
+                                activeIndex={activeIndex}
+                                activeShape={renderActiveShape}
                                 data={pieChartData}
                                 cx="50%"
                                 cy="50%"
-                                labelLine={false}
-                                label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
-                                    const RADIAN = Math.PI / 180;
-                                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                                    return (
-                                        <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
-                                            {`${(percent * 100).toFixed(0)}%`}
-                                        </text>
-                                    );
-                                }}
-                                outerRadius={120}
-                                innerRadius={60}
-                                paddingAngle={5}
+                                innerRadius={80}
+                                outerRadius={110}
+                                fill="#8884d8"
                                 dataKey="value"
+                                onMouseEnter={onPieEnter}
+                                paddingAngle={5}
                             >
                                 {pieChartData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                                 ))}
                             </Pie>
+                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>
                 </CardContent>
@@ -470,4 +512,3 @@ export function Analytics() {
       );
 }
 
-    
