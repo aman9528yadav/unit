@@ -449,11 +449,11 @@ export function Analytics() {
                                     <div className="p-2 bg-primary/10 text-primary rounded-full">
                                         <activity.icon className="w-5 h-5"/>
                                     </div>
-                                    <div className="flex-1">
+                                    <div className="flex-1 min-w-0">
                                         <p className="font-semibold">{activity.name}</p>
-                                        <p className="text-sm text-muted-foreground truncate">{activity.details}</p>
+                                        <p className="text-sm text-muted-foreground break-words">{activity.details}</p>
                                     </div>
-                                    <p className="text-xs text-muted-foreground whitespace-nowrap">
+                                    <p className="text-xs text-muted-foreground whitespace-nowrap self-start">
                                         {formatDistanceToNow(parseISO(activity.timestamp), { addSuffix: true })}
                                     </p>
                                 </li>
@@ -467,3 +467,5 @@ export function Analytics() {
         </div>
       );
 }
+
+    
