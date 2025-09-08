@@ -13,10 +13,10 @@ import { useRouter } from 'next/navigation';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { Header } from '@/components/header';
 import { cn } from '@/lib/utils';
-import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarClose, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle } from 'lucide-react';
+import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X } from 'lucide-react';
 import { Logo } from '@/components/logo';
 
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
@@ -135,16 +135,18 @@ export default function RootLayout({
                       </div>
                       <Sidebar>
                           <SidebarContent>
-                               <div className="flex items-center gap-2 p-4">
-                                  <Logo className="w-8 h-8"/>
-                                  <h2 className="text-lg font-semibold">Sutradhaar</h2>
-                               </div>
+                               <div className="absolute top-4 right-4">
+                                <SidebarClose asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <X className="h-6 w-6" />
+                                  </Button>
+                                </SidebarClose>
+                              </div>
                               <SidebarMenu>
                                   {navLinks.map((link) => (
                                       <SidebarMenuItem key={link.href}>
                                           <Link href={link.href} passHref>
                                               <SidebarMenuButton isActive={pathname === link.href}>
-                                                  <link.icon />
                                                   <span>{link.label}</span>
                                               </SidebarMenuButton>
                                           </Link>
