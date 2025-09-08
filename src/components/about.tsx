@@ -197,7 +197,7 @@ export function About() {
       {/* Testimonials */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <h2 className="text-3xl font-bold mb-6 text-center text-primary">What Our Users Say</h2>
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8">
           {testimonials.map((testimonial, i) => (
             <Card key={i} className="p-6 shadow-lg bg-card hover:scale-105 transition-transform">
               <p className="italic text-card-foreground/80">"{testimonial.text}"</p>
@@ -227,7 +227,7 @@ export function About() {
       </motion.div>
 
       {/* Footer Links */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid md:grid-cols-3 gap-8 text-center">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 gap-8 text-center">
         <div className="bg-card p-6 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-transform">
           <h3 className="font-semibold mb-3 text-primary flex justify-center items-center gap-2"><BookOpen className="w-5 h-5" /> Learn More</h3>
           <Link href="/updates" className="block hover:text-accent cursor-pointer">Updates</Link>
