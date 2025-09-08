@@ -611,6 +611,7 @@ export async function getUserData(email: string | null): Promise<UserData> {
 /**
  * Creates or updates a user's data in Realtime Database.
  * This uses `update` which is equivalent to a merge, so it won't overwrite entire objects.
+ * If the user doesn't exist, it will be created.
  * @param email - The user's email. Does nothing if null.
  * @param data - The data object to merge with existing data.
  */
@@ -618,11 +619,18 @@ export async function updateUserData(email: string | null, data: Partial<UserDat
     if (!email) return;
     try {
         const userRef = ref(rtdb, `users/${sanitizeEmail(email)}`);
-        await update(userRef, data);
+        const snapshot = await get(userRef);
+        // We use a merge-like behavior by getting existing data first.
+        // `update` in RTDB also merges, but this ensures we have a local representation if needed.
+        const existingData = snapshot.val() || {};
+        const newData = { ...existingData, ...data };
+        
+        await setRealtimeDb(userRef, newData);
     } catch (error) {
         console.error("Error updating user data in RTDB:", error);
     }
 }
+
 
 /**
  * Listens to a user's data document from Realtime Database.
