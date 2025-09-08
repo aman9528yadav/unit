@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -132,7 +131,7 @@ const SidebarMenu = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ul
     ref={ref}
-    className={cn("grid w-full max-w-[380px] grid-cols-3 gap-x-4 gap-y-4", className)}
+    className={cn("grid w-full max-w-[380px] grid-cols-4 gap-x-4 gap-y-4", className)}
     {...props}
   />
 ))
