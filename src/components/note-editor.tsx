@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon, ArrowRightLeft, CheckSquare, Baseline, Highlighter } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon, ArrowRightLeft, CheckSquare, Baseline, Highlighter, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -178,15 +178,10 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             const reader = new FileReader();
             reader.onloadend = () => {
                 const result = reader.result as string;
-                if (file.type.startsWith('image/')) {
-                    setAttachment(result);
-                } else {
-                    // For non-image files, we'll store the data URI and display the name.
-                    // This isn't ideal for large files, but works for simple cases.
-                    const fileInfo = `${file.name}|${result}`;
-                    setAttachment(fileInfo);
-                }
-                toast({ title: t('noteEditor.toast.imageAttached')});
+                // Store all files as a 'filename|dataURI' string
+                const fileInfo = `${file.name}|${result}`;
+                setAttachment(fileInfo);
+                toast({ title: "File attached successfully!"});
                 setIsDirty(true);
             };
             reader.readAsDataURL(file);
@@ -326,6 +321,34 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             router.back();
         }
     };
+    
+    const renderAttachment = () => {
+        if (!attachment) return null;
+
+        const parts = attachment.split('|');
+        const fileName = parts[0];
+        const dataUri = parts[1] || attachment; // Fallback for old format
+
+        const isImage = dataUri.startsWith('data:image/');
+
+        return (
+            <div className="relative group p-2 border rounded-lg">
+                {isImage ? (
+                    <div className="relative w-full h-64">
+                         <Image src={dataUri} alt={t('noteEditor.attachmentAlt')} layout="fill" objectFit="contain" className="rounded-md" />
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2">
+                        <File className="w-6 h-6 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground truncate">{fileName}</span>
+                    </div>
+                )}
+                 <Button variant="destructive" size="icon" className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={handleRemoveImage}>
+                   <X size={14}/>
+                </Button>
+            </div>
+        );
+    }
 
 
     if (!isClient && !isNewNote) {
@@ -364,7 +387,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('redo')}><Redo /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('bold')}><Bold /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('italic')}><Italic /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => epreventDefault()} onClick={() => handleFormat('underline')}><Underline /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('underline')}><Underline /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('strikeThrough')}><Strikethrough /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={showComingSoonToast}><Link2 /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('insertUnorderedList')}><List /></Button>
@@ -415,26 +438,22 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={handleInsertCalculation}><CalculatorIcon /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={handleInsertConversion}><ArrowRightLeft /></Button>
                 </div>
-                {attachment && (
-                    <div className="relative w-full h-64 group">
-                        <Image src={attachment} alt={t('noteEditor.attachmentAlt')} layout="fill" objectFit="contain" className="rounded-md" />
-                        <Button variant="destructive" size="icon" className="absolute top-2 right-2 w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={handleRemoveImage}>
-                           <X size={16}/>
-                        </Button>
-                    </div>
-                )}
+                
+                {renderAttachment()}
+
                  <div
                     ref={editorRef}
                     contentEditable
                     onInput={() => {
                         setIsDirty(true);
+                        setContent(editorRef.current?.innerHTML || '');
                     }}
                     data-placeholder={t('noteEditor.placeholders.content')}
                     className="w-full h-full flex-grow bg-transparent border-none resize-none focus-visible:outline-none text-base p-0 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
                     style={{ direction: 'ltr' }}
                 />
                 <div className="flex items-center gap-2 pt-2 border-t border-border">
-                    <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}><Paperclip /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => fileInputRef.current?.click()}><Paperclip /></Button>
                     <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
                     <Button variant="ghost" size="icon" onClick={() => handleInsertEmoji('😀')}><Smile /></Button>
                     <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={handleSoftDelete}><Trash2 /></Button>
@@ -466,6 +485,4 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
-
-
 
