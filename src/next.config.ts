@@ -42,7 +42,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https',
+        protocol: 'https' as const,
         hostname: '**.googleusercontent.com',
         port: '',
         pathname: '/**',
@@ -53,10 +53,11 @@ const nextConfig: NextConfig = {
 
 let configWithPwa = nextConfig;
 
+// Only apply PWA configuration for production builds to avoid issues in development
 if (process.env.NODE_ENV === 'production') {
     const withPWA = require('@ducanh2912/next-pwa').default({
         dest: 'public',
-        disable: process.env.NODE_ENV === 'development',
+        disable: false, // Ensure PWA is enabled in production
         register: true,
         skipWaiting: true,
         runtimeCaching: [
