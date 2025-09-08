@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useTransition } from 'react';
@@ -6,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { ArrowRightLeft, Loader2, Languages } from 'lucide-react';
-import { translateText } from '@/ai/flows/translate-text-flow';
+import { ArrowRightLeft, Loader2, Languages, Copy, Lightbulb } from 'lucide-react';
+import { translateText, TranslateTextOutput } from '@/ai/flows/translate-text-flow';
 import { useToast } from '@/hooks/use-toast';
 
 const languages = [
@@ -16,6 +15,10 @@ const languages = [
     { value: 'French', label: 'French' },
     { value: 'German', label: 'German' },
     { value: 'Hindi', label: 'Hindi' },
+    { value: 'Bengali', label: 'Bengali' },
+    { value: 'Tamil', label: 'Tamil' },
+    { value: 'Telugu', label: 'Telugu' },
+    { value: 'Marathi', label: 'Marathi' },
     { value: 'Japanese', label: 'Japanese' },
     { value: 'Chinese (Simplified)', label: 'Chinese (Simplified)' },
     { value: 'Russian', label: 'Russian' },
@@ -24,8 +27,8 @@ const languages = [
 
 export function Translator() {
     const [inputText, setInputText] = useState('');
-    const [translatedText, setTranslatedText] = useState('');
-    const [targetLanguage, setTargetLanguage] = useState('Spanish');
+    const [translationResult, setTranslationResult] = useState<TranslateTextOutput | null>(null);
+    const [targetLanguage, setTargetLanguage] = useState('Hindi');
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
 
@@ -42,7 +45,7 @@ export function Translator() {
         startTransition(async () => {
             try {
                 const result = await translateText({ text: inputText, targetLanguage });
-                setTranslatedText(result.translatedText);
+                setTranslationResult(result);
             } catch (error) {
                 console.error("Translation failed:", error);
                 toast({
@@ -55,21 +58,29 @@ export function Translator() {
     };
     
     const handleSwap = () => {
-        if (!translatedText) return;
-        setInputText(translatedText);
-        setTranslatedText('');
-        // A more advanced version could try to detect the new language
-        // and set the target language appropriately. For now, we'll leave it.
+        if (!translationResult?.translatedText) return;
+        setInputText(translationResult.translatedText);
+        setTranslationResult(null);
     }
+    
+    const handleCopyToClipboard = (text: string) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        toast({
+            title: "Copied to clipboard!",
+            description: `"${text.substring(0, 20)}..." has been copied.`,
+        });
+    };
+
 
     return (
-        <Card className="w-full max-w-xl">
+        <Card className="w-full max-w-2xl">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Languages className="text-primary"/>
                     AI Translator
                 </CardTitle>
-                <CardDescription>Translate text into different languages using AI.</CardDescription>
+                <CardDescription>Translate text into different languages and get word suggestions using AI.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -79,12 +90,23 @@ export function Translator() {
                         onChange={(e) => setInputText(e.target.value)}
                         className="min-h-[150px] text-base"
                     />
-                     <Textarea 
-                        placeholder="Translation will appear here..."
-                        value={translatedText}
-                        readOnly
-                        className="min-h-[150px] bg-secondary text-base"
-                    />
+                    <div className="relative">
+                         <Textarea 
+                            placeholder="Translation will appear here..."
+                            value={translationResult?.translatedText || ''}
+                            readOnly
+                            className="min-h-[150px] bg-secondary text-base pr-12"
+                        />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2"
+                            onClick={() => handleCopyToClipboard(translationResult?.translatedText || '')}
+                            disabled={!translationResult?.translatedText}
+                        >
+                            <Copy className="w-5 h-5"/>
+                        </Button>
+                    </div>
                 </div>
                 
                 <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -101,7 +123,7 @@ export function Translator() {
                         </SelectContent>
                     </Select>
                     
-                    <Button onClick={handleSwap} variant="outline" size="icon" className="flex-shrink-0" disabled={!translatedText}>
+                    <Button onClick={handleSwap} variant="outline" size="icon" className="flex-shrink-0" disabled={!translationResult?.translatedText}>
                         <ArrowRightLeft className="w-5 h-5"/>
                     </Button>
 
@@ -110,6 +132,33 @@ export function Translator() {
                         Translate
                     </Button>
                 </div>
+
+                {translationResult?.suggestions && translationResult.suggestions.length > 0 && (
+                    <div className="pt-4 border-t">
+                        <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
+                            <Lightbulb className="text-yellow-500" />
+                            Suggestions
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {translationResult.suggestions.map((suggestion, index) => (
+                                <div key={index} className="bg-secondary p-3 rounded-lg flex justify-between items-start">
+                                    <div className="flex-1">
+                                        <p className="font-bold text-primary">{suggestion.word}</p>
+                                        <p className="text-sm text-muted-foreground">{suggestion.meaning}</p>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => handleCopyToClipboard(suggestion.word)}
+                                    >
+                                        <Copy className="w-4 h-4"/>
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );
