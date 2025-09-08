@@ -12,6 +12,7 @@ import { listenToGlobalMaintenanceMode } from '@/services/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { Header } from '@/components/header';
 
 function AppFooter() {
     const pathname = usePathname();
@@ -81,6 +82,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const noHeaderPaths = ['/welcome', '/signup', '/forgot-password', '/profile/edit', '/logout', '/profile/success', '/maintenance'];
+  const devPaths = /^\/dev(\/.*)?$/;
+  const hideHeader = noHeaderPaths.includes(pathname) || devPaths.test(pathname) || pathname.startsWith('/notes/') || pathname.startsWith('/profile');
+
   return (
     <ThemeProvider>
       <LanguageProvider>
@@ -98,6 +104,7 @@ export default function RootLayout({
             <body className="font-body antialiased" suppressHydrationWarning>
                 <MaintenanceRedirect>
                 <div className="flex flex-col min-h-screen">
+                    {!hideHeader && <Header />}
                     <main className="flex-grow">
                         {children}
                     </main>

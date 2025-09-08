@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -657,28 +658,6 @@ export function Converter() {
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-4">
-      <header className="flex items-center justify-between sticky top-0 z-50 bg-background/80 backdrop-blur-sm py-4">
-        <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" asChild>
-                <Link href="/">
-                    <Home />
-                </Link>
-            </Button>
-            <div className="p-2 bg-primary/10 text-primary rounded-lg">
-              <Scale />
-            </div>
-            <h1 className="text-xl font-bold">{t('converter.welcome')}</h1>
-        </div>
-        <div className="flex items-center gap-2">
-            <Button variant="ghost" className="gap-2" onClick={handleProfileClick}>
-                Hi, {profile?.fullName.split(' ')[0] || 'Guest'}
-                <Avatar className="h-8 w-8">
-                    <AvatarImage src={profile?.profileImage} alt={profile?.fullName}/>
-                    <AvatarFallback><User /></AvatarFallback>
-                </Avatar>
-            </Button>
-        </div>
-      </header>
       
       <div className="absolute -left-[9999px] -top-[9999px]">
         {outputValue && (

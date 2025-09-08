@@ -845,16 +845,6 @@ export function TimeUtilities() {
 
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-4">
-        <header className="flex items-center justify-between sticky top-0 z-50 bg-background py-4">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/">
-                  <Home />
-              </Link>
-            </Button>
-            <h1 className="text-xl font-bold">{t('timePage.title')}</h1>
-            <div className="w-10"></div>
-        </header>
-
          <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'timer' | 'stopwatch' | 'date-diff')} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="timer">{t('timePage.tabs.timer')}</TabsTrigger>

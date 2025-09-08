@@ -165,14 +165,6 @@ export function History() {
   return (
       <div className="w-full max-w-2xl mx-auto flex flex-col gap-4">
         <header className="flex items-center justify-between sticky top-0 z-50 bg-background py-4">
-            <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/">
-                        <Home />
-                    </Link>
-                </Button>
-                <h1 className="text-xl font-bold flex items-center gap-2"><Clock/> {t('history.title')}</h1>
-            </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" disabled={itemsToDisplay.length === 0}>

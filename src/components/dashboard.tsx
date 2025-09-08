@@ -149,114 +149,6 @@ interface UserProfile {
     [key: string]: any;
 }
 
-const Header = ({ name, onProfileClick, profileImage }: { name: string, onProfileClick: () => void, profileImage?: string }) => {
-  const router = useRouter();
-  const { t } = useLanguage();
-  const [welcomeMessage, setWelcomeMessage] = useState(t('dashboard.welcome'));
-
-  useEffect(() => {
-    const unsub = listenToDashboardWelcomeMessage((message) => {
-        if(message) {
-            setWelcomeMessage(message);
-        } else {
-            setWelcomeMessage(t('dashboard.welcome'));
-        }
-    });
-    return () => unsub();
-  }, [t]);
-  
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">{t('dashboard.greeting', { name: name })}</h1>
-        <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <Notifications />
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={onProfileClick}>
-                <Avatar className="h-10 w-10 border border-border bg-card text-foreground">
-                    <AvatarImage src={profileImage}/>
-                    <AvatarFallback><User /></AvatarFallback>
-                </Avatar>
-            </Button>
-        </div>
-      </div>
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          {welcomeMessage}
-      </div>
-       <div>
-           <GlobalSearch />
-        </div>
-    </div>
-  );
-};
-
-const LanguageToggle = () => {
-    const { language, setLanguage } = useLanguage();
-    return (
-        <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'hi')}>
-            <SelectTrigger className="w-[120px] bg-card border-border">
-                <Languages className="mr-2 h-4 w-4" />
-                <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="hi">हिन्दी</SelectItem>
-            </SelectContent>
-        </Select>
-    );
-};
-
-function AnimatedStat({ value }: { value: number }) {
-  const ref = React.useRef(null);
-  const isInView = useInView(ref, { once: true });
-  const spring = useSpring(0, {
-    damping: 30, // Slower, less bouncy
-    stiffness: 80, // Less stiff
-  });
-
-  useEffect(() => {
-    if (isInView) {
-      spring.set(value);
-    }
-  }, [isInView, value, spring]);
-
-  useEffect(() => {
-    // Animate on value change as well
-    spring.set(value);
-  }, [value, spring]);
-
-
-  const displayValue = useSpring(spring, {
-    damping: 30,
-    stiffness: 80,
-  });
-
-  useEffect(() => {
-    const unsubscribe = displayValue.on("change", (latest) => {
-      if (ref.current) {
-        (ref.current as any).textContent = Math.round(latest).toLocaleString();
-      }
-    });
-    return () => unsubscribe();
-  }, [displayValue]);
-
-  return <p ref={ref} className="font-semibold text-lg">0</p>;
-}
-
-const StatCard = ({ title, value, icon: Icon, color, unit }: { title: string, value: number, icon: React.ElementType, color?: string, unit?: string }) => (
-    <Card className="flex flex-col p-4 bg-card border-border shadow-sm">
-        <div className="flex items-center gap-2">
-            <div className={cn("size-8 grid place-items-center rounded-lg", color)}>
-                <Icon className="size-5" />
-            </div>
-             <div className="flex items-baseline gap-1">
-                <AnimatedStat value={value} />
-                {unit && <span className="text-xs text-muted-foreground">{unit}</span>}
-             </div>
-        </div>
-        <p className="text-sm text-muted-foreground mt-2">{title}</p>
-    </Card>
-);
 
 const CountdownBox = ({ value, label }: { value: number; label: string }) => (
     <div className="bg-primary/10 p-3 rounded-lg text-primary text-center">
@@ -401,13 +293,6 @@ export function Dashboard() {
         }
     }, []);
   
-  const handleProfileClick = () => {
-    if (profile) {
-      router.push('/profile');
-    } else {
-      setShowLoginDialog(true);
-    }
-  };
   
   const handleBetaDialogClose = () => {
       if (doNotShowAgain) {
@@ -494,8 +379,6 @@ export function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
     >
-      <Header name={profile?.fullName || t('dashboard.guest')} onProfileClick={handleProfileClick} profileImage={profile?.profileImage} />
-      
       <UpdateBanner />
 
       <section>

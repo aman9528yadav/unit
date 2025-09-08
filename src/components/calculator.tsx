@@ -332,28 +332,7 @@ const BasicLayout = () => (
   return (
     <div className="w-full max-w-md mx-auto flex flex-col gap-4">
        <audio ref={audioRef} src="/alarm.mp3" preload="auto"></audio>
-       <header className="flex items-center justify-between sticky top-0 z-50 bg-background/80 backdrop-blur-sm py-4">
-        <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/">
-                  <Home />
-              </Link>
-            </Button>
-            <div className="p-2 bg-orange-500/10 text-orange-500 rounded-lg">
-              <CalculatorIcon />
-            </div>
-            <h1 className="text-xl font-bold">Calculator</h1>
-        </div>
-        <div className="flex items-center gap-2">
-            <Button variant="ghost" className="gap-2" onClick={() => router.push(profile ? '/profile' : '/welcome')}>
-                Hi, {profile?.fullName.split(' ')[0] || 'Guest'}
-                <Avatar className="h-8 w-8">
-                    <AvatarImage src={profile?.profileImage} alt={profile?.fullName}/>
-                    <AvatarFallback><User /></AvatarFallback>
-                </Avatar>
-            </Button>
-        </div>
-      </header>
+       
         <div className="bg-card p-4 rounded-xl flex flex-col gap-4">
             {/* Display */}
             <div className="text-right h-28 flex flex-col justify-end p-4">

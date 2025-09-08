@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { format, formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { enUS, hi } from 'date-fns/locale';
 import {
   DropdownMenu,
@@ -145,11 +145,11 @@ export function Notepad() {
     };
 
     const handlePasswordSubmit = () => {
+        if (!passwordPrompt) return;
+
         if (passwordInput === userData?.notePassword) {
             toast({ title: "Unlocked!" });
-            if (passwordPrompt) {
-                executeProtectedAction(passwordPrompt.note, passwordPrompt.action);
-            }
+            executeProtectedAction(passwordPrompt.note, passwordPrompt.action);
             setPasswordPrompt(null);
             setPasswordInput('');
         } else {
@@ -329,9 +329,6 @@ export function Notepad() {
     return (
         <div className="w-full max-w-md mx-auto flex flex-col h-screen">
              <header className="flex items-center justify-between p-4 flex-shrink-0 sticky top-0 z-50 bg-background">
-                <Link href="/">
-                    <Button variant="ghost" size="icon"><Home/></Button>
-                </Link>
                 <div className='text-center'>
                      {isSearchVisible ? (
                         <div className="flex items-center gap-2">
@@ -348,7 +345,6 @@ export function Notepad() {
                         </div>
                     ) : (
                         <>
-                            <h1 className="text-2xl font-bold">{getHeading()}</h1>
                             <p className="text-sm text-muted-foreground">{t('notepad.noteCount', {count: sortedNotes.length})}</p>
                         </>
                     )}
@@ -447,7 +443,7 @@ export function Notepad() {
                                     </div>
                                     <div>
                                         <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
-                                            <span>{format(new Date(note.updatedAt), "d MMM yyyy, h:mm a", { locale: dateLocale })}</span>
+                                            <span>{format(parseISO(note.updatedAt), "d MMM yyyy, h:mm a", { locale: dateLocale })}</span>
                                             {note.category && <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full">{note.category}</span>}
                                         </div>
                                         {note.deletedAt && (
