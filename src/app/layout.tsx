@@ -104,8 +104,8 @@ export default function RootLayout({
             <body className="font-body antialiased" suppressHydrationWarning>
                 <MaintenanceRedirect>
                 <div className="flex flex-col min-h-screen">
-                    {!hideHeader && <Header />}
-                    <main className="flex-grow">
+                    <main className="flex-grow flex flex-col items-center">
+                        {!hideHeader && <Header />}
                         {children}
                     </main>
                     <AppFooter />
@@ -118,5 +118,3 @@ export default function RootLayout({
     </ThemeProvider>
   );
 }
-
-    

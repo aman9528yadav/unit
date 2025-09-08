@@ -1,14 +1,15 @@
 
+
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Home, User, Settings, Languages, Sigma, Calculator, NotebookPen, History as HistoryIcon, Timer } from "lucide-react";
+import { Home, User, Settings, Languages, Sigma, Calculator, NotebookPen, History as HistoryIcon, Timer, ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLanguage } from "@/context/language-context";
-import { listenToDashboardWelcomeMessage, listenToUserData } from "@/services/firestore";
+import { listenToUserData, UserData } from "@/services/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Notifications } from "./notifications";
 
@@ -33,24 +34,23 @@ export function Header() {
     const router = useRouter();
     const { t } = useLanguage();
     const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [welcomeMessage, setWelcomeMessage] = useState(t('dashboard.welcome'));
+    const [userData, setUserData] = useState<UserData | null>(null);
 
     const pageInfo = pageTitles[pathname] || { title: 'Sutradhaar', icon: Home };
-
+    const defaultPage = userData?.settings?.defaultPage || 'dashboard';
+    const isHomePage = pathname === `/${defaultPage}` || (defaultPage === 'dashboard' && pathname === '/');
+    
     useEffect(() => {
         const storedProfileData = localStorage.getItem("userProfile");
         if(storedProfileData) {
             setProfile(JSON.parse(storedProfileData));
         }
 
-        const unsubWelcome = listenToDashboardWelcomeMessage((message) => {
-            if(message) {
-                setWelcomeMessage(message);
-            } else {
-                setWelcomeMessage(t('dashboard.welcome'));
-            }
+        const userEmail = storedProfileData ? JSON.parse(storedProfileData).email : null;
+        const unsub = listenToUserData(userEmail, (data) => {
+            setUserData(data);
         });
-        
+
         const handleStorageChange = (event: StorageEvent) => {
             if (event.key === 'userProfile' && event.newValue) {
                 setProfile(JSON.parse(event.newValue));
@@ -60,10 +60,10 @@ export function Header() {
         window.addEventListener('storage', handleStorageChange);
         
         return () => {
-            unsubWelcome();
+            unsub();
             window.removeEventListener('storage', handleStorageChange);
         };
-    }, [t]);
+    }, []);
 
     const handleProfileClick = () => {
         if (profile) {
@@ -74,9 +74,14 @@ export function Header() {
     };
     
     return (
-        <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
-            <div className="container flex h-14 items-center gap-4">
-                <div className="flex items-center gap-2 mr-auto">
+        <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm py-4">
+            <div className="w-full max-w-lg flex items-center gap-4">
+                 <div className="flex items-center gap-2 mr-auto">
+                    {!isHomePage && (
+                        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                            <ArrowLeft />
+                        </Button>
+                    )}
                     <pageInfo.icon className="h-6 w-6 text-primary" />
                     <h1 className="text-lg font-bold tracking-tight text-foreground">{pageInfo.title}</h1>
                 </div>

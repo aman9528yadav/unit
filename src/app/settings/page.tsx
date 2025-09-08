@@ -25,10 +25,6 @@ export default function SettingsPage() {
     return (
       <main className="flex min-h-screen w-full flex-col items-center bg-background p-6">
           <div className="w-full max-w-md mx-auto flex flex-col gap-6">
-              <div className="flex items-center gap-4">
-                  <Skeleton className="h-10 w-10" />
-                  <Skeleton className="h-6 w-32" />
-              </div>
               <div className="space-y-8">
                   <div>
                       <Skeleton className="h-6 w-40 mb-3" />
@@ -57,5 +53,3 @@ export default function SettingsPage() {
     </main>
   );
 }
-
-    

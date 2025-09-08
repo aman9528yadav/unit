@@ -33,7 +33,6 @@ function DashboardSkeleton() {
 export default function Home() {
     const router = useRouter();
     const [authStatus, setAuthStatus] = useState<'loading' | 'unauthenticated' | 'authenticated'>('loading');
-    const [defaultPage, setDefaultPage] = useState('/welcome');
 
     useEffect(() => {
         const storedProfile = localStorage.getItem("userProfile");
@@ -48,7 +47,7 @@ export default function Home() {
 
         if (hasSkippedLogin) {
             setAuthStatus('authenticated');
-            setDefaultPage('/'); // Default for guests
+            // Allow guest to see dashboard
             return;
         }
 
@@ -64,8 +63,6 @@ export default function Home() {
                 if (window.location.pathname === '/') {
                     router.replace(homeRoute);
                 }
-                
-                setDefaultPage(homeRoute);
                 setAuthStatus('authenticated');
             });
             return () => unsub();
@@ -81,7 +78,6 @@ export default function Home() {
         );
     }
     
-    // For guests or users who set Dashboard as default and land on '/'
     if (authStatus === 'authenticated' && window.location.pathname === '/') {
          return (
             <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-6">
@@ -90,6 +86,5 @@ export default function Home() {
         );
     }
 
-    // This will be null for most cases as redirection happens in useEffect
     return null;
 }
