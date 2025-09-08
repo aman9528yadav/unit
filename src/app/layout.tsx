@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import './globals.css';
@@ -125,7 +126,7 @@ export default function RootLayout({
             <body className="font-body antialiased" suppressHydrationWarning>
                 <MaintenanceRedirect>
                   <SidebarProvider>
-                      <div className="flex flex-col min-h-screen items-center">
+                      <div className="flex min-h-screen items-center justify-center">
                           <div className={cn("w-full flex-grow flex flex-col", "max-w-[412px] relative")}>
                               {!hideHeader && (
                                   <Header />
