@@ -1,10 +1,9 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2, Pencil } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2, Pencil, Phone, MapPin, Linkedin, Twitter, Github, Instagram, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,24 +13,16 @@ import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { updateProfile, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/language-context";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { ProfilePhotoEditor } from "./profile-photo-editor";
-import { updateUserData, listenToUserData } from "@/services/firestore";
-
-
-interface UserProfile {
-    fullName: string;
-    email: string;
-    dob: string;
-    profileImage?: string;
-}
+import { updateUserData, listenToUserData, UserData } from "@/services/firestore";
 
 export function ProfileEditForm() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<Partial<UserData> | null>(null);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -42,7 +33,6 @@ export function ProfileEditForm() {
   const [isClient, setIsClient] = useState(false);
   const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
   const { t } = useLanguage();
-
 
   const { toast } = useToast();
   const router = useRouter();
@@ -58,13 +48,11 @@ export function ProfileEditForm() {
 
     const unsub = listenToUserData(userEmail, (data) => {
       if (!data) {
-        // This might happen on first load before RTDB is populated, rely on auth object
         const currentUser = auth.currentUser;
         if(currentUser) {
             setProfile({
                 fullName: currentUser.displayName || '',
                 email: currentUser.email || '',
-                dob: '',
                 profileImage: currentUser.photoURL || ''
             });
         }
@@ -75,6 +63,12 @@ export function ProfileEditForm() {
         email: userEmail,
         dob: data.dob || '',
         profileImage: data.profileImage || '',
+        phone: data.phone || '',
+        address: data.address || '',
+        linkedin: data.linkedin || '',
+        twitter: data.twitter || '',
+        github: data.github || '',
+        instagram: data.instagram || '',
       });
     });
 
@@ -95,7 +89,7 @@ export function ProfileEditForm() {
 
   const handleSaveChanges = async () => {
     if (!profile || !profile.fullName) {
-      toast({ title: t('profileEdit.toast.nameRequired'), variant: "destructive" });
+      toast({ title: "Full name is required", variant: "destructive" });
       return;
     }
     setIsSubmitting(true);
@@ -104,24 +98,22 @@ export function ProfileEditForm() {
       if (user) {
         await updateProfile(user, {
           displayName: profile.fullName,
+          photoURL: profile.profileImage
         });
-
-        // Save to RTDB
+        
         await updateUserData(user.email, {
-            fullName: profile.fullName,
-            dob: profile.dob,
-            profileImage: profile.profileImage,
+            ...profile
         });
 
         localStorage.setItem("userProfile", JSON.stringify(profile));
         window.dispatchEvent(new StorageEvent('storage', { key: 'userProfile', newValue: JSON.stringify(profile) }));
         
-        toast({ title: t('profileEdit.toast.profileUpdated.title'), description: t('profileEdit.toast.profileUpdated.description') });
-        router.push("/profile/success");
+        toast({ title: "Profile Updated", description: "Your personal information has been updated." });
+        router.push("/profile");
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast({ title: t('profileEdit.toast.updateFailed.title'), description: t('profileEdit.toast.updateFailed.description'), variant: "destructive" });
+      toast({ title: "Update Failed", description: "Could not update your profile.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -131,29 +123,20 @@ export function ProfileEditForm() {
     if (!profile) return;
     const updatedProfile = { ...profile, profileImage: newImage || '' };
     setProfile(updatedProfile);
-    
-    if (auth.currentUser?.email) {
-      await updateUserData(auth.currentUser.email, { profileImage: newImage || '' });
-    }
-    
-    localStorage.setItem("userProfile", JSON.stringify(updatedProfile));
-    window.dispatchEvent(new StorageEvent('storage', { key: 'userProfile', newValue: JSON.stringify(updatedProfile) }));
-    
-    toast({ title: t('profileEdit.toast.imageReady.title'), description: t('profileEdit.toast.imageReady.description') });
     setIsPhotoEditorOpen(false);
   };
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      toast({ title: t('profileEdit.toast.passwordFieldsRequired'), variant: "destructive" });
+      toast({ title: "Please fill all password fields", variant: "destructive" });
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast({ title: t('profileEdit.toast.passwordsNoMatch'), variant: "destructive" });
+      toast({ title: "New passwords do not match", variant: "destructive" });
       return;
     }
     if (newPassword.length < 6) {
-        toast({ title: t('profileEdit.toast.passwordTooShort.title'), description: t('profileEdit.toast.passwordTooShort.description', {min: 6}), variant: "destructive" });
+        toast({ title: "Password too short", description: "Password must be at least 6 characters.", variant: "destructive" });
         return;
     }
 
@@ -164,17 +147,17 @@ export function ProfileEditForm() {
       try {
         await reauthenticateWithCredential(user, credential);
         await updatePassword(user, newPassword);
-        toast({ title: t('profileEdit.toast.passwordChanged.title'), description: t('profileEdit.toast.passwordChanged.description') });
+        toast({ title: "Password Changed", description: "Your password has been updated successfully." });
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
       } catch (error: any) {
         console.error("Password change error:", error);
-        let title = t('profileEdit.toast.passwordChangeFailed.title');
-        let description = t('profileEdit.toast.passwordChangeFailed.description');
+        let title = "Password Change Failed";
+        let description = "Could not update password. Please try again.";
         if (error.code === 'auth/wrong-password') {
-            title = t('profileEdit.toast.incorrectPassword.title');
-            description = t('profileEdit.toast.incorrectPassword.description');
+            title = "Incorrect Password";
+            description = "The current password you entered is incorrect.";
         }
         toast({ title, description, variant: "destructive" });
       } finally {
@@ -198,107 +181,143 @@ export function ProfileEditForm() {
     );
   }
 
-
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4 sm:p-6">
-      <header className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft />
-        </Button>
-        <h1 className="text-xl font-bold">{t('profileEdit.title')}</h1>
-      </header>
+    <div className="min-h-screen flex justify-center p-6 bg-gray-50 text-gray-900">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="w-full max-w-2xl"
+      >
+        <div className="mb-4">
+            <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => router.back()}>
+                <ArrowLeft size={16} /> Back
+            </Button>
+        </div>
 
-      <Tabs defaultValue="account" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="account">{t('profileEdit.tabs.account')}</TabsTrigger>
-          <TabsTrigger value="security">{t('profileEdit.tabs.security')}</TabsTrigger>
-        </TabsList>
-        <TabsContent value="account">
-          <Card>
-            <CardHeader className="items-center">
-              <CardTitle>{t('profileEdit.account.title')}</CardTitle>
-              <CardDescription>{t('profileEdit.account.description')}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="flex flex-col items-center gap-4">
-                    <Avatar className="w-32 h-32 text-4xl">
-                        <AvatarImage src={profile.profileImage} alt={profile.fullName} />
-                         <AvatarFallback>{profile.fullName?.split(' ').map(n => n[0]).join('') || <User />}</AvatarFallback>
-                    </Avatar>
-                    <Button variant="outline" onClick={() => setIsPhotoEditorOpen(true)}>
-                        <Pencil className="mr-2 h-4 w-4" /> Change Photo
+        <Card className="p-6 shadow-xl rounded-2xl">
+          <CardContent className="p-0">
+            <h2 className="text-xl font-semibold mb-4 text-center">Edit Profile</h2>
+            <p className="text-sm text-gray-500 mb-6 text-center">Manage your account and security details below.</p>
+
+            <Tabs defaultValue="account">
+              <TabsList className="grid grid-cols-2 mb-6">
+                <TabsTrigger value="account">Account</TabsTrigger>
+                <TabsTrigger value="security">Security</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="account">
+                <div className="flex flex-col items-center mb-6">
+                  <div className="w-28 h-28 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100">
+                    <img
+                      src={profile.profileImage || `https://i.pravatar.cc/150?u=${profile.email}`}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <Button variant="outline" size="sm" className="mt-3" onClick={() => setIsPhotoEditorOpen(true)}>Change Photo</Button>
+                </div>
+
+                <div className="space-y-4 text-left">
+                  <div>
+                    <Label className="text-sm font-medium">Full Name</Label>
+                    <Input name="fullName" type="text" value={profile.fullName} onChange={handleInputChange} className="mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Email</Label>
+                    <Input type="email" value={profile.email} disabled className="mt-1 bg-gray-100" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Phone Number</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Phone size={18} className="text-gray-500" />
+                      <Input name="phone" type="tel" value={profile.phone} onChange={handleInputChange} />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Address</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <MapPin size={18} className="text-gray-500" />
+                      <Input name="address" type="text" value={profile.address} onChange={handleInputChange} />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Date of Birth</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Calendar size={18} className="text-gray-500" />
+                      <Input name="dob" type="date" value={profile.dob ? format(parseISO(profile.dob), 'yyyy-MM-dd') : ''} onChange={handleInputChange} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium">LinkedIn</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Linkedin size={18} className="text-gray-500" />
+                      <Input name="linkedin" type="url" value={profile.linkedin} onChange={handleInputChange} />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Twitter</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Twitter size={18} className="text-gray-500" />
+                      <Input name="twitter" type="url" value={profile.twitter} onChange={handleInputChange} />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">GitHub</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Github size={18} className="text-gray-500" />
+                      <Input name="github" type="url" value={profile.github} onChange={handleInputChange} />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Instagram</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Instagram size={18} className="text-gray-500" />
+                      <Input name="instagram" type="url" value={profile.instagram} onChange={handleInputChange} />
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="security">
+                <div className="space-y-4 text-left">
+                  <div>
+                    <Label className="text-sm font-medium">Current Password</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Lock size={18} className="text-gray-500" />
+                      <Input type={showCurrentPassword ? "text" : "password"} placeholder="Enter current password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">New Password</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <KeyRound size={18} className="text-gray-500" />
+                      <Input type={showNewPassword ? "text" : "password"} placeholder="Enter new password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Confirm New Password</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <KeyRound size={18} className="text-gray-500" />
+                      <Input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm new password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+                    </div>
+                  </div>
+                   <Button onClick={handleChangePassword} className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? 'Updating...' : 'Update Password'}
                     </Button>
                 </div>
-              <div>
-                <Label htmlFor="fullName">{t('profileEdit.account.fullName')}</Label>
-                <Input id="fullName" name="fullName" value={profile.fullName} onChange={handleInputChange} />
-              </div>
-              <div>
-                <Label htmlFor="email">{t('profileEdit.account.email')}</Label>
-                <Input id="email" type="email" value={profile.email} disabled />
-              </div>
-              <div>
-                <Label htmlFor="dob">{t('profileEdit.account.dob')}</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant={"outline"} className="w-full justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {profile.dob ? format(new Date(profile.dob), "PPP") : <span>{t('profileEdit.account.pickDate')}</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={profile.dob ? new Date(profile.dob) : undefined}
-                      onSelect={handleDateChange}
-                      captionLayout="dropdown-buttons"
-                      fromYear={1920}
-                      toYear={new Date().getFullYear()}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <Button onClick={handleSaveChanges} className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? t('profileEdit.account.saving') : t('profileEdit.account.save')}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('profileEdit.security.title')}</CardTitle>
-              <CardDescription>{t('profileEdit.security.description')}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="relative">
-                <Label htmlFor="currentPassword">{t('profileEdit.security.currentPassword')}</Label>
-                <Input id="currentPassword" type={showCurrentPassword ? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-                <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowCurrentPassword(!showCurrentPassword)}><IconEye show={showCurrentPassword} /></Button>
-              </div>
-              <div className="relative">
-                <Label htmlFor="newPassword">{t('profileEdit.security.newPassword')}</Label>
-                <Input id="newPassword" type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-                <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowNewPassword(!showNewPassword)}><IconEye show={showNewPassword} /></Button>
-              </div>
-              <div className="relative">
-                <Label htmlFor="confirmPassword">{t('profileEdit.security.confirmPassword')}</Label>
-                <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-                <Button variant="ghost" size="icon" className="absolute right-1 top-6" onClick={() => setShowConfirmPassword(!showConfirmPassword)}><IconEye show={showConfirmPassword} /></Button>
-              </div>
-              <Button onClick={handleChangePassword} variant="secondary" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? t('profileEdit.security.updating') : t('profileEdit.security.update')}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              </TabsContent>
+            </Tabs>
+
+            <Button className="w-full mt-6" onClick={handleSaveChanges} disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+            </Button>
+
+            <p className="mt-6 text-xs text-gray-500 text-center">© 2025 Sutradhar | Owned by Aman Yadav.</p>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
-}
-
-
-function IconEye({ show }: {show: boolean}) {
-  return show ? <EyeOff /> : <Eye />;
 }
