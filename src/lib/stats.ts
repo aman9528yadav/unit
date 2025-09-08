@@ -80,6 +80,7 @@ export const processUserDataForStats = (userData: any, email: string | null): {
     totalConversions: number;
     totalCalculations: number;
     totalDateCalculations: number;
+    totalHistory: number;
 } => {
     if (!userData) {
         userData = {};
@@ -92,6 +93,10 @@ export const processUserDataForStats = (userData: any, email: string | null): {
     const totalConversions = userData.totalConversions || 0;
     const totalCalculations = userData.totalCalculations || 0;
     const totalDateCalculations = userData.totalDateCalculations || 0;
+    
+    const conversionHistory = userData.conversionHistory || [];
+    const calculationHistory = userData.calculationHistory || [];
+    const totalHistory = conversionHistory.length + calculationHistory.length;
 
     const todaysOps = (todaysDailyStats.totalConversions || 0) + (todaysDailyStats.totalCalculations || 0) + (todaysDailyStats.totalDateCalculations || 0);
     const totalOps = totalConversions + totalCalculations + totalDateCalculations;
@@ -143,7 +148,8 @@ export const processUserDataForStats = (userData: any, email: string | null): {
         activity,
         totalConversions,
         totalCalculations,
-        totalDateCalculations
+        totalDateCalculations,
+        totalHistory,
     };
 };
 

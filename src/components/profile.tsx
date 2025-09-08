@@ -26,7 +26,7 @@ const defaultSkills = ["React", "Tailwind CSS", "UI/UX Design", "Content Writing
 
 export function Profile() {
     const [profileData, setProfileData] = useState<UserData | null>(null);
-    const [stats, setStats] = useState({ conversions: 0, notes: 0, daysActive: 0 });
+    const [stats, setStats] = useState({ conversions: 0, notes: 0, daysActive: 0, history: 0 });
     const [userRole, setUserRole] = useState<UserRole>('Member');
     const [achievements, setAchievements] = useState<string[]>([]);
     
@@ -57,6 +57,7 @@ export function Profile() {
             conversions: userStats.totalConversions,
             notes: userStats.savedNotes,
             daysActive: streakData.bestStreak,
+            history: userStats.totalHistory,
         });
 
         if (email === DEVELOPER_EMAIL) {
@@ -156,10 +157,10 @@ export function Profile() {
                         )}
 
                         <div className="grid grid-cols-2 gap-3 mt-6">
-                            <Button asChild className="flex gap-2" variant="secondary"><Link href="/settings"><Globe size={16} /> Region</Link></Button>
+                            <Button asChild className="flex gap-2" variant="secondary"><Link href="/settings"><Globe size={16} /> {settings?.defaultRegion || 'Region'}</Link></Button>
                             <Button asChild className="flex gap-2" variant="secondary"><Link href="/profile/edit"><Shield size={16} /> Security</Link></Button>
-                            <Button asChild className="flex gap-2" variant="secondary"><Link href="/settings/theme"><Palette size={16} /> Theme</Link></Button>
-                            <Button asChild className="flex gap-2" variant="secondary"><Link href="/history"><History size={16} /> History</Link></Button>
+                            <Button asChild className="flex gap-2" variant="secondary"><Link href="/settings/theme"><Palette size={16} /> {settings?.theme || 'Theme'}</Link></Button>
+                            <Button asChild className="flex gap-2" variant="secondary"><Link href="/history"><History size={16} /> {stats.history} items</Link></Button>
                         </div>
                         
                         <div className="mt-6 grid grid-cols-3 gap-4 text-center">
