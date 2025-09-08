@@ -80,7 +80,6 @@ const navLinks = [
     { href: "/profile", label: "Profile", icon: User },
     { href: "/settings", label: "Settings", icon: Settings },
     { href: "/settings/theme", label: "Theme", icon: Palette },
-    { href: "/settings", label: "Language", icon: Languages },
     { href: "/updates", label: "Updates", icon: Rocket },
     { href: "/about", label: "About", icon: Info },
     { href: "/how-to-use", label: "Help", icon: HelpCircle },
