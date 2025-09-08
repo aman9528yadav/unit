@@ -3,7 +3,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2, Pencil, Phone, MapPin, Linkedin, Twitter, Github, Instagram, KeyRound } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowLeft, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2, Pencil, Phone, MapPin, Linkedin, Twitter, Github, Instagram, KeyRound, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +33,7 @@ export function ProfileEditForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("account");
   const { t } = useLanguage();
 
   const { toast } = useToast();
@@ -88,6 +90,14 @@ export function ProfileEditForm() {
   };
 
   const handleSaveChanges = async () => {
+    if (activeTab === 'account') {
+        await handleSaveAccount();
+    } else if (activeTab === 'security') {
+        await handleChangePassword();
+    }
+  }
+
+  const handleSaveAccount = async () => {
     if (!profile || !profile.fullName) {
       toast({ title: "Full name is required", variant: "destructive" });
       return;
@@ -182,43 +192,45 @@ export function ProfileEditForm() {
   }
 
   return (
-    <div className="min-h-screen flex justify-center p-6 bg-gray-50 text-gray-900">
+    <div className="min-h-screen flex justify-center p-6 bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="w-full max-w-2xl"
+        className="w-full max-w-3xl"
       >
-        <div className="mb-4">
-            <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => router.back()}>
-                <ArrowLeft size={16} /> Back
-            </Button>
+        <div className="mb-6">
+          <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => router.back()}>
+            <ArrowLeft size={16} /> Back
+          </Button>
         </div>
 
-        <Card className="p-6 shadow-xl rounded-2xl">
+        <Card className="p-8 shadow-2xl rounded-3xl border border-gray-200 bg-white">
           <CardContent className="p-0">
-            <h2 className="text-xl font-semibold mb-4 text-center">Edit Profile</h2>
-            <p className="text-sm text-gray-500 mb-6 text-center">Manage your account and security details below.</p>
+            <h2 className="text-2xl font-bold mb-2 text-center">Edit Profile</h2>
+            <p className="text-sm text-gray-500 mb-8 text-center">Update your personal information and security settings.</p>
 
-            <Tabs defaultValue="account">
-              <TabsList className="grid grid-cols-2 mb-6">
-                <TabsTrigger value="account">Account</TabsTrigger>
-                <TabsTrigger value="security">Security</TabsTrigger>
+            <Tabs defaultValue="account" onValueChange={setActiveTab}>
+              <TabsList className="grid grid-cols-2 mb-8 bg-gray-100 rounded-lg p-1">
+                <TabsTrigger value="account" className="rounded-md">Account</TabsTrigger>
+                <TabsTrigger value="security" className="rounded-md">Security</TabsTrigger>
               </TabsList>
 
               <TabsContent value="account">
-                <div className="flex flex-col items-center mb-6">
-                  <div className="w-28 h-28 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100">
-                    <img
-                      src={profile.profileImage || `https://i.pravatar.cc/150?u=${profile.email}`}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                <div className="flex flex-col items-center mb-8">
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-100"
+                  >
+                     <Avatar className="w-full h-full">
+                        <AvatarImage src={profile.profileImage || `https://i.pravatar.cc/150?u=${profile.email}`} />
+                        <AvatarFallback><User/></AvatarFallback>
+                    </Avatar>
+                  </motion.div>
                   <Button variant="outline" size="sm" className="mt-3" onClick={() => setIsPhotoEditorOpen(true)}>Change Photo</Button>
                 </div>
 
-                <div className="space-y-4 text-left">
+                <div className="space-y-5 text-left">
                   <div>
                     <Label className="text-sm font-medium">Full Name</Label>
                     <Input name="fullName" type="text" value={profile.fullName} onChange={handleInputChange} className="mt-1" />
@@ -243,12 +255,18 @@ export function ProfileEditForm() {
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Date of Birth</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Calendar size={18} className="text-gray-500" />
-                      <Input name="dob" type="date" value={profile.dob ? format(parseISO(profile.dob), 'yyyy-MM-dd') : ''} onChange={handleInputChange} />
-                    </div>
+                     <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start text-left font-normal mt-1">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {profile.dob ? format(parseISO(profile.dob), "PPP") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar mode="single" selected={profile.dob ? parseISO(profile.dob) : undefined} onSelect={handleDateChange} captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear()} initialFocus/>
+                        </PopoverContent>
+                    </Popover>
                   </div>
-
                   <div>
                     <Label className="text-sm font-medium">LinkedIn</Label>
                     <div className="flex items-center gap-2 mt-1">
@@ -281,7 +299,7 @@ export function ProfileEditForm() {
               </TabsContent>
 
               <TabsContent value="security">
-                <div className="space-y-4 text-left">
+                <div className="space-y-5 text-left">
                   <div>
                     <Label className="text-sm font-medium">Current Password</Label>
                     <div className="flex items-center gap-2 mt-1">
@@ -303,18 +321,22 @@ export function ProfileEditForm() {
                       <Input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm new password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
                     </div>
                   </div>
-                   <Button onClick={handleChangePassword} className="w-full" disabled={isSubmitting}>
-                      {isSubmitting ? 'Updating...' : 'Update Password'}
-                    </Button>
+                  <div className="flex items-center justify-between mt-6 p-4 border rounded-xl bg-gray-50">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck size={20} className="text-gray-600" />
+                      <span className="text-sm font-medium">Two-Factor Authentication</span>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => toast({ title: "Coming Soon!", description: "2FA will be available in a future update."})}>Enable</Button>
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>
 
-            <Button className="w-full mt-6" onClick={handleSaveChanges} disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : 'Save Changes'}
+            <Button onClick={handleSaveChanges} className="w-full mt-8 py-3 text-base rounded-xl" disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
 
-            <p className="mt-6 text-xs text-gray-500 text-center">© 2025 Sutradhar | Owned by Aman Yadav.</p>
+            <p className="mt-8 text-xs text-gray-500 text-center">© 2025 Sutradhar | Owned by Aman Yadav.</p>
           </CardContent>
         </Card>
       </motion.div>
