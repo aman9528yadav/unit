@@ -36,11 +36,6 @@ const TranslateTextOutputSchema = z.object({
 });
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
 
-export async function translateText(
-  input: TranslateTextInput
-): Promise<TranslateTextOutput> {
-  return translateTextFlow(input);
-}
 
 const prompt = ai.definePrompt({
   name: 'translateTextPrompt',
@@ -69,3 +64,10 @@ const translateTextFlow = ai.defineFlow(
     return output!;
   }
 );
+
+
+export async function translateText(
+  input: TranslateTextInput
+): Promise<TranslateTextOutput> {
+  return translateTextFlow(input);
+}
