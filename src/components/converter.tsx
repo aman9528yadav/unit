@@ -215,8 +215,13 @@ export function Converter() {
         }
 
         if (!data) return;
-        setCustomUnits(data.customUnits || []);
-        setCustomCategories(data.customCategories || []);
+
+        const newCustomUnits = data.customUnits || [];
+        const newCustomCategories = data.customCategories || [];
+
+        setCustomUnits(newCustomUnits);
+        setCustomCategories(newCustomCategories);
+        
         setFavorites(data.favoriteConversions || []);
         const conversionHistory = data.conversionHistory || [];
         setRecentConversions(conversionHistory.slice(0, 4));
@@ -230,7 +235,8 @@ export function Converter() {
 
         const savedDefaultCategory = data.settings?.defaultCategory;
         if (savedDefaultCategory) {
-            const category = conversionCategories.find(c => c.name === savedDefaultCategory);
+            const latestConversionCategories = getConversionCategories(newCustomUnits, newCustomCategories);
+            const category = latestConversionCategories.find(c => c.name === savedDefaultCategory);
             if (category) {
                 setSelectedCategory(category);
                 setFromUnit(category.units[0].symbol);
@@ -243,7 +249,7 @@ export function Converter() {
       unsub();
       unsubLocks();
     };
-  }, [updateUserRole, conversionCategories]);
+  }, [updateUserRole]);
 
   React.useEffect(() => {
     const itemToRestore = localStorage.getItem("restoreConversion");
