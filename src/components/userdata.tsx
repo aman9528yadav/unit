@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Crown, LogOut, Settings, Palette, Globe, Shield, History, CheckCircle, Award, ArrowLeft, Calendar, MapPin, Phone, Linkedin, Twitter, Star, Github, Edit } from "lucide-react";
+import { Crown, LogOut, Settings, Palette, Globe, Shield, History, CheckCircle, Award, ArrowLeft, Calendar, MapPin, Phone, Linkedin, Twitter, Star, Github, Edit, Instagram } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
@@ -131,7 +131,7 @@ export function UserData() {
                             <img
                                 src={profileImage || 'https://i.pravatar.cc/150?u=amanyadav9458'}
                                 alt="Profile"
-                                className="w-full h-full rounded-full object-contain"
+                                className="w-full h-full object-contain"
                             />
                         </div>
                     </div>
@@ -216,7 +216,7 @@ export function UserData() {
                             </Button>
                             <Button asChild variant="outline" className="flex gap-2">
                                 <Link href="/settings">
-                                    <Settings size={16} /> Settings
+                                    <Settings size={16} /> Manage Settings
                                 </Link>
                             </Button>
                             <Button variant="destructive" className="flex gap-2" onClick={handleLogout}>
