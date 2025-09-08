@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home, ShieldX, ChevronDown, Lock, FileText, Eye, EyeOff } from 'lucide-react';
+import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home, ShieldX, ChevronDown, Lock, FileText, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -37,6 +37,8 @@ import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import { useLanguage } from '@/context/language-context';
 import { listenToUserData, listenToUserNotes, updateUserNotes, UserData } from '@/services/firestore';
 import { Label } from './ui/label';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 
 export interface Note {
@@ -75,6 +77,13 @@ export function Notepad() {
     const [passwordPrompt, setPasswordPrompt] = useState<{note: Note; action: 'view' | 'edit' | 'delete'} | null>(null);
     const [passwordInput, setPasswordInput] = useState('');
     const [showUnlockPassword, setShowUnlockPassword] = useState(false);
+    
+    // States for password reset flow
+    const [resetStep, setResetStep] = useState<'prompt' | 'verify' | 'new_pass' >('prompt');
+    const [loginPassword, setLoginPassword] = useState('');
+    const [newNotePassword, setNewNotePassword] = useState('');
+    const [confirmNewNotePassword, setConfirmNewNotePassword] = useState('');
+
     const { language, t } = useLanguage();
     const dateLocale = language === 'hi' ? hi : enUS;
 
@@ -153,7 +162,52 @@ export function Notepad() {
             toast({ title: "Incorrect Password", variant: "destructive" });
         }
     };
+    
+    const handleForgotPasswordClick = () => {
+        setResetStep('verify');
+    }
 
+    const handleVerifyLoginPassword = async () => {
+        if (!profile?.email || !loginPassword) {
+            toast({ title: "Please enter your login password", variant: "destructive" });
+            return;
+        }
+        try {
+            await signInWithEmailAndPassword(auth, profile.email, loginPassword);
+            setResetStep('new_pass');
+            toast({ title: "Verification Successful", description: "You can now set a new note password." });
+        } catch (error) {
+            toast({ title: "Incorrect Login Password", description: "The password you entered for your account is incorrect.", variant: "destructive" });
+        } finally {
+            setLoginPassword('');
+        }
+    };
+
+    const handleSetNewNotePassword = async () => {
+        if (newNotePassword !== confirmNewNotePassword) {
+            toast({ title: "Passwords do not match", variant: "destructive" });
+            return;
+        }
+        if (newNotePassword.length < 4) {
+            toast({ title: "Password must be at least 4 characters", variant: "destructive" });
+            return;
+        }
+        if (profile?.email) {
+            await updateUserNotes(profile.email, allNotes); // Save other changes first
+            await updateUserNotes(profile.email, { ...userData, notePassword: newNotePassword });
+            toast({ title: "Note Password Reset Successfully" });
+            closeAndResetPasswordDialog();
+        }
+    };
+
+    const closeAndResetPasswordDialog = () => {
+        setPasswordPrompt(null);
+        setResetStep('prompt');
+        setPasswordInput('');
+        setLoginPassword('');
+        setNewNotePassword('');
+        setConfirmNewNotePassword('');
+    }
 
     const handleSoftDelete = (noteId: string) => {
         const note = notes.find(n => n.id === noteId);
@@ -480,39 +534,68 @@ export function Notepad() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-             <AlertDialog open={!!passwordPrompt} onOpenChange={(open) => !open && setPasswordPrompt(null)}>
+            <AlertDialog open={!!passwordPrompt} onOpenChange={(open) => !open && closeAndResetPasswordDialog()}>
                 <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Enter Password</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This note is locked. Please enter your note password to continue.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <div className="space-y-2">
-                        <Label htmlFor="note-password">Password</Label>
-                        <div className="relative flex items-center border border-input rounded-md focus-within:ring-2 focus-within:ring-ring">
-                            <Input
-                                id="note-password"
-                                type={showUnlockPassword ? "text" : "password"}
-                                value={passwordInput}
-                                onChange={e => setPasswordInput(e.target.value)}
-                                className="pr-10 border-none focus-visible:ring-0"
-                                onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit()}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowUnlockPassword(!showUnlockPassword)}
-                                className="absolute right-3 text-muted-foreground"
-                            >
-                                {showUnlockPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                            </button>
-                        </div>
-                         <Button variant="link" size="sm" className="h-auto p-0 justify-start" onClick={() => router.push('/forgot-password')}>Forgot password?</Button>
-                    </div>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handlePasswordSubmit}>Unlock</AlertDialogAction>
-                    </AlertDialogFooter>
+                    {resetStep === 'prompt' && (
+                        <>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Enter Password</AlertDialogTitle>
+                                <AlertDialogDescription>This note is locked. Please enter your note password to continue.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <div className="space-y-2">
+                                <Label htmlFor="note-password">Password</Label>
+                                <div className="relative flex items-center border border-input rounded-md focus-within:ring-2 focus-within:ring-ring">
+                                    <Input id="note-password" type={showUnlockPassword ? "text" : "password"} value={passwordInput} onChange={e => setPasswordInput(e.target.value)} className="pr-10 border-none focus-visible:ring-0" onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit()} />
+                                    <button type="button" onClick={() => setShowUnlockPassword(!showUnlockPassword)} className="absolute right-3 text-muted-foreground">
+                                        {showUnlockPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
+                                </div>
+                                <Button variant="link" size="sm" className="h-auto p-0 justify-start" onClick={handleForgotPasswordClick}>Forgot password?</Button>
+                            </div>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handlePasswordSubmit}>Unlock</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </>
+                    )}
+                     {resetStep === 'verify' && (
+                        <>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Verify Your Identity</AlertDialogTitle>
+                                <AlertDialogDescription>To reset your note password, please enter your main account login password.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <div className="space-y-2">
+                                <Label htmlFor="login-password">Login Password</Label>
+                                 <Input id="login-password" type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleVerifyLoginPassword()}/>
+                            </div>
+                            <AlertDialogFooter>
+                                <Button variant="ghost" onClick={() => setResetStep('prompt')}>Back</Button>
+                                <AlertDialogAction onClick={handleVerifyLoginPassword}>Verify</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </>
+                    )}
+                    {resetStep === 'new_pass' && (
+                        <>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Set New Note Password</AlertDialogTitle>
+                                <AlertDialogDescription>Enter a new password for your notes.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="new-note-password">New Password</Label>
+                                    <Input id="new-note-password" type="password" value={newNotePassword} onChange={e => setNewNotePassword(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="confirm-new-note-password">Confirm New Password</Label>
+                                    <Input id="confirm-new-note-password" type="password" value={confirmNewNotePassword} onChange={e => setConfirmNewNotePassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSetNewNotePassword()}/>
+                                </div>
+                            </div>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleSetNewNotePassword}>Set New Password</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </>
+                    )}
                 </AlertDialogContent>
             </AlertDialog>
         </div>
