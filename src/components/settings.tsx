@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music, Sigma } from "lucide-react";
+import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music, Sigma, Home } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { useTheme, type CustomTheme } from "@/context/theme-context";
 import {
@@ -32,6 +32,7 @@ import { getStreakData } from "@/lib/streak";
 
 
 export type CalculatorMode = 'basic' | 'scientific';
+type DefaultPage = 'dashboard' | 'calculator' | 'notes' | 'converter' | 'time';
 const PREMIUM_MEMBER_THRESHOLD = 10000;
 type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
@@ -130,6 +131,7 @@ export function Settings() {
   
   const [saveConversionHistory, setSaveConversionHistory] = useState(true);
   const [defaultRegion, setDefaultRegion] = useState<Region>('International');
+  const [defaultPage, setDefaultPage] = useState<DefaultPage>('dashboard');
 
   const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>('basic');
   const [calculatorSound, setCalculatorSound] = useState(true);
@@ -153,6 +155,7 @@ export function Settings() {
             if (userSettings.defaultRegion && regions.includes(userSettings.defaultRegion)) {
                 setDefaultRegion(userSettings.defaultRegion);
             }
+            if (userSettings.defaultPage) setDefaultPage(userSettings.defaultPage);
             if (userSettings.calculatorMode) setCalculatorMode(userSettings.calculatorMode);
             setCalculatorSound(userSettings.calculatorSound ?? true);
         });
@@ -206,6 +209,7 @@ export function Settings() {
         notificationsEnabled,
         saveConversionHistory,
         defaultRegion,
+        defaultPage,
         calculatorMode,
         calculatorSound
     };
@@ -349,6 +353,22 @@ export function Settings() {
                         </Select>
                     }
                 />
+                 <SettingRow
+                    label="Default Home Page"
+                    description="Choose the first page you see"
+                    control={
+                         <Select value={defaultPage} onValueChange={(value) => setDefaultPage(value as DefaultPage)}>
+                            <SelectTrigger className="w-40"><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="dashboard">Dashboard</SelectItem>
+                                <SelectItem value="converter">Converter</SelectItem>
+                                <SelectItem value="calculator">Calculator</SelectItem>
+                                <SelectItem value="notes">Notes</SelectItem>
+                                <SelectItem value="time">Timer</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    }
+                />
                 {profile?.email === "amanyadavyadav9458@gmail.com" && (
                   <SettingRow
                       isLink
@@ -469,5 +489,3 @@ export function Settings() {
     </div>
   );
 }
-
-    

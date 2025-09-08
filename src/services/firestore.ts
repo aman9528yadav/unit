@@ -462,6 +462,7 @@ export interface UserData {
         notificationsEnabled?: boolean;
         saveConversionHistory?: boolean;
         defaultRegion?: string;
+        defaultPage?: 'dashboard' | 'calculator' | 'notes' | 'converter' | 'time';
         calculatorMode?: string;
         calculatorSound?: boolean;
     };

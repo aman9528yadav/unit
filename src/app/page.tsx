@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dashboard } from "@/components/dashboard";
 import { Skeleton } from '@/components/ui/skeleton';
+import { listenToUserData, UserData } from '@/services/firestore';
 
 function DashboardSkeleton() {
     return (
@@ -31,23 +32,48 @@ function DashboardSkeleton() {
 
 export default function Home() {
     const router = useRouter();
-    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [authStatus, setAuthStatus] = useState<'loading' | 'unauthenticated' | 'authenticated'>('loading');
+    const [defaultPage, setDefaultPage] = useState('/welcome');
 
     useEffect(() => {
         const storedProfile = localStorage.getItem("userProfile");
         const hasSkippedLogin = sessionStorage.getItem("hasSkippedLogin");
+        const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
 
-        if (storedProfile || hasSkippedLogin) {
-            setIsAuthenticated(true);
-        } else {
+        if (!userEmail && !hasSkippedLogin) {
             router.replace('/welcome');
-            return; // Exit early to prevent flashing content
+            setAuthStatus('unauthenticated');
+            return;
         }
-        setIsCheckingAuth(false);
+
+        if (hasSkippedLogin) {
+            setAuthStatus('authenticated');
+            setDefaultPage('/'); // Default for guests
+            return;
+        }
+
+        if (userEmail) {
+            const unsub = listenToUserData(userEmail, (data: UserData) => {
+                const page = data?.settings?.defaultPage;
+                let homeRoute = '/';
+                if (page && page !== 'dashboard') {
+                    homeRoute = `/${page}`;
+                }
+                
+                // If current path is already home, redirect. Otherwise, let other pages load.
+                if (window.location.pathname === '/') {
+                    router.replace(homeRoute);
+                }
+                
+                setDefaultPage(homeRoute);
+                setAuthStatus('authenticated');
+            });
+            return () => unsub();
+        }
+
     }, [router]);
 
-    if (isCheckingAuth) {
+    if (authStatus === 'loading') {
         return (
              <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-6">
                 <DashboardSkeleton />
@@ -55,13 +81,15 @@ export default function Home() {
         );
     }
     
-    if (isAuthenticated) {
-        return (
+    // For guests or users who set Dashboard as default and land on '/'
+    if (authStatus === 'authenticated' && window.location.pathname === '/') {
+         return (
             <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-6">
                 <Dashboard />
             </main>
         );
     }
 
+    // This will be null for most cases as redirection happens in useEffect
     return null;
 }
