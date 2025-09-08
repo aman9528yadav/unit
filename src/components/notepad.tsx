@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -375,7 +376,13 @@ export function Notepad() {
     return (
         <div className="w-full max-w-md mx-auto flex flex-col h-screen">
              <header className="flex items-center justify-between p-4 flex-shrink-0 bg-background">
-                <div></div>
+                <div>
+                     <Link href="/notes/edit/new">
+                        <Button variant="ghost" size="icon">
+                            <Edit size={20} />
+                        </Button>
+                    </Link>
+                </div>
                 <h1 className="text-xl font-bold">{getHeading()}</h1>
                 <div className="flex items-center">
                     <DropdownMenu>
@@ -504,11 +511,7 @@ export function Notepad() {
                     )}
                 </div>
             </main>
-            <Link href="/notes/edit/new" passHref>
-                <Button className="fixed bottom-8 right-1/2 translate-x-1/2 sm:right-8 sm:translate-x-0 w-16 h-16 rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90">
-                    <Edit size={24} />
-                </Button>
-            </Link>
+            
             <AlertDialog open={!!noteToDelete}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -611,5 +614,3 @@ export function Notepad() {
         </div>
     );
 }
-
-    

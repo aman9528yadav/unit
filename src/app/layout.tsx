@@ -14,21 +14,6 @@ import { useRouter } from 'next/navigation';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { Header } from '@/components/header';
 
-function AppFooter() {
-    const pathname = usePathname();
-    const showFooter = !pathname.startsWith('/dev');
-
-    if (!showFooter) {
-        return null;
-    }
-
-    return (
-        <footer className="text-center p-4 bg-card text-muted-foreground text-sm border-t flex-shrink-0">
-            <p>&copy; {new Date().getFullYear()} Sutradhaar | Owned by Aman Yadav. All Rights Reserved.</p>
-        </footer>
-    );
-}
-
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean | null>(null);
     const pathname = usePathname();
@@ -136,7 +121,6 @@ export default function RootLayout({
                         )}
                         {children}
                     </div>
-                    <AppFooter />
                 </div>
                 </MaintenanceRedirect>
                 <Toaster />
