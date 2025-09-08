@@ -4,118 +4,78 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { User, Upload, LogOut, Settings, HelpCircle, X, Pencil, TrendingUp, Info, CheckCircle, Crown, Star } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Crown, LogOut, Settings, Palette, Globe, Shield, History, CheckCircle, Award, ArrowLeft, Calendar, MapPin, Phone, Linkedin, Twitter, Star, Github } from "lucide-react";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/context/language-context";
+import { listenToUserData, UserData } from "@/services/firestore";
 import { getStats } from "@/lib/stats";
-import { ProfilePhotoEditor } from "./profile-photo-editor";
-import { listenToUserData } from "@/services/firestore";
 import { getStreakData } from "@/lib/streak";
+import { format } from "date-fns";
 
-
-interface UserProfile {
-    fullName: string;
-    email: string;
-    profileImage?: string;
-}
-
-interface UserSettings {
-    theme: string;
-    defaultRegion: string;
-    saveHistory: boolean;
-    autoConvert: boolean;
-}
-
-const PREMIUM_MEMBER_THRESHOLD = 10000;
 type UserRole = 'Member' | 'Premium Member' | 'Owner';
+const PREMIUM_MEMBER_THRESHOLD = 10000;
+const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 
-const DetailRow = ({ label, value, valueClassName }: { label: string, value: React.ReactNode, valueClassName?: string }) => (
-    <div className="flex justify-between items-center py-3">
-        <span className="text-muted-foreground">{label}</span>
-        <div className={`flex items-center gap-2 font-medium text-foreground text-right max-w-[70%] ${valueClassName}`}>
-            {value}
-        </div>
-    </div>
-);
-
-const Section = ({ title, children }: { title: string, children: React.ReactNode }) => (
-    <div>
-        <h3 className="text-sm font-semibold text-muted-foreground mb-1 mt-4">{title.toUpperCase()}</h3>
-        <div className="bg-secondary/50 rounded-lg p-4 divide-y divide-border">
-            {children}
-        </div>
-    </div>
-)
+const defaultSkills = ["React", "Tailwind CSS", "UI/UX Design", "Content Writing", "Cricket", "Music"];
 
 export function UserData() {
-    const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [settings, setSettings] = useState<UserSettings | null>(null);
+    const [profileData, setProfileData] = useState<UserData | null>(null);
+    const [stats, setStats] = useState({ conversions: 0, notes: 0, daysActive: 0 });
     const [userRole, setUserRole] = useState<UserRole>('Member');
-    const [stats, setStats] = useState({ totalOps: 0 });
-    const [isClient, setIsClient] = useState(false);
+    const [achievements, setAchievements] = useState<string[]>([]);
+    
     const router = useRouter();
     const { toast } = useToast();
     const { t } = useLanguage();
 
-
     useEffect(() => {
-        setIsClient(true);
-        const userEmail = auth.currentUser?.email || (localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null);
-    
+        const userEmail = auth.currentUser?.email;
         if (!userEmail) {
             router.replace('/welcome');
             return;
         }
 
-        const unsub = listenToUserData(userEmail, (data) => {
-            if (!data) {
-                router.replace('/welcome');
-                return;
-            }
-            const userProfile: UserProfile = {
-                fullName: data.fullName || auth.currentUser?.displayName || 'Guest',
-                email: userEmail,
-                profileImage: data.profileImage,
-            };
-            setProfile(userProfile);
-            
-            const userSettings = data.settings || {};
-             setSettings({
-                theme: userSettings.theme?.charAt(0).toUpperCase() + userSettings.theme?.slice(1) || 'System',
-                defaultRegion: userSettings.defaultRegion || 'International',
-                saveHistory: userSettings.saveConversionHistory ?? true,
-                autoConvert: userSettings.autoConvert ?? true,
-            });
-
-            updateUserRoleAndStats(userEmail);
+        const unsubscribe = listenToUserData(userEmail, (data) => {
+            setProfileData(data);
+            updateUserRoleAndStats(userEmail, data);
         });
 
-        return () => unsub();
-
+        return () => unsubscribe();
     }, [router]);
 
-    const updateUserRoleAndStats = async (email: string | null) => {
+    const updateUserRoleAndStats = async (email: string, userData: UserData) => {
         const userStats = await getStats(email);
-        setStats({ totalOps: userStats.totalOps });
         const streakData = await getStreakData(email);
 
-        if(email === "amanyadavyadav9458@gmail.com") {
+        setStats({
+            conversions: userStats.totalConversions,
+            notes: userStats.savedNotes,
+            daysActive: streakData.bestStreak,
+        });
+
+        if (email === DEVELOPER_EMAIL) {
             setUserRole('Owner');
-            return;
-        }
-        if(userStats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
+        } else if (userStats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
             setUserRole('Premium Member');
         } else {
             setUserRole('Member');
         }
+
+        const newAchievements: string[] = [];
+        if (auth.currentUser?.emailVerified) newAchievements.push("⭐ Verified User");
+        if (userStats.totalConversions >= 100) newAchievements.push("🏆 100+ Conversions");
+        if (streakData.bestStreak >= 30) newAchievements.push("📅 30 Days Active");
+        if (streakData.bestStreak >= 7) newAchievements.push("🔥 7 Day Streak");
+        if (userRole === 'Premium Member' || userRole === 'Owner') newAchievements.push("👑 Premium Member");
+        setAchievements(newAchievements);
     };
-    
+
     const handleLogout = () => {
         auth.signOut().then(() => {
             localStorage.removeItem("userProfile");
@@ -126,117 +86,124 @@ export function UserData() {
             toast({ title: t('profile.toast.logoutFailed.title'), description: t('profile.toast.logoutFailed.description'), variant: "destructive" });
         });
     };
-    
-    if (!isClient || !profile) {
-        // You can return a loading skeleton here
-        return null;
+
+    if (!profileData) {
+        return null; // Or a loading skeleton
     }
 
-    const roleText = {
-      'Member': t('userdata.roles.member'),
-      'Premium Member': t('userdata.roles.premiummember'),
-      'Owner': t('userdata.roles.owner')
-    }
-    const RoleIcon = userRole === 'Member' ? Star : Crown;
-    const roleIconColor = userRole === 'Member' ? '' : 'text-yellow-400';
-    const progress = Math.min((stats.totalOps / PREMIUM_MEMBER_THRESHOLD) * 100, 100);
-
+    const {
+        profileImage,
+        fullName,
+        email,
+        phone,
+        address,
+        dob,
+        linkedin,
+        twitter,
+        github,
+        instagram,
+        skills = defaultSkills,
+        settings,
+    } = profileData;
 
     return (
-        <div className="w-full max-w-lg mx-auto bg-card rounded-2xl shadow-lg border p-6">
-            <header className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                        <User/>
-                    </div>
-                    <h1 className="text-xl font-bold">{t('userdata.title')}</h1>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                        <Link href="/profile/edit"><Pencil className="h-4 w-4"/></Link>
+        <div className="min-h-screen flex justify-center p-4 sm:p-6 bg-gray-50 text-gray-900">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="w-full max-w-lg"
+            >
+                <div className="mb-4">
+                     <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => router.push('/')}>
+                        <ArrowLeft size={16} /> Back to Dashboard
                     </Button>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" asChild><Link href="/help"><HelpCircle className="mr-2 h-4 w-4"/> {t('userdata.help')}</Link></Button>
-                     <Link href="/">
-                        <Button variant="ghost" size="icon"><X/></Button>
-                    </Link>
-                </div>
-            </header>
 
-             <div className="flex flex-col items-center text-center">
-                 <div className="relative">
-                    <Avatar className="w-28 h-28 mb-4">
-                        <AvatarImage src={profile.profileImage} alt={profile.fullName}/>
-                        <AvatarFallback>{profile.fullName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                    </Avatar>
-                </div>
-                <div className="flex items-center gap-2">
-                    <h2 className="text-2xl font-bold">{profile.fullName}</h2>
-                     <Badge variant="secondary">
-                        <RoleIcon className={`mr-2 h-4 w-4 ${roleIconColor}`}/>
-                        {roleText[userRole]}
-                    </Badge>
-                </div>
-                <p className="text-muted-foreground text-sm">{profile.email}</p>
-            </div>
-            
-            {userRole === 'Member' && (
-                <div className="my-6">
-                    <div className="flex justify-between items-center mb-2">
-                        <h3 className="text-sm font-semibold">{t('userdata.premium.title')}</h3>
-                        <p className="text-sm font-bold">{stats.totalOps.toLocaleString()} / {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} {t('userdata.premium.ops')}</p>
+                <div className="relative rounded-2xl overflow-hidden shadow-lg">
+                    <div className="h-32 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+                    <div className="absolute -bottom-16 left-1/2 -translate-x-1/2">
+                        <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white flex items-center justify-center">
+                            <img
+                                src={profileImage || 'https://i.pravatar.cc/150?u=amanyadav9458'}
+                                alt="Profile"
+                                className="w-full h-full rounded-full object-cover"
+                            />
+                        </div>
                     </div>
-                    <Progress value={progress} />
-                     <Link href="/help">
-                        <p className="text-xs text-center text-muted-foreground mt-2 hover:underline cursor-pointer">
-                            {t('userdata.premium.learnMore')}
-                        </p>
-                    </Link>
                 </div>
-            )}
 
+                <Card className="mt-20 p-6 text-center shadow-xl rounded-2xl">
+                    <CardContent className="p-0">
+                        <h2 className="text-xl font-semibold flex items-center justify-center gap-2">
+                            {fullName} {userRole !== 'Member' && <Crown className="text-yellow-500" size={20} />}
+                        </h2>
+                        <p className="text-sm text-gray-500">{email}</p>
+                         <p className="flex items-center justify-center gap-1 text-green-500 mt-1 text-sm">
+                            <CheckCircle size={16} /> Verified
+                        </p>
 
-            <main className="w-full mt-2">
-                <Section title={t('userdata.sections.account.title')}>
-                    <DetailRow label={t('userdata.sections.account.name')} value={profile.fullName}/>
-                    <DetailRow 
-                        label={t('userdata.sections.account.email')} 
-                        value={
-                            <div className="border rounded-md px-2 py-1 break-all">
-                                {profile.email}
+                        <div className="mt-6 space-y-3 text-left">
+                            {phone && <div className="flex justify-between items-center"><span className="font-medium flex items-center gap-2"><Phone size={14} /> Phone</span><span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{phone}</span></div>}
+                            {address && <div className="flex justify-between items-center"><span className="font-medium flex items-center gap-2"><MapPin size={14} /> Address</span><span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{address}</span></div>}
+                            {dob && <div className="flex justify-between items-center"><span className="font-medium">Birthday</span><span className="px-3 py-1 bg-gray-200 rounded-full text-sm flex items-center gap-1"><Calendar size={14} /> {format(new Date(dob), 'MMMM do')}</span></div>}
+                        </div>
+
+                        {settings && (
+                             <div className="mt-6 space-y-3 text-left">
+                                <div className="flex justify-between items-center"><span className="font-medium">Default Region</span><span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{settings.defaultRegion || 'International'}</span></div>
+                                <div className="flex justify-between items-center"><span className="font-medium">Theme</span><span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{settings.theme || 'Default'}</span></div>
+                                <div className="flex justify-between items-center"><span className="font-medium">Save History</span><Switch checked={settings.saveHistory} disabled/></div>
                             </div>
-                        }
-                    />
-                    <DetailRow
-                        label={t('userdata.sections.account.status')}
-                        value={
-                            <>
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                                {t('userdata.sections.account.verified')}
-                            </>
-                        }
-                    />
-                </Section>
+                        )}
 
-                <Section title={t('userdata.sections.preferences.title')}>
-                    <DetailRow label={t('userdata.sections.preferences.region')} value={settings?.defaultRegion || '...'}/>
-                    <DetailRow 
-                        label={t('userdata.sections.preferences.theme')} 
-                        value={
-                             <div className="border rounded-md px-2 py-1 break-all">
-                                {t(`userdata.sections.preferences.themes.${settings?.theme.toLowerCase() || '...'}`)}
+                        <div className="grid grid-cols-2 gap-3 mt-6">
+                            <Button asChild className="flex gap-2" variant="secondary"><Link href="/settings"><Globe size={16} /> Region</Link></Button>
+                            <Button asChild className="flex gap-2" variant="secondary"><Link href="/profile/edit"><Shield size={16} /> Security</Link></Button>
+                            <Button asChild className="flex gap-2" variant="secondary"><Link href="/settings/theme"><Palette size={16} /> Theme</Link></Button>
+                            <Button asChild className="flex gap-2" variant="secondary"><Link href="/history"><History size={16} /> History</Link></Button>
+                        </div>
+                        
+                        <div className="mt-6 grid grid-cols-3 gap-4 text-center">
+                            <div><p className="text-lg font-bold">{stats.conversions}</p><p className="text-xs text-gray-500">Conversions</p></div>
+                            <div><p className="text-lg font-bold">{stats.notes}</p><p className="text-xs text-gray-500">Notes</p></div>
+                            <div><p className="text-lg font-bold">{stats.daysActive}</p><p className="text-xs text-gray-500">Days Active</p></div>
+                        </div>
+
+                        {achievements.length > 0 && (
+                            <div className="mt-6 text-left">
+                                <h3 className="font-semibold flex items-center gap-2 text-lg"><Award size={18} /> Achievements</h3>
+                                <ul className="mt-2 space-y-1 text-sm">
+                                    {achievements.map((achieve, index) => (<li key={index} className="flex items-center gap-2 bg-gray-100 rounded-md px-3 py-1">{achieve}</li>))}
+                                </ul>
                             </div>
-                        }
-                    />
-                    <DetailRow label={t('userdata.sections.preferences.saveHistory')} value={settings?.saveHistory ? t('userdata.sections.preferences.enabled') : t('userdata.sections.preferences.disabled')}/>
-                </Section>
-            </main>
+                        )}
 
-            <footer className="mt-8 pt-6 border-t flex justify-end items-center gap-4">
-                <Button variant="outline" onClick={handleLogout}><LogOut className="mr-2 h-4 w-4"/> {t('userdata.logout')}</Button>
-                <Link href="/settings">
-                    <Button><Settings className="mr-2 h-4 w-4"/> {t('userdata.manageSettings')}</Button>
-                </Link>
-            </footer>
+                        {skills.length > 0 && (
+                             <div className="mt-6 text-left">
+                                <h3 className="font-semibold flex items-center gap-2 text-lg"><Star size={18} /> Skills & Interests</h3>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {skills.map((skill, index) => (<span key={index} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm shadow-sm">{skill}</span>))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="mt-6 flex gap-4 justify-center">
+                            {linkedin && <a href={linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:underline flex items-center gap-1 text-sm"><Linkedin size={16} /> LinkedIn</a>}
+                            {twitter && <a href={twitter} target="_blank" rel="noopener noreferrer" className="text-sky-500 hover:underline flex items-center gap-1 text-sm"><Twitter size={16} /> Twitter</a>}
+                            {github && <a href={github} target="_blank" rel="noopener noreferrer" className="text-gray-800 hover:underline flex items-center gap-1 text-sm"><Github size={16} /> GitHub</a>}
+                            {instagram && <a href={instagram} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:underline flex items-center gap-1 text-sm"><Instagram size={16} /> Instagram</a>}
+                        </div>
+
+                        <div className="flex justify-between mt-8">
+                            <Button variant="outline" className="flex gap-2" onClick={handleLogout}><LogOut size={16} /> Log out</Button>
+                            <Button asChild className="flex gap-2"><Link href="/settings"><Settings size={16} /> Manage Settings</Link></Button>
+                        </div>
+                        
+                        <p className="mt-6 text-xs text-gray-500">© 2025 Sutradhar | Owned by Aman Yadav. v1.5.2</p>
+                    </CardContent>
+                </Card>
+            </motion.div>
         </div>
     );
 }
