@@ -400,6 +400,9 @@ export function Analytics() {
                                 selected={dateRange}
                                 onSelect={setDateRange}
                                 numberOfMonths={1}
+                                captionLayout="dropdown-buttons"
+                                fromYear={new Date().getFullYear() - 5}
+                                toYear={new Date().getFullYear()}
                                 />
                             </PopoverContent>
                         </Popover>

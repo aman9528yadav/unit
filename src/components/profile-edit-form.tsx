@@ -78,6 +78,13 @@ export function ProfileEditForm() {
         ...data,
         fullName: data.fullName || '',
         email: userEmail,
+        phone: data.phone || '',
+        address: data.address || '',
+        dob: data.dob || '',
+        linkedin: data.linkedin || '',
+        twitter: data.twitter || '',
+        github: data.github || '',
+        instagram: data.instagram || '',
       });
       setNotePassword(data.notePassword || '');
       setSkillsString((data.skills || []).join(', '));
