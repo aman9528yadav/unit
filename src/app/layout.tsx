@@ -8,7 +8,7 @@ import { LanguageProvider } from '@/context/language-context';
 import { ThemeProvider } from '@/context/theme-context';
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { listenToGlobalMaintenanceMode, UserData, listenToUserData } from '@/services/firestore';
+import { listenToGlobalMaintenanceMode, UserData, listenToUserData, listenToAboutInfoFromRtdb, AppInfo } from '@/services/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
@@ -89,6 +89,7 @@ export default function RootLayout({
 }>) {
   const pathname = usePathname();
   const [profile, setProfile] = useState<Partial<UserData> | null>(null);
+  const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
   const noHeaderPaths = ['/welcome', '/signup', '/forgot-password', '/profile/edit', '/logout', '/profile/success', '/maintenance'];
   const devPaths = /^\/dev(\/.*)?$/;
   const [isCalculatorFullScreen, setIsCalculatorFullScreen] = useState(false);
@@ -118,6 +119,13 @@ export default function RootLayout({
         });
         return () => unsub();
     }
+     const unsubAppInfo = listenToAboutInfoFromRtdb((data) => {
+      if (data?.appInfo) {
+        setAppInfo(data.appInfo);
+      }
+    });
+
+    return () => unsubAppInfo();
   }, []);
 
   
@@ -141,7 +149,7 @@ export default function RootLayout({
                 <MaintenanceRedirect>
                   <SidebarProvider>
                       <div className="flex min-h-screen items-center justify-center">
-                          <div className={cn("w-full flex-grow flex flex-col", "max-w-[412px] relative")}>
+                          <div className={cn("w-full flex-grow flex flex-col", "max-w-[415px] relative")}>
                               {!hideHeader && (
                                   <Header />
                               )}
@@ -173,6 +181,10 @@ export default function RootLayout({
                                       </SidebarMenuItem>
                                   ))}
                               </SidebarMenu>
+                               <div className="absolute bottom-6 text-center text-black/60 text-sm">
+                                <p>Sutradhaar {appInfo?.version || ''}</p>
+                                <p>Made by Aman Yadav</p>
+                              </div>
                           </SidebarContent>
                       </Sidebar>
                   </SidebarProvider>
