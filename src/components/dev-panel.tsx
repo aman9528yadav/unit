@@ -13,7 +13,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
-import { setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo, setBroadcastNotification, listenToBroadcastNotification, deleteBroadcastNotification, listenToDashboardWelcomeMessage, setDashboardWelcomeMessage } from '@/services/firestore';
+import { setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo, setBroadcastNotification, listenToBroadcastNotification, deleteBroadcastNotification, listenToWelcomeContent, setWelcomeContent } from '@/services/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { intervalToDuration } from 'date-fns';
 
@@ -51,7 +51,8 @@ export function DevPanel() {
     const [notificationDescription, setNotificationDescription] = useState('');
     
     // State for UI Content Tab
-    const [welcomeMessage, setWelcomeMessage] = useState('');
+    const [welcomeTitle, setWelcomeTitle] = useState('');
+    const [welcomeDescription, setWelcomeDescription] = useState('');
 
     // State for Security Tab
     const [currentDevPassword, setCurrentDevPassword] = useState('');
@@ -133,14 +134,17 @@ export function DevPanel() {
             setNotificationDescription(info?.description || '');
         });
         
-        const unsubWelcomeMessage = listenToDashboardWelcomeMessage(setWelcomeMessage);
+        const unsubWelcomeContent = listenToWelcomeContent((content) => {
+            setWelcomeTitle(content?.title || '');
+            setWelcomeDescription(content?.description || '');
+        });
 
         return () => {
             unsubMaintenanceMode();
             unsubUpdateInfo();
             unsubNextUpdateInfo();
             unsubBroadcast();
-            unsubWelcomeMessage();
+            unsubWelcomeContent();
         };
     }, [isAuthorized, isAuthenticated]);
     
@@ -269,12 +273,12 @@ export function DevPanel() {
         }
     };
     
-    const handleSetWelcomeMessage = async () => {
+    const handleSetWelcomeContent = async () => {
         try {
-            await setDashboardWelcomeMessage(welcomeMessage);
-            toast({ title: 'Welcome Message Updated' });
+            await setWelcomeContent({ title: welcomeTitle, description: welcomeDescription });
+            toast({ title: 'Welcome Content Updated' });
         } catch (error) {
-             toast({ title: "Update Failed", description: "Could not update welcome message.", variant: "destructive" });
+             toast({ title: "Update Failed", description: "Could not update welcome content.", variant: "destructive" });
         }
     };
 
@@ -568,15 +572,25 @@ export function DevPanel() {
                                 <Button onClick={() => router.push('/dev/about')}>Manage</Button>
                             </div>
                              <div>
-                                <Label htmlFor="welcomeMessage">Dashboard Welcome Message</Label>
+                                <Label htmlFor="welcomeTitle">Welcome Title</Label>
                                 <Input 
-                                    id="welcomeMessage" 
-                                    value={welcomeMessage}
-                                    onChange={(e) => setWelcomeMessage(e.target.value)}
-                                    placeholder="e.g., Welcome back!"
+                                    id="welcomeTitle" 
+                                    value={welcomeTitle}
+                                    onChange={(e) => setWelcomeTitle(e.target.value)}
+                                    placeholder="e.g., Login to Sutradhaar"
                                 />
                             </div>
-                            <Button onClick={handleSetWelcomeMessage} className="w-full">Save Welcome Message</Button>
+                            <div>
+                                <Label htmlFor="welcomeDescription">Welcome Description</Label>
+                                <Textarea 
+                                    id="welcomeDescription" 
+                                    value={welcomeDescription}
+                                    onChange={(e) => setWelcomeDescription(e.target.value)}
+                                    placeholder="e.g., Access your unit converter dashboard"
+                                    rows={3}
+                                />
+                            </div>
+                            <Button onClick={handleSetWelcomeContent} className="w-full">Save Welcome Content</Button>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -618,4 +632,3 @@ export function DevPanel() {
         </div>
     );
 }
-

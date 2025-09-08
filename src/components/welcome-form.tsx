@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword, User } from "firebase/auth";
 import { Eye, EyeOff, Info, ArrowRight, Play } from "lucide-react";
-import { logUserEvent } from "@/services/firestore";
+import { logUserEvent, listenToWelcomeContent } from "@/services/firestore";
 import { useLanguage } from "@/context/language-context";
 
 
@@ -42,9 +42,19 @@ export function WelcomeForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [welcomeContent, setWelcomeContent] = useState({ title: "Login to Sutradhaar", description: "Access your unit converter dashboard" });
   const { toast } = useToast();
   const router = useRouter();
   const { t } = useLanguage();
+
+  useEffect(() => {
+    const unsub = listenToWelcomeContent((content) => {
+        if (content) {
+            setWelcomeContent(content);
+        }
+    });
+    return () => unsub();
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -101,9 +111,9 @@ export function WelcomeForm() {
                 <Button variant="ghost" className="data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:shadow-sm" onClick={() => router.push('/signup')}>{t('welcome.tabs.signup')}</Button>
             </div>
              <div className="text-left mb-6">
-                <h2 className="text-2xl font-bold">{t('welcome.title')}</h2>
+                <h2 className="text-2xl font-bold">{welcomeContent.title}</h2>
                 <p className="text-muted-foreground mt-1 text-sm">
-                   {t('welcome.description')}
+                   {welcomeContent.description}
                 </p>
             </div>
 

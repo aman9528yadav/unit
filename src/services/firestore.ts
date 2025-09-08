@@ -353,20 +353,25 @@ export interface BroadcastNotification {
     createdAt: string;
 }
 
-export async function setDashboardWelcomeMessage(message: string) {
+export interface WelcomeContent {
+    title: string;
+    description: string;
+}
+
+export async function setWelcomeContent(content: WelcomeContent) {
     try {
-        const welcomeRef = ref(rtdb, 'settings/dashboardWelcomeMessage');
-        await setRealtimeDb(welcomeRef, message);
+        const welcomeRef = ref(rtdb, 'settings/welcomeContent');
+        await setRealtimeDb(welcomeRef, content);
     } catch (error) {
-        console.error("Error setting welcome message:", error);
+        console.error("Error setting welcome content:", error);
         throw error;
     }
 }
 
-export function listenToDashboardWelcomeMessage(callback: (message: string) => void) {
-    const welcomeRef = ref(rtdb, 'settings/dashboardWelcomeMessage');
+export function listenToWelcomeContent(callback: (content: WelcomeContent | null) => void) {
+    const welcomeRef = ref(rtdb, 'settings/welcomeContent');
     return onValue(welcomeRef, (snapshot) => {
-        callback(snapshot.val() || "Welcome back to your dashboard!");
+        callback(snapshot.val());
     });
 }
 
