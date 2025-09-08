@@ -531,19 +531,19 @@ export function Notepad() {
                     </AlertDialogHeader>
                     <div className="space-y-2">
                         <Label htmlFor="note-password">Password</Label>
-                        <div className="relative">
-                            <Input 
-                                id="note-password" 
-                                type={showUnlockPassword ? "text" : "password"} 
-                                value={passwordInput} 
+                        <div className="relative flex items-center border border-input rounded-md focus-within:ring-2 focus-within:ring-ring">
+                            <Input
+                                id="note-password"
+                                type={showUnlockPassword ? "text" : "password"}
+                                value={passwordInput}
                                 onChange={e => setPasswordInput(e.target.value)}
-                                className="pr-10"
+                                className="pr-10 border-none focus-visible:ring-0"
                                 onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit()}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowUnlockPassword(!showUnlockPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                className="absolute right-3 text-muted-foreground"
                             >
                                 {showUnlockPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                             </button>
