@@ -132,14 +132,12 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
         img.onload = () => {
             const scaledWidth = img.width * zoom;
             const scaledHeight = img.height * zoom;
-            
-            const centerX = (avatarSize - scaledWidth) / 2;
-            const centerY = (avatarSize - scaledHeight) / 2;
 
-            const finalX = centerX + offset.x;
-            const finalY = centerY + offset.y;
+            // Calculate the top-left corner of the image for drawing, considering zoom and pan
+            const drawX = offset.x - (scaledWidth - avatarSize) / 2;
+            const drawY = offset.y - (scaledHeight - avatarSize) / 2;
 
-            ctx.drawImage(img, finalX, finalY, scaledWidth, scaledHeight);
+            ctx.drawImage(img, drawX, drawY, scaledWidth, scaledHeight);
             
             const dataUrl = canvas.toDataURL('image/png');
             onSave(dataUrl);
