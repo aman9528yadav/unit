@@ -29,6 +29,13 @@ const defaultReleasePlan: ReleasePlanItem[] = [
     { id: '2', title: 'Next Steps', date: 'Upcoming', description: 'Smarter, faster conversions with notes & history\nModern UI in Figma\nResponsive React components\nContinuous feature updates\nSutradhaar web app\nTesting & optimizations\nCross-platform official release' },
 ];
 
+const DetailRow = ({ label, value }: { label: string, value: string }) => (
+    <div className="flex justify-between items-center py-2 text-sm">
+        <p className="text-muted-foreground">{label}</p>
+        <p className="font-semibold text-foreground">{value}</p>
+    </div>
+);
+
 
 export function About() {
   const router = useRouter();
@@ -136,11 +143,11 @@ export function About() {
           <CardHeader>
             <CardTitle className="text-primary flex items-center gap-2"><Rocket className="w-5 h-5 text-accent" /> App Information</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div><p className="font-semibold text-primary">Version</p><p>{appInfo.version}</p></div>
-            <div><p className="font-semibold text-primary">Build</p><p>{appInfo.build}</p></div>
-            <div><p className="font-semibold text-primary">Channel</p><p>{appInfo.releaseChannel}</p></div>
-            <div><p className="font-semibold text-primary">License</p><p>{appInfo.license}</p></div>
+          <CardContent className="divide-y divide-border/50">
+             <DetailRow label="Version" value={appInfo.version} />
+             <DetailRow label="Build" value={appInfo.build} />
+             <DetailRow label="Channel" value={appInfo.releaseChannel} />
+             <DetailRow label="License" value={appInfo.license} />
           </CardContent>
         </Card>
       </motion.div>
