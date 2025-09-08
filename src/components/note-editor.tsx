@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -178,7 +177,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             const reader = new FileReader();
             reader.onloadend = () => {
                 const result = reader.result as string;
-                // Store all files as a 'filename|dataURI' string
                 const fileInfo = `${file.name}|${result}`;
                 setAttachment(fileInfo);
                 toast({ title: "File attached successfully!"});
@@ -327,7 +325,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
         const parts = attachment.split('|');
         const fileName = parts[0];
-        const dataUri = parts[1] || attachment; // Fallback for old format
+        const dataUri = parts[1] || attachment;
 
         const isImage = dataUri.startsWith('data:image/');
 
@@ -338,7 +336,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                          <Image src={dataUri} alt={t('noteEditor.attachmentAlt')} layout="fill" objectFit="contain" className="rounded-md" />
                     </div>
                 ) : (
-                    <a href={dataUri} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:underline">
+                    <a href={dataUri} download={fileName} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:underline">
                         <File className="w-6 h-6 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground truncate">{fileName}</span>
                     </a>
@@ -486,3 +484,5 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     );
 }
 
+
+    
