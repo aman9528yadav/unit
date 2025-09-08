@@ -102,7 +102,7 @@ function Calendar({
 
           return (
             <Select
-              onValueChange={(newValue) => {
+              onValueChange={(newValue: string) => {
                 const newDate = new Date(currentMonth);
                 if (props.name === 'months') {
                   newDate.setMonth(parseInt(newValue));
@@ -110,7 +110,8 @@ function Calendar({
                   newDate.setFullYear(parseInt(newValue));
                 }
                 setMonth(newDate);
-                props.onChange?.(newDate);
+                const anonChange = props.onChange as ((date: Date) => void) | undefined;
+                anonChange?.(newDate);
               }}
               value={props.name === 'months' ? currentMonth.getMonth().toString() : currentMonth.getFullYear().toString()}
             >
