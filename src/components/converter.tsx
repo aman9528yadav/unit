@@ -310,11 +310,9 @@ export function Converter() {
   };
 
   const isFeatureLocked = (featureId: string, isPremiumByDefault: boolean) => {
-    const isLockedByFlag = featureLocks[featureId]; // Can be true, false, or undefined
-    if (isLockedByFlag === true) return true; // Remotely locked
-    if (isLockedByFlag === false) return false; // Remotely unlocked
-
-    // If undefined, fallback to default premium logic
+    const isLockedByFlag = featureLocks[featureId];
+    if (isLockedByFlag === true) return true;
+    if (isLockedByFlag === false) return false;
     return isPremiumByDefault && userRole === 'Member';
   };
 
@@ -551,7 +549,7 @@ export function Converter() {
                                 {regions.map(r => {
                                     const isLocked = isFeatureLocked(`Region:${r}`, PREMIUM_REGIONS.includes(r));
                                     return (
-                                        <SelectItem key={r} value={r} disabled={isLocked} onSelect={(e) => { if (isLocked) { e.preventDefault(); setShowPremiumLockDialog(true); } }}>
+                                        <SelectItem key={r} value={r} onSelect={(e) => { if (isLocked) { e.preventDefault(); setShowPremiumLockDialog(true); } }}>
                                             <div className="flex items-center gap-2">
                                                 {PREMIUM_REGIONS.includes(r) && <Star className={cn("w-3 h-3", isLocked ? "text-muted-foreground" : "text-yellow-500 fill-yellow-400")} />}
                                                 {r}
@@ -572,7 +570,7 @@ export function Converter() {
                                 {conversionCategories.map(cat => {
                                     const isLocked = isFeatureLocked(`Category:${cat.name}`, PREMIUM_CATEGORIES.includes(cat.name));
                                     return (
-                                        <SelectItem key={cat.name} value={cat.name} disabled={isLocked} onSelect={(e) => { if (isLocked) { e.preventDefault(); setShowPremiumLockDialog(true); } }}>
+                                        <SelectItem key={cat.name} value={cat.name} onSelect={(e) => { if (isLocked) { e.preventDefault(); setShowPremiumLockDialog(true); } }}>
                                             <div className="flex items-center gap-2">
                                                 {PREMIUM_CATEGORIES.includes(cat.name) && <Star className={cn("w-3 h-3", isLocked ? "text-muted-foreground" : "text-yellow-500 fill-yellow-400")} />}
                                                 <cat.icon className="w-4 h-4" />

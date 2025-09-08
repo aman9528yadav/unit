@@ -342,7 +342,7 @@ export function Settings() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             {themes.map((themeItem) => (
-                                                <SelectItem key={themeItem.value} value={themeItem.value} onSelect={(e) => { if (isFeatureLocked(`Theme:${themeItem.value}`, themeItem.isPremium)) e.preventDefault(); }}>
+                                                <SelectItem key={themeItem.value} value={themeItem.value} onSelect={(e) => { if (isFeatureLocked(`Theme:${themeItem.value}`, themeItem.isPremium)) {e.preventDefault(); setShowPremiumLockDialog(true); }}}>
                                                     <div className="flex items-center gap-2">
                                                         {themeItem.isPremium && <Star className={cn("w-3 h-3", isFeatureLocked(`Theme:${themeItem.value}`, themeItem.isPremium) ? "text-muted-foreground" : "text-yellow-500 fill-yellow-400")} />}
                                                         {themeItem.name}
@@ -498,7 +498,7 @@ export function Settings() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="basic">{t('settings.calculator.modes.basic')}</SelectItem>
-                                            <SelectItem value="scientific">{t('settings.calculator.modes.scientific')}</SelectItem>
+                                            <SelectItem value="scientific" onSelect={(e) => {if(isScientificModeLocked) e.preventDefault()}}>{t('settings.calculator.modes.scientific')}</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 }
