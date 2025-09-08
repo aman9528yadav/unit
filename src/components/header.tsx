@@ -1,17 +1,17 @@
 
-
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Home, User, Settings, Languages, Sigma, Calculator, NotebookPen, History as HistoryIcon, Timer, ArrowLeft } from "lucide-react";
+import { Home, User, Settings, Languages, Sigma, Calculator, NotebookPen, History as HistoryIcon, Timer, ArrowLeft, HelpCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLanguage } from "@/context/language-context";
 import { listenToUserData, UserData } from "@/services/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Notifications } from "./notifications";
+import { cn } from "@/lib/utils";
 
 interface UserProfile {
     fullName: string;
@@ -28,6 +28,16 @@ const pageTitles: { [key: string]: { title: string, icon: React.ElementType } } 
     '/time': { title: 'Time Utilities', icon: Timer },
     '/settings': { title: 'Settings', icon: Settings },
 };
+
+const navLinks = [
+    { href: "/", label: "Dashboard", icon: Home },
+    { href: "/converter", label: "Converter", icon: Sigma },
+    { href: "/calculator", label: "Calculator", icon: Calculator },
+    { href: "/notes", label: "Notes", icon: NotebookPen },
+    { href: "/history", label: "History", icon: HistoryIcon },
+    { href: "/time", label: "Timer", icon: Timer },
+    { href: "/settings", label: "Settings", icon: Settings },
+]
 
 export function Header() {
     const pathname = usePathname();
@@ -102,6 +112,23 @@ export function Header() {
                     </Button>
                 </div>
             </div>
+             <nav className="mt-4 flex items-center justify-center gap-2 overflow-x-auto pb-2 -mx-4 px-4">
+                {navLinks.map(link => (
+                    <Link key={link.href} href={link.href} passHref>
+                        <Button
+                            variant={pathname === link.href ? "secondary" : "ghost"}
+                            className="text-sm px-3 py-1.5 h-auto flex-shrink-0"
+                        >
+                            {link.label}
+                        </Button>
+                    </Link>
+                ))}
+                <Link href="/how-to-use" passHref>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                        <HelpCircle className="h-5 w-5"/>
+                    </Button>
+                </Link>
+            </nav>
         </header>
     )
 }
