@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { User, Menu, Search, X } from "lucide-react";
+import { User, Menu, Search, X, Sparkles, LogIn } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { listenToUserData } from "@/services/firestore";
 import { GlobalSearch } from "./global-search";
@@ -14,6 +14,7 @@ import { useLanguage } from '@/context/language-context';
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Notifications } from "./notifications";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 
 interface UserProfile {
     fullName: string;
@@ -27,6 +28,7 @@ export function Header() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [isSearchActive, setIsSearchActive] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [showLoginDialog, setShowLoginDialog] = useState(false);
 
     useEffect(() => {
         const storedProfileData = localStorage.getItem("userProfile");
@@ -66,10 +68,10 @@ export function Header() {
     }, []);
 
     const handleProfileClick = () => {
-        if (profile) {
+        if (isLoggedIn) {
             router.push('/profile');
         } else {
-            router.push('/welcome');
+            setShowLoginDialog(true);
         }
     };
 
@@ -131,6 +133,26 @@ export function Header() {
                     </Button>
                 </div>
             </div>
+            <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+              <AlertDialogContent>
+                <AlertDialogHeader className="items-center text-center">
+                  <div className="p-3 bg-primary/10 rounded-full mb-4 w-fit">
+                    <Sparkles className="w-8 h-8 text-primary" />
+                  </div>
+                  <AlertDialogTitle className="text-2xl">{t('dashboard.unlockProfile.title')}</AlertDialogTitle>
+                  <AlertDialogDescription className="max-w-xs">
+                    {t('dashboard.unlockProfile.description')}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="flex-col-reverse sm:flex-col-reverse gap-2">
+                  <AlertDialogCancel>{t('dashboard.unlockProfile.cancel')}</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => router.push('/welcome')} className="bg-primary hover:bg-primary/90">
+                    <LogIn className="mr-2"/>
+                    {t('dashboard.unlockProfile.confirm')}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
         </header>
     )
 }

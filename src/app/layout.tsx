@@ -17,11 +17,12 @@ import { cn } from '@/lib/utils';
 import { SidebarProvider, Sidebar, SidebarClose, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X, User, Info, Newspaper, Rocket, Palette, Languages, Hourglass, Calendar, Mail, Crown } from 'lucide-react';
+import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X, User, Info, Newspaper, Rocket, Palette, Languages, Hourglass, Calendar, Mail, Crown, Sparkles, LogIn } from 'lucide-react';
 import { Logo } from '@/components/logo';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Label } from './ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { motion, PanInfo } from 'framer-motion';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
@@ -228,18 +229,15 @@ function PageContent({ children }: { children: React.ReactNode }) {
   )
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { t } = useLanguage();
   const [profile, setProfile] = useState<Partial<UserData> | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
-  const noHeaderPaths = ['/welcome', '/signup', '/forgot-password', '/getting-started', '/maintenance', '/logout', '/profile/success'];
-  const devPaths = /^\/dev(\/.*)?$/;
   const [isCalculatorFullScreen, setIsCalculatorFullScreen] = useState(false);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
   
   useEffect(() => {
     const checkFullScreen = () => {
@@ -277,68 +275,109 @@ export default function RootLayout({
     return () => unsubAppInfo();
   }, []);
 
-  
-  const hideHeader = noHeaderPaths.includes(pathname) || devPaths.test(pathname) || isCalculatorFullScreen;
-  
   const navLinks = allNavLinks.filter(link => !link.requiresAuth || isLoggedIn);
 
+  const handleLinkClick = (e: React.MouseEvent, href: string, requiresAuth: boolean) => {
+    if (requiresAuth && !isLoggedIn) {
+      e.preventDefault();
+      setShowLoginDialog(true);
+    }
+  };
+
+  return (
+    <html lang="en">
+      <head>
+          <title>Sutradhaar</title>
+          <meta name="description" content="A straightforward unit converter app for various measurements." />
+          <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
+          <meta name="manifest" content="/manifest.json" />
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+          <link rel="apple-touch-icon" href="/icon-192x192.png" />
+      </head>
+      <body className="font-body antialiased" suppressHydrationWarning>
+          <MaintenanceRedirect>
+            <SidebarProvider>
+                <div className="flex min-h-screen items-center justify-center">
+                    <PageContent>{children}</PageContent>
+                </div>
+                <Sidebar>
+                    <SidebarContent className="p-4 flex flex-col items-center justify-center">
+                          <div className="absolute top-4 flex flex-col items-center gap-4">
+                          <SidebarSelectors />
+                          <SidebarClose asChild>
+                            <Button variant="ghost" size="icon" className="text-black hover:bg-black/10 rounded-full">
+                              <X className="h-6 w-6" />
+                            </Button>
+                          </SidebarClose>
+                        </div>
+                        <div className="text-center text-black mb-8 mt-24">
+                          <h2 className="text-xl font-medium">Welcome back,</h2>
+                          <p className="text-3xl font-bold">{profile?.fullName || 'Guest'}</p>
+                        </div>
+                        <SidebarMenu>
+                            {allNavLinks.map((link) => (
+                                <SidebarMenuItem key={link.href}>
+                                    <Link 
+                                      href={link.href} 
+                                      passHref
+                                      onClick={(e) => handleLinkClick(e, link.href, link.requiresAuth)}
+                                      target={link.isExternal ? "_blank" : undefined}
+                                      rel={link.isExternal ? "noopener noreferrer" : undefined}
+                                    >
+                                        <SidebarMenuButton isActive={pathname === link.href}>
+                                            <link.icon className="w-5 h-5"/>
+                                            <span>{link.label}</span>
+                                        </SidebarMenuButton>
+                                    </Link>
+                                </SidebarMenuItem>
+                            ))}
+                        </SidebarMenu>
+                          <div className="absolute bottom-4 text-center text-black/60 text-sm">
+                          <p>Sutradhaar {appInfo?.version || ''}</p>
+                          <p>Made by Aman Yadav</p>
+                        </div>
+                    </SidebarContent>
+                </Sidebar>
+            </SidebarProvider>
+          </MaintenanceRedirect>
+          <Toaster />
+          <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader className="items-center text-center">
+                <div className="p-3 bg-primary/10 rounded-full mb-4 w-fit">
+                  <Sparkles className="w-8 h-8 text-primary" />
+                </div>
+                <AlertDialogTitle className="text-2xl">{t('dashboard.unlockProfile.title')}</AlertDialogTitle>
+                <AlertDialogDescription className="max-w-xs">
+                  {t('dashboard.unlockProfile.description')}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="flex-col-reverse sm:flex-col-reverse gap-2">
+                <AlertDialogCancel>{t('dashboard.unlockProfile.cancel')}</AlertDialogCancel>
+                <AlertDialogAction onClick={() => router.push('/welcome')} className="bg-primary hover:bg-primary/90">
+                  <LogIn className="mr-2"/>
+                  {t('dashboard.unlockProfile.confirm')}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+      </body>
+    </html>
+  );
+}
+
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <ThemeProvider>
       <LanguageProvider>
-            <html lang="en">
-            <head>
-                <title>Sutradhaar</title>
-                <meta name="description" content="A straightforward unit converter app for various measurements." />
-                <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
-                <meta name="manifest" content="/manifest.json" />
-                <link rel="preconnect" href="https://fonts.googleapis.com" />
-                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-                <link rel="apple-touch-icon" href="/icon-192x192.png" />
-            </head>
-            <body className="font-body antialiased" suppressHydrationWarning>
-                <MaintenanceRedirect>
-                  <SidebarProvider>
-                      <div className="flex min-h-screen items-center justify-center">
-                          <PageContent>{children}</PageContent>
-                      </div>
-                      <Sidebar>
-                          <SidebarContent className="p-4 flex flex-col items-center justify-center">
-                               <div className="absolute top-4 flex flex-col items-center gap-4">
-                                <SidebarSelectors />
-                                <SidebarClose asChild>
-                                  <Button variant="ghost" size="icon" className="text-black hover:bg-black/10 rounded-full">
-                                    <X className="h-6 w-6" />
-                                  </Button>
-                                </SidebarClose>
-                              </div>
-                              <div className="text-center text-black mb-8 mt-24">
-                                <h2 className="text-xl font-medium">Welcome back,</h2>
-                                <p className="text-3xl font-bold">{profile?.fullName || 'Guest'}</p>
-                              </div>
-                              <SidebarMenu>
-                                  {navLinks.map((link) => (
-                                      <SidebarMenuItem key={link.href}>
-                                          <Link href={link.href} passHref>
-                                              <SidebarMenuButton isActive={pathname === link.href}>
-                                                  <link.icon className="w-5 h-5"/>
-                                                  <span>{link.label}</span>
-                                              </SidebarMenuButton>
-                                          </Link>
-                                      </SidebarMenuItem>
-                                  ))}
-                              </SidebarMenu>
-                               <div className="absolute bottom-4 text-center text-black/60 text-sm">
-                                <p>Sutradhaar {appInfo?.version || ''}</p>
-                                <p>Made by Aman Yadav</p>
-                              </div>
-                          </SidebarContent>
-                      </Sidebar>
-                  </SidebarProvider>
-                </MaintenanceRedirect>
-                <Toaster />
-            </body>
-            </html>
+        <RootLayoutContent>{children}</RootLayoutContent>
       </LanguageProvider>
     </ThemeProvider>
   );
