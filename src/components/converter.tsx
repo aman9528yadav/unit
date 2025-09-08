@@ -53,7 +53,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useDebounce } from "@/hooks/use-debounce";
 import { incrementConversionCount, getStats } from "@/lib/stats";
-import { listenToUserData, addConversionToHistory, setFavorites as setFavoritesInDb, deleteHistoryItem, listenToFeatureLocks, FeatureLocks, CONVERSION_HISTORY_KEY } from "@/services/firestore";
+import { listenToUserData, addConversionToHistory, setFavorites as setFavoritesInDb, deleteHistoryItem, getHistoryKey, listenToFeatureLocks, FeatureLocks } from "@/services/firestore";
 import { getStreakData } from "@/lib/streak";
 import { offlineParseConversionQuery } from "./global-search";
 
@@ -254,7 +254,7 @@ export function Converter() {
             setProfile(newProfileData ? JSON.parse(newProfileData) : null);
             updateUserRole(userEmail);
         }
-        if (e.key === CONVERSION_HISTORY_KEY(profile?.email || null)) {
+        if (e.key === getHistoryKey(profile?.email || null, 'conversionHistory')) {
             const newHistory = JSON.parse(e.newValue || '[]');
             setRecentConversions(newHistory.slice(0, 4));
         }

@@ -738,7 +738,7 @@ export async function updateUserNotes(email: string | null, notes: Note[]) {
 export type HistoryType = 'conversionHistory' | 'calculationHistory' | 'favoriteConversions';
 
 // Centralize local storage key generation
-const getHistoryKey = (email: string | null, historyType: HistoryType) => email ? `${email}_${historyType}` : `guest_${historyType}`;
+export const getHistoryKey = (email: string | null, historyType: HistoryType) => email ? `${email}_${historyType}` : `guest_${historyType}`;
 
 
 async function addToHistory(email: string | null, historyType: HistoryType, item: string) {
