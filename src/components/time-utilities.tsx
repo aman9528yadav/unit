@@ -546,7 +546,7 @@ function DateDifference() {
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
-                                <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus />
+                                <Calendar mode="single" selected={startDate} onSelect={setStartDate} captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear() + 5} initialFocus />
                             </PopoverContent>
                         </Popover>
                     </div>
@@ -561,7 +561,7 @@ function DateDifference() {
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
-                                <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
+                                <Calendar mode="single" selected={endDate} onSelect={setEndDate} captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear() + 5} initialFocus />
                             </PopoverContent>
                         </Popover>
                     </div>
@@ -623,7 +623,7 @@ function AddSubtractTime() {
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
-                            <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                            <Calendar mode="single" selected={date} onSelect={setDate} captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear() + 5} initialFocus />
                         </PopoverContent>
                     </Popover>
                 </div>
@@ -745,14 +745,14 @@ function WorkingDaysCalculator() {
                     <Label>{t('timePage.dateCalc.startDate')}</Label>
                     <Popover>
                         <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{startDate ? format(startDate, "PPP") : <span>{t('timePage.dateCalc.pickDate')}</span>}</Button></PopoverTrigger>
-                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={setStartDate} /></PopoverContent>
+                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={setStartDate} captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear() + 5} /></PopoverContent>
                     </Popover>
                 </div>
                  <div className="flex flex-col gap-1.5">
                     <Label>{t('timePage.dateCalc.endDate')}</Label>
                     <Popover>
                         <PopoverTrigger asChild><Button variant="outline" className="w-full justify-start text-left font-normal"><CalendarIcon className="mr-2 h-4 w-4" />{endDate ? format(endDate, "PPP") : <span>{t('timePage.dateCalc.pickDate')}</span>}</Button></PopoverTrigger>
-                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={setEndDate} /></PopoverContent>
+                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={setEndDate} captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear() + 5} /></PopoverContent>
                     </Popover>
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -802,7 +802,7 @@ function Countdown() {
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={targetDate} onSelect={setTargetDate} initialFocus />
+                        <Calendar mode="single" selected={targetDate} onSelect={setTargetDate} captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear() + 5} initialFocus />
                     </PopoverContent>
                 </Popover>
                 {timeLeft ? (
