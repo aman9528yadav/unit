@@ -14,6 +14,7 @@ import { Logo } from "./logo";
 import { useLanguage } from '@/context/language-context';
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Notifications } from "./notifications";
 
 interface UserProfile {
     fullName: string;
@@ -75,8 +76,7 @@ export function Header() {
                             transition={{ duration: 0.3, ease: 'easeInOut' }}
                             className="flex items-center gap-2"
                         >
-                            <Logo className="w-8 h-8"/>
-                            <h1 className="font-bold text-lg text-foreground hidden sm:block">Sutradhaar</h1>
+                             <Notifications />
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -93,9 +93,8 @@ export function Header() {
                                 exit={{ opacity: 0 }}
                                 className="w-full max-w-xs"
                             >
-                                <Button variant="ghost" className="w-full justify-start gap-2" onClick={() => setIsSearchActive(true)}>
+                                <Button variant="ghost" className="w-full justify-center gap-2" onClick={() => setIsSearchActive(true)}>
                                    <Search className="text-muted-foreground"/>
-                                   <span className="text-muted-foreground">Search...</span>
                                </Button>
                            </motion.div>
                         )}
