@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon, ArrowRightLeft, CheckSquare, Baseline, Highlighter, File, Lock, Unlock } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon, ArrowRightLeft, CheckSquare, Baseline, Highlighter, File, Lock, Unlock, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -20,8 +20,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { useLanguage } from '@/context/language-context';
-import { listenToUserNotes, updateUserNotes } from '@/services/firestore';
+import { listenToUserNotes, updateUserNotes, listenToUserData, UserData } from '@/services/firestore';
 import { cn } from '@/lib/utils';
+import { Label } from './ui/label';
 
 
 const FONT_COLORS = [
@@ -50,10 +51,14 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const [customFontSize, setCustomFontSize] = useState('16');
     const [isDirty, setIsDirty] = useState(false);
     const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [userData, setUserData] = useState<UserData | null>(null);
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
     const { t } = useLanguage();
     const [allNotes, setAllNotes] = useState<Note[]>([]);
     const [isLocked, setIsLocked] = useState(false);
+    const [showSetPasswordDialog, setShowSetPasswordDialog] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
 
     const router = useRouter();
@@ -78,7 +83,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     useEffect(() => {
         if (!profile) return;
         
-        const unsubscribe = listenToUserNotes(profile.email, (notesFromDb) => {
+        const unsubNotes = listenToUserNotes(profile.email, (notesFromDb) => {
             setAllNotes(notesFromDb);
             if (!isNewNote) {
                 const noteToEdit = notesFromDb.find(note => note.id === noteId);
@@ -96,8 +101,13 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 }
             }
         });
+
+        const unsubUserData = listenToUserData(profile.email, setUserData);
         
-        return () => unsubscribe();
+        return () => {
+            unsubNotes();
+            unsubUserData();
+        };
 
     }, [noteId, isNewNote, router, toast, profile, t]);
 
@@ -122,6 +132,36 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             window.removeEventListener('beforeunload', handleBeforeUnload);
         };
     }, [isDirty]);
+
+    const handleLockToggle = () => {
+        if (!isLocked && !userData?.notePassword) {
+            setShowSetPasswordDialog(true);
+        } else {
+            setIsLocked(!isLocked);
+            setIsDirty(true);
+        }
+    }
+    
+    const handleSetInitialPassword = async () => {
+        if (newPassword !== confirmNewPassword) {
+            toast({ title: "Passwords do not match", variant: "destructive" });
+            return;
+        }
+        if (newPassword.length < 4) {
+            toast({ title: "Password must be at least 4 characters", variant: "destructive" });
+            return;
+        }
+        if (profile?.email) {
+            await updateUserNotes(profile.email, allNotes); // Save other changes first
+            await updateUserData(profile.email, { notePassword: newPassword });
+            setIsLocked(true);
+            setIsDirty(true);
+            setShowSetPasswordDialog(false);
+            setNewPassword('');
+            setConfirmNewPassword('');
+            toast({ title: "Password Set & Note Locked", description: "You can change this password in settings." });
+        }
+    };
 
 
     const applyStyle = (style: string, value: string) => {
@@ -334,23 +374,28 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
         const isImage = dataUri.startsWith('data:image/');
 
+        if (isImage) {
+            return (
+                 <div className="relative w-full h-64 my-4 group">
+                    <Image src={dataUri} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="contain" className="rounded-md" />
+                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={handleRemoveImage}>
+                       <X size={16}/>
+                    </Button>
+                </div>
+            )
+        }
+
         return (
-            <div className="relative group p-2 border rounded-lg">
-                {isImage ? (
-                    <div className="relative w-full h-64">
-                         <Image src={dataUri} alt={t('noteEditor.attachmentAlt')} layout="fill" objectFit="contain" className="rounded-md" />
-                    </div>
-                ) : (
-                    <a href={dataUri} download={fileName} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:underline">
-                        <File className="w-6 h-6 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground truncate">{fileName}</span>
-                    </a>
-                )}
+            <div className="relative group p-2 border rounded-lg my-4">
+                 <a href={dataUri} download={fileName} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:underline">
+                    <File className="w-6 h-6 text-muted-foreground" />
+                    <span className="text-sm text-foreground truncate font-medium">{fileName}</span>
+                </a>
                  <Button variant="destructive" size="icon" className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={handleRemoveImage}>
                    <X size={14}/>
                 </Button>
             </div>
-        );
+        )
     }
 
 
@@ -365,7 +410,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <ArrowLeft />
                 </Button>
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => { setIsLocked(!isLocked); setIsDirty(true); }} className={cn(isLocked && "bg-primary/10 text-primary")}>
+                    <Button variant="ghost" size="icon" onClick={handleLockToggle} className={cn(isLocked && "bg-primary/10 text-primary")}>
                        {isLocked ? <Lock /> : <Unlock/>}
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => handleSave()}>
@@ -440,7 +485,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     </DropdownMenu>
                     
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => fileInputRef.current?.click()}><ImageIcon /></Button>
-                    <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
+                    <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="*" className="hidden" />
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={handleInsertCalculation}><CalculatorIcon /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={handleInsertConversion}><ArrowRightLeft /></Button>
                 </div>
@@ -490,7 +535,31 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            
+            <AlertDialog open={showSetPasswordDialog} onOpenChange={setShowSetPasswordDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Set Your Note Password</AlertDialogTitle>
+                        <AlertDialogDescription>
+                           This password will be used to lock and unlock your notes. You can change it later in settings.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                           <Label htmlFor="new-password">New Password</Label>
+                           <Input id="new-password" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                           <Label htmlFor="confirm-password">Confirm Password</Label>
+                           <Input id="confirm-password" type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} />
+                        </div>
+                    </div>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setShowSetPasswordDialog(false)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleSetInitialPassword}>Set Password & Lock</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
-
