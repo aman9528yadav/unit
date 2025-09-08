@@ -1,222 +1,207 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  ChevronRight,
-  User,
-  Star,
-  Lock,
-  Settings,
-  HelpCircle,
-  LogOut,
-  Code,
-  Gift,
-  Pencil,
-  Info,
-  Crown,
-  Cake
-} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+import { Switch } from "@/components/ui/switch";
+import { Crown, LogOut, Settings, Palette, Globe, Shield, History, CheckCircle, Award, ArrowLeft, Calendar, MapPin, Phone, Linkedin, Twitter, Star } from "lucide-react";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useLanguage } from "@/context/language-context";
+import { listenToUserData, UserData } from "@/services/firestore";
 import { getStats } from "@/lib/stats";
-import { Badge } from "./ui/badge";
-import { motion } from "framer-motion";
-import { listenToUserData } from "@/services/firestore";
 import { getStreakData } from "@/lib/streak";
+import { format } from "date-fns";
 
-const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
-const PREMIUM_MEMBER_THRESHOLD = 10000;
 type UserRole = 'Member' | 'Premium Member' | 'Owner';
+const PREMIUM_MEMBER_THRESHOLD = 10000;
+const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 
-
-interface UserProfile {
-    fullName: string;
-    email: string;
-    birthday: string;
-    dob: string;
-    profileImage?: string;
-}
-
-const defaultProfile: UserProfile = {
-    fullName: "Aman Yadav",
-    email: "aman@example.com",
-    birthday: "April 1st",
-    dob: "1990-04-01",
-};
+const defaultSkills = ["React", "Tailwind CSS", "UI/UX Design", "Content Writing", "Cricket", "Music"];
 
 export function Profile() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [userRole, setUserRole] = useState<UserRole>('Member');
-  const [isClient, setIsClient] = useState(false);
-  const router = useRouter();
-  const { toast } = useToast();
-  const { t } = useLanguage();
-  
-  const updateUserRole = async (email: string | null) => {
-    if(email === DEVELOPER_EMAIL) {
-        setUserRole('Owner');
-        return;
-    }
-    if (email) {
-        const stats = await getStats(email);
+    const [profileData, setProfileData] = useState<UserData | null>(null);
+    const [stats, setStats] = useState({ conversions: 0, notes: 0, daysActive: 0 });
+    const [userRole, setUserRole] = useState<UserRole>('Member');
+    const [achievements, setAchievements] = useState<string[]>([]);
+    
+    const router = useRouter();
+    const { toast } = useToast();
+    const { t } = useLanguage();
+
+    useEffect(() => {
+        const userEmail = auth.currentUser?.email;
+        if (!userEmail) {
+            router.replace('/welcome');
+            return;
+        }
+
+        const unsubscribe = listenToUserData(userEmail, (data) => {
+            setProfileData(data);
+            updateUserRoleAndStats(userEmail, data);
+        });
+
+        return () => unsubscribe();
+    }, [router]);
+
+    const updateUserRoleAndStats = async (email: string, userData: UserData) => {
+        const userStats = await getStats(email);
         const streakData = await getStreakData(email);
-        if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
+
+        setStats({
+            conversions: userStats.totalConversions,
+            notes: userStats.savedNotes,
+            daysActive: streakData.bestStreak,
+        });
+
+        if (email === DEVELOPER_EMAIL) {
+            setUserRole('Owner');
+        } else if (userStats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
             setUserRole('Premium Member');
         } else {
             setUserRole('Member');
         }
-    } else {
-        setUserRole('Member');
+
+        const newAchievements: string[] = [];
+        if (auth.currentUser?.emailVerified) newAchievements.push("⭐ Verified User");
+        if (userStats.totalConversions >= 100) newAchievements.push("🏆 100+ Conversions");
+        if (streakData.bestStreak >= 30) newAchievements.push("📅 30 Days Active");
+        if (streakData.bestStreak >= 7) newAchievements.push("🔥 7 Day Streak");
+        if (userRole === 'Premium Member' || userRole === 'Owner') newAchievements.push("👑 Premium Member");
+        setAchievements(newAchievements);
+    };
+
+    const handleLogout = () => {
+        auth.signOut().then(() => {
+            localStorage.removeItem("userProfile");
+            toast({ title: t('profile.toast.logout.title'), description: t('profile.toast.logout.description') });
+            router.push("/logout");
+        }).catch((error) => {
+            console.error("Logout Error:", error);
+            toast({ title: t('profile.toast.logoutFailed.title'), description: t('profile.toast.logoutFailed.description'), variant: "destructive" });
+        });
+    };
+
+    if (!profileData) {
+        return null; // Or a loading skeleton
     }
-  };
 
-  useEffect(() => {
-    setIsClient(true);
-    
-    const userEmail = auth.currentUser?.email || (localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null);
+    const {
+        profileImage,
+        fullName,
+        email,
+        phone,
+        address,
+        dob,
+        linkedin,
+        twitter,
+        skills = defaultSkills,
+        settings,
+    } = profileData;
 
-    if (!userEmail) {
-        router.replace('/welcome');
-        return;
-    }
-    
-    const unsub = listenToUserData(userEmail, (data) => {
-        if (!data) {
-             router.replace('/welcome');
-             return;
-        }
-        const userProfile = {
-            fullName: data.fullName || auth.currentUser?.displayName || 'Guest',
-            email: userEmail,
-            profileImage: data.profileImage || auth.currentUser?.photoURL,
-            dob: data.dob,
-            birthday: data.dob ? format(new Date(data.dob), "MMMM do") : ''
-        };
-        setProfile(userProfile);
-        updateUserRole(userEmail);
-        
-        localStorage.setItem("userProfile", JSON.stringify(userProfile));
-    });
+    return (
+        <div className="min-h-screen flex justify-center p-4 sm:p-6 bg-gray-50 text-gray-900">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="w-full max-w-lg"
+            >
+                <div className="mb-4">
+                    <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => router.back()}>
+                        <ArrowLeft size={16} /> Back
+                    </Button>
+                </div>
 
-    return () => unsub();
+                <div className="relative rounded-2xl overflow-hidden shadow-lg">
+                    <div className="h-32 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+                    <div className="absolute -bottom-16 left-1/2 -translate-x-1/2">
+                        <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white flex items-center justify-center">
+                            <img
+                                src={profileImage || 'https://i.pravatar.cc/150?u=amanyadav9458'}
+                                alt="Profile"
+                                className="w-full h-full rounded-full object-cover"
+                            />
+                        </div>
+                    </div>
+                </div>
 
-  }, [router]);
+                <Card className="mt-20 p-6 text-center shadow-xl rounded-2xl">
+                    <CardContent className="p-0">
+                        <h2 className="text-xl font-semibold flex items-center justify-center gap-2">
+                            {fullName} {userRole !== 'Member' && <Crown className="text-yellow-500" size={20} />}
+                        </h2>
+                        <p className="text-sm text-gray-500">{email}</p>
+                        <p className="flex items-center justify-center gap-1 text-green-500 mt-1 text-sm">
+                            <CheckCircle size={16} /> Verified
+                        </p>
 
-  const handleLogout = () => {
-    auth.signOut().then(() => {
-        localStorage.removeItem("userProfile");
-        toast({ title: t('profile.toast.logout.title'), description: t('profile.toast.logout.description') });
-        router.push("/logout");
-    }).catch((error) => {
-        console.error("Logout Error:", error);
-        toast({ title: t('profile.toast.logoutFailed.title'), description: t('profile.toast.logoutFailed.description'), variant: "destructive" });
-    });
-  };
+                        <div className="mt-6 space-y-3 text-left">
+                            {phone && <div className="flex justify-between items-center"><span className="font-medium flex items-center gap-2"><Phone size={14} /> Phone</span><span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{phone}</span></div>}
+                            {address && <div className="flex justify-between items-center"><span className="font-medium flex items-center gap-2"><MapPin size={14} /> Address</span><span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{address}</span></div>}
+                            {dob && <div className="flex justify-between items-center"><span className="font-medium">Birthday</span><span className="px-3 py-1 bg-gray-200 rounded-full text-sm flex items-center gap-1"><Calendar size={14} /> {format(new Date(dob), 'MMMM do')}</span></div>}
+                        </div>
 
-  const menuItems = [
-    { icon: Gift, text: t('profile.menu.whatsNew'), href: "/updates" },
-    { icon: Lock, text: t('profile.menu.privacy'), href: "/privacy-policy" },
-    { icon: Settings, text: t('profile.menu.settings'), href: "/settings" },
-    { icon: HelpCircle, text: t('profile.menu.help'), href: "/how-to-use" },
-    { icon: Info, text: t('profile.menu.about'), href: "/about" },
-    { icon: LogOut, text: t('profile.menu.logout'), onClick: handleLogout }
-  ];
+                        {settings && (
+                             <div className="mt-6 space-y-3 text-left">
+                                <div className="flex justify-between items-center"><span className="font-medium">Default Region</span><span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{settings.defaultRegion || 'International'}</span></div>
+                                <div className="flex justify-between items-center"><span className="font-medium">Theme</span><span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{settings.theme || 'Default'}</span></div>
+                                <div className="flex justify-between items-center"><span className="font-medium">Save History</span><Switch checked={settings.saveConversionHistory} disabled/></div>
+                            </div>
+                        )}
 
-  if (profile?.email === DEVELOPER_EMAIL) {
-    menuItems.splice(5, 0, { icon: Code, text: t('profile.menu.developer'), href: "/dev" });
-  }
+                        <div className="grid grid-cols-2 gap-3 mt-6">
+                            <Button asChild className="flex gap-2" variant="secondary"><Link href="/settings"><Globe size={16} /> Region</Link></Button>
+                            <Button asChild className="flex gap-2" variant="secondary"><Link href="/profile/edit"><Shield size={16} /> Security</Link></Button>
+                            <Button asChild className="flex gap-2" variant="secondary"><Link href="/settings/theme"><Palette size={16} /> Theme</Link></Button>
+                            <Button asChild className="flex gap-2" variant="secondary"><Link href="/history"><History size={16} /> History</Link></Button>
+                        </div>
+                        
+                        <div className="mt-6 grid grid-cols-3 gap-4 text-center">
+                            <div><p className="text-lg font-bold">{stats.conversions}</p><p className="text-xs text-gray-500">Conversions</p></div>
+                            <div><p className="text-lg font-bold">{stats.notes}</p><p className="text-xs text-gray-500">Notes</p></div>
+                            <div><p className="text-lg font-bold">{stats.daysActive}</p><p className="text-xs text-gray-500">Days Active</p></div>
+                        </div>
 
+                        {achievements.length > 0 && (
+                            <div className="mt-6 text-left">
+                                <h3 className="font-semibold flex items-center gap-2 text-lg"><Award size={18} /> Achievements</h3>
+                                <ul className="mt-2 space-y-1 text-sm">
+                                    {achievements.map((achieve, index) => (<li key={index} className="flex items-center gap-2 bg-gray-100 rounded-md px-3 py-1">{achieve}</li>))}
+                                </ul>
+                            </div>
+                        )}
 
-  if (!isClient || !profile) {
-    return null; // or a loading spinner
-  }
+                        {skills.length > 0 && (
+                             <div className="mt-6 text-left">
+                                <h3 className="font-semibold flex items-center gap-2 text-lg"><Star size={18} /> Skills & Interests</h3>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {skills.map((skill, index) => (<span key={index} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm shadow-sm">{skill}</span>))}
+                                </div>
+                            </div>
+                        )}
 
-  const roleText = {
-      'Member': 'Member',
-      'Premium Member': 'Premium',
-      'Owner': 'Owner'
-  }
+                        {(linkedin || twitter) && (
+                            <div className="mt-6 flex gap-4 justify-center">
+                                {linkedin && <a href={linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:underline flex items-center gap-1 text-sm"><Linkedin size={16} /> LinkedIn</a>}
+                                {twitter && <a href={twitter} target="_blank" rel="noopener noreferrer" className="text-sky-500 hover:underline flex items-center gap-1 text-sm"><Twitter size={16} /> Twitter</a>}
+                            </div>
+                        )}
 
-  return (
-    <motion.div 
-        className="w-full max-w-md mx-auto text-foreground flex flex-col"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-    >
-      <div className="bg-primary/80 text-primary-foreground pb-8 rounded-b-3xl">
-        <header className="p-4 flex items-center gap-4">
-          <Link href="/">
-            <Button variant="ghost" size="icon" className="hover:bg-white/20">
-              <ArrowLeft />
-            </Button>
-          </Link>
-          <h1 className="text-xl font-bold">{t('profile.title')}</h1>
-        </header>
-
-        <div className="flex flex-col items-center text-center gap-2 mt-2">
-            <div className="relative w-28 h-28 cursor-pointer">
-                <Avatar className="w-28 h-28 text-6xl border-4 border-background">
-                    <AvatarImage src={profile.profileImage} alt={profile.fullName} />
-                    <AvatarFallback>
-                        {profile.fullName?.split(' ').map(n => n[0]).join('') || <User />}
-                    </AvatarFallback>
-                </Avatar>
-                <Button asChild size="icon" className="absolute bottom-0 right-0 rounded-full w-8 h-8">
-                    <Link href="/profile/edit">
-                        <Pencil />
-                    </Link>
-                </Button>
-            </div>
-          <h2 className="text-2xl font-bold mt-2">{profile.fullName}</h2>
-          <p className="text-sm">{profile.email}</p>
-          {profile.birthday && (
-            <div className="flex items-center gap-2 text-sm">
-                <Cake className="w-4 h-4" />
-                <span>{profile.birthday}</span>
-            </div>
-          )}
-          <Badge variant="secondary" className="mt-2">
-             {userRole === 'Premium Member' || userRole === 'Owner' ? <Crown className="w-4 h-4 mr-2 text-yellow-400"/> : <Star className="w-4 h-4 mr-2" />}
-             {roleText[userRole]}
-          </Badge>
+                        <div className="flex justify-between mt-8">
+                            <Button variant="outline" className="flex gap-2" onClick={handleLogout}><LogOut size={16} /> Log out</Button>
+                            <Button asChild className="flex gap-2"><Link href="/settings"><Settings size={16} /> Manage Settings</Link></Button>
+                        </div>
+                        
+                        <p className="mt-6 text-xs text-gray-500">© 2025 Sutradhar | Owned by Aman Yadav. v1.5.2</p>
+                    </CardContent>
+                </Card>
+            </motion.div>
         </div>
-      </div>
-
-      <nav className="mt-6 px-4 flex-grow">
-        <ul className="space-y-2">
-          {menuItems.map((item, index) => {
-             const content = (
-                <motion.div 
-                    className="flex items-center p-3 rounded-lg hover:bg-card transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                >
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <item.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <span className="ml-4 font-medium">{item.text}</span>
-                  <ChevronRight className="ml-auto w-5 h-5 text-muted-foreground" />
-                </motion.div>
-              );
-
-            return (
-              <li key={index} onClick={item.onClick} className="cursor-pointer">
-                {item.href ? <Link href={item.href}>{content}</Link> : <div>{content}</div>}
-              </li>
-            )
-          })}
-        </ul>
-      </nav>
-    </motion.div>
-  );
+    );
 }
+

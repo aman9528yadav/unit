@@ -259,8 +259,8 @@ export interface AppInfo {
 export interface ReleasePlanItem {
     id: string;
     title: string;
-    date: string;
     description: string;
+    date: string;
 }
 
 export interface AboutInfo {
@@ -442,20 +442,42 @@ export function listenToBroadcastNotification(callback: (info: BroadcastNotifica
 }
 
 // --- USER DATA (RTDB) ---
+export interface UserData {
+    fullName: string;
+    email: string;
+    profileImage?: string;
+    dob?: string;
+    phone?: string;
+    address?: string;
+    linkedin?: string;
+    twitter?: string;
+    skills?: string[];
+    settings?: {
+        language?: string;
+        theme?: string;
+        customTheme?: any;
+        notificationsEnabled?: boolean;
+        saveConversionHistory?: boolean;
+        defaultRegion?: string;
+        calculatorMode?: string;
+        calculatorSound?: boolean;
+    };
+    [key: string]: any; // For other dynamic properties
+}
 /**
  * Retrieves a user's data document from Realtime Database.
  * @param email - The user's email. Returns an empty object if null.
  * @returns The user data object.
  */
-export async function getUserData(email: string | null) {
-    if (!email) return {};
+export async function getUserData(email: string | null): Promise<UserData> {
+    if (!email) return {} as UserData;
     try {
         const userRef = ref(rtdb, `users/${sanitizeEmail(email)}`);
         const snapshot = await get(userRef);
-        return snapshot.val() || {};
+        return snapshot.val() || ({} as UserData);
     } catch (error) {
         console.error("Error getting user data from RTDB:", error);
-        return {}; // Return empty object on error to prevent app crashes
+        return {} as UserData; // Return empty object on error to prevent app crashes
     }
 }
 
@@ -465,7 +487,7 @@ export async function getUserData(email: string | null) {
  * @param email - The user's email. Does nothing if null.
  * @param data - The data object to merge with existing data.
  */
-export async function updateUserData(email: string | null, data: { [key: string]: any }) {
+export async function updateUserData(email: string | null, data: Partial<UserData>) {
     if (!email) return;
     try {
         const userRef = ref(rtdb, `users/${sanitizeEmail(email)}`);
@@ -481,9 +503,9 @@ export async function updateUserData(email: string | null, data: { [key: string]
  * @param callback - The function to call with the user data.
  * @returns An unsubscribe function.
  */
-export function listenToUserData(email: string | null, callback: (data: any) => void) {
+export function listenToUserData(email: string | null, callback: (data: UserData) => void) {
     if (!email) {
-        callback({}); // Return empty object for guests
+        callback({} as UserData); // Return empty object for guests
         return () => {}; // Return a no-op unsubscribe function
     }
     const userRef = ref(rtdb, `users/${sanitizeEmail(email)}`);
@@ -491,7 +513,7 @@ export function listenToUserData(email: string | null, callback: (data: any) => 
         callback(snapshot.val() || {});
     }, (error) => {
         console.error("Error listening to user data:", error);
-        callback({});
+        callback({} as UserData);
     });
 }
 
