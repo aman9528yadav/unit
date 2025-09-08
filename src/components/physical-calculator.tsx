@@ -45,17 +45,20 @@ export function PhysicalCalculator({ isFullScreen, onFullScreenToggle }: { isFul
 
     useEffect(() => {
         const storedProfile = localStorage.getItem("userProfile");
+        const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
         if (storedProfile) {
-            const parsedProfile = JSON.parse(storedProfile);
-            setProfile(parsedProfile);
+            setProfile(JSON.parse(storedProfile));
+        }
 
-            const unsub = listenToUserData(parsedProfile.email, (data: UserData) => {
+        const unsub = listenToUserData(userEmail, (data: UserData) => {
+            if (data) {
                 const history = data?.calculationHistory || [];
                 setRecentCalculations(history.slice(0, 4));
-                 setSoundEnabled(data?.settings?.calculatorSound ?? true);
-            });
-            return () => unsub();
-        }
+                setSoundEnabled(data?.settings?.calculatorSound ?? true);
+            }
+        });
+        
+        return () => unsub();
     }, []);
 
     const playSound = () => {
@@ -64,13 +67,9 @@ export function PhysicalCalculator({ isFullScreen, onFullScreenToggle }: { isFul
 
 
     const handleSaveToHistory = (calculation: string, result: string) => {
-        if (!profile?.email) return;
         const historyString = `${calculation} = ${result}|${new Date().toISOString()}`;
-        addCalculationToHistory(profile.email, historyString);
+        addCalculationToHistory(profile?.email || null, historyString);
         incrementCalculationCount();
-        
-        localStorage.setItem('lastCalculation', historyString);
-        window.dispatchEvent(new StorageEvent('storage', { key: 'lastCalculation', newValue: historyString }));
     };
 
     const handleButtonClick = (value: string) => {

@@ -49,17 +49,20 @@ export function Calculator({ isFullScreen, onFullScreenToggle }: { isFullScreen:
 
     useEffect(() => {
         const storedProfile = localStorage.getItem("userProfile");
+        const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
         if (storedProfile) {
-            const parsedProfile = JSON.parse(storedProfile);
-            setProfile(parsedProfile);
-            
-            const unsub = listenToUserData(parsedProfile.email, (data: UserData) => {
-                const history = data?.calculationHistory || [];
-                setRecentCalculations(history.slice(0, 4));
-                setSoundEnabled(data?.settings?.calculatorSound ?? true);
-            });
-            return () => unsub();
+            setProfile(JSON.parse(storedProfile));
         }
+
+        const unsub = listenToUserData(userEmail, (data: UserData) => {
+            if (data) {
+                 const history = data?.calculationHistory || [];
+                 setRecentCalculations(history.slice(0, 4));
+                 setSoundEnabled(data?.settings?.calculatorSound ?? true);
+            }
+        });
+
+        return () => unsub();
     }, []);
     
 
@@ -69,13 +72,13 @@ export function Calculator({ isFullScreen, onFullScreenToggle }: { isFullScreen:
 
 
     const handleSaveToHistory = (calculation: string, result: string) => {
-        if (!profile?.email) return;
         const historyString = `${calculation} = ${result}|${new Date().toISOString()}`;
-        addCalculationToHistory(profile.email, historyString);
+        addCalculationToHistory(profile?.email || null, historyString);
         incrementCalculationCount();
         
-        localStorage.setItem('lastCalculation', historyString);
-        window.dispatchEvent(new StorageEvent('storage', { key: 'lastCalculation', newValue: historyString }));
+        // This is for other components to listen to changes, but it's redundant with the RTDB/localstorage listener
+        // localStorage.setItem('lastCalculation', historyString);
+        // window.dispatchEvent(new StorageEvent('storage', { key: 'lastCalculation', newValue: historyString }));
     };
 
     const handleButtonClick = (value: string) => {
