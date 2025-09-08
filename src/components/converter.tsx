@@ -88,23 +88,14 @@ type ChartDataItem = {
     value: number;
 }
 
-
-export function Converter() {
-  const { toast } = useToast();
-  const router = useRouter();
-
-  const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
-  const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
-  
-  const conversionCategories = useMemo(() => {
+const getConversionCategories = (customUnits: CustomUnit[], customCategories: CustomCategory[]): ConversionCategory[] => {
     const categoriesWithCustomData = [...baseConversionCategories].map(c => ({ ...c }));
 
-    // Add custom categories
     customCategories.forEach(cc => {
         if (!categoriesWithCustomData.some(c => c.name === cc.name)) {
             const newCategory: ConversionCategory = {
                 name: cc.name,
-                icon: Power, // Default icon for custom categories
+                icon: Power, // Default icon
                 units: [{
                     name: cc.baseUnitName,
                     symbol: cc.baseUnitSymbol,
@@ -123,7 +114,6 @@ export function Converter() {
         }
     });
 
-    // Add custom units to their respective categories
     return categoriesWithCustomData.map(category => {
         const newCategory = { ...category, units: [...category.units] };
         if (newCategory.factors) {
@@ -147,8 +137,17 @@ export function Converter() {
         
         return newCategory;
     });
+};
 
-  }, [customUnits, customCategories]);
+
+export function Converter() {
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
+  const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
+  
+  const conversionCategories = useMemo(() => getConversionCategories(customUnits, customCategories), [customUnits, customCategories]);
 
 
   const [selectedCategory, setSelectedCategory] = React.useState<ConversionCategory>(conversionCategories[0]);
