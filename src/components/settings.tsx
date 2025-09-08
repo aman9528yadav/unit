@@ -33,6 +33,7 @@ import { getStreakData } from "@/lib/streak";
 
 export type CalculatorMode = 'basic' | 'scientific';
 type DefaultPage = 'dashboard' | 'calculator' | 'notes' | 'converter' | 'time';
+type CalculatorTheme = 'original' | 'physical';
 const PREMIUM_MEMBER_THRESHOLD = 10000;
 type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
@@ -134,6 +135,7 @@ export function Settings() {
   const [defaultPage, setDefaultPage] = useState<DefaultPage>('dashboard');
 
   const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>('basic');
+  const [calculatorTheme, setCalculatorTheme] = useState<CalculatorTheme>('original');
   const [calculatorSound, setCalculatorSound] = useState(true);
   
   // Local state for theme selector
@@ -157,6 +159,7 @@ export function Settings() {
             }
             if (userSettings.defaultPage) setDefaultPage(userSettings.defaultPage);
             if (userSettings.calculatorMode) setCalculatorMode(userSettings.calculatorMode);
+            if (userSettings.calculatorTheme) setCalculatorTheme(userSettings.calculatorTheme);
             setCalculatorSound(userSettings.calculatorSound ?? true);
         });
         return () => unsub();
@@ -211,6 +214,7 @@ export function Settings() {
         defaultRegion,
         defaultPage,
         calculatorMode,
+        calculatorTheme,
         calculatorSound
     };
 
@@ -235,7 +239,7 @@ export function Settings() {
             streakData: { currentStreak: 0, bestStreak: 0, daysNotOpened: 0 }
         });
     }
-    toast({ title: t('settings.data.toast.cleared.title'), description: t('settings.data.toast.cleared.description') });
+    toast({ title: t('settings.data.clearData'), description: t('settings.data.toast.cleared.description') });
     setTimeout(() => {
       auth.signOut();
       router.push('/welcome');
@@ -434,6 +438,21 @@ export function Settings() {
                             </Select>
                         }
                     />
+                    <SettingRow
+                        label="Calculator Style"
+                        description="Choose your preferred calculator design"
+                        control={
+                            <Select value={calculatorTheme} onValueChange={(v) => setCalculatorTheme(v as CalculatorTheme)}>
+                                <SelectTrigger className="w-32">
+                                    <SelectValue/>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="original">Original</SelectItem>
+                                    <SelectItem value="physical">Physical</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        }
+                    />
                      <SettingRow
                         label={t('settings.calculator.keypressSound.label')}
                         description={t('settings.calculator.keypressSound.description')}
@@ -475,7 +494,7 @@ export function Settings() {
                     </div>
                     <AlertDialogTitle className="text-2xl">Premium Feature Locked</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This feature is available to Premium Members. Complete {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} operations or maintain a 15-day streak to unlock this feature and more!
+                        Complete {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} operations or maintain a 15-day streak to unlock this feature and more!
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="sm:justify-center flex-col-reverse sm:flex-row gap-2">

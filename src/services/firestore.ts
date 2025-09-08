@@ -491,7 +491,8 @@ export interface UserData {
         saveConversionHistory?: boolean;
         defaultRegion?: string;
         defaultPage?: 'dashboard' | 'calculator' | 'notes' | 'converter' | 'time';
-        calculatorMode?: string;
+        calculatorMode?: 'basic' | 'scientific';
+        calculatorTheme?: 'original' | 'physical';
         calculatorSound?: boolean;
     };
     [key: string]: any; // For other dynamic properties
