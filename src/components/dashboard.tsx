@@ -322,6 +322,16 @@ export function Dashboard() {
         if(storedProfileData) {
             setProfile(JSON.parse(storedProfileData));
         }
+
+        const updateStatsAndStreak = async (email: string | null) => {
+            const processedStats = processUserDataForStats(await (async () => {
+                const data = await listenToUserData(email, () => {});
+                return data;
+            })(), email);
+            setStats(processedStats);
+            const newStreakData = await getStreakData(email);
+            setStreakData(newStreakData);
+        };
         
         const unsubUpdates = listenToUpdatesFromRtdb((updates) => {
             const sortedUpdates = updates.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -332,16 +342,18 @@ export function Dashboard() {
             const processedStats = processUserDataForStats(userData, userEmail);
             setStats(processedStats);
             
-            // Recalculate streak data based on the latest visit history
             getStreakData(userEmail).then(setStreakData);
         });
 
-        // Record visit once on component mount
         recordVisit(userEmail);
+        updateStatsAndStreak(userEmail);
 
         const handleStorageChange = (event: StorageEvent) => {
             if (event.key === 'userProfile' && event.newValue) {
                 setProfile(JSON.parse(event.newValue));
+            }
+            if (event.key && (event.key.startsWith('guest_') || event.key.startsWith('user_'))) {
+                updateStatsAndStreak(userEmail);
             }
         };
         

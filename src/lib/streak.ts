@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { differenceInCalendarDays, format, parseISO } from 'date-fns';
@@ -10,6 +11,7 @@ export interface StreakData {
     daysNotOpened: number;
 }
 
+const getGuestKey = (key: string) => `guest_${key}`;
 const getTodayDateString = () => format(new Date(), 'yyyy-MM-dd');
 
 /**
@@ -17,8 +19,19 @@ const getTodayDateString = () => format(new Date(), 'yyyy-MM-dd');
  * @param email - The user's email or null for guests.
  */
 export async function recordVisit(email: string | null) {
-    if (!email) return; // Do not record visits for guests
     const today = getTodayDateString();
+    
+    if (!email) {
+        const key = getGuestKey('userVisitHistory');
+        const historyStr = localStorage.getItem(key);
+        const visitHistory: string[] = historyStr ? JSON.parse(historyStr) : [];
+        if (!visitHistory.includes(today)) {
+            const updatedHistory = [...visitHistory, today].slice(-365);
+            localStorage.setItem(key, JSON.stringify(updatedHistory));
+        }
+        return;
+    }
+    
     const userData = await getUserData(email);
     const visitHistory: string[] = userData.userVisitHistory || [];
     
@@ -34,10 +47,17 @@ export async function recordVisit(email: string | null) {
  * @returns An object containing the current streak, best streak, and days since last visit.
  */
 export async function getStreakData(email: string | null): Promise<StreakData> {
-    if (!email) return { currentStreak: 0, bestStreak: 0, daysNotOpened: 0 };
-    
-    const userData = await getUserData(email);
-    const visitHistory: string[] = userData.userVisitHistory || [];
+    let visitHistory: string[] = [];
+
+    if (!email) {
+         const key = getGuestKey('userVisitHistory');
+         const historyStr = localStorage.getItem(key);
+         visitHistory = historyStr ? JSON.parse(historyStr) : [];
+    } else {
+        const userData = await getUserData(email);
+        visitHistory = userData.userVisitHistory || [];
+    }
+
 
     if (visitHistory.length === 0) {
         return { currentStreak: 0, bestStreak: 0, daysNotOpened: 0 };
@@ -86,8 +106,10 @@ export async function getStreakData(email: string | null): Promise<StreakData> {
 
     const data = { currentStreak, bestStreak, daysNotOpened };
     
-    // Save the calculated streaks back to user data for potential other uses
-    await updateUserData(email, { streakData: data });
+    // Save the calculated streaks back to user data for potential other uses if logged in
+    if(email) {
+        await updateUserData(email, { streakData: data });
+    }
 
     return data;
 }

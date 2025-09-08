@@ -8,16 +8,18 @@ import { type Note } from '@/components/notepad';
 import { ref, runTransaction } from 'firebase/database';
 import { rtdb } from '@/lib/firebase';
 
+const getGuestKey = (key: string) => `guest_${key}`;
+
 const getGuestStats = () => {
     if (typeof window === 'undefined') return {};
-    const stats = localStorage.getItem('guest_stats');
+    const stats = localStorage.getItem(getGuestKey('stats'));
     return stats ? JSON.parse(stats) : {};
 };
 
 const setGuestStats = (stats: any) => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem('guest_stats', JSON.stringify(stats));
-    window.dispatchEvent(new StorageEvent('storage', { key: 'guest_stats' }));
+    localStorage.setItem(getGuestKey('stats'), JSON.stringify(stats));
+    window.dispatchEvent(new StorageEvent('storage', { key: getGuestKey('stats') }));
 };
 
 const incrementStat = async (field: 'totalConversions' | 'totalCalculations' | 'totalDateCalculations') => {
@@ -184,4 +186,5 @@ export const getStats = async (email: string | null) => {
     const userData = await getUserData(email);
     return processUserDataForStats(userData, email);
 };
+
 
