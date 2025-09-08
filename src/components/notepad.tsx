@@ -507,6 +507,7 @@ export function Notepad() {
                                 {showUnlockPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                             </button>
                         </div>
+                         <Button variant="link" size="sm" className="h-auto p-0 justify-start" onClick={() => router.push('/forgot-password')}>Forgot password?</Button>
                     </div>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
