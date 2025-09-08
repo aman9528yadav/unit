@@ -88,22 +88,16 @@ const StatCard = ({ title, value, icon, change, changeType, description }: { tit
 
 export function Analytics() {
     const { t } = useLanguage();
-    const [stats, setStats] = useState<{
-        totalConversions: number;
-        totalCalculations: number;
-        totalDateCalculations: number;
-        savedNotes: number;
-        recycledNotes: number;
-        favoriteConversions: number;
-        activity: DailyActivity[];
-    }>({
+    const [stats, setStats] = useState({
         totalConversions: 0,
         totalCalculations: 0,
         totalDateCalculations: 0,
         savedNotes: 0,
         recycledNotes: 0,
         favoriteConversions: 0,
-        activity: [],
+        activity: [] as DailyActivity[],
+        todaysOps: 0,
+        totalOps: 0
     });
     const [streakData, setStreakData] = useState<StreakData>({
         currentStreak: 0,
