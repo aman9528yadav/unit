@@ -89,15 +89,6 @@ export function History() {
         setProfile(JSON.parse(storedProfile));
     }
     
-    // Load initial data from localStorage for instant UI
-    const localConvHistory = JSON.parse(localStorage.getItem(CONVERSION_HISTORY_KEY(userEmail)) || '[]');
-    const localCalcHistory = JSON.parse(localStorage.getItem(CALCULATION_HISTORY_KEY(userEmail)) || '[]');
-    const localFavorites = JSON.parse(localStorage.getItem(FAVORITES_HISTORY_KEY(userEmail)) || '[]');
-    
-    setConversionHistory(localConvHistory.map((s: string) => parseHistoryString(s, 'conversion')).filter(Boolean as any));
-    setCalculationHistory(localCalcHistory.map((s: string) => parseHistoryString(s, 'calculation')).filter(Boolean as any));
-    setFavorites(localFavorites.map((s: string) => parseHistoryString(s, 'favorite')).filter(Boolean as any));
-
     // Listen to RTDB for real-time updates
     const unsub = listenToUserData(userEmail, (data) => {
         const convHistory: string[] = data?.conversionHistory || [];
@@ -107,11 +98,6 @@ export function History() {
         setConversionHistory(convHistory.map(s => parseHistoryString(s, 'conversion')).filter(Boolean as any));
         setCalculationHistory(calcHistory.map(s => parseHistoryString(s, 'calculation')).filter(Boolean as any));
         setFavorites(favs.map(s => parseHistoryString(s, 'favorite')).filter(Boolean as any));
-
-        // Also update local storage when RTDB changes to keep them in sync
-        localStorage.setItem(CONVERSION_HISTORY_KEY(userEmail), JSON.stringify(convHistory));
-        localStorage.setItem(CALCULATION_HISTORY_KEY(userEmail), JSON.stringify(calcHistory));
-        localStorage.setItem(FAVORITES_HISTORY_KEY(userEmail), JSON.stringify(favs));
     });
     
     return () => unsub();
@@ -123,20 +109,18 @@ export function History() {
   };
   
   const handleClearAll = () => {
-    if(!profile?.email) return;
     const historyType = activeTab === 'conversions' ? 'conversionHistory'
                      : activeTab === 'calculator' ? 'calculationHistory'
                      : 'favoriteConversions';
 
-    clearAllHistory(profile.email, historyType);
+    clearAllHistory(profile?.email || null, historyType);
   };
   
   const handleDeleteItem = (itemToDelete: HistoryItemData) => {
-     if(!profile?.email) return;
      const historyType = activeTab === 'conversions' ? 'conversionHistory'
                      : activeTab === 'calculator' ? 'calculationHistory'
                      : 'favoriteConversions';
-    deleteHistoryItem(profile.email, historyType, itemToDelete.fullString);
+    deleteHistoryItem(profile?.email || null, historyType, itemToDelete.fullString);
   };
   
   const itemsToDisplay = 

@@ -54,8 +54,6 @@ export interface Note {
     isLocked: boolean;
 }
 
-export const NOTES_STORAGE_KEY_BASE = 'notes';
-
 interface UserProfile {
     fullName: string;
     email: string;
@@ -104,9 +102,9 @@ export function Notepad() {
     }, []);
 
     useEffect(() => {
-        if (!profile) return; // Don't do anything until profile is loaded
-
-        const unsubNotes = listenToUserNotes(profile.email, (notesFromDb) => {
+        const userEmail = profile?.email || null;
+        
+        const unsubNotes = listenToUserNotes(userEmail, (notesFromDb) => {
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             
@@ -119,12 +117,12 @@ export function Notepad() {
             
             setNotes(freshNotes);
 
-            if (freshNotes.length !== notesFromDb.length) {
-                updateUserNotes(profile.email, freshNotes);
+            if (userEmail && freshNotes.length !== notesFromDb.length) {
+                updateUserNotes(userEmail, freshNotes);
             }
         });
         
-        const unsubUserData = listenToUserData(profile.email, setUserData);
+        const unsubUserData = listenToUserData(userEmail, setUserData);
 
         return () => {
             unsubNotes();
@@ -224,49 +222,43 @@ export function Notepad() {
              return;
         }
 
-        if (!profile) return;
         const updatedNotes = notes.map(note => 
             note.id === noteId ? { ...note, deletedAt: new Date().toISOString() } : note
         );
-        updateUserNotes(profile.email, updatedNotes);
+        updateUserNotes(profile?.email || null, updatedNotes);
         toast({ title: t('notepad.toast.movedToTrash') });
     };
     
     const handlePermanentDelete = (noteId: string) => {
-        if (!profile) return;
         const updatedNotes = notes.filter(note => note.id !== noteId);
-        updateUserNotes(profile.email, updatedNotes);
+        updateUserNotes(profile?.email || null, updatedNotes);
         toast({ title: t('notepad.toast.permanentlyDeleted') });
     };
 
     const handleRestore = (noteId: string) => {
-        if (!profile) return;
         const updatedNotes = notes.map(note =>
             note.id === noteId ? { ...note, deletedAt: null } : note
         );
-        updateUserNotes(profile.email, updatedNotes);
+        updateUserNotes(profile?.email || null, updatedNotes);
         toast({ title: t('notepad.toast.restored') });
     };
 
     const handleToggleFavorite = (noteId: string) => {
-        if (!profile) return;
         const updatedNotes = notes.map(note =>
             note.id === noteId ? { ...note, isFavorite: !note.isFavorite } : note
         );
-        updateUserNotes(profile.email, updatedNotes);
+        updateUserNotes(profile?.email || null, updatedNotes);
     };
     
     const handleRestoreAll = () => {
-        if (!profile) return;
         const updatedNotes = notes.map(note => note.deletedAt ? { ...note, deletedAt: null } : note);
-        updateUserNotes(profile.email, updatedNotes);
+        updateUserNotes(profile?.email || null, updatedNotes);
         toast({ title: t('notepad.toast.allRestored') });
     };
 
     const handleEmptyTrash = () => {
-        if (!profile) return;
         const updatedNotes = notes.filter(note => !note.deletedAt);
-        updateUserNotes(profile.email, updatedNotes);
+        updateUserNotes(profile?.email || null, updatedNotes);
         toast({ title: t('notepad.toast.trashEmptied') });
         setShowEmptyTrashDialog(false);
     };

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,7 +12,7 @@ import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword, User, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { Eye, EyeOff, Info, ArrowRight, Play } from "lucide-react";
-import { logUserEvent, listenToWelcomeContent, updateUserData } from "@/services/firestore";
+import { logUserEvent, listenToWelcomeContent, updateUserData, mergeLocalDataWithFirebase } from "@/services/firestore";
 import { useLanguage } from "@/context/language-context";
 
 
@@ -31,7 +32,10 @@ const handleSuccessfulLogin = async (user: User) => {
         email: user.email,
     };
     
-    // Ensure the user document exists in RTDB
+    // Merge guest data with firebase account
+    await mergeLocalDataWithFirebase(user.email!);
+    
+    // Ensure the user document exists in RTDB after merge
     await updateUserData(user.email!, {
         fullName: user.displayName,
         email: user.email,

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,13 +12,15 @@ import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile, U
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { ArrowLeft, Eye, EyeOff, Play, ArrowRight, User as UserIcon } from "lucide-react";
-import { logUserEvent } from "@/services/firestore";
+import { logUserEvent, mergeLocalDataWithFirebase } from "@/services/firestore";
 import { useLanguage } from "@/context/language-context";
 import { cn } from "@/lib/utils";
 
 
 const handleSuccessfulSignup = async (user: User) => {
     // This function will handle both setting local storage and logging the event
+    await mergeLocalDataWithFirebase(user.email!);
+    
     const profile = {
         fullName: user.displayName,
         email: user.email,
