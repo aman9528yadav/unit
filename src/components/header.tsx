@@ -11,7 +11,7 @@ import { useLanguage } from "@/context/language-context";
 import { listenToUserData, UserData } from "@/services/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Notifications } from "./notifications";
-import { cn } from "@/lib/utils";
+import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 
 interface UserProfile {
     fullName: string;
@@ -112,23 +112,26 @@ export function Header() {
                     </Button>
                 </div>
             </div>
-             <nav className="mt-4 flex items-center justify-center gap-2 overflow-x-auto pb-2 -mx-4 px-4">
-                {navLinks.map(link => (
-                    <Link key={link.href} href={link.href} passHref>
-                        <Button
-                            variant={pathname === link.href ? "secondary" : "ghost"}
-                            className="text-sm px-3 py-1.5 h-auto flex-shrink-0"
-                        >
-                            {link.label}
+             <ScrollArea className="w-full whitespace-nowrap rounded-lg mt-4">
+                <nav className="flex w-max space-x-2 pb-2">
+                    {navLinks.map(link => (
+                        <Link key={link.href} href={link.href} passHref>
+                            <Button
+                                variant={pathname === link.href ? "secondary" : "ghost"}
+                                className="text-sm px-3 py-1.5 h-auto flex-shrink-0"
+                            >
+                                {link.label}
+                            </Button>
+                        </Link>
+                    ))}
+                    <Link href="/how-to-use" passHref>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                            <HelpCircle className="h-5 w-5"/>
                         </Button>
                     </Link>
-                ))}
-                <Link href="/how-to-use" passHref>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                        <HelpCircle className="h-5 w-5"/>
-                    </Button>
-                </Link>
-            </nav>
+                </nav>
+                <ScrollBar orientation="horizontal" />
+            </ScrollArea>
         </header>
     )
 }
