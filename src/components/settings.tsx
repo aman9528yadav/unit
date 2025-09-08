@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -49,7 +48,7 @@ const SettingRow = ({ label, description, control, isLink = false, href, childre
             <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2">
                     {isPremium && (
-                        <Star className={cn("h-4 w-4", isLocked ? 'text-muted-foreground' : 'text-yellow-500 fill-yellow-500')} />
+                        <Star className={cn("h-4 w-4", isLocked ? 'text-muted-foreground' : 'text-yellow-500 fill-yellow-400')} />
                     )}
                     <p className="font-medium">{label}</p>
                 </div>
@@ -65,13 +64,11 @@ const SettingRow = ({ label, description, control, isLink = false, href, childre
     const handleWrapperClick = () => {
         if (isLocked && onLockClick) {
             onLockClick();
-        } else if (isLink && href) {
-            // Handled by Link component
         }
     };
 
     if (isLink && href && !isLocked) {
-        return <Link href={href} className="px-4 border-b last:border-b-0">{content}</Link>;
+        return <Link href={href} className="px-4 border-b last:border-b-0 block">{content}</Link>;
     }
 
     return (
@@ -468,24 +465,25 @@ export function Settings() {
                         </div>
                     </AccordionTrigger>
                     <AccordionContent className="p-0 bg-card border-t-0 rounded-b-lg border mt-[-8px] pt-2">
-                         <SettingRow
-                            label={t('settings.calculator.mode.label')}
-                            description={t('settings.calculator.mode.description')}
-                            isPremium
-                            isLocked={isPremiumFeatureLocked}
-                            onLockClick={() => setShowPremiumLockDialog(true)}
-                            control={
-                                <Select value={calculatorMode} onValueChange={(v) => setCalculatorMode(v as CalculatorMode)} disabled={isPremiumFeatureLocked}>
-                                    <SelectTrigger className="w-32">
-                                        <SelectValue/>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="basic">{t('settings.calculator.modes.basic')}</SelectItem>
-                                        <SelectItem value="scientific">{t('settings.calculator.modes.scientific')}</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            }
-                        />
+                        <div onClick={() => isPremiumFeatureLocked && setShowPremiumLockDialog(true)} className={cn(isPremiumFeatureLocked && "cursor-pointer")}>
+                            <SettingRow
+                                label={t('settings.calculator.mode.label')}
+                                description={t('settings.calculator.mode.description')}
+                                isPremium
+                                isLocked={isPremiumFeatureLocked}
+                                control={
+                                    <Select value={calculatorMode} onValueChange={(v) => setCalculatorMode(v as CalculatorMode)} disabled={isPremiumFeatureLocked}>
+                                        <SelectTrigger className="w-32">
+                                            <SelectValue/>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="basic">{t('settings.calculator.modes.basic')}</SelectItem>
+                                            <SelectItem value="scientific">{t('settings.calculator.modes.scientific')}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                }
+                            />
+                        </div>
                         <SettingRow
                             label="Calculator Style"
                             description="Choose your preferred calculator design"
