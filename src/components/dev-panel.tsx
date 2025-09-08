@@ -6,12 +6,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send, Wrench, Info, Shield, BellOff, Newspaper, User, MessageSquare } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
+import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send, Wrench, Info, Shield, BellOff, Newspaper, User, MessageSquare, ArrowLeft } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from './ui/switch';
 import { setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo, setBroadcastNotification, listenToBroadcastNotification, deleteBroadcastNotification, listenToWelcomeContent, setWelcomeContent, setBetaWelcomeMessage, listenToBetaWelcomeMessage } from '@/services/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -387,299 +386,267 @@ export function DevPanel() {
     }
     
     return (
-        <div className="w-full max-w-md mx-auto flex flex-col gap-6 p-4">
-            <header className="text-center">
-                <h1 className="text-2xl font-bold">Developer Panel</h1>
-                <p className="text-muted-foreground">Tools for testing and debugging.</p>
+        <div className="w-full max-w-lg mx-auto flex flex-col gap-6 p-4">
+            <header className="flex items-center gap-4">
+                 <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                    <ArrowLeft />
+                </Button>
+                <div>
+                    <h1 className="text-2xl font-bold">Developer Panel</h1>
+                    <p className="text-muted-foreground">Tools for testing and debugging.</p>
+                </div>
             </header>
 
-            <Tabs defaultValue="maintenance" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
-                    <TabsTrigger value="maintenance"><Timer /></TabsTrigger>
-                    <TabsTrigger value="updates"><ServerCog /></TabsTrigger>
-                    <TabsTrigger value="broadcast"><Send /></TabsTrigger>
-                    <TabsTrigger value="content"><MessageSquare /></TabsTrigger>
-                    <TabsTrigger value="security"><Shield /></TabsTrigger>
-                </TabsList>
-                <TabsContent value="maintenance" className="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center justify-between">
-                                <span className="flex items-center gap-2"><Timer /> Maintenance Page</span>
-                                <Button variant="outline" size="sm" onClick={handleClearMaintenanceInfo}>Clear</Button>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                <div>
-                                    <Label htmlFor="maintenance-mode">Enable Maintenance Mode</Label>
-                                    <p className='text-xs text-muted-foreground'>Redirects all users to maintenance site.</p>
-                                </div>
-                                <Switch
-                                    id="maintenance-mode"
-                                    checked={isMaintenanceMode}
-                                    onCheckedChange={handleMaintenanceModeToggle}
-                                />
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Timer /> Maintenance Mode</CardTitle>
+                    <CardDescription>Control the application's maintenance page and countdown timer.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                        <div>
+                            <Label htmlFor="maintenance-mode">Enable Maintenance Mode</Label>
+                            <p className='text-xs text-muted-foreground'>Redirects all users to the maintenance site.</p>
+                        </div>
+                        <Switch
+                            id="maintenance-mode"
+                            checked={isMaintenanceMode}
+                            onCheckedChange={handleMaintenanceModeToggle}
+                        />
+                    </div>
+                    <div>
+                        <Label>Set Countdown Duration</Label>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="days-m" className="text-xs">Days</Label>
+                                <Input id="days-m" type="number" value={maintenanceDuration.days} onChange={(e) => handleMaintenanceDurationChange('days', e.target.value)} placeholder="0" />
                             </div>
                             <div>
-                                <Label>Set Countdown Duration</Label>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="days-m" className="text-xs">Days</Label>
-                                        <Input id="days-m" type="number" value={maintenanceDuration.days} onChange={(e) => handleMaintenanceDurationChange('days', e.target.value)} placeholder="0" />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="hours-m" className="text-xs">Hours</Label>
-                                        <Input id="hours-m" type="number" value={maintenanceDuration.hours} onChange={(e) => handleMaintenanceDurationChange('hours', e.target.value)} placeholder="0" />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="minutes-m" className="text-xs">Minutes</Label>
-                                        <Input id="minutes-m" type="number" value={maintenanceDuration.minutes} onChange={(e) => handleMaintenanceDurationChange('minutes', e.target.value)} placeholder="0" />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="seconds-m" className="text-xs">Seconds</Label>
-                                        <Input id="seconds-m" type="number" value={maintenanceDuration.seconds} onChange={(e) => handleMaintenanceDurationChange('seconds', e.target.value)} placeholder="0" />
-                                    </div>
-                                </div>
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="maintenanceText" className="flex items-center gap-2"><NotebookText /> Maintenance Details</Label>
-                                <Textarea 
-                                    id="maintenanceText"
-                                    value={maintenanceText}
-                                    onChange={(e) => setMaintenanceText(e.target.value)}
-                                    placeholder="Describe what's happening during maintenance..."
-                                    rows={3}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="maintenanceType" className="flex items-center gap-2"><Wrench /> Maintenance Type</Label>
-                                <Select value={maintenanceType} onValueChange={setMaintenanceType}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Security">Security</SelectItem>
-                                        <SelectItem value="Feature Update">Feature Update</SelectItem>
-                                        <SelectItem value="Bug Fixes">Bug Fixes</SelectItem>
-                                        <SelectItem value="Performance">Performance</SelectItem>
-                                        <SelectItem value="Custom">Custom</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            {maintenanceType === 'Custom' && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="customMaintenanceTitle" className="flex items-center gap-2"><Info /> Custom Title</Label>
-                                    <Input 
-                                        id="customMaintenanceTitle"
-                                        value={customMaintenanceTitle}
-                                        onChange={(e) => setCustomMaintenanceTitle(e.target.value)}
-                                        placeholder="e.g., Database Migration"
-                                    />
-                                </div>
-                            )}
-                            <div className="space-y-2">
-                                <Label htmlFor="updateStatus" className="flex items-center gap-2"><Info /> Post-Update Status</Label>
-                                <Select value={updateStatus} onValueChange={(v) => setUpdateStatus(v as any)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="inprogress">In Progress</SelectItem>
-                                        <SelectItem value="success">Success</SelectItem>
-                                        <SelectItem value="failed">Failed</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="successMessage">Success Message</Label>
-                                <Input id="successMessage" value={successMessage} onChange={(e) => setSuccessMessage(e.target.value)} placeholder="e.g., Update successful!" />
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="failureMessage">Failure Message</Label>
-                                <Input id="failureMessage" value={failureMessage} onChange={(e) => setFailureMessage(e.target.value)} placeholder="e.g., Update failed." />
-                            </div>
-                             <Button onClick={handleSetMaintenanceInfo} className="w-full">Save Maintenance Info</Button>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="updates" className="mt-4">
-                    <Card>
-                         <CardHeader>
-                            <CardTitle className="flex items-center justify-between">
-                                <span className="flex items-center gap-2"><ServerCog /> Updates Page</span>
-                                <Button variant="outline" size="sm" onClick={handleClearUpdateInfo}>Clear</Button>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                <div>
-                                    <Label htmlFor="show-update-banner">Show Update Banner on Dashboard</Label>
-                                    <p className='text-xs text-muted-foreground'>Toggles the countdown banner for all users.</p>
-                                </div>
-                                <Switch
-                                    id="show-update-banner"
-                                    checked={showUpdateOnDashboard}
-                                    onCheckedChange={setShowUpdateOnDashboard}
-                                />
+                                <Label htmlFor="hours-m" className="text-xs">Hours</Label>
+                                <Input id="hours-m" type="number" value={maintenanceDuration.hours} onChange={(e) => handleMaintenanceDurationChange('hours', e.target.value)} placeholder="0" />
                             </div>
                             <div>
-                                <Label>Set Countdown Duration</Label>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="days-u" className="text-xs">Days</Label>
-                                        <Input id="days-u" type="number" value={updateDuration.days} onChange={(e) => handleUpdateDurationChange('days', e.target.value)} placeholder="0" />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="hours-u" className="text-xs">Hours</Label>
-                                        <Input id="hours-u" type="number" value={updateDuration.hours} onChange={(e) => handleUpdateDurationChange('hours', e.target.value)} placeholder="0" />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="minutes-u" className="text-xs">Minutes</Label>
-                                        <Input id="minutes-u" type="number" value={updateDuration.minutes} onChange={(e) => handleUpdateDurationChange('minutes', e.target.value)} placeholder="0" />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="seconds-u" className="text-xs">Seconds</Label>
-                                        <Input id="seconds-u" type="number" value={updateDuration.seconds} onChange={(e) => handleUpdateDurationChange('seconds', e.target.value)} placeholder="0" />
-                                    </div>
-                                </div>
+                                <Label htmlFor="minutes-m" className="text-xs">Minutes</Label>
+                                <Input id="minutes-m" type="number" value={maintenanceDuration.minutes} onChange={(e) => handleMaintenanceDurationChange('minutes', e.target.value)} placeholder="0" />
                             </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="updateText" className="flex items-center gap-2"><NotebookText /> Upcoming Feature Details</Label>
-                                <Textarea 
-                                    id="updateText"
-                                    value={updateText}
-                                    onChange={(e) => setUpdateText(e.target.value)}
-                                    placeholder="Describe what's coming in the next update..."
-                                    rows={3}
-                                />
-                            </div>
-                             <Button onClick={handleSetUpdateInfo} className="w-full">Save Update Info</Button>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="broadcast" className="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><Send /> Notification Broadcaster</CardTitle>
-                            <CardDescription>Update the global broadcast message for all users.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
                             <div>
-                                <Label htmlFor="notificationTitle">Title</Label>
-                                <Input 
-                                    id="notificationTitle" 
-                                    value={notificationTitle}
-                                    onChange={(e) => setNotificationTitle(e.target.value)}
-                                    placeholder="e.g., New Feature!"
-                                />
+                                <Label htmlFor="seconds-m" className="text-xs">Seconds</Label>
+                                <Input id="seconds-m" type="number" value={maintenanceDuration.seconds} onChange={(e) => handleMaintenanceDurationChange('seconds', e.target.value)} placeholder="0" />
                             </div>
-                             <div>
-                                <Label htmlFor="notificationDescription">Description</Label>
-                                <Textarea 
-                                    id="notificationDescription"
-                                    value={notificationDescription}
-                                    onChange={(e) => setNotificationDescription(e.target.value)}
-                                    placeholder="Describe the notification..."
-                                    rows={3}
-                                />
-                            </div>
-                            <div className="flex gap-2">
-                                <Button onClick={handleSendNotification} className="w-full">
-                                    Update Notification
-                                </Button>
-                                <Button onClick={handleDeleteBroadcast} variant="destructive" size="icon" className="flex-shrink-0">
-                                    <BellOff/>
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="content" className="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><MessageSquare /> UI Content</CardTitle>
-                            <CardDescription>Manage dynamic text shown in the app.</CardDescription>
-                        </CardHeader>
-                         <CardContent className="space-y-4">
-                            <div className="space-y-2 p-3 bg-secondary rounded-lg">
-                                <Label>Getting Started Page</Label>
-                                <Input value={gettingStartedTitle} onChange={(e) => setGettingStartedTitle(e.target.value)} placeholder="Getting Started Title" />
-                                <Textarea value={gettingStartedDescription} onChange={(e) => setGettingStartedDescription(e.target.value)} placeholder="Getting Started Description" />
-                                <Button onClick={handleSetBetaWelcome} size="sm" className="w-full">Save Getting Started Content</Button>
-                            </div>
-                            <div className="space-y-2 p-3 bg-secondary rounded-lg">
-                                <Label>Welcome Page</Label>
-                                <Input value={welcomeTitle} onChange={(e) => setWelcomeTitle(e.target.value)} placeholder="Welcome Title" />
-                                <Textarea value={welcomeDescription} onChange={(e) => setWelcomeDescription(e.target.value)} placeholder="Welcome Description" />
-                                <Button onClick={handleSetWelcomeContent} size="sm" className="w-full">Save Welcome Content</Button>
-                            </div>
-                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                <div>
-                                    <Label>Manage Help Content</Label>
-                                    <p className='text-xs text-muted-foreground'>Edit the FAQ on the help page.</p>
-                                </div>
-                                <Button onClick={() => router.push('/dev/help')}>Manage</Button>
-                            </div>
-                            <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                <div>
-                                    <Label>Manage 'How to Use'</Label>
-                                    <p className='text-xs text-muted-foreground'>Edit the feature list on the how-to-use page.</p>
-                                </div>
-                                <Button onClick={() => router.push('/dev/how-to-use')}>Manage</Button>
-                            </div>
-                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                <div>
-                                    <Label>Manage Updates</Label>
-                                    <p className='text-xs text-muted-foreground'>Edit the "What's New" page content.</p>
-                                </div>
-                                <Button onClick={() => router.push('/dev/updates')}>Manage</Button>
-                            </div>
-                             <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                                <div>
-                                    <Label>Manage About Page</Label>
-                                    <p className='text-xs text-muted-foreground'>Edit the app info and release plan.</p>
-                                </div>
-                                <Button onClick={() => router.push('/dev/about')}>Manage</Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="security" className="mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><Shield /> Security</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div>
-                                <Label htmlFor="currentDevPassword">Current Dev Password</Label>
-                                <Input 
-                                    id="currentDevPassword" 
-                                    type="password"
-                                    value={currentDevPassword}
-                                    onChange={(e) => setCurrentDevPassword(e.target.value)}
-                                    placeholder="Enter current password" 
-                                />
-                            </div>
-                             <div>
-                                <Label htmlFor="newDevPassword">New Dev Password</Label>
-                                <Input 
-                                    id="newDevPassword"
-                                    type="password"
-                                    value={newDevPassword}
-                                    onChange={(e) => setNewDevPassword(e.target.value)}
-                                    placeholder="Enter new password"
-                                />
-                            </div>
-                            <Button onClick={handleDevPasswordChange} className="w-full">
-                                Change Dev Password
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
+                        </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="maintenanceText" className="flex items-center gap-2"><NotebookText /> Maintenance Details</Label>
+                        <Textarea 
+                            id="maintenanceText"
+                            value={maintenanceText}
+                            onChange={(e) => setMaintenanceText(e.target.value)}
+                            placeholder="Describe what's happening during maintenance..."
+                            rows={3}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="maintenanceType" className="flex items-center gap-2"><Wrench /> Maintenance Type</Label>
+                        <Select value={maintenanceType} onValueChange={setMaintenanceType}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Security">Security</SelectItem>
+                                <SelectItem value="Feature Update">Feature Update</SelectItem>
+                                <SelectItem value="Bug Fixes">Bug Fixes</SelectItem>
+                                <SelectItem value="Performance">Performance</SelectItem>
+                                <SelectItem value="Custom">Custom</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {maintenanceType === 'Custom' && (
+                        <div className="space-y-2">
+                            <Label htmlFor="customMaintenanceTitle" className="flex items-center gap-2"><Info /> Custom Title</Label>
+                            <Input 
+                                id="customMaintenanceTitle"
+                                value={customMaintenanceTitle}
+                                onChange={(e) => setCustomMaintenanceTitle(e.target.value)}
+                                placeholder="e.g., Database Migration"
+                            />
+                        </div>
+                    )}
+                    <div className="space-y-2">
+                        <Label htmlFor="updateStatus" className="flex items-center gap-2"><Info /> Post-Update Status</Label>
+                        <Select value={updateStatus} onValueChange={(v) => setUpdateStatus(v as any)}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="inprogress">In Progress</SelectItem>
+                                <SelectItem value="success">Success</SelectItem>
+                                <SelectItem value="failed">Failed</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="successMessage">Success Message</Label>
+                        <Input id="successMessage" value={successMessage} onChange={(e) => setSuccessMessage(e.target.value)} placeholder="e.g., Update successful!" />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="failureMessage">Failure Message</Label>
+                        <Input id="failureMessage" value={failureMessage} onChange={(e) => setFailureMessage(e.target.value)} placeholder="e.g., Update failed." />
+                    </div>
+                </CardContent>
+                 <CardFooter className="gap-2">
+                    <Button variant="outline" onClick={handleClearMaintenanceInfo} className="w-full">Clear</Button>
+                    <Button onClick={handleSetMaintenanceInfo} className="w-full">Save</Button>
+                </CardFooter>
+            </Card>
             
-            <Button onClick={() => router.back()} variant="outline" className="mt-4">Back to App</Button>
+            <Card>
+                 <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><ServerCog /> Dashboard Update Banner</CardTitle>
+                    <CardDescription>Manage the upcoming update countdown banner on the dashboard.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                        <div>
+                            <Label htmlFor="show-update-banner">Show Update Banner on Dashboard</Label>
+                            <p className='text-xs text-muted-foreground'>Toggles the countdown banner for all users.</p>
+                        </div>
+                        <Switch
+                            id="show-update-banner"
+                            checked={showUpdateOnDashboard}
+                            onCheckedChange={setShowUpdateOnDashboard}
+                        />
+                    </div>
+                    <div>
+                        <Label>Set Countdown Duration</Label>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="days-u" className="text-xs">Days</Label>
+                                <Input id="days-u" type="number" value={updateDuration.days} onChange={(e) => handleUpdateDurationChange('days', e.target.value)} placeholder="0" />
+                            </div>
+                            <div>
+                                <Label htmlFor="hours-u" className="text-xs">Hours</Label>
+                                <Input id="hours-u" type="number" value={updateDuration.hours} onChange={(e) => handleUpdateDurationChange('hours', e.target.value)} placeholder="0" />
+                            </div>
+                            <div>
+                                <Label htmlFor="minutes-u" className="text-xs">Minutes</Label>
+                                <Input id="minutes-u" type="number" value={updateDuration.minutes} onChange={(e) => handleUpdateDurationChange('minutes', e.target.value)} placeholder="0" />
+                            </div>
+                            <div>
+                                <Label htmlFor="seconds-u" className="text-xs">Seconds</Label>
+                                <Input id="seconds-u" type="number" value={updateDuration.seconds} onChange={(e) => handleUpdateDurationChange('seconds', e.target.value)} placeholder="0" />
+                            </div>
+                        </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="updateText" className="flex items-center gap-2"><NotebookText /> Upcoming Feature Details</Label>
+                        <Textarea 
+                            id="updateText"
+                            value={updateText}
+                            onChange={(e) => setUpdateText(e.target.value)}
+                            placeholder="Describe what's coming in the next update..."
+                            rows={3}
+                        />
+                    </div>
+                </CardContent>
+                 <CardFooter className="gap-2">
+                    <Button variant="outline" onClick={handleClearUpdateInfo} className="w-full">Clear</Button>
+                    <Button onClick={handleSetUpdateInfo} className="w-full">Save</Button>
+                </CardFooter>
+            </Card>
+
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Send /> Global Notification</CardTitle>
+                    <CardDescription>Update the broadcast message for all users.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div>
+                        <Label htmlFor="notificationTitle">Title</Label>
+                        <Input 
+                            id="notificationTitle" 
+                            value={notificationTitle}
+                            onChange={(e) => setNotificationTitle(e.target.value)}
+                            placeholder="e.g., New Feature!"
+                        />
+                    </div>
+                     <div>
+                        <Label htmlFor="notificationDescription">Description</Label>
+                        <Textarea 
+                            id="notificationDescription"
+                            value={notificationDescription}
+                            onChange={(e) => setNotificationDescription(e.target.value)}
+                            placeholder="Describe the notification..."
+                            rows={3}
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        <Button onClick={handleSendNotification} className="w-full">
+                            Update Notification
+                        </Button>
+                        <Button onClick={handleDeleteBroadcast} variant="destructive" size="icon" className="flex-shrink-0">
+                            <BellOff/>
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><MessageSquare /> Content Management</CardTitle>
+                    <CardDescription>Edit dynamic text and content for various pages.</CardDescription>
+                </CardHeader>
+                 <CardContent className="space-y-2">
+                    <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                        <Label>Getting Started Page</Label>
+                        <Button onClick={() => router.push('/dev/about')}>Manage</Button>
+                    </div>
+                    <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                        <Label>Help & How-to-Use Pages</Label>
+                        <Button onClick={() => router.push('/dev/how-to-use')}>Manage</Button>
+                    </div>
+                     <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                        <Label>Updates Page</Label>
+                        <Button onClick={() => router.push('/dev/updates')}>Manage</Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Shield /> Security & Data</CardTitle>
+                     <CardDescription>Manage developer access and clear local data.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div>
+                        <Label htmlFor="currentDevPassword">Current Dev Password</Label>
+                        <Input 
+                            id="currentDevPassword" 
+                            type="password"
+                            value={currentDevPassword}
+                            onChange={(e) => setCurrentDevPassword(e.target.value)}
+                            placeholder="Enter current password" 
+                        />
+                    </div>
+                     <div>
+                        <Label htmlFor="newDevPassword">New Dev Password</Label>
+                        <Input 
+                            id="newDevPassword"
+                            type="password"
+                            value={newDevPassword}
+                            onChange={(e) => setNewDevPassword(e.target.value)}
+                            placeholder="Enter new password"
+                        />
+                    </div>
+                    <Button onClick={handleDevPasswordChange} className="w-full">
+                        Change Dev Password
+                    </Button>
+                </CardContent>
+                <CardFooter>
+                     <Button onClick={handleClearLocalStorage} variant="destructive" className="w-full">
+                        <Trash2 className="mr-2 h-4 w-4"/> Clear All Local Storage
+                    </Button>
+                </CardFooter>
+            </Card>
         </div>
     );
 }
