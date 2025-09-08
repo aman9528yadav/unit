@@ -21,16 +21,6 @@ interface UserProfile {
     profileImage?: string;
 }
 
-const pageTitles: { [key: string]: { title: string, icon: React.ElementType } } = {
-    '/': { title: 'Dashboard', icon: Home },
-    '/converter': { title: 'Unit Converter', icon: Sigma },
-    '/calculator': { title: 'Calculator', icon: Calculator },
-    '/notes': { title: 'Notes', icon: NotebookPen },
-    '/history': { title: 'History', icon: HistoryIcon },
-    '/time': { title: 'Time Utilities', icon: Timer },
-    '/settings': { title: 'Settings', icon: Settings },
-};
-
 const navLinks = [
     { href: "/", label: "Dashboard", icon: Home },
     { href: "/converter", label: "Converter", icon: Sigma },
@@ -89,7 +79,7 @@ export function Header() {
     };
 
     return (
-        <header className="sticky top-0 z-40 w-full max-w-lg border-b bg-background/80 backdrop-blur-sm py-2">
+        <header className="sticky top-0 z-40 w-[389px] mx-auto border-b bg-background/80 backdrop-blur-sm py-1">
             <div className="flex items-center justify-between gap-2">
                  <div className="flex items-center gap-2 mr-auto">
                     {!isHomePage && (
@@ -111,7 +101,7 @@ export function Header() {
                     </Button>
                 </div>
             </div>
-             <ScrollArea className="w-full whitespace-nowrap rounded-lg mt-2">
+             <ScrollArea className="w-full whitespace-nowrap rounded-lg mt-1">
                 <nav className="flex w-max space-x-2 pb-2">
                     {navLinks.map(link => (
                         <Link key={link.href} href={link.href} passHref>
