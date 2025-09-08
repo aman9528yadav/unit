@@ -112,7 +112,41 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
     }
 
     const handleSave = () => {
-        onSave(image);
+        if (!image) {
+            onSave(null);
+            return;
+        }
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const avatarSize = 200; // The final size of the avatar
+        canvas.width = avatarSize;
+        canvas.height = avatarSize;
+
+        const img = new window.Image();
+        img.crossOrigin = "Anonymous";
+        img.src = image;
+
+        img.onload = () => {
+            const scaledWidth = img.width * zoom;
+            const scaledHeight = img.height * zoom;
+
+            // Calculate the drawing position, considering the zoom and pan
+            // The offset from dragging is already scaled by zoom in the move handler, but we need to apply it
+            // The drawing should be centered in the canvas, and then panned
+            const centerX = (avatarSize - scaledWidth) / 2;
+            const centerY = (avatarSize - scaledHeight) / 2;
+
+            const finalX = centerX + offset.x * zoom;
+            const finalY = centerY + offset.y * zoom;
+
+            ctx.drawImage(img, finalX, finalY, scaledWidth, scaledHeight);
+            
+            const dataUrl = canvas.toDataURL('image/png');
+            onSave(dataUrl);
+        };
     };
 
      const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
