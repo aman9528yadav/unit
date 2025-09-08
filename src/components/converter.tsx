@@ -755,16 +755,16 @@ const CompareButton = ({ category, fromUnit, inputValue, t }: { category: Conver
                     <GitCompareArrows className="mr-2 h-4 w-4" /> Compare
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl">
+            <DialogContent className="max-w-md w-full">
                 <DialogHeader>
                     <DialogTitle>Conversion Comparison</DialogTitle>
                     <DialogDescription>
                         Comparing {inputValue} {fromUnit} to other units in the {category.name} category.
                     </DialogDescription>
                 </DialogHeader>
-                 <div className="grid md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto p-1">
+                 <div className="grid grid-cols-1 gap-6 max-h-[60vh] overflow-y-auto p-1">
                     {/* Chart */}
-                    <div className="h-80 pr-4">
+                    <div className="h-64 pr-4">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={results} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" />
@@ -783,7 +783,7 @@ const CompareButton = ({ category, fromUnit, inputValue, t }: { category: Conver
                                         return null;
                                     }}
                                 />
-                                <Bar dataKey="value" fill="hsl(var(--primary))" barSize={20} />
+                                <Bar dataKey="value" fill="hsl(var(--primary))" barSize={15} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
