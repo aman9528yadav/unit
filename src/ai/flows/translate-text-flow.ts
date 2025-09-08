@@ -23,12 +23,16 @@ const SuggestionSchema = z.object({
     meaning: z.object({
         sourceLanguage: z.string().describe("The meaning of the word in the original (source) language."),
         targetLanguage: z.string().describe("The meaning of the word in the new (target) language.")
-    }).describe("The meaning or context for the suggestion in both languages.")
+    }).describe("The meaning or context for the suggestion in both languages."),
+    example: z.object({
+        sourceLanguage: z.string().describe("An example sentence using the word in the original (source) language."),
+        targetLanguage: z.string().describe("An example sentence using the word in the new (target) language.")
+    }).describe("Example sentences for the suggestion in both languages.").optional(),
 });
 
 const TranslateTextOutputSchema = z.object({
   translatedText: z.string().describe('The translated text.'),
-  suggestions: z.array(SuggestionSchema).describe("A list of alternative words or phrases for the translated text, along with their meanings.").optional(),
+  suggestions: z.array(SuggestionSchema).describe("A list of alternative words or phrases for the translated text, along with their meanings and example sentences.").optional(),
 });
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
 
@@ -48,7 +52,8 @@ Text to translate:
 "{{text}}"
 
 After providing the primary translation in the 'translatedText' field, also provide a few alternative word or phrase suggestions in the 'suggestions' array. 
-For each suggestion, provide the word itself, and then provide its meaning in BOTH the original source language and the target language within the 'meaning' object.
+For each suggestion, provide the word itself. Then, provide its meaning in BOTH the original source language and the target language within the 'meaning' object.
+Finally, provide an example sentence for the word in BOTH languages within the 'example' object.
 If no suggestions are applicable, return an empty array for suggestions.
 `,
 });

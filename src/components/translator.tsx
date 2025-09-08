@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { ArrowRightLeft, Loader2, Languages, Copy, Lightbulb } from 'lucide-react';
+import { ArrowRightLeft, Loader2, Languages, Copy, Lightbulb, MessageSquare } from 'lucide-react';
 import { translateText, TranslateTextOutput } from '@/ai/flows/translate-text-flow';
 import { useToast } from '@/hooks/use-toast';
 
@@ -142,7 +142,7 @@ export function Translator() {
                         </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {translationResult.suggestions.map((suggestion, index) => (
-                                <div key={index} className="bg-secondary p-3 rounded-lg flex flex-col gap-2">
+                                <div key={index} className="bg-secondary p-3 rounded-lg flex flex-col gap-3">
                                     <div className="flex justify-between items-start">
                                         <p className="font-bold text-primary">{suggestion.word}</p>
                                         <Button
@@ -158,6 +158,13 @@ export function Translator() {
                                         <p><strong>Source:</strong> {suggestion.meaning.sourceLanguage}</p>
                                         <p><strong>{targetLanguage}:</strong> {suggestion.meaning.targetLanguage}</p>
                                     </div>
+                                     {suggestion.example && (
+                                        <div className="text-sm text-muted-foreground space-y-2 border-t border-border/50 pt-3 mt-1">
+                                            <p className="font-semibold flex items-center gap-1.5"><MessageSquare className="w-4 h-4" /> Examples</p>
+                                            <p className="italic">"{suggestion.example.sourceLanguage}"</p>
+                                            <p className="italic">"{suggestion.example.targetLanguage}"</p>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
