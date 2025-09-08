@@ -53,6 +53,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { incrementConversionCount, getStats } from "@/lib/stats";
 import { listenToUserData, addConversionToHistory, setFavorites as setFavoritesInDb, deleteHistoryItem } from "@/services/firestore";
 import { getStreakData } from "@/lib/streak";
+import { offlineParseConversionQuery } from "./global-search";
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -77,52 +78,6 @@ const getUserKey = (key: string, email: string | null) => {
     if (typeof window === 'undefined') return key;
     const prefix = email || 'guest';
     return `${prefix}_${key}`;
-};
-
-
-// Offline parser to replace the AI flow
-export const offlineParseConversionQuery = (query: string, allUnits: Unit[], categories: ConversionCategory[]): ParseConversionQueryOutput | null => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    // Regex to capture value, from unit (can have spaces), and to unit (can have spaces)
-    const regex = /^([0-9.,\s]+)\s*([^0-9\s].*?)\s+(?:to|in|as)\s+([^0-9\s].*?)$/i;
-    const match = normalizedQuery.match(regex);
-    
-    if (!match) return null;
-    
-    const [, valueStr, fromUnitStr, toUnitStr] = match;
-    const value = parseFloat(valueStr.replace(/,/g, ''));
-    if (isNaN(value)) return null;
-
-    // Sort units by length of name descending to match longer names first ("Square Meters" before "Meters")
-    const sortedUnits = [...allUnits].sort((a, b) => b.name.length - a.name.length);
-
-    const findUnit = (unitStr: string): Unit | undefined => {
-        const lowerUnitStr = unitStr.trim().toLowerCase().replace(/\s/g, '');
-        return sortedUnits.find(u => 
-            u.name.toLowerCase().replace(/\s/g, '') === lowerUnitStr || 
-            u.symbol.toLowerCase().replace(/\s/g, '') === lowerUnitStr
-        );
-    };
-
-    const fromUnit = findUnit(fromUnitStr);
-    const toUnit = findUnit(toUnitStr);
-
-    if (!fromUnit || !toUnit) return null;
-
-    const category = categories.find(c =>
-        c.units.some(u => u.symbol === fromUnit.symbol) &&
-        c.units.some(u => u.symbol === toUnit.symbol)
-    );
-
-    if (!category) return null;
-
-    return {
-        value,
-        fromUnit: fromUnit.symbol,
-        toUnit: toUnit.symbol,
-        category: category.name,
-    };
 };
 
 

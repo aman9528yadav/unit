@@ -9,12 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, StickyNote, History, HelpCircle, Settings, X, CornerDownLeft, ArrowRightLeft, Loader2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/use-debounce';
-import { Note, NOTES_STORAGE_KEY_BASE } from './notepad';
-import { FAQ, FAQ_STORAGE_KEY } from './help';
+import { Note } from './notepad';
+import { FAQ } from './help';
 import { conversionCategories as baseConversionCategories, Unit, ConversionCategory } from '@/lib/conversions';
-import { offlineParseConversionQuery } from './converter';
 import { CustomCategory, CustomUnit } from './custom-unit-manager';
 import { useLanguage } from '@/context/language-context';
+import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow.ts";
 
 
 interface SearchResult {
@@ -25,7 +25,53 @@ interface SearchResult {
   href: string;
 }
 
-const getUserNotesKey = (email: string | null) => email ? `${email}_${NOTES_STORAGE_KEY_BASE}` : `guest_${NOTES_STORAGE_KEY_BASE}`;
+const getUserNotesKey = (email: string | null) => email ? `${email}_notes` : `guest_notes`;
+
+// Offline parser to replace the AI flow
+export const offlineParseConversionQuery = (query: string, allUnits: Unit[], categories: ConversionCategory[]): ParseConversionQueryOutput | null => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    // Regex to capture value, from unit (can have spaces), and to unit (can have spaces)
+    const regex = /^([0-9.,\s]+)\s*([^0-9\s].*?)\s+(?:to|in|as)\s+([^0-9\s].*?)$/i;
+    const match = normalizedQuery.match(regex);
+    
+    if (!match) return null;
+    
+    const [, valueStr, fromUnitStr, toUnitStr] = match;
+    const value = parseFloat(valueStr.replace(/,/g, ''));
+    if (isNaN(value)) return null;
+
+    // Sort units by length of name descending to match longer names first ("Square Meters" before "Meters")
+    const sortedUnits = [...allUnits].sort((a, b) => b.name.length - a.name.length);
+
+    const findUnit = (unitStr: string): Unit | undefined => {
+        const lowerUnitStr = unitStr.trim().toLowerCase().replace(/\s/g, '');
+        return sortedUnits.find(u => 
+            u.name.toLowerCase().replace(/\s/g, '') === lowerUnitStr || 
+            u.symbol.toLowerCase().replace(/\s/g, '') === lowerUnitStr
+        );
+    };
+
+    const fromUnit = findUnit(fromUnitStr);
+    const toUnit = findUnit(toUnitStr);
+
+    if (!fromUnit || !toUnit) return null;
+
+    const category = categories.find(c =>
+        c.units.some(u => u.symbol === fromUnit.symbol) &&
+        c.units.some(u => u.symbol === toUnit.symbol)
+    );
+
+    if (!category) return null;
+
+    return {
+        value,
+        fromUnit: fromUnit.symbol,
+        toUnit: toUnit.symbol,
+        category: category.name,
+    };
+};
+
 
 export function GlobalSearch() {
   const [isFocused, setIsFocused] = useState(false);
@@ -161,7 +207,7 @@ export function GlobalSearch() {
     }
 
     // Search Help/FAQs
-    const faqData = localStorage.getItem(FAQ_STORAGE_KEY);
+    const faqData = localStorage.getItem('faqs');
     if (faqData) {
       try {
         const faqs: FAQ[] = JSON.parse(faqData);
