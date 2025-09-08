@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Crown, LogOut, Settings, Palette, Globe, Shield, History, CheckCircle, Award, ArrowLeft, Calendar, MapPin, Phone, Linkedin, Twitter, Star, Github, Edit, Instagram } from "lucide-react";
+import { Crown, LogOut, Settings, Palette, Globe, Shield, History, CheckCircle, Award, ArrowLeft, Calendar, MapPin, Phone, Linkedin, Twitter, Star, Github, Edit, Instagram, User as UserIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
@@ -18,6 +18,9 @@ import { getStats } from "@/lib/stats";
 import { getStreakData } from "@/lib/streak";
 import { format } from "date-fns";
 import { Progress } from "./ui/progress";
+import { PremiumInfoDialog } from "./premium-info-dialog";
+import { cn } from "@/lib/utils";
+
 
 type UserRole = 'Member' | 'Premium Member' | 'Owner';
 const PREMIUM_MEMBER_THRESHOLD = 10000;
@@ -25,11 +28,19 @@ const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 
 const defaultSkills = ["React", "Tailwind CSS", "UI/UX Design", "Content Writing", "Cricket", "Music"];
 
+const roleConfig = {
+    Member: { icon: UserIcon, color: "text-gray-500" },
+    'Premium Member': { icon: Crown, color: "text-purple-500" },
+    Owner: { icon: Shield, color: "text-amber-500" },
+};
+
+
 export function UserData() {
     const [profileData, setProfileData] = useState<UserData | null>(null);
     const [stats, setStats] = useState({ conversions: 0, notes: 0, daysActive: 0, totalOps: 0 });
     const [userRole, setUserRole] = useState<UserRole>('Member');
     const [achievements, setAchievements] = useState<string[]>([]);
+    const [isPremiumInfoOpen, setIsPremiumInfoOpen] = useState(false);
     
     const router = useRouter();
     const { toast } = useToast();
@@ -60,21 +71,21 @@ export function UserData() {
             daysActive: streakData.bestStreak,
             totalOps: userStats.totalOps,
         });
-
+        
+        let role: UserRole = 'Member';
         if (email === DEVELOPER_EMAIL) {
-            setUserRole('Owner');
+            role = 'Owner';
         } else if (userStats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
-            setUserRole('Premium Member');
-        } else {
-            setUserRole('Member');
+            role = 'Premium Member';
         }
+        setUserRole(role);
 
         const newAchievements: string[] = [];
         if (auth.currentUser?.emailVerified) newAchievements.push("⭐ Verified User");
         if (userStats.totalConversions >= 100) newAchievements.push("🏆 100+ Conversions");
         if (streakData.bestStreak >= 30) newAchievements.push("📅 30 Days Active");
         if (streakData.bestStreak >= 7) newAchievements.push("🔥 7 Day Streak");
-        if (userRole === 'Premium Member' || userRole === 'Owner') newAchievements.push("👑 Premium Member");
+        if (role === 'Premium Member' || role === 'Owner') newAchievements.push("👑 Premium Member");
         setAchievements(newAchievements);
     };
 
@@ -109,6 +120,7 @@ export function UserData() {
     } = profileData;
 
     const premiumProgress = Math.min((stats.totalOps / PREMIUM_MEMBER_THRESHOLD) * 100, 100);
+    const RoleIcon = roleConfig[userRole].icon;
 
     return (
         <div className="min-h-screen flex justify-center p-4 sm:p-6 bg-gray-50 text-gray-900">
@@ -136,12 +148,12 @@ export function UserData() {
                     </div>
                     <CardContent className="p-0">
                         <h2 className="text-xl font-semibold flex items-center justify-center gap-2">
-                            {fullName} {userRole !== 'Member' && <Crown className="text-yellow-500" size={20} />}
+                            {fullName}
                         </h2>
                         <p className="text-sm text-gray-500">{email}</p>
-                         <p className="flex items-center justify-center gap-1 text-green-500 mt-1 text-sm">
-                            <CheckCircle size={16} /> Verified
-                        </p>
+                         <div className={cn("inline-flex items-center gap-1 mt-2 px-2 py-1 rounded-full text-xs font-semibold", roleConfig[userRole].color, "bg-secondary")}>
+                            <RoleIcon size={14} /> {userRole}
+                         </div>
 
                         <div className="mt-6 space-y-3 text-left">
                             {phone && <div className="flex justify-between items-center"><span className="font-medium flex items-center gap-2"><Phone size={14} /> Phone</span><span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{phone}</span></div>}
@@ -175,7 +187,12 @@ export function UserData() {
                                 <h3 className="font-semibold flex items-center gap-2 text-lg"><Crown size={18} /> Premium Progress</h3>
                                 <p className="text-xs text-gray-500 mt-1">Complete {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} operations to unlock premium features.</p>
                                 <Progress value={premiumProgress} className="mt-2" />
-                                <p className="text-xs text-gray-500 mt-1 text-right">{stats.totalOps.toLocaleString()} / {PREMIUM_MEMBER_THRESHOLD.toLocaleString()}</p>
+                                <div className="flex justify-between items-center">
+                                    <p className="text-xs text-gray-500 mt-1 text-right">{stats.totalOps.toLocaleString()} / {PREMIUM_MEMBER_THRESHOLD.toLocaleString()}</p>
+                                     <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setIsPremiumInfoOpen(true)}>
+                                        Learn more
+                                    </Button>
+                                </div>
                             </div>
                         )}
 
@@ -224,6 +241,7 @@ export function UserData() {
                     </CardContent>
                 </Card>
             </motion.div>
+             <PremiumInfoDialog open={isPremiumInfoOpen} onOpenChange={setIsPremiumInfoOpen} />
         </div>
     );
 }
