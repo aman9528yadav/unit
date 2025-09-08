@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Trash2, Edit, Save, Palette, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit, Save, Palette, Calendar as CalendarIcon, Beaker, Bug, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -24,6 +24,7 @@ import * as LucideIcons from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { format, parseISO } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const iconNames = Object.keys(LucideIcons).filter(key => typeof (LucideIcons as any)[key] === 'object');
 
@@ -42,7 +43,9 @@ export function UpdatesEditor() {
         description: '',
         icon: 'Rocket',
         bgColor: '',
-        textColor: ''
+        textColor: '',
+        category: 'New Feature',
+        customCategoryTitle: '',
     });
 
     const { toast } = useToast();
@@ -79,7 +82,9 @@ export function UpdatesEditor() {
                 description: '',
                 icon: 'Rocket',
                 bgColor: '#fecaca', // A default bg color
-                textColor: '#991b1b' // A default text color
+                textColor: '#991b1b', // A default text color
+                category: 'New Feature',
+                customCategoryTitle: '',
             });
         }
         setIsDialogOpen(true);
@@ -204,6 +209,26 @@ export function UpdatesEditor() {
                             <Label htmlFor="description">Description</Label>
                             <Textarea id="description" value={formState.description} onChange={(e) => handleInputChange('description', e.target.value)} placeholder="Describe the update..."/>
                         </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="category">Category</Label>
+                             <Select value={formState.category} onValueChange={(v) => handleInputChange('category', v)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="New Feature"><Rocket className="mr-2 h-4 w-4" /> New Feature</SelectItem>
+                                    <SelectItem value="Bug Fix"><Bug className="mr-2 h-4 w-4" /> Bug Fix</SelectItem>
+                                    <SelectItem value="Improvement"><Beaker className="mr-2 h-4 w-4" /> Improvement</SelectItem>
+                                    <SelectItem value="Custom">Custom</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {formState.category === 'Custom' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="customCategoryTitle">Custom Category Title</Label>
+                                <Input id="customCategoryTitle" value={formState.customCategoryTitle} onChange={(e) => handleInputChange('customCategoryTitle', e.target.value)} placeholder="e.g., Performance Boost"/>
+                            </div>
+                        )}
                         <div className="space-y-2">
                             <Label htmlFor="icon">Icon Name</Label>
                             <Input id="icon" value={formState.icon} onChange={(e) => handleInputChange('icon', e.target.value)} placeholder="e.g., Rocket"/>

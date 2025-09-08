@@ -1,15 +1,20 @@
 
-
 "use client";
 
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Timer, CheckCircle } from "lucide-react";
+import { ArrowLeft, Timer, CheckCircle, Rocket, Bug, Beaker } from "lucide-react";
 import { format, intervalToDuration, differenceInDays, parseISO } from "date-fns";
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/language-context';
 import { listenToNextUpdateInfo, NextUpdateInfo, listenToUpdatesFromRtdb, UpdateItem } from '@/services/firestore';
 import * as LucideIcons from "lucide-react";
+
+const categoryIcons: { [key: string]: React.ElementType } = {
+  "New Feature": Rocket,
+  "Bug Fix": Bug,
+  "Improvement": Beaker
+};
 
 export function Updates() {
   const [targetDate, setTargetDate] = useState<Date | null>(null);
@@ -128,7 +133,8 @@ export function Updates() {
       <div className="relative pl-8">
         <div className="absolute left-4 top-4 bottom-4 w-0.5 bg-border"></div>
         {sortedUpdates.map((update, index) => {
-            const Icon = (LucideIcons as any)[update.icon] || LucideIcons.Rocket;
+            const Icon = (LucideIcons as any)[update.icon] || categoryIcons[update.category] || LucideIcons.Rocket;
+            const categoryTitle = update.category === 'Custom' ? update.customCategoryTitle : update.category;
             return (
               <div key={index} className="mb-6 relative">
                   <div className="flex items-start mb-2">
@@ -145,7 +151,8 @@ export function Updates() {
                   <div className="bg-card p-4 rounded-xl ml-8">
                       <p className="text-sm text-muted-foreground">{update.description}</p>
                   </div>
-                   <div className="ml-8 mt-2 flex justify-end">
+                   <div className="ml-8 mt-2 flex justify-between items-center">
+                        {categoryTitle && <span className="text-xs font-semibold text-primary">{categoryTitle}</span>}
                        <span className="text-xs font-medium text-muted-foreground border rounded-full px-2 py-0.5">{update.version}</span>
                    </div>
               </div>

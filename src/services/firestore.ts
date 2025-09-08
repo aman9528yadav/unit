@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { db, rtdb } from '@/lib/firebase';
@@ -104,6 +103,8 @@ export interface UpdateItem {
   icon: keyof typeof LucideIcons;
   bgColor: string;
   textColor: string;
+  category: string;
+  customCategoryTitle?: string;
 }
 
 const defaultUpdates: UpdateItem[] = [
@@ -115,7 +116,9 @@ const defaultUpdates: UpdateItem[] = [
         description: 'Manage your profile, track stats, and view your premium membership progress.',
         icon: 'User',
         bgColor: "bg-orange-500/10",
-        textColor: "text-orange-400"
+        textColor: "text-orange-400",
+        category: 'New Feature',
+        customCategoryTitle: '',
     },
     {
         id: uuidv4(),
@@ -125,7 +128,9 @@ const defaultUpdates: UpdateItem[] = [
         description: 'The entire app is now available in Hindi.',
         icon: 'Languages',
         bgColor: "bg-teal-500/10",
-        textColor: "text-teal-400"
+        textColor: "text-teal-400",
+        category: 'New Feature',
+        customCategoryTitle: '',
     },
 ];
 
