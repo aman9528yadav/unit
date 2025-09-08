@@ -74,8 +74,8 @@ export function Header() {
     };
     
     return (
-        <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm py-4">
-            <div className="w-full max-w-lg flex items-center gap-4">
+        <header className="sticky top-0 z-40 w-full max-w-lg border-b bg-background/80 backdrop-blur-sm py-4">
+            <div className="flex items-center gap-4">
                  <div className="flex items-center gap-2 mr-auto">
                     {!isHomePage && (
                         <Button variant="ghost" size="icon" onClick={() => router.back()}>
