@@ -124,7 +124,7 @@ function SidebarSelectors() {
     ];
 
     return (
-        <div className="absolute top-4 right-4 grid grid-cols-2 gap-4 w-[250px]">
+        <div className="grid grid-cols-2 gap-4 w-[250px] mb-8">
             <div>
                  <Label className="text-xs text-black/70">Theme</Label>
                  <Select value={theme} onValueChange={handleThemeChange}>
@@ -227,16 +227,16 @@ export default function RootLayout({
                           </div>
                       </div>
                       <Sidebar>
-                          <SidebarContent className="p-4">
-                               <div className="absolute top-2 left-2">
+                          <SidebarContent className="p-4 flex flex-col items-center justify-center">
+                               <div className="absolute top-4 flex flex-col items-center gap-4">
+                                <SidebarSelectors />
                                 <SidebarClose asChild>
                                   <Button variant="ghost" size="icon" className="text-black hover:bg-black/10 rounded-full">
                                     <X className="h-6 w-6" />
                                   </Button>
                                 </SidebarClose>
                               </div>
-                              <SidebarSelectors />
-                              <div className="text-center text-black mb-8">
+                              <div className="text-center text-black mb-8 mt-24">
                                 <h2 className="text-xl font-medium">Welcome back,</h2>
                                 <p className="text-3xl font-bold">{profile?.fullName || 'Guest'}</p>
                               </div>
