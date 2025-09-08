@@ -337,7 +337,7 @@ export function Dashboard() {
       { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
       { label: 'Translator', icon: Globe2, href: "/translator", color: 'text-purple-400' },
       { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
-      { label: 'News & Updates', icon: Newspaper, href: "https://aman9528.wixstudio.com/my-site-3", color: 'text-green-400' },
+      { label: 'News & Updates', icon: Newspaper, href: "/news", color: 'text-green-400' },
       { label: 'AI Search', icon: Wand2, onClick: () => openFeatureDialog("AI Smart Search (Coming Soon)", "A powerful new search experience that understands natural language to find notes, perform conversions, and navigate the app faster than ever."), color: 'text-indigo-400' },
     ];
     
@@ -587,3 +587,5 @@ export function Dashboard() {
     </motion.div>
   );
 }
+
+    

@@ -1,8 +1,7 @@
 
-
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -151,7 +150,6 @@ export function Analytics() {
     });
     
     const [timeRange, setTimeRange] = useState<TimeRangePreset>("weekly");
-    const [chartType, setChartType] = useState<ChartType>("bar");
     const [dateRange, setDateRange] = useState<DateRange | undefined>({
         from: addDays(new Date(), -6),
         to: new Date(),
@@ -412,38 +410,20 @@ export function Analytics() {
                                 <TabsTrigger value="yearly">Yearly</TabsTrigger>
                             </TabsList>
                         </Tabs>
-                        <Tabs value={chartType} onValueChange={(v) => setChartType(v as ChartType)}>
-                            <TabsList>
-                                <TabsTrigger value="bar"><BarChart className="w-4 h-4"/></TabsTrigger>
-                                <TabsTrigger value="line"><LineChartIcon className="w-4 h-4"/></TabsTrigger>
-                            </TabsList>
-                        </Tabs>
                     </div>
                 </div>
               </CardHeader>
               <CardContent className="h-96">
                 <ResponsiveContainer width="100%" height="100%">
-                    {chartType === 'line' ? (
-                        <LineChart data={formattedChartData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                            <XAxis dataKey="date" stroke="#6b7280" />
-                            <YAxis stroke="#6b7280" />
-                            <Tooltip />
-                            <Line type="monotone" dataKey="conversions" name="Conversions" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} />
-                            <Line type="monotone" dataKey="calculations" name="Calculator" stroke="#22c55e" strokeWidth={2} dot={{ r: 4 }}/>
-                            <Line type="monotone" dataKey="dateCalculations" name="Date Calcs" stroke="#f97316" strokeWidth={2} dot={{ r: 4 }}/>
-                        </LineChart>
-                    ) : (
-                        <RechartsBarChart data={formattedChartData}>
-                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                            <XAxis dataKey="date" stroke="#6b7280" />
-                            <YAxis stroke="#6b7280" />
-                            <Tooltip />
-                            <Bar dataKey="conversions" name="Conversions" stackId="a" fill="#6366f1" />
-                            <Bar dataKey="calculations" name="Calculator" stackId="a" fill="#22c55e" />
-                            <Bar dataKey="dateCalculations" name="Date Calcs" stackId="a" fill="#f97316" />
-                        </RechartsBarChart>
-                    )}
+                    <RechartsBarChart data={formattedChartData}>
+                         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="date" stroke="#6b7280" />
+                        <YAxis stroke="#6b7280" />
+                        <Tooltip />
+                        <Bar dataKey="conversions" name="Conversions" stackId="a" fill="#6366f1" />
+                        <Bar dataKey="calculations" name="Calculator" stackId="a" fill="#22c55e" />
+                        <Bar dataKey="dateCalculations" name="Date Calcs" stackId="a" fill="#f97316" />
+                    </RechartsBarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
@@ -511,4 +491,3 @@ export function Analytics() {
         </div>
       );
 }
-
