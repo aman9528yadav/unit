@@ -20,7 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
-import { Region } from "@/lib/conversions";
+import { Region, conversionCategories } from "@/lib/conversions";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { getStats } from "@/lib/stats";
@@ -127,6 +127,7 @@ export function Settings() {
   
   const [saveConversionHistory, setSaveConversionHistory] = useState(true);
   const [defaultRegion, setDefaultRegion] = useState<Region>('International');
+  const [defaultCategory, setDefaultCategory] = useState<string>('Length');
   const [defaultPage, setDefaultPage] = useState<DefaultPage>('dashboard');
   const [showGettingStarted, setShowGettingStarted] = useState(true);
 
@@ -159,6 +160,7 @@ export function Settings() {
             if (userSettings.defaultRegion && regions.includes(userSettings.defaultRegion)) {
                 setDefaultRegion(userSettings.defaultRegion);
             }
+            if (userSettings.defaultCategory) setDefaultCategory(userSettings.defaultCategory);
             if (userSettings.defaultPage) setDefaultPage(userSettings.defaultPage);
             if (userSettings.calculatorMode) setCalculatorMode(userSettings.calculatorMode);
             if (userSettings.calculatorTheme) setCalculatorTheme(userSettings.calculatorTheme);
@@ -209,6 +211,7 @@ export function Settings() {
         notificationsEnabled,
         saveConversionHistory,
         defaultRegion,
+        defaultCategory,
         defaultPage,
         showGettingStarted,
         calculatorMode,
@@ -443,6 +446,21 @@ export function Settings() {
                                     <SelectContent>
                                         {regions.map(r => (
                                             <SelectItem key={r} value={r}>{r}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            }
+                         />
+                         <SettingRow
+                            label="Default Category"
+                            control={
+                                <Select value={defaultCategory} onValueChange={(v) => setDefaultCategory(v)}>
+                                    <SelectTrigger className="w-48">
+                                        <SelectValue placeholder="Select a category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {conversionCategories.map(c => (
+                                            <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>

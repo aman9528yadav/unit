@@ -586,6 +586,7 @@ export interface UserData {
         notificationsEnabled?: boolean;
         saveConversionHistory?: boolean;
         defaultRegion?: string;
+        defaultCategory?: string;
         defaultPage?: 'dashboard' | 'calculator' | 'notes' | 'converter' | 'time';
         showGettingStarted?: boolean;
         calculatorMode?: 'basic' | 'scientific';

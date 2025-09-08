@@ -224,9 +224,19 @@ export function Converter() {
         const localHistoryKey = getUserKey('conversionHistory', userEmail);
         localStorage.setItem(localHistoryKey, JSON.stringify(conversionHistory));
         
-        const savedDefaultRegion = data.defaultRegion;
+        const savedDefaultRegion = data.settings?.defaultRegion;
          if (savedDefaultRegion && regions.includes(savedDefaultRegion as Region)) {
           setRegion(savedDefaultRegion as Region);
+        }
+
+        const savedDefaultCategory = data.settings?.defaultCategory;
+        if (savedDefaultCategory) {
+            const category = conversionCategories.find(c => c.name === savedDefaultCategory);
+            if (category) {
+                setSelectedCategory(category);
+                setFromUnit(category.units[0].symbol);
+                setToUnit(category.units.length > 1 ? category.units[1].symbol : category.units[0].symbol);
+            }
         }
     });
 
@@ -234,7 +244,7 @@ export function Converter() {
       unsub();
       unsubLocks();
     };
-  }, [updateUserRole]);
+  }, [updateUserRole, conversionCategories]);
 
   React.useEffect(() => {
     const itemToRestore = localStorage.getItem("restoreConversion");
