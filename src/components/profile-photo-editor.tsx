@@ -112,7 +112,36 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
     }
 
     const handleSave = () => {
-        onSave(image);
+        if (!image) {
+            onSave(null);
+            return;
+        }
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const img = new window.Image();
+        img.src = image;
+        img.onload = () => {
+            const previewSize = 192; // The size of the preview circle
+            canvas.width = previewSize;
+            canvas.height = previewSize;
+
+            // Calculate the dimensions and position of the source image to draw
+            const sourceWidth = img.width / zoom;
+            const sourceHeight = img.height / zoom;
+            const sourceX = (img.width - sourceWidth) / 2 - (offset.x * (img.width / previewSize));
+            const sourceY = (img.height - sourceHeight) / 2 - (offset.y * (img.height / previewSize));
+
+            // Clear canvas and draw the transformed image
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, previewSize, previewSize);
+
+            // Get the new image data
+            const newImageDataUrl = canvas.toDataURL('image/png');
+            onSave(newImageDataUrl);
+        };
     };
 
      const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
@@ -257,3 +286,5 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
         </div>
     );
 }
+
+    
