@@ -182,7 +182,7 @@ export function Converter() {
   const fromUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === fromUnit), [currentUnits, fromUnit]);
   const toUnitInfo = React.useMemo(() => currentUnits.find(u => u.symbol === toUnit), [currentUnits, toUnit]);
   
-  const updateUserRole = async (email: string | null) => {
+  const updateUserRole = useCallback(async (email: string | null) => {
     if(email === DEVELOPER_EMAIL) {
         setUserRole('Owner');
         return;
@@ -198,7 +198,7 @@ export function Converter() {
     } else {
         setUserRole('Member');
     }
-  };
+  }, []);
 
   React.useEffect(() => {
     const storedProfileData = localStorage.getItem("userProfile");
@@ -234,7 +234,7 @@ export function Converter() {
       unsub();
       unsubLocks();
     };
-  }, []);
+  }, [updateUserRole]);
 
   React.useEffect(() => {
     const itemToRestore = localStorage.getItem("restoreConversion");
@@ -248,7 +248,10 @@ export function Converter() {
 
     const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'userProfile') {
-            setProfile(e.newValue ? JSON.parse(e.newValue) : null);
+            const newProfileData = e.newValue;
+            const userEmail = newProfileData ? JSON.parse(newProfileData).email : null;
+            setProfile(newProfileData ? JSON.parse(newProfileData) : null);
+            updateUserRole(userEmail);
         }
     };
     
@@ -257,7 +260,7 @@ export function Converter() {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [allUnits, conversionCategories]);
+  }, [allUnits, conversionCategories, updateUserRole]);
 
     useEffect(() => {
         const performConversion = () => {
@@ -684,7 +687,7 @@ export function Converter() {
                 </AlertDialogHeader>
                 <AlertDialogFooter className="sm:justify-center flex-col-reverse sm:flex-row gap-2">
                      <AlertDialogCancel onClick={() => setShowPremiumLockDialog(false)}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => router.push('/profile')}>
+                    <AlertDialogAction onClick={() => router.push('/premium')}>
                         Check Your Progress
                     </AlertDialogAction>
                 </AlertDialogFooter>
@@ -767,6 +770,12 @@ const CompareButton = ({ category, fromUnit, inputValue, t }: { category: Conver
                     <div className="h-64 pr-4">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={results} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                <defs>
+                                    <linearGradient id="colorUv" x1="0" y1="0" x2="1" y2="0">
+                                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
+                                    </linearGradient>
+                                </defs>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis type="number" />
                                 <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 12 }} />
@@ -783,7 +792,7 @@ const CompareButton = ({ category, fromUnit, inputValue, t }: { category: Conver
                                         return null;
                                     }}
                                 />
-                                <Bar dataKey="value" fill="hsl(var(--primary))" barSize={15} />
+                                <Bar dataKey="value" fill="url(#colorUv)" barSize={15} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
