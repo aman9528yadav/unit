@@ -300,6 +300,12 @@ function PomodoroSettingsDialog({ isOpen, setIsOpen, currentSettings, onSave }: 
     const { t } = useLanguage();
     const [localSettings, setLocalSettings] = React.useState(currentSettings);
 
+    React.useEffect(() => {
+        if (isOpen) {
+            setLocalSettings(currentSettings);
+        }
+    }, [isOpen, currentSettings]);
+
     const handleChange = (key: keyof typeof localSettings, value: string) => {
         const numValue = parseInt(value, 10);
         if (!isNaN(numValue) && numValue > 0) {
@@ -310,13 +316,6 @@ function PomodoroSettingsDialog({ isOpen, setIsOpen, currentSettings, onSave }: 
     const handleSave = () => {
         onSave(localSettings);
     }
-    
-    // Reset local state if the dialog is reopened with different initial props
-    React.useEffect(() => {
-        if (isOpen) {
-            setLocalSettings(currentSettings);
-        }
-    }, [isOpen, currentSettings]);
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
