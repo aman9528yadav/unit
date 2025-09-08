@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -376,9 +375,8 @@ export function Notepad() {
     return (
         <div className="w-full max-w-md mx-auto flex flex-col h-screen">
              <header className="flex items-center justify-between p-4 flex-shrink-0 sticky top-0 z-50 bg-background">
-                <div className='text-center'>
-                    <p className="text-sm text-muted-foreground">{t('notepad.noteCount', {count: sortedNotes.length})}</p>
-                </div>
+                <div></div>
+                <h1 className="text-xl font-bold">{getHeading()}</h1>
                 <div className="flex items-center">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -403,6 +401,10 @@ export function Notepad() {
                     </DropdownMenu>
                 </div>
             </header>
+            
+             <div className='text-center px-4 pb-4'>
+                <p className="text-sm text-muted-foreground">{t('notepad.noteCount', {count: sortedNotes.length})}</p>
+            </div>
             
             <div className="px-4 flex-shrink-0">
                 <Tabs value={view === 'category' ? 'all' : view} onValueChange={handleTabChange} className="w-full">
