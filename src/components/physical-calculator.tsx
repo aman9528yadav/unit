@@ -39,13 +39,21 @@ export function PhysicalCalculator({ isFullScreen, onFullScreenToggle }: { isFul
     const [operation, setOperation] = useState<string | undefined>(undefined);
     const [memory, setMemory] = useState(0);
     const [profile, setProfile] = useState<{email: string} | null>(null);
+    const [recentCalculations, setRecentCalculations] = useState<string[]>([]);
     const router = useRouter();
 
 
     useEffect(() => {
         const storedProfile = localStorage.getItem("userProfile");
         if (storedProfile) {
-            setProfile(JSON.parse(storedProfile));
+            const parsedProfile = JSON.parse(storedProfile);
+            setProfile(parsedProfile);
+
+            const unsub = listenToUserData(parsedProfile.email, (data: UserData) => {
+                const history = data?.calculationHistory || [];
+                setRecentCalculations(history.slice(0, 4));
+            });
+            return () => unsub();
         }
     }, []);
 
@@ -165,18 +173,22 @@ export function PhysicalCalculator({ isFullScreen, onFullScreenToggle }: { isFul
     );
 
   return (
-    <div className={cn("w-full", isFullScreen ? "h-screen flex flex-col" : "max-w-[500px] mx-auto")}>
+    <div className={cn("w-full space-y-4", isFullScreen ? "h-screen flex flex-col" : "max-w-[500px] mx-auto")}>
        {isFullScreen && <FullScreenHeader />}
       <div className={cn("bg-[#9eadb8] rounded-2xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.6),_0_0_0_6px_#7a8791,_0_0_0_12px_#6b7882,_0_0_0_18px_#5d6871,_inset_0_5px_8px_rgba(255,255,255,0.4),_inset_0_-5px_8px_rgba(0,0,0,0.2)]", isFullScreen && "flex-grow flex flex-col")}>
-        <div className="header flex justify-between items-center mb-5">
-            <div className="text-[#4a5c6c] text-3xl font-bold tracking-widest text-shadow-[1px_1px_2px_rgba(0,0,0,0.2)]">CALCPRO</div>
-            <div className="flex justify-between w-[180px] bg-[#3a3022] rounded-md p-2 shadow-[inset_0_0_10px_rgba(0,0,0,0.5),_0_0_0_3px_#2d251a]">
-                <div className="flex-1 h-8 bg-gradient-to-b from-[#2b3a42] to-[#1c252a] mx-1 rounded-sm shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]"></div>
-                <div className="flex-1 h-8 bg-gradient-to-b from-[#2b3a42] to-[#1c252a] mx-1 rounded-sm shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]"></div>
-                <div className="flex-1 h-8 bg-gradient-to-b from-[#2b3a42] to-[#1c252a] mx-1 rounded-sm shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]"></div>
+        {!isFullScreen && (
+            <div className="header flex justify-between items-center mb-5">
+                <div className="text-[#4a5c6c] text-3xl font-bold tracking-widest text-shadow-[1px_1px_2px_rgba(0,0,0,0.2)]">CALCPRO</div>
+                <div className="flex justify-between w-[180px] bg-[#3a3022] rounded-md p-2 shadow-[inset_0_0_10px_rgba(0,0,0,0.5),_0_0_0_3px_#2d251a]">
+                    <div className="flex-1 h-8 bg-gradient-to-b from-[#2b3a42] to-[#1c252a] mx-1 rounded-sm shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]"></div>
+                    <div className="flex-1 h-8 bg-gradient-to-b from-[#2b3a42] to-[#1c252a] mx-1 rounded-sm shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]"></div>
+                    <div className="flex-1 h-8 bg-gradient-to-b from-[#2b3a42] to-[#1c252a] mx-1 rounded-sm shadow-[inset_0_0_4px_rgba(0,0,0,0.8)]"></div>
+                </div>
+                 <Button variant="ghost" size="icon" onClick={() => onFullScreenToggle(true)} className="text-[#4a5c6c] hover:bg-black/10">
+                    <Maximize />
+                </Button>
             </div>
-            <div className="text-right text-[#4a5c6c] font-semibold">X-8000 SERIES</div>
-        </div>
+        )}
 
         <div className="display-container bg-[#c3d4c6] rounded-lg p-5 mb-6 text-right shadow-[inset_0_6px_10px_rgba(0,0,0,0.3),_0_0_0_4px_#aab9b0,_0_0_0_6px_#95a298] min-h-[120px]">
              <div className="display bg-gradient-to-b from-[#e0efe9] to-[#c3d4c6] rounded-md p-4 h-full shadow-[inset_0_0_10px_rgba(0,0,0,0.1)]">
@@ -221,11 +233,35 @@ export function PhysicalCalculator({ isFullScreen, onFullScreenToggle }: { isFul
             <PhysicalButton onClick={handleButtonClick} label="=" className="bg-gradient-to-b from-[#2196F3] to-[#0b7dda] text-white [--shadow-color:#0a6ebe]" />
             <PhysicalButton onClick={handleButtonClick} label="±" className="bg-gradient-to-b from-[#ff9500] to-[#e68400] text-white [--shadow-color:#cc7600]" />
         </div>
-         <div className="footer flex justify-between mt-5 text-[#4a5c6c] text-sm font-semibold">
-            <div>SCIENTIFIC CALCULATOR</div>
-            <div className="italic">SN: CPX-8000-2023</div>
-        </div>
+         {!isFullScreen && (
+            <div className="footer flex justify-between mt-5 text-[#4a5c6c] text-sm font-semibold">
+                <div>SCIENTIFIC CALCULATOR</div>
+                <div className="italic">SN: CPX-8000-2023</div>
+            </div>
+         )}
       </div>
+      {!isFullScreen && recentCalculations.length > 0 && (
+            <Card className="bg-card/50 backdrop-blur-sm border-none">
+                <CardHeader>
+                    <CardTitle className="flex items-center justify-between text-base">
+                        <div className="flex items-center gap-2">
+                           <History size={18} />
+                           Recent Calculations
+                        </div>
+                        <Button variant="link" size="sm" onClick={() => router.push('/history?tab=calculator')}>See All</Button>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                        {recentCalculations.map((calc, i) => (
+                            <li key={i} className="flex justify-between items-center p-2 bg-black/10 rounded-md group">
+                               <span className="truncate">{calc.split('|')[0]}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </CardContent>
+            </Card>
+        )}
     </div>
   );
 }

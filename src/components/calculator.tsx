@@ -24,17 +24,16 @@ const CalculatorButton = ({
   buttonLabel?: string;
   children?: React.ReactNode;
 }) => (
-  <button
+  <Button
+    variant="secondary"
     onClick={() => onClick(label)}
     className={cn(
-        "relative flex items-center justify-center rounded-xl p-4 text-2xl font-semibold text-primary-foreground shadow-md transition-all duration-100 ease-in-out active:translate-y-1 active:shadow-sm",
-        "before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/20 before:to-transparent before:clip-q",
+        "h-auto text-2xl font-semibold p-4 rounded-xl shadow-md active:shadow-sm active:translate-y-px",
         className
     )}
   >
     {children || label}
-    {buttonLabel && <span className="absolute bottom-1.5 right-2.5 text-xs font-bold uppercase opacity-60">{buttonLabel}</span>}
-  </button>
+  </Button>
 );
 
 
@@ -180,15 +179,10 @@ export function Calculator({ isFullScreen, onFullScreenToggle }: { isFullScreen:
   return (
     <div className={cn("w-full space-y-4", isFullScreen ? "h-screen flex flex-col" : "max-w-lg mx-auto")}>
        {isFullScreen && <FullScreenHeader />}
-      <div className={cn("bg-card/80 rounded-2xl shadow-lg border-2 border-border/20", isFullScreen ? "flex-grow flex flex-col p-4" : "p-6")}>
+      <div className={cn("bg-card rounded-2xl shadow-lg border", isFullScreen ? "flex-grow flex flex-col p-4" : "p-6")}>
         {!isFullScreen && (
-            <div className="header flex justify-between items-center mb-5">
-                <div className="font-bold text-xl text-foreground/70 tracking-widest">CALCPRO</div>
-                <div className="flex justify-between w-36 bg-secondary/50 rounded-md p-1.5 border border-border/20">
-                    <div className="flex-1 h-6 bg-gradient-to-b from-secondary to-background/50 mx-1 rounded-sm"></div>
-                    <div className="flex-1 h-6 bg-gradient-to-b from-secondary to-background/50 mx-1 rounded-sm"></div>
-                    <div className="flex-1 h-6 bg-gradient-to-b from-secondary to-background/50 mx-1 rounded-sm"></div>
-                </div>
+            <div className="flex justify-between items-center mb-5">
+                <div className="font-bold text-xl text-foreground/70 tracking-widest">CALC</div>
                 <div className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => onFullScreenToggle(true)}>
                         <Maximize />
@@ -197,48 +191,48 @@ export function Calculator({ isFullScreen, onFullScreenToggle }: { isFullScreen:
             </div>
         )}
 
-        <div className={cn("display-container bg-muted/50 rounded-lg p-2 border-2 border-border/20 shadow-inner", isFullScreen ? "mb-4" : "mb-6")}>
-             <div className="display bg-gradient-to-b from-background/80 to-background/50 rounded-md p-4 h-28 text-right flex flex-col justify-end">
-                <div className="previous-operand text-foreground/60 text-xl min-h-7 break-all">{previousOperand} {operation}</div>
+        <div className={cn("display-container bg-muted rounded-lg p-2 border", isFullScreen ? "mb-4" : "mb-6")}>
+             <div className="display bg-background/50 rounded-md p-4 h-28 text-right flex flex-col justify-end">
+                <div className="previous-operand text-muted-foreground text-xl min-h-7 break-all">{previousOperand} {operation}</div>
                 <div className="current-operand text-foreground text-5xl font-semibold break-all">{currentOperand}</div>
             </div>
         </div>
 
         <div className={cn("buttons grid grid-cols-5 grid-rows-5 gap-3", isFullScreen && "flex-grow")}>
-          <CalculatorButton onClick={handleButtonClick} label="MC" className="bg-accent text-accent-foreground shadow-accent/50" buttonLabel="MEM" />
-          <CalculatorButton onClick={handleButtonClick} label="MR" className="bg-accent text-accent-foreground shadow-accent/50" buttonLabel="RECALL" />
-          <CalculatorButton onClick={handleButtonClick} label="M+" className="bg-accent text-accent-foreground shadow-accent/50" buttonLabel="STORE" />
-          <CalculatorButton onClick={handleButtonClick} label="AC" className="bg-destructive text-destructive-foreground shadow-destructive/50" buttonLabel="OFF" />
-          <CalculatorButton onClick={handleButtonClick} label="DEL" className="bg-destructive text-destructive-foreground shadow-destructive/50" buttonLabel="ON" />
+          <CalculatorButton onClick={handleButtonClick} label="MC" className="bg-accent text-accent-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="MR" className="bg-accent text-accent-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="M+" className="bg-accent text-accent-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="AC" className="bg-destructive text-destructive-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="DEL" className="bg-destructive text-destructive-foreground" />
           
-          <CalculatorButton onClick={handleButtonClick} label="√" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
-          <CalculatorButton onClick={handleButtonClick} label="%" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
-          <CalculatorButton onClick={handleButtonClick} label="(" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
-          <CalculatorButton onClick={handleButtonClick} label=")" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
-          <CalculatorButton onClick={handleButtonClick} label="÷" className="bg-primary text-primary-foreground shadow-primary/50" />
+          <CalculatorButton onClick={handleButtonClick} label="√" />
+          <CalculatorButton onClick={handleButtonClick} label="%" />
+          <CalculatorButton onClick={handleButtonClick} label="(" />
+          <CalculatorButton onClick={handleButtonClick} label=")" />
+          <CalculatorButton onClick={handleButtonClick} label="÷" className="bg-primary text-primary-foreground" />
           
-          <CalculatorButton onClick={handleButtonClick} label="7" className="bg-muted text-muted-foreground" />
-          <CalculatorButton onClick={handleButtonClick} label="8" className="bg-muted text-muted-foreground" />
-          <CalculatorButton onClick={handleButtonClick} label="9" className="bg-muted text-muted-foreground" />
-          <CalculatorButton onClick={handleButtonClick} label="×" className="bg-primary text-primary-foreground shadow-primary/50" />
-          <CalculatorButton onClick={handleButtonClick} label="M-" className="bg-accent text-accent-foreground shadow-accent/50" />
+          <CalculatorButton onClick={handleButtonClick} label="7" />
+          <CalculatorButton onClick={handleButtonClick} label="8" />
+          <CalculatorButton onClick={handleButtonClick} label="9" />
+          <CalculatorButton onClick={handleButtonClick} label="×" className="bg-primary text-primary-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="M-" className="bg-accent text-accent-foreground" />
 
-          <CalculatorButton onClick={handleButtonClick} label="4" className="bg-muted text-muted-foreground" />
-          <CalculatorButton onClick={handleButtonClick} label="5" className="bg-muted text-muted-foreground" />
-          <CalculatorButton onClick={handleButtonClick} label="6" className="bg-muted text-muted-foreground" />
-          <CalculatorButton onClick={handleButtonClick} label="-" className="bg-primary text-primary-foreground shadow-primary/50" />
-          <CalculatorButton onClick={handleButtonClick} label="x²" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
+          <CalculatorButton onClick={handleButtonClick} label="4" />
+          <CalculatorButton onClick={handleButtonClick} label="5" />
+          <CalculatorButton onClick={handleButtonClick} label="6" />
+          <CalculatorButton onClick={handleButtonClick} label="-" className="bg-primary text-primary-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="x²" />
 
-          <CalculatorButton onClick={handleButtonClick} label="1" className="bg-muted text-muted-foreground" />
-          <CalculatorButton onClick={handleButtonClick} label="2" className="bg-muted text-muted-foreground" />
-          <CalculatorButton onClick={handleButtonClick} label="3" className="bg-muted text-muted-foreground" />
-          <CalculatorButton onClick={handleButtonClick} label="+" className="bg-primary text-primary-foreground shadow-primary/50" />
-          <CalculatorButton onClick={handleButtonClick} label="1/x" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
+          <CalculatorButton onClick={handleButtonClick} label="1" />
+          <CalculatorButton onClick={handleButtonClick} label="2" />
+          <CalculatorButton onClick={handleButtonClick} label="3" />
+          <CalculatorButton onClick={handleButtonClick} label="+" className="bg-primary text-primary-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="1/x" />
           
-          <CalculatorButton onClick={handleButtonClick} label="0" className="bg-muted text-muted-foreground col-span-2" />
-          <CalculatorButton onClick={handleButtonClick} label="." className="bg-muted text-muted-foreground" />
-          <CalculatorButton onClick={handleButtonClick} label="=" className="bg-primary text-primary-foreground shadow-primary/50" />
-          <CalculatorButton onClick={handleButtonClick} label="±" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
+          <CalculatorButton onClick={handleButtonClick} label="0" className="col-span-2" />
+          <CalculatorButton onClick={handleButtonClick} label="." />
+          <CalculatorButton onClick={handleButtonClick} label="=" className="bg-primary text-primary-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="±" />
         </div>
       </div>
        {!isFullScreen && recentCalculations.length > 0 && (
