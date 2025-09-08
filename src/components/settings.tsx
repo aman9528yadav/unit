@@ -49,7 +49,7 @@ const SettingRow = ({ label, description, control, isLink = false, href, childre
             <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2">
                     {isPremium && (
-                        <Star className={cn("h-4 w-4", isLocked ? 'text-muted-foreground' : 'text-yellow-500 fill-yellow-400')} />
+                         <Star className={cn("h-4 w-4", isLocked ? 'text-muted-foreground' : 'text-yellow-400 fill-yellow-400')} />
                     )}
                     <p className="font-medium">{label}</p>
                 </div>
@@ -62,14 +62,20 @@ const SettingRow = ({ label, description, control, isLink = false, href, childre
         </div>
     );
     
-    const handleWrapperClick = () => {
+    const handleWrapperClick = (e: React.MouseEvent) => {
         if (isLocked && onLockClick) {
+            e.preventDefault();
+            e.stopPropagation();
             onLockClick();
         }
     };
 
     if (isLink && href && !isLocked) {
         return <Link href={href} className="px-4 border-b last:border-b-0 block">{content}</Link>;
+    }
+    
+    if (isLink && href && isLocked) {
+         return <div onClick={handleWrapperClick} className="px-4 border-b last:border-b-0 block cursor-pointer">{content}</div>;
     }
 
     return (
@@ -162,12 +168,19 @@ export function Settings() {
             unsub();
             unsubLocks();
         };
+    } else {
+        const unsubLocks = listenToFeatureLocks(setFeatureLocks);
+        return () => unsubLocks();
     }
   }, []);
   
   const updateUserRole = async (email: string | null) => {
     if(email === "amanyadavyadav9458@gmail.com") {
         setUserRole('Owner');
+        return;
+    }
+    if (!email) {
+        setUserRole('Member');
         return;
     }
     const stats = await getStats(email);
@@ -478,6 +491,7 @@ export function Settings() {
                                 description={t('settings.calculator.mode.description')}
                                 isPremium
                                 isLocked={isScientificModeLocked}
+                                onLockClick={() => setShowPremiumLockDialog(true)}
                                 control={
                                     <Select value={calculatorMode} onValueChange={(v) => { if(!isScientificModeLocked) setCalculatorMode(v as CalculatorMode) }} disabled={isScientificModeLocked}>
                                         <SelectTrigger className="w-32">

@@ -551,9 +551,9 @@ export function Converter() {
                                 {regions.map(r => {
                                     const isLocked = isFeatureLocked(`Region:${r}`, PREMIUM_REGIONS.includes(r));
                                     return (
-                                        <SelectItem key={r} value={r} disabled={isLocked} onSelect={(e) => { if (isLocked) e.preventDefault(); }}>
+                                        <SelectItem key={r} value={r} disabled={isLocked} onSelect={(e) => { if (isLocked) { e.preventDefault(); setShowPremiumLockDialog(true); } }}>
                                             <div className="flex items-center gap-2">
-                                                {isLocked && <Star className="w-3 h-3 text-muted-foreground" />}
+                                                {PREMIUM_REGIONS.includes(r) && <Star className={cn("w-3 h-3", isLocked ? "text-muted-foreground" : "text-yellow-500 fill-yellow-400")} />}
                                                 {r}
                                             </div>
                                         </SelectItem>
@@ -572,9 +572,9 @@ export function Converter() {
                                 {conversionCategories.map(cat => {
                                     const isLocked = isFeatureLocked(`Category:${cat.name}`, PREMIUM_CATEGORIES.includes(cat.name));
                                     return (
-                                        <SelectItem key={cat.name} value={cat.name} disabled={isLocked} onSelect={(e) => { if (isLocked) e.preventDefault(); }}>
+                                        <SelectItem key={cat.name} value={cat.name} disabled={isLocked} onSelect={(e) => { if (isLocked) { e.preventDefault(); setShowPremiumLockDialog(true); } }}>
                                             <div className="flex items-center gap-2">
-                                                {isLocked && <Star className="w-3 h-3 text-muted-foreground" />}
+                                                {PREMIUM_CATEGORIES.includes(cat.name) && <Star className={cn("w-3 h-3", isLocked ? "text-muted-foreground" : "text-yellow-500 fill-yellow-400")} />}
                                                 <cat.icon className="w-4 h-4" />
                                                 {t(`categories.${cat.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat.name })}
                                             </div>
