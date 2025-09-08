@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { Search, StickyNote, History, HelpCircle, Settings, X, CornerDownLeft, ArrowRightLeft, Loader2 } from 'lucide-react';
+import { Search, StickyNote, History, HelpCircle, Settings, X, CornerDownLeft, ArrowRightLeft, Loader2, Sigma, LayoutGrid } from 'lucide-react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Note } from './notepad';
 import { FAQ } from './help';
@@ -20,7 +20,7 @@ import { listenToUserData, UserData } from '@/services/firestore';
 
 
 interface SearchResult {
-  type: 'Note' | 'History' | 'Help' | 'Setting' | 'Conversion';
+  type: 'Note' | 'History' | 'Help' | 'Setting' | 'Conversion' | 'Unit' | 'Category';
   title: string;
   description?: string;
   id: string;
@@ -169,14 +169,18 @@ export function GlobalSearch() {
     // Search Notes
     const notes = userData?.notes || [];
     notes
-        .filter(n => !n.deletedAt && (n.title.toLowerCase().includes(lowerQuery) || n.content.toLowerCase().includes(lowerQuery)))
-        .forEach(n => allResults.push({
-            type: 'Note',
-            title: n.title || t('globalSearch.results.note.untitled'),
-            description: n.content.replace(/<[^>]*>?/gm, '').substring(0, 100),
-            id: n.id,
-            href: `/notes/edit/${n.id}`,
-        }));
+      .filter(n => !n.deletedAt && (
+        n.title.toLowerCase().includes(lowerQuery) || 
+        n.content.toLowerCase().includes(lowerQuery) ||
+        (n.category && n.category.toLowerCase().includes(lowerQuery))
+      ))
+      .forEach(n => allResults.push({
+          type: 'Note',
+          title: n.title || t('globalSearch.results.note.untitled'),
+          description: n.content.replace(/<[^>]*>?/gm, '').substring(0, 100),
+          id: n.id,
+          href: `/notes/edit/${n.id}`,
+      }));
 
     // Search History
     const conversionHistory = userData?.conversionHistory || [];
@@ -203,6 +207,27 @@ export function GlobalSearch() {
           }));
     }
 
+    // Search Conversion Categories
+    conversionCategories
+      .filter(c => c.name.toLowerCase().includes(lowerQuery))
+      .forEach(c => allResults.push({
+        type: 'Category',
+        title: `Category: ${c.name}`,
+        description: `Go to the ${c.name} converter`,
+        id: c.name,
+        href: '/converter'
+      }));
+
+    // Search Units
+    allUnits
+      .filter(u => u.name.toLowerCase().includes(lowerQuery) || u.symbol.toLowerCase() === lowerQuery)
+      .forEach(u => allResults.push({
+        type: 'Unit',
+        title: `${u.name} (${u.symbol})`,
+        id: u.symbol,
+        href: '/converter'
+      }));
+
 
     // Search Settings
     SETTINGS_PAGES
@@ -220,6 +245,22 @@ export function GlobalSearch() {
     if (result.type === 'History' || result.type === 'Conversion') {
         localStorage.setItem('restoreConversion', result.type === 'Conversion' ? query : result.id);
     }
+    if (result.type === 'Category') {
+      const category = conversionCategories.find(c => c.name === result.id);
+      if (category) {
+        localStorage.setItem('restoreConversion', `1 ${category.units[0].symbol} to ${category.units[1]?.symbol || category.units[0].symbol}`);
+      }
+    }
+    if (result.type === 'Unit') {
+      const unit = allUnits.find(u => u.symbol === result.id);
+      if(unit) {
+        const category = conversionCategories.find(c => c.units.some(u => u.symbol === unit.symbol));
+        if (category) {
+          const toUnit = category.units.find(u => u.symbol !== unit.symbol) || unit;
+          localStorage.setItem('restoreConversion', `1 ${unit.symbol} to ${toUnit.symbol}`);
+        }
+      }
+    }
     router.push(result.href);
     setOpen(false);
     setQuery('');
@@ -232,6 +273,8 @@ export function GlobalSearch() {
       case 'Help': return <HelpCircle className="w-5 h-5 text-green-500" />;
       case 'Setting': return <Settings className="w-5 h-5 text-gray-500" />;
       case 'Conversion': return <ArrowRightLeft className="w-5 h-5 text-purple-500" />;
+      case 'Category': return <LayoutGrid className="w-5 h-5 text-indigo-500" />;
+      case 'Unit': return <Sigma className="w-5 h-5 text-orange-500" />;
       default: return null;
     }
   };
@@ -284,3 +327,5 @@ export function GlobalSearch() {
     </Dialog>
   );
 }
+
+    

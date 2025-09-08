@@ -159,14 +159,10 @@ export function Converter() {
   const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
 
 
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [isSearching, startSearchTransition] = React.useTransition();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>('Member');
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const searchContainerRef = useRef<HTMLDivElement>(null);
-
+  
   const [favorites, setFavorites] = useState<string[]>([]);
   const [isFavorite, setIsFavorite] = useState(false);
   const [recentConversions, setRecentConversions] = useState<string[]>([]);
@@ -308,24 +304,6 @@ export function Converter() {
     window.dispatchEvent(new StorageEvent('storage', { key: 'lastConversion', newValue: historyString }));
     window.dispatchEvent(new StorageEvent('storage', { key: localHistoryKey, newValue: JSON.stringify(newLocalHistory) }));
   };
-  
- const handleSearch = () => {
-    if (isSearching) return;
-    startSearchTransition(() => {
-        const parsed = offlineParseConversionQuery(searchQuery, allUnits, conversionCategories);
-
-        if (parsed) {
-            restoreFromParsedQuery(parsed);
-            setSearchQuery("");
-            setSuggestions([]);
-        } else {
-             if (searchQuery.match(/^\d/) && searchQuery.match(/to|in|as/i)) {
-                 toast({ title: t('converter.toast.invalidSearch'), description: t('converter.toast.queryError'), variant: "destructive" });
-            }
-        }
-    });
-};
-
 
   const handleCategoryChange = (categoryName: string) => {
     const isLocked = isPremiumFeatureLocked && PREMIUM_CATEGORIES.includes(categoryName);
@@ -529,87 +507,6 @@ export function Converter() {
     const currentConversionString = getFullHistoryString(inputValue, fromUnit, toUnit, outputValue, selectedCategory.name);
     setIsFavorite(favorites.includes(currentConversionString));
   }, [inputValue, fromUnit, toUnit, outputValue, selectedCategory, favorites]);
-
- const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-
-    if (!query.trim()) {
-        setSuggestions([]);
-        return;
-    }
-
-    const newSuggestions: string[] = [];
-    const lowerQuery = query.toLowerCase();
-
-    // Regex to find a number and some text
-    const valueUnitRegex = /^([0-9.,\s]+)?\s*(.*)/i;
-    const match = query.match(valueUnitRegex);
-    
-    let numericPart: string | undefined = undefined;
-    let textPart = '';
-
-    if (match) {
-        numericPart = (match[1] || '').trim();
-        textPart = (match[2] || '').trim();
-    } else {
-        textPart = query.trim().toLowerCase();
-    }
-    
-    const toSeparator = " to ";
-    const toIndex = textPart.toLowerCase().lastIndexOf(toSeparator.trim());
-
-    if (toIndex !== -1 && (textPart.toLowerCase().endsWith(toSeparator.trim()) || textPart.toLowerCase().endsWith(toSeparator.trim() + ' '))) {
-       const fromPart = textPart.substring(0, toIndex).trim();
-       
-       const fromUnit = allUnits.find(u => u.name.toLowerCase().replace(/\s/g,'') === fromPart.replace(/\s/g,'') || u.symbol.toLowerCase().replace(/\s/g,'') === fromPart.replace(/\s/g,''));
-
-       if (fromUnit) {
-           const category = conversionCategories.find(c => c.units.some(u => u.symbol === fromUnit.symbol));
-           if (category) {
-               category.units.forEach(unit => {
-                   if (unit.symbol !== fromUnit.symbol) {
-                       newSuggestions.push(`${numericPart || '1'} ${fromUnit.name} to ${unit.name}`);
-                   }
-               });
-           }
-       }
-    } else if (textPart) {
-        const textPartLower = textPart.toLowerCase().replace(/\s/g, '');
-        allUnits.forEach(unit => {
-            const unitNameLower = unit.name.toLowerCase().replace(/\s/g, '');
-            const unitSymbolLower = unit.symbol.toLowerCase().replace(/\s/g, '');
-            if (unitNameLower.includes(textPartLower) || unitSymbolLower.includes(textPartLower)) {
-                newSuggestions.push(`${numericPart || '1'} ${unit.name} (${unit.symbol})`);
-            }
-        });
-    }
-
-    setSuggestions([...new Set(newSuggestions)].slice(0, 5));
-};
-
-  
-  const handleSuggestionClick = (suggestion: string) => {
-    // Remove the symbol part for parsing, e.g. "10 Kilometers (km)" -> "10 Kilometers"
-    const queryToParse = suggestion.replace(/\s\([^)]*\)$/, '');
-    setSearchQuery(queryToParse);
-    setSuggestions([]);
-    
-    // Use a slight delay to allow state to update before searching
-    setTimeout(() => handleSearch(), 0);
-  };
-  
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        setSuggestions([]);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col gap-4">
@@ -861,3 +758,5 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
+
+    
