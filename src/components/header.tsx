@@ -11,7 +11,7 @@ import { listenToUserData } from "@/services/firestore";
 import { GlobalSearch } from "./global-search";
 import { SidebarTrigger } from "./ui/sidebar";
 import { Logo } from "./logo";
-import { useLanguage } from "./language-context";
+import { useLanguage } from "@/context/language-context";
 
 interface UserProfile {
     fullName: string;
