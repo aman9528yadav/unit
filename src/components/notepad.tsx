@@ -74,7 +74,7 @@ export function Notepad() {
     const [isSearchVisible, setIsSearchVisible] = useState(false);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [userData, setUserData] = useState<UserData | null>(null);
-    const [passwordPrompt, setPasswordPrompt] = useState<{noteId: string} | null>(null);
+    const [passwordPrompt, setPasswordPrompt] = useState<{note: Note; action: 'view' | 'edit' | 'delete'} | null>(null);
     const [passwordInput, setPasswordInput] = useState('');
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
     const { language, t } = useLanguage();
@@ -127,22 +127,28 @@ export function Notepad() {
     
     const handleNoteClick = (note: Note) => {
         if(note.isLocked) {
-            const sessionPassword = sessionStorage.getItem('notePassword');
-            if (sessionPassword && sessionPassword === userData?.notePassword) {
-                 router.push(`/notes/view/${note.id}`);
-            } else {
-                 setPasswordPrompt({noteId: note.id});
-            }
+            setPasswordPrompt({ note, action: 'view' });
         } else {
             router.push(`/notes/view/${note.id}`);
         }
     }
+    
+    const executeProtectedAction = (note: Note, action: 'view' | 'edit' | 'delete') => {
+         if (action === 'view') {
+            router.push(`/notes/view/${note.id}`);
+        } else if (action === 'edit') {
+            router.push(`/notes/edit/${note.id}`);
+        } else if (action === 'delete') {
+            handleSoftDelete(note.id);
+        }
+    };
 
     const handlePasswordSubmit = () => {
         if (passwordInput === userData?.notePassword) {
-            sessionStorage.setItem('notePassword', passwordInput);
-            toast({ title: "Unlocked!", description: "You can now view locked notes for this session." });
-            router.push(`/notes/view/${passwordPrompt!.noteId}`);
+            toast({ title: "Unlocked!" });
+            if (passwordPrompt) {
+                executeProtectedAction(passwordPrompt.note, passwordPrompt.action);
+            }
             setPasswordPrompt(null);
             setPasswordInput('');
         } else {
@@ -152,6 +158,12 @@ export function Notepad() {
 
 
     const handleSoftDelete = (noteId: string) => {
+        const note = notes.find(n => n.id === noteId);
+        if (note?.isLocked) {
+             setPasswordPrompt({ note, action: 'delete' });
+             return;
+        }
+
         if (!profile) return;
         const updatedNotes = notes.map(note => 
             note.id === noteId ? { ...note, deletedAt: new Date().toISOString() } : note
@@ -197,6 +209,15 @@ export function Notepad() {
         updateUserNotes(profile.email, updatedNotes);
         toast({ title: t('notepad.toast.trashEmptied') });
         setShowEmptyTrashDialog(false);
+    };
+    
+    const handleEditClick = (e: React.MouseEvent, note: Note) => {
+        e.stopPropagation();
+        if (note.isLocked) {
+            setPasswordPrompt({ note, action: 'edit' });
+        } else {
+            router.push(`/notes/edit/${note.id}`);
+        }
     };
 
     const categories = [...new Set(notes.filter(n => !n.deletedAt && n.category).map(n => n.category!))];
@@ -439,7 +460,7 @@ export function Notepad() {
                                                 </>
                                             ) : (
                                                 <>
-                                                    <Button size="sm" variant="ghost" onClick={(e) => {e.stopPropagation(); router.push(`/notes/edit/${note.id}`)}}><Edit size={16} /></Button>
+                                                    <Button size="sm" variant="ghost" onClick={(e) => handleEditClick(e, note)}><Edit size={16} /></Button>
                                                     <Button size="sm" variant="ghost" onClick={(e) => {e.stopPropagation(); handleToggleFavorite(note.id)}}>
                                                         <Star size={16} className={note.isFavorite ? 'text-yellow-400 fill-yellow-400' : ''}/>
                                                     </Button>
@@ -504,7 +525,7 @@ export function Notepad() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Enter Password</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This note is locked. Please enter your note password to view it.
+                            This note is locked. Please enter your note password to continue.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <div className="space-y-2">
