@@ -208,10 +208,15 @@ export function UserData() {
                             {instagram && <a href={instagram} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:underline flex items-center gap-1 text-sm"><Instagram size={16} /> Instagram</a>}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 mt-8">
+                        <div className="grid grid-cols-3 gap-2 mt-8">
                              <Button asChild variant="outline" className="flex gap-2">
                                 <Link href="/profile/edit">
                                     <Edit size={16} /> Edit Profile
+                                </Link>
+                            </Button>
+                            <Button asChild variant="outline" className="flex gap-2">
+                                <Link href="/settings">
+                                    <Settings size={16} /> Settings
                                 </Link>
                             </Button>
                             <Button variant="destructive" className="flex gap-2" onClick={handleLogout}>
