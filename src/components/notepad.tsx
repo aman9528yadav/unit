@@ -70,14 +70,11 @@ export function Notepad() {
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const [layout, setLayout] = useState<LayoutView>('list');
     const [sortKey, setSortKey] = useState<SortKey>('updatedAt');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [isSearchVisible, setIsSearchVisible] = useState(false);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [userData, setUserData] = useState<UserData | null>(null);
     const [passwordPrompt, setPasswordPrompt] = useState<{note: Note; action: 'view' | 'edit' | 'delete'} | null>(null);
     const [passwordInput, setPasswordInput] = useState('');
     const [showUnlockPassword, setShowUnlockPassword] = useState(false);
-    const debouncedSearchQuery = useDebounce(searchQuery, 300);
     const { language, t } = useLanguage();
     const dateLocale = language === 'hi' ? hi : enUS;
 
@@ -224,20 +221,11 @@ export function Notepad() {
     const categories = [...new Set(notes.filter(n => !n.deletedAt && n.category).map(n => n.category!))];
 
     const filteredNotes = notes.filter(note => {
-        const plainTextContent = note.content.replace(/<[^>]*>?/gm, '');
-        const matchesSearch = debouncedSearchQuery.trim() === '' || 
-                              note.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || 
-                              plainTextContent.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
-
-        if (!matchesSearch) return false;
-        
-        switch (view) {
-            case 'all': return !note.deletedAt;
-            case 'favorites': return !note.deletedAt && note.isFavorite;
-            case 'trash': return !!note.deletedAt;
-            case 'category': return !note.deletedAt && note.category === activeCategory;
-            default: return true;
-        }
+        if (view === 'all' && !note.deletedAt) return true;
+        if (view === 'favorites' && !note.deletedAt && note.isFavorite) return true;
+        if (view === 'trash' && note.deletedAt) return true;
+        if (view === 'category' && !note.deletedAt && note.category === activeCategory) return true;
+        return false;
     });
 
     const sortedNotes = [...filteredNotes].sort((a, b) => {
@@ -258,9 +246,6 @@ export function Notepad() {
     };
     
     const getEmptyState = () => {
-        if (debouncedSearchQuery && sortedNotes.length === 0) {
-            return { title: t('notepad.empty.search.title'), message: t('notepad.empty.search.message', {query: debouncedSearchQuery}) };
-        }
         switch(view) {
             case 'all': return { title: t('notepad.empty.all.title'), message: t('notepad.empty.all.message') };
             case 'favorites': return { title: t('notepad.empty.favorites.title'), message: t('notepad.empty.favorites.message') };
@@ -330,31 +315,9 @@ export function Notepad() {
         <div className="w-full max-w-md mx-auto flex flex-col h-screen">
              <header className="flex items-center justify-between p-4 flex-shrink-0 sticky top-0 z-50 bg-background">
                 <div className='text-center'>
-                     {isSearchVisible ? (
-                        <div className="flex items-center gap-2">
-                            <Search className="text-muted-foreground" />
-                            <Input 
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder={t('notepad.searchPlaceholder')}
-                                className="w-full bg-transparent border-none focus:ring-0"
-                                autoFocus
-                            />
-                            <Button variant="ghost" size="icon" onClick={() => {setIsSearchVisible(false); setSearchQuery('');}}><X/></Button>
-                        </div>
-                    ) : (
-                        <>
-                            <p className="text-sm text-muted-foreground">{t('notepad.noteCount', {count: sortedNotes.length})}</p>
-                        </>
-                    )}
+                    <p className="text-sm text-muted-foreground">{t('notepad.noteCount', {count: sortedNotes.length})}</p>
                 </div>
                 <div className="flex items-center">
-                    {!isSearchVisible && (
-                        <Button variant="ghost" size="icon" onClick={() => setIsSearchVisible(true)}>
-                            <Search />
-                        </Button>
-                    )}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">

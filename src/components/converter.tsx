@@ -627,44 +627,7 @@ export function Converter() {
             />
         )}
        </div>
-        <Card className="border-2 border-transparent">
-            <CardHeader>
-                <div className="flex items-center gap-2">
-                    <Search/>
-                    <CardTitle className="flex items-center gap-2">{t('converter.quickConvert')}</CardTitle>
-                </div>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-                <div className="relative" ref={searchContainerRef}>
-                    <div className="flex items-center gap-2">
-                        <Input
-                            placeholder={t('converter.searchPlaceholder')}
-                            value={searchQuery}
-                            onChange={handleSearchChange}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                        />
-                        <Button onClick={handleSearch} disabled={isSearching}>
-                            {isSearching ? <Loader2 className="animate-spin"/> : <Search />}
-                        </Button>
-                    </div>
-                     {suggestions.length > 0 && (
-                        <div className="absolute top-full mt-2 w-full bg-card rounded-lg border shadow-lg z-50 max-h-[200px] overflow-y-auto">
-                            <ul className="p-2">
-                                {suggestions.map((s, i) => (
-                                    <li 
-                                        key={i} 
-                                        className="p-2 rounded-md hover:bg-secondary cursor-pointer"
-                                        onClick={() => handleSuggestionClick(s)}
-                                    >
-                                        {s}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
+        
         <Card>
             <CardContent className="flex flex-col gap-4 pt-6">
                 <div className="grid grid-cols-2 gap-4">

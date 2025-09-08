@@ -78,8 +78,6 @@ export function History() {
   const searchParams = useSearchParams();
   const tabFromQuery = searchParams.get('tab') as 'conversions' | 'calculator' | 'favorites' | null;
   const [activeTab, setActiveTab] = useState(tabFromQuery || "conversions");
-  const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearch = useDebounce(searchQuery, 300);
   const { language, t } = useLanguage();
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
 
@@ -149,13 +147,10 @@ export function History() {
   const filteredItems = itemsToDisplay
     .filter((item): item is HistoryItemData => {
       if (!item) return false;
-      const searchMatch = !debouncedSearch || 
-            item.display.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-            (item.categoryName && item.categoryName.toLowerCase().includes(debouncedSearch.toLowerCase()));
       
       const categoryMatch = categoryFilter === "All" || (item.categoryName && item.categoryName === categoryFilter);
 
-      return searchMatch && (activeTab !== 'conversions' || categoryMatch);
+      return (activeTab !== 'conversions' || categoryMatch);
     })
     .sort((a, b) => parseISO(b.timestamp).getTime() - parseISO(a.timestamp).getTime());
 
@@ -195,26 +190,22 @@ export function History() {
                 <TabsTrigger value="favorites">Favorites</TabsTrigger>
             </TabsList>
             
-            <div className="flex items-center gap-2 my-4">
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder={t('history.searchPlaceholder')} className="pl-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-              </div>
-              {activeTab === 'conversions' && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline"><Filter className="mr-2"/> {categoryFilter === 'All' ? t('history.filter.all') : t(`categories.${categoryFilter.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: categoryFilter })} <ChevronDown className="ml-2 h-4 w-4" /></Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                      <DropdownMenuRadioGroup value={categoryFilter} onValueChange={setCategoryFilter}>
-                          {availableCategories.map(cat => (
-                              <DropdownMenuRadioItem key={cat} value={cat}>{cat === 'All' ? t('history.filter.all') : t(`categories.${cat.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat })}</DropdownMenuRadioItem>
-                          ))}
-                      </DropdownMenuRadioGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+            {activeTab === 'conversions' && (
+                <div className="flex items-center gap-2 my-4">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline"><Filter className="mr-2"/> {categoryFilter === 'All' ? t('history.filter.all') : t(`categories.${categoryFilter.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: categoryFilter })} <ChevronDown className="ml-2 h-4 w-4" /></Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                          <DropdownMenuRadioGroup value={categoryFilter} onValueChange={setCategoryFilter}>
+                              {availableCategories.map(cat => (
+                                  <DropdownMenuRadioItem key={cat} value={cat}>{cat === 'All' ? t('history.filter.all') : t(`categories.${cat.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat })}</DropdownMenuRadioItem>
+                              ))}
+                          </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
               )}
-            </div>
 
             <div className="bg-card p-4 rounded-lg">
                 {filteredItems.length > 0 ? (
