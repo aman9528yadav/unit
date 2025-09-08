@@ -60,7 +60,7 @@ import { Checkbox } from "./ui/checkbox";
 import { DailyActivity, processUserDataForStats } from "@/lib/stats";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { format, intervalToDuration } from "date-fns";
+import { format, intervalToDuration, isPast } from "date-fns";
 import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData, listenToUpdatesFromRtdb, UpdateItem, listenToDashboardWelcomeMessage, setDashboardWelcomeMessage, BetaWelcomeMessage, listenToBetaWelcomeMessage } from "@/services/firestore";
 import { getStreakData, recordVisit, StreakData } from "@/lib/streak";
 
@@ -177,6 +177,11 @@ function UpdateBanner() {
         }
 
         const targetDate = new Date(updateInfo.targetDate);
+        if (isPast(targetDate)) {
+             setTimeLeft(null);
+             return;
+        }
+
         const timer = setInterval(() => {
             const now = new Date();
             if (targetDate > now) {
@@ -190,7 +195,26 @@ function UpdateBanner() {
         return () => clearInterval(timer);
     }, [updateInfo?.targetDate]);
 
-    if (!updateInfo?.showOnDashboard || !timeLeft) {
+    if (!updateInfo?.showOnDashboard) {
+        return null;
+    }
+
+    if (updateInfo.targetDate && isPast(new Date(updateInfo.targetDate))) {
+        return (
+             <Card className="bg-green-50 border-green-200 text-green-800">
+                <CardHeader className="flex-row items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2"><CheckCircle2 className="text-green-600"/> Update is Live!</CardTitle>
+                    <Link href="/updates">
+                        <Button variant="ghost" size="sm" className="text-green-800 hover:bg-green-100">
+                            See What's New <ArrowRight className="ml-2 h-4 w-4"/>
+                        </Button>
+                    </Link>
+                </CardHeader>
+             </Card>
+        )
+    }
+
+    if (!timeLeft) {
         return null;
     }
 
