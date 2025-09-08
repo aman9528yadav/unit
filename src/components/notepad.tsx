@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home, ShieldX, ChevronDown, Lock, FileText } from 'lucide-react';
+import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home, ShieldX, ChevronDown, Lock, FileText, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -76,6 +76,7 @@ export function Notepad() {
     const [userData, setUserData] = useState<UserData | null>(null);
     const [passwordPrompt, setPasswordPrompt] = useState<{note: Note; action: 'view' | 'edit' | 'delete'} | null>(null);
     const [passwordInput, setPasswordInput] = useState('');
+    const [showUnlockPassword, setShowUnlockPassword] = useState(false);
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
     const { language, t } = useLanguage();
     const dateLocale = language === 'hi' ? hi : enUS;
@@ -530,7 +531,23 @@ export function Notepad() {
                     </AlertDialogHeader>
                     <div className="space-y-2">
                         <Label htmlFor="note-password">Password</Label>
-                        <Input id="note-password" type="password" value={passwordInput} onChange={e => setPasswordInput(e.target.value)} />
+                        <div className="relative">
+                            <Input 
+                                id="note-password" 
+                                type={showUnlockPassword ? "text" : "password"} 
+                                value={passwordInput} 
+                                onChange={e => setPasswordInput(e.target.value)}
+                                className="pr-10"
+                                onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit()}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowUnlockPassword(!showUnlockPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                            >
+                                {showUnlockPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                        </div>
                     </div>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
