@@ -115,9 +115,8 @@ export function Analytics() {
     const [showAllStats, setShowAllStats] = useState(false);
 
 
-    const loadLastActivities = useCallback(() => {
-        const activities: (LastActivityItem | null)[] = [
-            { key: 'lastConversion', name: 'Unit Conversion', icon: RefreshCw },
+    const loadLastActivities = useCallback((conversionHistory: string[] = []) => {
+        const localActivities: (LastActivityItem | null)[] = [
             { key: 'lastCalculation', name: 'Calculator', icon: Calculator },
             { key: 'lastNote', name: 'Note Edited', icon: NotebookPen },
             { key: 'lastDateCalc', name: 'Date Calculation', icon: CalendarIcon },
@@ -130,7 +129,14 @@ export function Analytics() {
             return { name, details, timestamp, icon };
         });
 
-        const sortedActivities = activities
+        const lastConversion = conversionHistory[0];
+        if (lastConversion) {
+             const [details, category, timestamp] = lastConversion.split('|');
+             localActivities.push({ name: 'Unit Conversion', details, timestamp, icon: RefreshCw });
+        }
+
+
+        const sortedActivities = localActivities
             .filter((a): a is LastActivityItem => a !== null && a.timestamp !== undefined)
             .sort((a, b) => {
                 const dateA = new Date(a.timestamp).getTime();
@@ -154,13 +160,15 @@ export function Analytics() {
             if (userEmail) {
                 getStreakData(userEmail).then(setStreakData);
             }
+            
+            // Load activities with the latest conversion history from the database
+            loadLastActivities(userData.conversionHistory);
         });
-
-        loadLastActivities();
-
+        
         const handleStorageChange = (e: StorageEvent) => {
-            if (['lastConversion', 'lastCalculation', 'lastNote', 'lastDateCalc', 'lastTimer', 'lastStopwatch'].includes(e.key || '')) {
-                loadLastActivities();
+            if (['lastCalculation', 'lastNote', 'lastDateCalc', 'lastTimer', 'lastStopwatch'].includes(e.key || '')) {
+                // Re-load local activities, assuming conversion history is already up-to-date from the listener
+                listenToUserData(userEmail, (userData) => loadLastActivities(userData.conversionHistory));
             }
         }
         window.addEventListener('storage', handleStorageChange);

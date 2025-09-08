@@ -120,7 +120,7 @@ export function About() {
         </p>
         <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4 sm:gap-16">
           <motion.div whileHover={{ scale: 1.1 }} className="text-center bg-card rounded-2xl shadow-xl p-6 border-t-4 border-primary">
-            <p className="text-3xl sm:text-4xl font-bold text-primary-foreground">10,000+</p>
+            <p className="text-3xl sm:text-4xl font-bold text-foreground">10,000+</p>
             <p className="text-card-foreground/80">Happy Users</p>
           </motion.div>
           <motion.div whileHover={{ scale: 1.1 }} className="text-center bg-card rounded-2xl shadow-xl p-6 border-t-4 border-accent">
