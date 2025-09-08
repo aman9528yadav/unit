@@ -85,7 +85,33 @@ export default function RootLayout({
   const pathname = usePathname();
   const noHeaderPaths = ['/welcome', '/signup', '/forgot-password', '/profile/edit', '/logout', '/profile/success', '/maintenance'];
   const devPaths = /^\/dev(\/.*)?$/;
-  const hideHeader = noHeaderPaths.includes(pathname) || devPaths.test(pathname) || pathname.startsWith('/notes/') || pathname.startsWith('/profile');
+  const [isCalculatorFullScreen, setIsCalculatorFullScreen] = useState(false);
+  
+  // A bit of a hack to communicate from a page to the layout.
+  // In a real app, you might use a context provider.
+  useEffect(() => {
+    const checkFullScreen = () => {
+        if (pathname === '/calculator') {
+             // This is a simplistic check. A more robust solution might involve a global state manager (Context, Zustand, etc.)
+             // For this prototype, we'll assume a certain DOM structure or a global flag could be set.
+             // Let's assume the child page will add a class to the body.
+             const isFullScreen = document.body.classList.contains('calculator-fullscreen');
+             setIsCalculatorFullScreen(isFullScreen);
+        } else {
+            setIsCalculatorFullScreen(false);
+        }
+    }
+    checkFullScreen();
+
+    // Re-check on path changes
+    const observer = new MutationObserver(checkFullScreen);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect();
+  }, [pathname]);
+
+  
+  const hideHeader = noHeaderPaths.includes(pathname) || devPaths.test(pathname) || pathname.startsWith('/notes/') || pathname.startsWith('/profile') || isCalculatorFullScreen;
 
   return (
     <ThemeProvider>

@@ -9,7 +9,7 @@ import { incrementCalculationCount } from '@/lib/stats';
 import { addCalculationToHistory, listenToUserData, UserData } from '@/services/firestore';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Button } from './ui/button';
-import { History } from 'lucide-react';
+import { History, Maximize, Minimize, ArrowLeft } from 'lucide-react';
 
 const CalculatorButton = ({
   onClick,
@@ -38,7 +38,7 @@ const CalculatorButton = ({
 );
 
 
-export function Calculator() {
+export function Calculator({ isFullScreen, onFullScreenToggle }: { isFullScreen: boolean, onFullScreenToggle: (isFullScreen: boolean) => void }) {
     const [currentOperand, setCurrentOperand] = useState('0');
     const [previousOperand, setPreviousOperand] = useState('');
     const [operation, setOperation] = useState<string | undefined>(undefined);
@@ -168,29 +168,43 @@ export function Calculator() {
         setCurrentOperand('');
     };
 
-  return (
-    <div className="w-full max-w-lg mx-auto p-4 space-y-4">
-      <div className="bg-card/80 rounded-2xl p-6 shadow-lg border-2 border-border/20">
-        <div className="header flex justify-between items-center mb-5">
-            <div className="font-bold text-xl text-foreground/70 tracking-widest">CALCPRO</div>
-            <div className="flex justify-between w-36 bg-secondary/50 rounded-md p-1.5 border border-border/20">
-                <div className="flex-1 h-6 bg-gradient-to-b from-secondary to-background/50 mx-1 rounded-sm"></div>
-                <div className="flex-1 h-6 bg-gradient-to-b from-secondary to-background/50 mx-1 rounded-sm"></div>
-                <div className="flex-1 h-6 bg-gradient-to-b from-secondary to-background/50 mx-1 rounded-sm"></div>
-            </div>
-            <div className="text-right">
-                <div className="font-semibold text-sm text-foreground/60">X-8000</div>
-            </div>
-        </div>
+    const FullScreenHeader = () => (
+        <header className="flex items-center p-4">
+            <Button variant="ghost" size="icon" onClick={() => onFullScreenToggle(false)}>
+                <ArrowLeft />
+            </Button>
+            <h1 className="text-xl font-bold ml-4">Calculator</h1>
+        </header>
+    );
 
-        <div className="display-container bg-muted/50 rounded-lg p-2 mb-6 border-2 border-border/20 shadow-inner">
+  return (
+    <div className={cn("w-full space-y-4", isFullScreen ? "h-screen flex flex-col" : "max-w-lg mx-auto")}>
+       {isFullScreen && <FullScreenHeader />}
+      <div className={cn("bg-card/80 rounded-2xl shadow-lg border-2 border-border/20", isFullScreen ? "flex-grow flex flex-col p-4" : "p-6")}>
+        {!isFullScreen && (
+            <div className="header flex justify-between items-center mb-5">
+                <div className="font-bold text-xl text-foreground/70 tracking-widest">CALCPRO</div>
+                <div className="flex justify-between w-36 bg-secondary/50 rounded-md p-1.5 border border-border/20">
+                    <div className="flex-1 h-6 bg-gradient-to-b from-secondary to-background/50 mx-1 rounded-sm"></div>
+                    <div className="flex-1 h-6 bg-gradient-to-b from-secondary to-background/50 mx-1 rounded-sm"></div>
+                    <div className="flex-1 h-6 bg-gradient-to-b from-secondary to-background/50 mx-1 rounded-sm"></div>
+                </div>
+                <div className="text-right">
+                    <Button variant="ghost" size="icon" onClick={() => onFullScreenToggle(true)}>
+                        <Maximize />
+                    </Button>
+                </div>
+            </div>
+        )}
+
+        <div className={cn("display-container bg-muted/50 rounded-lg p-2 border-2 border-border/20 shadow-inner", isFullScreen ? "mb-4" : "mb-6")}>
              <div className="display bg-gradient-to-b from-background/80 to-background/50 rounded-md p-4 h-28 text-right flex flex-col justify-end">
                 <div className="previous-operand text-foreground/60 text-xl min-h-7 break-all">{previousOperand} {operation}</div>
                 <div className="current-operand text-foreground text-5xl font-semibold break-all">{currentOperand}</div>
             </div>
         </div>
 
-        <div className="buttons grid grid-cols-5 grid-rows-5 gap-3">
+        <div className={cn("buttons grid grid-cols-5 grid-rows-5 gap-3", isFullScreen && "flex-grow")}>
           <CalculatorButton onClick={handleButtonClick} label="MC" className="bg-accent text-accent-foreground shadow-accent/50" buttonLabel="MEM" />
           <CalculatorButton onClick={handleButtonClick} label="MR" className="bg-accent text-accent-foreground shadow-accent/50" buttonLabel="RECALL" />
           <CalculatorButton onClick={handleButtonClick} label="M+" className="bg-accent text-accent-foreground shadow-accent/50" buttonLabel="STORE" />
@@ -227,7 +241,7 @@ export function Calculator() {
           <CalculatorButton onClick={handleButtonClick} label="±" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
         </div>
       </div>
-       {recentCalculations.length > 0 && (
+       {!isFullScreen && recentCalculations.length > 0 && (
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center justify-between text-base">
