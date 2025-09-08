@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Trash2, Edit, Save, Palette, Calendar as CalendarIcon, Beaker, Bug, Rocket } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit, Save, Palette, Calendar as CalendarIcon, Beaker, Bug, Rocket, Shield, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -218,7 +218,8 @@ export function UpdatesEditor() {
                                 <SelectContent>
                                     <SelectItem value="New Feature"><Rocket className="mr-2 h-4 w-4" /> New Feature</SelectItem>
                                     <SelectItem value="Bug Fix"><Bug className="mr-2 h-4 w-4" /> Bug Fix</SelectItem>
-                                    <SelectItem value="Improvement"><Beaker className="mr-2 h-4 w-4" /> Improvement</SelectItem>
+                                    <SelectItem value="Face Issue"><AlertTriangle className="mr-2 h-4 w-4" /> Face Issue</SelectItem>
+                                    <SelectItem value="Security"><Shield className="mr-2 h-4 w-4" /> Security</SelectItem>
                                     <SelectItem value="Custom">Custom</SelectItem>
                                 </SelectContent>
                             </Select>

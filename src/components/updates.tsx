@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Timer, CheckCircle, Rocket, Bug, Beaker } from "lucide-react";
+import { ArrowLeft, Timer, CheckCircle, Rocket, Bug, Beaker, Shield, AlertTriangle } from "lucide-react";
 import { format, intervalToDuration, differenceInDays, parseISO } from "date-fns";
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/language-context';
@@ -13,7 +13,9 @@ import * as LucideIcons from "lucide-react";
 const categoryIcons: { [key: string]: React.ElementType } = {
   "New Feature": Rocket,
   "Bug Fix": Bug,
-  "Improvement": Beaker
+  "Improvement": Beaker,
+  "Security": Shield,
+  "Face Issue": AlertTriangle,
 };
 
 export function Updates() {
