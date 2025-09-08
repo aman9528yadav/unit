@@ -68,13 +68,17 @@ import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData, listenToUpdat
 import { getStreakData, recordVisit, StreakData } from "@/lib/streak";
 
 
-const ToolButton = ({ icon: Icon, label, href, color, target, onClick }: any) => {
+const ToolButton = ({ icon: Icon, label, href, color, target, onClick, comingSoon = false }: any) => {
     const content = (
-        <motion.div 
-            className="group aspect-square rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex flex-col items-center justify-center gap-2 shadow-sm text-center"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+        <motion.div
+            className={cn(
+                "group aspect-square rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex flex-col items-center justify-center gap-2 shadow-sm text-center",
+                comingSoon && "opacity-60 cursor-not-allowed"
+            )}
+            whileHover={{ scale: comingSoon ? 1 : 1.05 }}
+            whileTap={{ scale: comingSoon ? 1 : 0.95 }}
         >
+            {comingSoon && <Badge variant="secondary" className="absolute top-2 right-2">Soon</Badge>}
             <div className={cn("size-12 grid place-items-center rounded-full bg-secondary", color)}>
                 <Icon className="size-6" />
             </div>
@@ -358,7 +362,6 @@ export function Dashboard() {
       { label: 'Translator', icon: Globe2, href: "/translator", color: 'text-purple-400' },
       { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
       { label: 'News & Updates', icon: Newspaper, href: "/news", color: 'text-green-400' },
-      { label: 'AI Search', icon: Wand2, onClick: () => openFeatureDialog("AI Smart Search (Coming Soon)", "A powerful new search experience that understands natural language to find notes, perform conversions, and navigate the app faster than ever."), color: 'text-indigo-400' },
     ];
     
     const moreTools = [
@@ -367,6 +370,10 @@ export function Dashboard() {
         { label: t('dashboard.tools.timer'), icon: Timer, href: '/time?tab=timer', color: 'text-red-500' },
         { label: t('dashboard.tools.stopwatch'), icon: Hourglass, href: '/time?tab=stopwatch', color: 'text-indigo-500' },
         { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
+    ];
+    
+    const comingSoonTools = [
+        { label: 'AI Smart Search', icon: Wand2, onClick: () => openFeatureDialog("AI Smart Search (Coming Soon)", "A powerful new search experience that understands natural language to find notes, perform conversions, and navigate the app faster than ever."), color: 'text-indigo-400', comingSoon: true },
     ];
 
     const allTools = [...quickTools, ...moreTools];
@@ -464,6 +471,17 @@ export function Dashboard() {
             </Button>
           </CardContent>
         </Card>
+      </section>
+      
+      <section>
+          <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-foreground">Coming Soon</h2>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {comingSoonTools.map((tool) => (
+                <ToolButton key={tool.label} {...tool} />
+            ))}
+          </div>
       </section>
       
       <section>
@@ -575,5 +593,3 @@ export function Dashboard() {
     </motion.div>
   );
 }
-
-    
