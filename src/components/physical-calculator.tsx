@@ -236,7 +236,7 @@ export function PhysicalCalculator({ isFullScreen, onFullScreenToggle }: { isFul
          {!isFullScreen && (
             <div className="footer flex justify-between mt-5 text-[#4a5c6c] text-sm font-semibold">
                 <div>SCIENTIFIC CALCULATOR</div>
-                <div className="italic">SN: CPX-8000-2023</div>
+                <div className="italic">Made by Aman Yadav</div>
             </div>
          )}
       </div>
