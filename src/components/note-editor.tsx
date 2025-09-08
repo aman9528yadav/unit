@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { useLanguage } from '@/context/language-context';
-import { listenToUserNotes, updateUserNotes, listenToUserData, UserData } from '@/services/firestore';
+import { listenToUserNotes, updateUserNotes, listenToUserData, UserData, getGuestKey } from '@/services/firestore';
 import { cn } from '@/lib/utils';
 import { Label } from './ui/label';
 import html2canvas from 'html2canvas';
@@ -76,16 +76,36 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     useEffect(() => {
         setIsClient(true);
         const storedProfile = localStorage.getItem('userProfile');
-        if (storedProfile) {
-            const parsedProfile = JSON.parse(storedProfile);
-            setProfile(parsedProfile);
+        const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
+        setProfile(userEmail ? { email: userEmail } : null);
+
+        if (!userEmail) { // Guest user
+            const localNotes = localStorage.getItem(getGuestKey('notes'));
+            setAllNotes(localNotes ? JSON.parse(localNotes) : []);
         }
+
     }, []);
 
     useEffect(() => {
-        if (!profile) return;
+        const userEmail = profile?.email || null;
+
+        if (!userEmail) {
+             if (!isNewNote) {
+                const noteToEdit = allNotes.find(note => note.id === noteId);
+                if (noteToEdit) {
+                    setTitle(noteToEdit.title);
+                    setContent(noteToEdit.content);
+                    contentSetRef.current = false;
+                    setIsFavorite(noteToEdit.isFavorite || false);
+                    setCategory(noteToEdit.category || '');
+                    setAttachment(noteToEdit.attachment || null);
+                    setIsLocked(noteToEdit.isLocked || false);
+                }
+            }
+            return;
+        }
         
-        const unsubNotes = listenToUserNotes(profile.email, (notesFromDb) => {
+        const unsubNotes = listenToUserNotes(userEmail, (notesFromDb) => {
             setAllNotes(notesFromDb);
             if (!isNewNote) {
                 const noteToEdit = notesFromDb.find(note => note.id === noteId);
@@ -104,14 +124,14 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             }
         });
 
-        const unsubUserData = listenToUserData(profile.email, setUserData);
+        const unsubUserData = listenToUserData(userEmail, setUserData);
         
         return () => {
             unsubNotes();
             unsubUserData();
         };
 
-    }, [noteId, isNewNote, router, toast, profile, t]);
+    }, [noteId, isNewNote, router, toast, profile, t, allNotes]);
 
     useEffect(() => {
         if (editorRef.current && content && !contentSetRef.current) {
@@ -290,11 +310,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             return;
         }
 
-        if (!profile) {
-            toast({ title: "Error", description: "User profile not found. Cannot save.", variant: "destructive" });
-            return;
-        }
-
         const notes: Note[] = [...allNotes];
         const now = new Date().toISOString();
 
@@ -328,7 +343,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             }
         }
         
-        updateUserNotes(profile.email, notes);
+        updateUserNotes(profile?.email || null, notes);
 
         const lastNoteString = `${title || 'Untitled Note'}|${new Date().toISOString()}`;
         localStorage.setItem('lastNote', lastNoteString);
@@ -343,8 +358,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     };
     
     const handleSoftDelete = () => {
-        if (!profile) return;
-
         if (isNewNote) {
              router.push('/notes');
              return;
@@ -353,7 +366,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             note.id === noteId ? { ...note, deletedAt: new Date().toISOString() } : note
         );
         
-        updateUserNotes(profile.email, updatedNotes);
+        updateUserNotes(profile?.email || null, updatedNotes);
         setIsDirty(false);
         toast({ title: t('notepad.toast.movedToTrash') });
         router.push('/notes');
