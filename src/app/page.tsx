@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -54,14 +55,13 @@ export default function Home() {
         if (userEmail) {
             const unsub = listenToUserData(userEmail, (data: UserData) => {
                 const page = data?.settings?.defaultPage;
-                let homeRoute = '/';
-                if (page && page !== 'dashboard') {
-                    homeRoute = `/${page}`;
-                }
-                
-                // If current path is already home, redirect. Otherwise, let other pages load.
-                if (window.location.pathname === '/') {
-                    router.replace(homeRoute);
+                // This logic runs once when the component mounts to handle initial redirect
+                // We check if this is the first navigation after login.
+                const hasRedirected = sessionStorage.getItem('hasRedirected');
+
+                if (!hasRedirected && page && page !== 'dashboard') {
+                    sessionStorage.setItem('hasRedirected', 'true');
+                    router.replace(`/${page}`);
                 }
                 setAuthStatus('authenticated');
             });
@@ -78,7 +78,8 @@ export default function Home() {
         );
     }
     
-    if (authStatus === 'authenticated' && window.location.pathname === '/') {
+    // Always render the Dashboard component if authenticated and on the root path
+    if (authStatus === 'authenticated') {
          return (
             <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-6">
                 <Dashboard />
