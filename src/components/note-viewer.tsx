@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Edit, File, Share2 } from 'lucide-react';
+import { ArrowLeft, Edit, File as FileIcon, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Note } from './notepad';
@@ -116,7 +116,7 @@ export function NoteViewer({ noteId }: { noteId: string }) {
         return (
             <div className="p-4 border rounded-lg my-4 bg-secondary">
                 <a href={dataUri} download={fileName} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:underline">
-                    <File className="w-6 h-6 text-muted-foreground" />
+                    <FileIcon className="w-6 h-6 text-muted-foreground" />
                     <span className="text-sm text-foreground truncate font-medium">{fileName}</span>
                 </a>
             </div>
