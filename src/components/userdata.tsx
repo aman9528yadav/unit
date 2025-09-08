@@ -38,7 +38,7 @@ type UserRole = 'Member' | 'Premium Member' | 'Owner';
 const DetailRow = ({ label, value, valueClassName }: { label: string, value: React.ReactNode, valueClassName?: string }) => (
     <div className="flex justify-between items-center py-3">
         <span className="text-muted-foreground">{label}</span>
-        <div className={`flex items-center gap-2 font-medium text-foreground text-right ${valueClassName}`}>
+        <div className={`flex items-center gap-2 font-medium text-foreground text-right max-w-[70%] ${valueClassName}`}>
             {value}
         </div>
     </div>
@@ -198,7 +198,14 @@ export function UserData() {
             <main className="w-full mt-2">
                 <Section title={t('userdata.sections.account.title')}>
                     <DetailRow label={t('userdata.sections.account.name')} value={profile.fullName}/>
-                    <DetailRow label={t('userdata.sections.account.email')} value={profile.email}/>
+                    <DetailRow 
+                        label={t('userdata.sections.account.email')} 
+                        value={
+                            <div className="border rounded-md px-2 py-1 break-all">
+                                {profile.email}
+                            </div>
+                        }
+                    />
                     <DetailRow
                         label={t('userdata.sections.account.status')}
                         value={
@@ -212,7 +219,14 @@ export function UserData() {
 
                 <Section title={t('userdata.sections.preferences.title')}>
                     <DetailRow label={t('userdata.sections.preferences.region')} value={settings?.defaultRegion || '...'}/>
-                    <DetailRow label={t('userdata.sections.preferences.theme')} value={t(`userdata.sections.preferences.themes.${settings?.theme.toLowerCase() || '...'}`)}/>
+                    <DetailRow 
+                        label={t('userdata.sections.preferences.theme')} 
+                        value={
+                             <div className="border rounded-md px-2 py-1 break-all">
+                                {t(`userdata.sections.preferences.themes.${settings?.theme.toLowerCase() || '...'}`)}
+                            </div>
+                        }
+                    />
                     <DetailRow label={t('userdata.sections.preferences.saveHistory')} value={settings?.saveHistory ? t('userdata.sections.preferences.enabled') : t('userdata.sections.preferences.disabled')}/>
                 </Section>
             </main>
