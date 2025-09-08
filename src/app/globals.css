@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -210,6 +211,28 @@ body {
     --ring: 345 60% 75%;
   }
 
+  .sutradhaar {
+    --background: 265 60% 97%;
+    --foreground: 250 25% 30%;
+    --card: 270 50% 99%;
+    --card-foreground: 250 25% 30%;
+    --popover: 265 60% 97%;
+    --popover-foreground: 250 25% 30%;
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 270 40% 95%;
+    --secondary-foreground: 250 25% 30%;
+    --muted: 270 40% 95%;
+    --muted-foreground: 250 20% 50%;
+    --accent: 345 80% 65%;
+    --accent-foreground: 250 25% 30%;
+    --destructive: 0 70% 60%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 270 30% 90%;
+    --input: 270 40% 95%;
+    --ring: 262.1 83.3% 57.8%;
+    --radius: 0.7rem;
+  }
 }
 
 @layer components {
@@ -235,3 +258,5 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+    

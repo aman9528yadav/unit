@@ -4,8 +4,9 @@
 
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { listenToUserData } from '@/services/firestore';
+import { cn } from '@/lib/utils';
 
-type Theme = 'light' | 'dark' | 'custom' | 'retro' | 'glass' | 'nord' | 'rose-pine';
+type Theme = 'light' | 'dark' | 'custom' | 'retro' | 'glass' | 'nord' | 'rose-pine' | 'sutradhaar';
 
 type CustomColors = {
     background?: string;
@@ -97,7 +98,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const applyTheme = useCallback((themeToApply: Theme, customThemeToApply: CustomTheme | null) => {
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark', 'retro', 'glass', 'nord', 'rose-pine');
+    root.classList.remove('light', 'dark', 'retro', 'glass', 'nord', 'rose-pine', 'sutradhaar');
+    
+    const body = window.document.body;
+    body.classList.remove('bg-gradient-to-br', 'from-purple-500', 'to-pink-500');
 
     const colorProperties: (keyof CustomColors)[] = [
         'background', 'foreground', 'card', 'cardForeground', 'popover', 
@@ -121,8 +125,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 root.style.setProperty(cssVarName, hexToHsl(value));
             }
         });
-    } else if (['light', 'dark', 'retro', 'glass', 'nord', 'rose-pine'].includes(themeToApply)) {
+    } else if (['light', 'dark', 'retro', 'glass', 'nord', 'rose-pine', 'sutradhaar'].includes(themeToApply)) {
         root.classList.add(themeToApply);
+        if (themeToApply === 'sutradhaar') {
+           body.classList.add('bg-gradient-to-br', 'from-purple-500', 'to-pink-500');
+        }
     }
   }, []);
   

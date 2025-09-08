@@ -185,7 +185,7 @@ export function Settings() {
     }
     
     const isPremiumFeatureLocked = userRole === 'Member';
-    const isThemeLocked = isPremiumFeatureLocked && (selectedTheme === 'retro' || selectedTheme === 'glass' || selectedTheme === 'nord' || selectedTheme === 'rose-pine' || selectedTheme === 'custom');
+    const isThemeLocked = isPremiumFeatureLocked && (selectedTheme === 'retro' || selectedTheme === 'glass' || selectedTheme === 'nord' || selectedTheme === 'rose-pine' || selectedTheme === 'custom' || selectedTheme === 'sutradhaar');
     const isCalcModeLocked = isPremiumFeatureLocked && calculatorMode === 'scientific';
 
     if(isThemeLocked || isCalcModeLocked) {
@@ -246,6 +246,7 @@ export function Settings() {
   const themes = [
       { name: 'Light', value: 'light', isLocked: false },
       { name: 'Dark', value: 'dark', isLocked: false },
+      { name: 'Sutradhaar', value: 'sutradhaar', isLocked: isPremiumFeatureLocked },
       { name: 'Retro', value: 'retro', isLocked: isPremiumFeatureLocked },
       { name: 'Glass', value: 'glass', isLocked: isPremiumFeatureLocked },
       { name: 'Nord', value: 'nord', isLocked: isPremiumFeatureLocked },
@@ -468,3 +469,5 @@ export function Settings() {
     </div>
   );
 }
+
+    

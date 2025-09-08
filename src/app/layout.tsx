@@ -95,7 +95,7 @@ export default function RootLayout({
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
                 <link rel="apple-touch-icon" href="/icon-192x192.png" />
             </head>
-            <body className="font-body antialiased bg-gradient-to-br from-background to-muted/50" suppressHydrationWarning>
+            <body className="font-body antialiased" suppressHydrationWarning>
                 <MaintenanceRedirect>
                 <div className="flex flex-col min-h-screen">
                     <main className="flex-grow">
@@ -112,3 +112,4 @@ export default function RootLayout({
   );
 }
 
+    
