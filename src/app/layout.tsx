@@ -90,7 +90,7 @@ export default function RootLayout({
   const pathname = usePathname();
   const [profile, setProfile] = useState<Partial<UserData> | null>(null);
   const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
-  const noHeaderPaths = ['/welcome', '/signup', '/forgot-password', '/profile/edit', '/logout', '/profile/success', '/maintenance'];
+  const noHeaderPaths = ['/welcome', '/signup', '/forgot-password', '/getting-started', '/maintenance', '/logout', '/profile/success'];
   const devPaths = /^\/dev(\/.*)?$/;
   const [isCalculatorFullScreen, setIsCalculatorFullScreen] = useState(false);
   
@@ -129,7 +129,7 @@ export default function RootLayout({
   }, []);
 
   
-  const hideHeader = noHeaderPaths.includes(pathname) || devPaths.test(pathname) || pathname.startsWith('/notes/') || pathname.startsWith('/profile') || isCalculatorFullScreen;
+  const hideHeader = noHeaderPaths.includes(pathname) || devPaths.test(pathname) || isCalculatorFullScreen;
 
   return (
     <ThemeProvider>

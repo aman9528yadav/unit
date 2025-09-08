@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Search, StickyNote, History, HelpCircle, Settings, X, CornerDownLeft, ArrowRightLeft, Loader2, Sigma, LayoutGrid, Languages } from 'lucide-react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Note } from './notepad';
@@ -17,6 +17,9 @@ import { CustomCategory, CustomUnit } from './custom-unit-manager';
 import { useLanguage } from '@/context/language-context';
 import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow.ts";
 import { listenToUserData, UserData } from '@/services/firestore';
+import { Logo } from './logo';
+import { AnimatePresence, motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 
 interface SearchResult {
@@ -75,8 +78,7 @@ export const offlineParseConversionQuery = (query: string, allUnits: Unit[], cat
 };
 
 
-export function GlobalSearch() {
-  const [open, setOpen] = useState(false);
+export function GlobalSearch({isSearchOpen, onSearchToggle}: {isSearchOpen: boolean, onSearchToggle: (open: boolean) => void}) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -125,7 +127,7 @@ export function GlobalSearch() {
 
 
   useEffect(() => {
-    if (!open) return;
+    if (!isSearchOpen) return;
     const storedProfile = localStorage.getItem('userProfile');
     const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
     
@@ -136,7 +138,7 @@ export function GlobalSearch() {
     });
 
     return () => unsub();
-  }, [open]);
+  }, [isSearchOpen]);
 
   const search = useCallback(() => {
     if (!debouncedQuery) {
@@ -274,7 +276,7 @@ export function GlobalSearch() {
       }
     }
     router.push(result.href);
-    setOpen(false);
+    onSearchToggle(false);
     setQuery('');
   }
 
@@ -293,12 +295,7 @@ export function GlobalSearch() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-            <Button variant="ghost" size="icon">
-                <Search />
-            </Button>
-        </DialogTrigger>
+    <Dialog open={isSearchOpen} onOpenChange={onSearchToggle}>
         <DialogContent className="p-0 gap-0 max-w-lg">
             <DialogHeader className="sr-only">
               <DialogTitle>Global Search</DialogTitle>
