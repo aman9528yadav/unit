@@ -73,7 +73,7 @@ function PomodoroTimer() {
       : mode === 'shortBreak' ? settings.shortBreakLength * 60
       : settings.longBreakLength * 60;
       
-    const progress = ((minutes * 60 + seconds) / totalDuration) * 100;
+    const progress = totalDuration > 0 ? ((minutes * 60 + seconds) / totalDuration) * 100 : 0;
 
 
     const audioRef = React.useRef<HTMLAudioElement>(null);
@@ -264,7 +264,8 @@ function PomodoroTimer() {
                     <div className="absolute inset-0 rounded-full overflow-hidden">
                          <div 
                             className={cn(
-                                "absolute bottom-0 left-0 w-full h-full bg-primary/20 transition-all duration-500 ease-linear",
+                                "absolute bottom-0 left-0 w-full transition-all duration-500 ease-linear",
+                                 mode === 'work' && 'bg-primary/20',
                                  mode === 'shortBreak' && 'bg-green-500/20',
                                  mode === 'longBreak' && 'bg-blue-500/20'
                             )}
