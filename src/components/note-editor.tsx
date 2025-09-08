@@ -172,17 +172,31 @@ export function NoteEditor({ noteId }: { noteId: string }) {
       handleFormat('hiliteColor', color);
     };
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             const reader = new FileReader();
             reader.onloadend = () => {
-                setAttachment(reader.result as string);
+                const result = reader.result as string;
+                if (file.type.startsWith('image/')) {
+                    setAttachment(result);
+                } else {
+                    // For non-image files, we'll store the data URI and display the name.
+                    // This isn't ideal for large files, but works for simple cases.
+                    const fileInfo = `${file.name}|${result}`;
+                    setAttachment(fileInfo);
+                }
                 toast({ title: t('noteEditor.toast.imageAttached')});
                 setIsDirty(true);
             };
             reader.readAsDataURL(file);
         }
+    };
+    
+    const handleInsertEmoji = (emoji: string) => {
+        editorRef.current?.focus();
+        document.execCommand('insertText', false, emoji);
+        setIsDirty(true);
     };
 
     const handleRemoveImage = () => {
@@ -397,7 +411,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     </DropdownMenu>
                     
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => fileInputRef.current?.click()}><ImageIcon /></Button>
-                    <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+                    <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={handleInsertCalculation}><CalculatorIcon /></Button>
                     <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={handleInsertConversion}><ArrowRightLeft /></Button>
                 </div>
@@ -420,8 +434,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     style={{ direction: 'ltr' }}
                 />
                 <div className="flex items-center gap-2 pt-2 border-t border-border">
-                    <Button variant="ghost" size="icon" onClick={showComingSoonToast}><Paperclip /></Button>
-                    <Button variant="ghost" size="icon" onClick={showComingSoonToast}><Smile /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}><Paperclip /></Button>
+                    <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
+                    <Button variant="ghost" size="icon" onClick={() => handleInsertEmoji('😀')}><Smile /></Button>
                     <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={handleSoftDelete}><Trash2 /></Button>
                 </div>
             </div>
@@ -451,5 +466,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         </div>
     );
 }
+
 
 
