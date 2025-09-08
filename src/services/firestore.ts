@@ -260,6 +260,7 @@ export interface ReleasePlanItem {
     id: string;
     title: string;
     date: string;
+    description: string;
 }
 
 export interface AboutInfo {

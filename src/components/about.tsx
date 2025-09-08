@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link";
@@ -24,8 +25,8 @@ const defaultOwnerInfo: OwnerInfo = {
 };
 
 const defaultReleasePlan: ReleasePlanItem[] = [
-    { id: '1', title: 'Beta 1 (15/07/2025)', date: 'Core release with unit conversion, notes, and history features.' },
-    { id: '2', title: 'Next Steps', date: 'Smarter, faster conversions with notes & history\nModern UI in Figma\nResponsive React components\nContinuous feature updates\nSutradhaar web app\nTesting & optimizations\nCross-platform official release' },
+    { id: '1', title: 'Beta 1', date: '15/07/2025', description: 'Core release with unit conversion, notes, and history features.' },
+    { id: '2', title: 'Next Steps', date: 'Upcoming', description: 'Smarter, faster conversions with notes & history\nModern UI in Figma\nResponsive React components\nContinuous feature updates\nSutradhaar web app\nTesting & optimizations\nCross-platform official release' },
 ];
 
 
@@ -34,9 +35,12 @@ export function About() {
   const [appInfo, setAppInfo] = useState<AppInfo>(defaultAppInfo);
   const [releasePlan, setReleasePlan] = useState<ReleasePlanItem[]>(defaultReleasePlan);
   const [ownerInfo, setOwnerInfo] = useState<OwnerInfo>(defaultOwnerInfo);
-  const [expandBeta, setExpandBeta] = useState(false);
-  const [expandNext, setExpandNext] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [showConfetti, setShowConfetti] = useState(false);
+  
+  const toggleExpand = (id: string) => {
+    setExpandedItems(prev => ({...prev, [id]: !prev[id]}));
+  };
 
   useEffect(() => {
     const unsubscribeAbout = listenToAboutInfoFromRtdb((data) => {
@@ -80,8 +84,8 @@ export function About() {
   ];
 
   return (
-    <div className="relative p-8 space-y-16 bg-gradient-to-b from-purple-50 via-white to-purple-100 text-gray-800 overflow-hidden">
-      <header className="absolute top-4 left-4">
+    <div className="relative p-4 sm:p-8 space-y-16 bg-gradient-to-b from-purple-50 via-white to-purple-100 text-gray-800 overflow-hidden">
+      <header className="absolute top-4 left-4 z-10">
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft />
         </Button>
@@ -105,22 +109,22 @@ export function About() {
       </motion.div>
 
       {/* Hero Section */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative text-center">
-        <h1 className="text-6xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative text-center pt-10">
+        <h1 className="text-4xl sm:text-6xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
           Sutradhaar 🚀
         </h1>
-        <p className="text-lg text-gray-700 max-w-2xl mx-auto">
+        <p className="text-base sm:text-lg text-gray-700 max-w-2xl mx-auto">
           <strong>Sutradhaar</strong> is a modern, smart, and simple unit converter app built by <strong>Aman Yadav</strong>. 
           It blends <span className="text-purple-600 font-semibold">speed</span>, <span className="text-pink-600 font-semibold">accuracy</span>, and 
           <span className="text-purple-600 font-semibold"> elegant design</span> to make your calculations effortless.
         </p>
-        <div className="mt-10 flex justify-center gap-16">
+        <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4 sm:gap-16">
           <motion.div whileHover={{ scale: 1.1 }} className="text-center bg-white rounded-2xl shadow-xl p-6 border-t-4 border-purple-500">
-            <p className="text-4xl font-bold text-purple-700">10,000+</p>
+            <p className="text-3xl sm:text-4xl font-bold text-purple-700">10,000+</p>
             <p className="text-gray-600">Happy Users</p>
           </motion.div>
           <motion.div whileHover={{ scale: 1.1 }} className="text-center bg-white rounded-2xl shadow-xl p-6 border-t-4 border-pink-500">
-            <p className="text-4xl font-bold text-pink-600">1M+</p>
+            <p className="text-3xl sm:text-4xl font-bold text-pink-600">1M+</p>
             <p className="text-gray-600">Calculations Done</p>
           </motion.div>
         </div>
@@ -142,26 +146,31 @@ export function About() {
       </motion.div>
 
       {/* Roadmap */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <h2 className="text-3xl font-bold text-center text-purple-700 mb-8 flex justify-center items-center gap-2">
-          <Sparkles className="w-6 h-6 text-pink-500" /> Release Plan & Roadmap
-        </h2>
-        <div className="relative border-l-4 border-purple-400 ml-6 space-y-8">
-            {releasePlan.map((item, index) => (
-                 <div key={item.id} className="ml-6">
-                    <div className={`absolute -left-3.5 w-6 h-6 ${index % 2 === 0 ? 'bg-purple-500' : 'bg-pink-500'} rounded-full border-4 border-white`}></div>
-                    <h3 className={`font-semibold ${index % 2 === 0 ? 'text-purple-600' : 'text-pink-600'} flex items-center gap-2 cursor-pointer`} onClick={() => index === 0 ? setExpandBeta(!expandBeta) : setExpandNext(!expandNext)}>
-                        📝 {item.title} {index === 0 ? (expandBeta ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />) : (expandNext ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />)}
-                    </h3>
-                     {(index === 0 ? expandBeta : expandNext) && (
-                        <motion.div className="text-gray-700 mt-2 whitespace-pre-line" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                           {item.date}
-                        </motion.div>
-                    )}
-                </div>
-            ))}
-        </div>
-      </motion.div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <h2 className="text-3xl font-bold text-center text-purple-700 mb-8 flex justify-center items-center gap-2">
+            <Sparkles className="w-6 h-6 text-pink-500" /> Release Plan & Roadmap
+            </h2>
+            <div className="relative border-l-4 border-purple-400 ml-6 space-y-8">
+                {releasePlan.map((item, index) => (
+                    <div key={item.id} className="ml-6">
+                        <div className={`absolute -left-3.5 w-6 h-6 ${index % 2 === 0 ? 'bg-purple-500' : 'bg-pink-500'} rounded-full border-4 border-white`}></div>
+                        <h3 className={`font-semibold ${index % 2 === 0 ? 'text-purple-600' : 'text-pink-600'} flex items-start gap-2 cursor-pointer`} onClick={() => toggleExpand(item.id)}>
+                            <div className="flex-1">
+                                📝 {item.title}
+                                <span className="block text-xs font-normal text-gray-500">{item.date}</span>
+                            </div>
+                            {expandedItems[item.id] ? <ChevronUp className="w-4 h-4 mt-1" /> : <ChevronDown className="w-4 h-4 mt-1" />}
+                        </h3>
+                        {expandedItems[item.id] && (
+                            <motion.div className="text-gray-700 mt-2 whitespace-pre-line" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                               {item.description}
+                            </motion.div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </motion.div>
+
 
       {/* WOW Button */}
       <div className="text-center">

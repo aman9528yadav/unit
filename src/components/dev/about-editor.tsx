@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -21,6 +22,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ProfilePhotoEditor } from '../profile-photo-editor';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import { Textarea } from '../ui/textarea';
 
 
 export function AboutEditor() {
@@ -64,7 +66,7 @@ export function AboutEditor() {
     };
 
     const handleAddReleaseItem = () => {
-        setReleasePlan(prev => [...prev, { id: uuidv4(), title: 'New Milestone', date: 'TBD' }]);
+        setReleasePlan(prev => [...prev, { id: uuidv4(), title: 'New Milestone', date: 'TBD', description: '' }]);
     };
 
     const handleDeleteReleaseItem = (id: string) => {
@@ -173,18 +175,24 @@ export function AboutEditor() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {releasePlan.map(item => (
-                        <div key={item.id} className="flex gap-2 items-end p-2 bg-secondary rounded-lg">
-                            <div className="flex-grow space-y-1">
-                                <Label htmlFor={`title-${item.id}`}>Title</Label>
-                                <Input id={`title-${item.id}`} value={item.title} onChange={(e) => handleReleasePlanChange(item.id, 'title', e.target.value)} />
+                        <div key={item.id} className="flex flex-col gap-2 p-3 bg-secondary rounded-lg">
+                            <div className="flex gap-2 items-end">
+                                <div className="flex-grow space-y-1">
+                                    <Label htmlFor={`title-${item.id}`}>Title</Label>
+                                    <Input id={`title-${item.id}`} value={item.title} onChange={(e) => handleReleasePlanChange(item.id, 'title', e.target.value)} />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor={`date-${item.id}`}>Date</Label>
+                                    <Input id={`date-${item.id}`} value={item.date} onChange={(e) => handleReleasePlanChange(item.id, 'date', e.target.value)} placeholder="e.g., 15/07/2025" />
+                                </div>
+                                <Button variant="destructive" size="icon" onClick={() => handleDeleteReleaseItem(item.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
                             </div>
-                             <div className="flex-grow space-y-1">
-                                <Label htmlFor={`date-${item.id}`}>Date</Label>
-                                <Input id={`date-${item.id}`} value={item.date} onChange={(e) => handleReleasePlanChange(item.id, 'date', e.target.value)} />
+                            <div className="space-y-1">
+                                <Label htmlFor={`description-${item.id}`}>Description</Label>
+                                <Textarea id={`description-${item.id}`} value={item.description} onChange={(e) => handleReleasePlanChange(item.id, 'description', e.target.value)} placeholder="Enter description text here..." />
                             </div>
-                            <Button variant="destructive" size="icon" onClick={() => handleDeleteReleaseItem(item.id)}>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
                         </div>
                     ))}
                     {releasePlan.length === 0 && (
