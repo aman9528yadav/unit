@@ -112,36 +112,7 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
     }
 
     const handleSave = () => {
-        if (!image) {
-            onSave(null);
-            return;
-        }
-
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        const avatarSize = 200; // The final size of the avatar
-        canvas.width = avatarSize;
-        canvas.height = avatarSize;
-
-        const img = new window.Image();
-        img.crossOrigin = "Anonymous";
-        img.src = image;
-
-        img.onload = () => {
-            const scaledWidth = img.width * zoom;
-            const scaledHeight = img.height * zoom;
-
-            // Calculate the top-left corner of the image for drawing, considering zoom and pan
-            const drawX = offset.x - (scaledWidth - avatarSize) / 2;
-            const drawY = offset.y - (scaledHeight - avatarSize) / 2;
-
-            ctx.drawImage(img, drawX, drawY, scaledWidth, scaledHeight);
-            
-            const dataUrl = canvas.toDataURL('image/png');
-            onSave(dataUrl);
-        };
+        onSave(image);
     };
 
      const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
