@@ -66,10 +66,14 @@ export function Profile() {
         setUserRole('Owner');
         return;
     }
-    const stats = await getStats(email);
-    const streakData = await getStreakData(email);
-    if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
-        setUserRole('Premium Member');
+    if (email) {
+        const stats = await getStats(email);
+        const streakData = await getStreakData(email);
+        if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
+            setUserRole('Premium Member');
+        } else {
+            setUserRole('Member');
+        }
     } else {
         setUserRole('Member');
     }
@@ -122,7 +126,7 @@ export function Profile() {
     { icon: Gift, text: t('profile.menu.whatsNew'), href: "/updates" },
     { icon: Lock, text: t('profile.menu.privacy'), href: "/privacy-policy" },
     { icon: Settings, text: t('profile.menu.settings'), href: "/settings" },
-    { icon: HelpCircle, text: t('profile.menu.help'), href: "/help" },
+    { icon: HelpCircle, text: t('profile.menu.help'), href: "/how-to-use" },
     { icon: Info, text: t('profile.menu.about'), href: "/about" },
     { icon: LogOut, text: t('profile.menu.logout'), onClick: handleLogout }
   ];
