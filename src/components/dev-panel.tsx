@@ -589,49 +589,6 @@ export function DevPanel() {
                                 </div>
                                 <Button onClick={() => router.push('/dev/about')}>Manage</Button>
                             </div>
-                             <div>
-                                <Label htmlFor="welcomeTitle">Welcome Title</Label>
-                                <Input 
-                                    id="welcomeTitle" 
-                                    value={welcomeTitle}
-                                    onChange={(e) => setWelcomeTitle(e.target.value)}
-                                    placeholder="e.g., Login to Sutradhaar"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="welcomeDescription">Welcome Description</Label>
-                                <Textarea 
-                                    id="welcomeDescription" 
-                                    value={welcomeDescription}
-                                    onChange={(e) => setWelcomeDescription(e.target.value)}
-                                    placeholder="e.g., Access your unit converter dashboard"
-                                    rows={3}
-                                />
-                            </div>
-                            <Button onClick={handleSetWelcomeContent} className="w-full">Save Welcome Content</Button>
-                            
-                            <hr className="my-4" />
-
-                            <div>
-                                <Label htmlFor="betaWelcomeTitle">Beta Welcome Title</Label>
-                                <Input 
-                                    id="betaWelcomeTitle" 
-                                    value={betaWelcomeTitle}
-                                    onChange={(e) => setBetaWelcomeTitle(e.target.value)}
-                                    placeholder="e.g., Welcome to the Beta!"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="betaWelcomeDescription">Beta Welcome Description</Label>
-                                <Textarea 
-                                    id="betaWelcomeDescription" 
-                                    value={betaWelcomeDescription}
-                                    onChange={(e) => setBetaWelcomeDescription(e.target.value)}
-                                    placeholder="e.g., Thanks for testing..."
-                                    rows={3}
-                                />
-                            </div>
-                            <Button onClick={handleSetBetaWelcome} className="w-full">Save Beta Welcome Content</Button>
                         </CardContent>
                     </Card>
                 </TabsContent>

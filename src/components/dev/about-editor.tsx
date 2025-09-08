@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Save, Trash2, Edit, Pencil, User } from 'lucide-react';
+import { ArrowLeft, Plus, Save, Trash2, Edit, Pencil, User, MessageSquare } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +17,13 @@ import {
     type ReleasePlanItem,
     type OwnerInfo,
     listenToOwnerInfoFromRtdb,
-    setOwnerInfoInRtdb
+    setOwnerInfoInRtdb,
+    listenToWelcomeContent,
+    setWelcomeContent,
+    setBetaWelcomeMessage,
+    listenToBetaWelcomeMessage,
+    BetaWelcomeMessage,
+    WelcomeContent
 } from '@/services/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ProfilePhotoEditor } from '../profile-photo-editor';
@@ -29,6 +35,9 @@ export function AboutEditor() {
     const [appInfo, setAppInfo] = useState<AppInfo>({ version: '', build: '', releaseChannel: '', license: '' });
     const [releasePlan, setReleasePlan] = useState<ReleasePlanItem[]>([]);
     const [ownerInfo, setOwnerInfo] = useState<OwnerInfo>({ name: 'Aman Yadav', imageUrl: '' });
+    const [welcomeContent, setWelcomeContentState] = useState<WelcomeContent>({ title: '', description: ''});
+    const [betaWelcome, setBetaWelcome] = useState<BetaWelcomeMessage>({ title: '', description: '' });
+
     const [isClient, setIsClient] = useState(false);
     const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
     const router = useRouter();
@@ -47,9 +56,18 @@ export function AboutEditor() {
                 setOwnerInfo(data);
             }
         });
+         const unsubWelcomeContent = listenToWelcomeContent((content) => {
+            if(content) setWelcomeContentState(content);
+        });
+
+        const unsubBetaWelcome = listenToBetaWelcomeMessage((content) => {
+            if(content) setBetaWelcome(content);
+        });
         return () => {
             unsubscribeAbout();
             unsubscribeOwner();
+            unsubWelcomeContent();
+            unsubBetaWelcome();
         };
     }, []);
 
@@ -77,9 +95,11 @@ export function AboutEditor() {
         try {
             await setAboutInfoInRtdb({ appInfo, releasePlan });
             await setOwnerInfoInRtdb(ownerInfo);
-            toast({ title: 'Success!', description: 'About page content has been saved.' });
+            await setWelcomeContent(welcomeContent);
+            await setBetaWelcomeMessage(betaWelcome);
+            toast({ title: 'Success!', description: 'All content has been saved.' });
         } catch (error) {
-            console.error("Failed to save about info:", error);
+            console.error("Failed to save content:", error);
             toast({ title: 'Error', description: 'Could not save changes.', variant: 'destructive' });
         }
     };
@@ -109,12 +129,43 @@ export function AboutEditor() {
                     <Button variant="ghost" size="icon" onClick={() => router.back()}>
                         <ArrowLeft />
                     </Button>
-                    <h1 className="text-xl font-bold">Edit About Page</h1>
+                    <h1 className="text-xl font-bold">Edit Page Content</h1>
                 </div>
                 <Button onClick={handleSaveChanges}>
                     <Save className="mr-2 h-4 w-4" /> Save All
                 </Button>
             </header>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><MessageSquare /> Welcome Screen</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-1">
+                        <Label htmlFor="welcomeTitle">Welcome Title</Label>
+                        <Input id="welcomeTitle" value={welcomeContent.title} onChange={(e) => setWelcomeContentState(p => ({...p, title: e.target.value}))} />
+                    </div>
+                     <div className="space-y-1">
+                        <Label htmlFor="welcomeDescription">Welcome Description</Label>
+                        <Textarea id="welcomeDescription" value={welcomeContent.description} onChange={(e) => setWelcomeContentState(p => ({...p, description: e.target.value}))} />
+                    </div>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><MessageSquare /> Beta Welcome Popup</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-1">
+                        <Label htmlFor="betaWelcomeTitle">Beta Welcome Title</Label>
+                        <Input id="betaWelcomeTitle" value={betaWelcome.title} onChange={(e) => setBetaWelcome(p => ({...p, title: e.target.value}))} />
+                    </div>
+                     <div className="space-y-1">
+                        <Label htmlFor="betaWelcomeDescription">Beta Welcome Description</Label>
+                        <Textarea id="betaWelcomeDescription" value={betaWelcome.description} onChange={(e) => setBetaWelcome(p => ({...p, description: e.target.value}))} />
+                    </div>
+                </CardContent>
+            </Card>
 
              <Card>
                 <CardHeader>
