@@ -34,6 +34,7 @@ interface ProfilePhotoEditorProps {
 export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePhotoEditorProps) {
     const [image, setImage] = useState<string | null>(currentImage);
     const [zoom, setZoom] = useState(1);
+    const [offset, setOffset] = useState({ x: 0, y: 0 });
     const [mode, setMode] = useState<"edit" | "camera">("edit");
     const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
     const { t } = useLanguage();
@@ -80,6 +81,8 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImage(reader.result as string);
+                setZoom(1);
+                setOffset({ x: 0, y: 0 });
             };
             reader.readAsDataURL(file);
         }
@@ -89,9 +92,17 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
         if (webcamRef.current) {
             const imageSrc = webcamRef.current.getScreenshot();
             setImage(imageSrc);
+            setZoom(1);
+            setOffset({ x: 0, y: 0 });
             setMode("edit");
         }
     };
+    
+    const handleReset = () => {
+        setImage(currentImage);
+        setZoom(1);
+        setOffset({ x: 0, y: 0 });
+    }
 
     const handleSave = () => {
         onSave(image);
@@ -109,20 +120,44 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
                     <div className="flex flex-col items-center gap-4">
                         <div className="w-48 h-48 rounded-full overflow-hidden flex items-center justify-center bg-muted">
                            <Avatar className="w-full h-full">
-                                <AvatarImage src={image ?? undefined} alt={t('photoEditor.previewAlt')} style={{ transform: `scale(${zoom})` }} />
+                                <AvatarImage src={image ?? undefined} alt={t('photoEditor.previewAlt')} style={{ transform: `scale(${zoom}) translateX(${offset.x}px) translateY(${offset.y}px)` }} />
                                 <AvatarFallback className="text-6xl"><User/></AvatarFallback>
                            </Avatar>
                         </div>
-                        <div className="w-full">
-                            <Label htmlFor="zoom">{t('photoEditor.zoom')}</Label>
-                            <Slider
-                                id="zoom"
-                                min={1}
-                                max={3}
-                                step={0.1}
-                                value={[zoom]}
-                                onValueChange={(value) => setZoom(value[0])}
-                            />
+                        <div className="w-full space-y-4">
+                            <div>
+                                <Label htmlFor="zoom">{t('photoEditor.zoom')}</Label>
+                                <Slider
+                                    id="zoom"
+                                    min={1}
+                                    max={3}
+                                    step={0.1}
+                                    value={[zoom]}
+                                    onValueChange={(value) => setZoom(value[0])}
+                                />
+                            </div>
+                             <div>
+                                <Label htmlFor="offset-x">Left / Right</Label>
+                                <Slider
+                                    id="offset-x"
+                                    min={-50}
+                                    max={50}
+                                    step={1}
+                                    value={[offset.x]}
+                                    onValueChange={(value) => setOffset(prev => ({...prev, x: value[0]}))}
+                                />
+                            </div>
+                             <div>
+                                <Label htmlFor="offset-y">Up / Down</Label>
+                                <Slider
+                                    id="offset-y"
+                                    min={-50}
+                                    max={50}
+                                    step={1}
+                                    value={[offset.y]}
+                                    onValueChange={(value) => setOffset(prev => ({...prev, y: value[0]}))}
+                                />
+                            </div>
                         </div>
                     </div>
                     <div className="space-y-4">
@@ -181,7 +216,7 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
             )}
             
             <footer className="mt-8 pt-6 border-t flex justify-between items-center gap-4">
-                <Button variant="ghost" onClick={() => setImage(currentImage)}><RotateCcw className="mr-2 h-4 w-4"/> {t('photoEditor.reset')}</Button>
+                <Button variant="ghost" onClick={handleReset}><RotateCcw className="mr-2 h-4 w-4"/> {t('photoEditor.reset')}</Button>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={onClose}>{t('photoEditor.cancel')}</Button>
                     <Button onClick={handleSave}>{t('photoEditor.save')}</Button>
