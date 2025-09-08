@@ -374,7 +374,7 @@ export function Notepad() {
 
     return (
         <div className="w-full max-w-md mx-auto flex flex-col h-screen">
-             <header className="flex items-center justify-between p-4 flex-shrink-0 sticky top-0 z-50 bg-background">
+             <header className="flex items-center justify-between p-4 flex-shrink-0 bg-background">
                 <div></div>
                 <h1 className="text-xl font-bold">{getHeading()}</h1>
                 <div className="flex items-center">
@@ -611,3 +611,5 @@ export function Notepad() {
         </div>
     );
 }
+
+    
