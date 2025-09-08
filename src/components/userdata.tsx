@@ -18,7 +18,6 @@ import { getStats } from "@/lib/stats";
 import { getStreakData } from "@/lib/streak";
 import { format } from "date-fns";
 import { Progress } from "./ui/progress";
-import { PremiumInfoDialog } from "./premium-info-dialog";
 import { cn } from "@/lib/utils";
 
 
@@ -196,7 +195,7 @@ export function UserData() {
                                 <Progress value={premiumProgress} className="mt-2" />
                                 <div className="flex justify-between items-center">
                                     <p className="text-xs text-gray-500 mt-1 text-right">{stats.totalOps.toLocaleString()} / {PREMIUM_MEMBER_THRESHOLD.toLocaleString()}</p>
-                                     <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => setIsPremiumInfoOpen(true)}>
+                                     <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => router.push('/premium')}>
                                         Learn more
                                     </Button>
                                 </div>
@@ -248,7 +247,6 @@ export function UserData() {
                     </CardContent>
                 </Card>
             </motion.div>
-             <PremiumInfoDialog open={isPremiumInfoOpen} onOpenChange={setIsPremiumInfoOpen} content={premiumInfoContent} />
         </div>
     );
 }

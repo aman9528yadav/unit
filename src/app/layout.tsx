@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { SidebarProvider, Sidebar, SidebarClose, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X, User, Info, Newspaper, Rocket, Palette, Languages, Hourglass, Calendar, Mail } from 'lucide-react';
+import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X, User, Info, Newspaper, Rocket, Palette, Languages, Hourglass, Calendar, Mail, Crown } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Label } from './ui/label';
@@ -82,6 +82,7 @@ const allNavLinks = [
     { href: "/time?tab=timer", label: "Timer", icon: Timer, requiresAuth: false },
     { href: "/time?tab=stopwatch", label: "Stopwatch", icon: Hourglass, requiresAuth: false },
     { href: "/time?tab=date-diff", label: "Date Calc", icon: Calendar, requiresAuth: false },
+    { href: "/premium", label: "Go Premium", icon: Crown, requiresAuth: false },
     { href: "/news", label: "News", icon: Newspaper, requiresAuth: false },
     { href: "/profile", label: "Profile", icon: User, requiresAuth: true },
     { href: "/settings", label: "Settings", icon: Settings, requiresAuth: true },

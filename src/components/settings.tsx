@@ -30,7 +30,6 @@ import { Label } from "./ui/label";
 import { listenToUserData, updateUserData, listenToPremiumInfoContent, PremiumInfoContent, defaultPremiumInfo } from "@/services/firestore";
 import { getStreakData } from "@/lib/streak";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
-import { PremiumInfoDialog } from "./premium-info-dialog";
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 
@@ -63,13 +62,23 @@ const SettingRow = ({ label, description, control, isLink = false, href, childre
         </div>
     );
     
+    const Wrapper = isLink && href ? Link : 'div';
+    const wrapperProps = isLink && href ? { href } : {};
+
+    const handleClick = (e: React.MouseEvent) => {
+        if (isPremium && onLockClick) {
+            e.preventDefault();
+            onLockClick();
+        }
+    };
 
     if (isLink && href) {
-        return <Link href={href} className="px-4 border-b last:border-b-0 block">{content}</Link>;
+        return <Link href={href} onClick={isPremium ? handleClick : undefined} className="px-4 border-b last:border-b-0 block">{content}</Link>;
     }
 
+
     return (
-        <div className="px-4 border-b last:border-b-0">
+        <div className="px-4 border-b last:border-b-0" onClick={isPremium ? handleClick : undefined}>
             {content}
             {children && <div className="pt-3">{children}</div>}
         </div>
@@ -107,9 +116,6 @@ export function Settings() {
   const [profile, setProfile] = useState<{email: string} | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>('Member');
-  const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
-  const [isPremiumInfoOpen, setIsPremiumInfoOpen] = useState(false);
-  const [premiumInfoContent, setPremiumInfoContent] = useState<PremiumInfoContent>(defaultPremiumInfo);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -135,7 +141,13 @@ export function Settings() {
     setIsClient(true);
     const storedProfile = localStorage.getItem('userProfile');
     const email = storedProfile ? JSON.parse(storedProfile).email : null;
-    setProfile(storedProfile ? JSON.parse(storedProfile) : null);
+    
+    if (email) {
+      setProfile({ email });
+    } else {
+        router.replace('/welcome');
+        return;
+    }
 
     if (email) {
         updateUserRole(email);
@@ -154,18 +166,11 @@ export function Settings() {
             setCalculatorSound(userSettings.calculatorSound ?? true);
         });
         
-         const unsubPremiumInfo = listenToPremiumInfoContent((content) => {
-            if(content) {
-                setPremiumInfoContent(content);
-            }
-         });
-        
         return () => {
             unsub();
-            unsubPremiumInfo();
         };
     }
-  }, []);
+  }, [router]);
   
   const updateUserRole = async (email: string | null) => {
     if(email === DEVELOPER_EMAIL) {
@@ -258,6 +263,10 @@ export function Settings() {
   const isCustomizeThemeLocked = userRole === 'Member';
   const isScientificModeLocked = userRole === 'Member';
   const isCustomUnitsLocked = userRole === 'Member';
+  
+  const handlePremiumLockClick = () => {
+    router.push('/premium');
+  }
 
 
   return (
@@ -288,7 +297,7 @@ export function Settings() {
                             description={t('settings.account.editProfile.description')}
                         />
                          <div className="px-4 py-2 text-center">
-                            <Button variant="link" onClick={() => setIsPremiumInfoOpen(true)} className="text-primary">
+                            <Button variant="link" onClick={() => router.push('/premium')} className="text-primary">
                                 Learn more about Premium
                             </Button>
                         </div>
@@ -314,7 +323,7 @@ export function Settings() {
                                         onValueChange={(v) => {
                                             const themeItem = themes.find(t => t.value === v);
                                             if (themeItem?.isPremium && userRole === 'Member') {
-                                                setShowPremiumLockDialog(true);
+                                                handlePremiumLockClick();
                                             } else {
                                                 setSelectedTheme(v);
                                             }
@@ -325,7 +334,7 @@ export function Settings() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             {themes.map((themeItem) => (
-                                                <SelectItem key={themeItem.value} value={themeItem.value} onSelect={(e) => { if (themeItem.isPremium && userRole === 'Member') {e.preventDefault(); setShowPremiumLockDialog(true); }}}>
+                                                <SelectItem key={themeItem.value} value={themeItem.value}>
                                                     <div className="flex items-center gap-2">
                                                         {themeItem.isPremium && <Star className={cn("w-3 h-3", (themeItem.isPremium && userRole === 'Member') ? "text-muted-foreground" : "text-yellow-500 fill-yellow-400")} />}
                                                         {themeItem.name}
@@ -347,8 +356,8 @@ export function Settings() {
                             href="/settings/theme"
                             label={t('settings.appearance.customizeTheme.label')}
                             description={t('settings.appearance.customizeTheme.description')}
-                            isPremium
-                            onLockClick={() => setShowPremiumLockDialog(true)}
+                            isPremium={isCustomizeThemeLocked}
+                            onLockClick={handlePremiumLockClick}
                         />
                     </AccordionContent>
                 </AccordionItem>
@@ -444,8 +453,8 @@ export function Settings() {
                             href="/settings/custom-units"
                             label={t('settings.unitConverter.customUnit.label')}
                             description={t('settings.unitConverter.customUnit.description')}
-                            isPremium
-                            onLockClick={() => setShowPremiumLockDialog(true)}
+                            isPremium={isCustomUnitsLocked}
+                            onLockClick={handlePremiumLockClick}
                         />
                          <SettingRow
                             label={t('settings.unitConverter.saveHistory.label')}
@@ -465,12 +474,12 @@ export function Settings() {
                         </div>
                     </AccordionTrigger>
                     <AccordionContent className="p-0 bg-card border-t-0 rounded-b-lg border mt-[-8px] pt-2">
-                        <div onClick={() => isScientificModeLocked && setShowPremiumLockDialog(true)} className={cn(isScientificModeLocked && "cursor-pointer")}>
+                        <div onClick={() => isScientificModeLocked && handlePremiumLockClick()} className={cn(isScientificModeLocked && "cursor-pointer")}>
                             <SettingRow
                                 label={t('settings.calculator.mode.label')}
                                 description={t('settings.calculator.mode.description')}
-                                isPremium
-                                onLockClick={() => setShowPremiumLockDialog(true)}
+                                isPremium={isScientificModeLocked}
+                                onLockClick={handlePremiumLockClick}
                                 control={
                                     <Select value={calculatorMode} onValueChange={(v) => { if(!isScientificModeLocked) setCalculatorMode(v as CalculatorMode) }}>
                                         <SelectTrigger className="w-32">
@@ -533,30 +542,6 @@ export function Settings() {
                 <Button onClick={handleSaveChanges}>{t('settings.data.saveChanges')}</Button>
             </div>
         </footer>
-         <AlertDialog open={showPremiumLockDialog} onOpenChange={setShowPremiumLockDialog}>
-            <AlertDialogContent>
-                <AlertDialogHeader className="items-center text-center">
-                     <div className="p-4 bg-primary/10 rounded-full mb-4">
-                        <Star className="w-10 h-10 text-primary" />
-                    </div>
-                    <AlertDialogTitle className="text-2xl">Premium Feature Locked</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Complete {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} operations or maintain a 15-day streak to unlock this feature and more!
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="sm:justify-center flex-col-reverse sm:flex-row gap-2">
-                     <AlertDialogCancel onClick={() => setShowPremiumLockDialog(false)}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => router.push('/profile')}>
-                        Check Your Progress
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-        <PremiumInfoDialog 
-            open={isPremiumInfoOpen} 
-            onOpenChange={setIsPremiumInfoOpen}
-            content={premiumInfoContent}
-        />
     </div>
   );
 }
