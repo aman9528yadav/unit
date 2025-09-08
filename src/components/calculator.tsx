@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { incrementCalculationCount, getStats } from '@/lib/stats';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { addCalculationToHistory, deleteCalculationFromHistory, listenToUserData, CALCULATION_HISTORY_KEY } from '@/services/firestore';
+import { addCalculationToHistory, deleteHistoryItem, listenToUserData, CALCULATION_HISTORY_KEY } from '@/services/firestore';
 import { getStreakData } from '@/lib/streak';
 
 const buttonClasses = {
@@ -246,7 +246,7 @@ export function Calculator() {
 
   const handleDeleteCalculation = (itemToDelete: string) => {
     if (profile?.email) {
-      deleteCalculationFromHistory(profile.email, itemToDelete);
+      deleteHistoryItem(profile.email, 'calculationHistory', itemToDelete);
     }
   };
   
