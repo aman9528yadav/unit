@@ -48,7 +48,10 @@ export function Header() {
 
     const pageInfo = pageTitles[pathname] || { title: 'Sutradhaar', icon: Home };
     const defaultPage = userData?.settings?.defaultPage || 'dashboard';
-    const isHomePage = pathname === `/${defaultPage}` || (defaultPage === 'dashboard' && pathname === '/');
+
+    // Correctly determine if the current page is the effective "home" page.
+    const isHomePage = (defaultPage === 'dashboard' && pathname === '/') || (pathname === `/${defaultPage}`);
+
     
     useEffect(() => {
         const storedProfileData = localStorage.getItem("userProfile");
