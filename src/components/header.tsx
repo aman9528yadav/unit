@@ -144,7 +144,7 @@ const LanguageToggle = () => {
         <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'hi')}>
             <SelectTrigger className="w-[120px] bg-card border-border">
                 <Languages className="mr-2 h-4 w-4" />
-                <SelectValue />
+                <span>{language === 'en' ? 'En' : 'Hi'}</span>
             </SelectTrigger>
             <SelectContent>
                 <SelectItem value="en">English</SelectItem>
