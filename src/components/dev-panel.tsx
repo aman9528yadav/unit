@@ -40,6 +40,9 @@ export function DevPanel() {
     const [maintenanceType, setMaintenanceType] = useState('Security');
     const [customMaintenanceTitle, setCustomMaintenanceTitle] = useState('');
     const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+    const [updateStatus, setUpdateStatus] = useState<'inprogress' | 'success' | 'failed'>('inprogress');
+    const [successMessage, setSuccessMessage] = useState('');
+    const [failureMessage, setFailureMessage] = useState('');
 
     // State for Updates Tab
     const [updateDuration, setUpdateDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -91,6 +94,9 @@ export function DevPanel() {
             setMaintenanceText(info.updateText || '');
             setMaintenanceType(info.maintenanceType || 'Security');
             setCustomMaintenanceTitle(info.customMaintenanceTitle || '');
+            setUpdateStatus(info.updateStatus || 'inprogress');
+            setSuccessMessage(info.successMessage || '');
+            setFailureMessage(info.failureMessage || '');
             if (info.targetDate) {
                 const target = new Date(info.targetDate);
                 const now = new Date();
@@ -196,6 +202,9 @@ export function DevPanel() {
                 updateText: maintenanceText, 
                 maintenanceType,
                 customMaintenanceTitle: maintenanceType === 'Custom' ? customMaintenanceTitle : '',
+                updateStatus,
+                successMessage,
+                failureMessage
             });
              toast({ title: 'Maintenance Info Saved' });
         } catch(e) {
@@ -226,7 +235,18 @@ export function DevPanel() {
         setMaintenanceText('');
         setCustomMaintenanceTitle('');
         setMaintenanceType('Security');
-        await setUpdateInfo({ targetDate: null, updateText: '', maintenanceType: 'Security', customMaintenanceTitle: '' });
+        setUpdateStatus('inprogress');
+        setSuccessMessage('');
+        setFailureMessage('');
+        await setUpdateInfo({ 
+            targetDate: null, 
+            updateText: '', 
+            maintenanceType: 'Security', 
+            customMaintenanceTitle: '',
+            updateStatus: 'inprogress',
+            successMessage: 'The update was successful! We will be back online shortly.',
+            failureMessage: 'The update failed. Please try again later.'
+        });
         toast({ title: 'Maintenance Info Cleared' });
     }
 
@@ -458,6 +478,27 @@ export function DevPanel() {
                                     />
                                 </div>
                             )}
+                            <div className="space-y-2">
+                                <Label htmlFor="updateStatus" className="flex items-center gap-2"><Info /> Post-Update Status</Label>
+                                <Select value={updateStatus} onValueChange={(v) => setUpdateStatus(v as any)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="inprogress">In Progress</SelectItem>
+                                        <SelectItem value="success">Success</SelectItem>
+                                        <SelectItem value="failed">Failed</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="successMessage">Success Message</Label>
+                                <Input id="successMessage" value={successMessage} onChange={(e) => setSuccessMessage(e.target.value)} placeholder="e.g., Update successful!" />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="failureMessage">Failure Message</Label>
+                                <Input id="failureMessage" value={failureMessage} onChange={(e) => setFailureMessage(e.target.value)} placeholder="e.g., Update failed." />
+                            </div>
                              <Button onClick={handleSetMaintenanceInfo} className="w-full">Save Maintenance Info</Button>
                         </CardContent>
                     </Card>

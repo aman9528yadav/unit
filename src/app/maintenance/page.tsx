@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Wrench, Clock, Settings, Zap, Hourglass, Bug, Rocket, Shield, Info } from "lucide-react";
+import { Wrench, Clock, Settings, Zap, Hourglass, Bug, Rocket, Shield, Info, CheckCircle, XCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { format, intervalToDuration, differenceInDays } from "date-fns";
 import { listenToUpdateInfo, UpdateInfo } from '@/services/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const CountdownBox = ({ value, label }: { value: number; label: string }) => (
     <div className="bg-primary/10 p-3 rounded-lg text-primary text-center">
@@ -163,8 +164,22 @@ export default function MaintenancePage() {
             </div>
         )}
 
-        {timerFinished && (
-            <div className="bg-green-100 border border-green-200 text-green-800 p-4 rounded-lg">
+        {timerFinished && updateInfo?.updateStatus === 'success' && (
+            <div className={cn("border p-4 rounded-lg flex items-center gap-4 bg-green-100 border-green-200 text-green-800")}>
+                <CheckCircle className="w-6 h-6" />
+                <p className="font-semibold">{updateInfo.successMessage || 'Update successful! We will be back online shortly.'}</p>
+            </div>
+        )}
+
+        {timerFinished && updateInfo?.updateStatus === 'failed' && (
+             <div className={cn("border p-4 rounded-lg flex items-center gap-4 bg-red-100 border-red-200 text-red-800")}>
+                <XCircle className="w-6 h-6" />
+                <p className="font-semibold">{updateInfo.failureMessage || 'Update encountered an issue. We are working on it.'}</p>
+            </div>
+        )}
+        
+         {timerFinished && updateInfo?.updateStatus === 'inprogress' && (
+            <div className="bg-blue-100 border border-blue-200 text-blue-800 p-4 rounded-lg">
                 <p className="font-semibold">Maintenance done! We will be back in a few minutes.</p>
             </div>
         )}

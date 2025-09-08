@@ -335,9 +335,12 @@ export async function logUserEvent(event: UserEvent) {
 // --- APP-WIDE SETTINGS (RTDB) ---
 export interface UpdateInfo {
   targetDate: string | null;
-  updateText: string | null;
-  maintenanceType: string | null;
+  updateText: string;
+  maintenanceType: string;
   customMaintenanceTitle?: string;
+  updateStatus: 'inprogress' | 'success' | 'failed';
+  successMessage?: string;
+  failureMessage?: string;
 }
 
 export interface NextUpdateInfo {
@@ -426,7 +429,15 @@ export async function setUpdateInfo(info: UpdateInfo) {
 
 export function listenToUpdateInfo(callback: (info: UpdateInfo) => void) {
     return onValue(ref(rtdb, 'settings/updateInfo'), (snapshot) => {
-        callback(snapshot.val() || { targetDate: null, updateText: null, maintenanceType: null, customMaintenanceTitle: '' });
+        callback(snapshot.val() || { 
+            targetDate: null, 
+            updateText: '', 
+            maintenanceType: 'Performance',
+            customMaintenanceTitle: '',
+            updateStatus: 'inprogress',
+            successMessage: 'The update was successful!',
+            failureMessage: 'The update failed. Please try again later.'
+        });
     });
 }
 
