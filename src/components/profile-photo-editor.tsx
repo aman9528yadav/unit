@@ -132,15 +132,12 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
         img.onload = () => {
             const scaledWidth = img.width * zoom;
             const scaledHeight = img.height * zoom;
-
-            // Calculate the drawing position, considering the zoom and pan
-            // The offset from dragging is already scaled by zoom in the move handler, but we need to apply it
-            // The drawing should be centered in the canvas, and then panned
+            
             const centerX = (avatarSize - scaledWidth) / 2;
             const centerY = (avatarSize - scaledHeight) / 2;
 
-            const finalX = centerX + offset.x * zoom;
-            const finalY = centerY + offset.y * zoom;
+            const finalX = centerX + offset.x;
+            const finalY = centerY + offset.y;
 
             ctx.drawImage(img, finalX, finalY, scaledWidth, scaledHeight);
             
@@ -164,8 +161,8 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
         const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
         const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
         
-        const dx = (clientX - startPos.x) / zoom;
-        const dy = (clientY - startPos.y) / zoom;
+        const dx = clientX - startPos.x;
+        const dy = clientY - startPos.y;
 
         setOffset({
             x: startOffset.x + dx,
