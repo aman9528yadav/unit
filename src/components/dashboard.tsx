@@ -216,6 +216,20 @@ function UpdateBanner() {
     );
 }
 
+const StatCard = ({ title, value, unit, icon: Icon, color }: { title: string, value: string | number, unit?: string, icon: React.ElementType, color: string }) => (
+    <div className="bg-card rounded-xl p-4 flex items-center gap-4 shadow-sm border border-border">
+        <div className={cn("size-10 grid place-items-center rounded-lg", color)}>
+            <Icon className="size-5" />
+        </div>
+        <div>
+            <p className="text-sm text-muted-foreground">{title}</p>
+            <p className="font-bold text-lg text-foreground">
+                {value} {unit && <span className="text-sm font-medium">{unit}</span>}
+            </p>
+        </div>
+    </div>
+);
+
 
 export function Dashboard() {
   const { t } = useLanguage();
