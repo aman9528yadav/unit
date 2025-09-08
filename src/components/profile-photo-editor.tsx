@@ -14,6 +14,7 @@ import { useLanguage } from "@/context/language-context";
 import { auth } from "@/lib/firebase";
 import { updateProfile } from "firebase/auth";
 import { updateUserData } from "@/services/firestore";
+import { cn } from "@/lib/utils";
 
 
 const defaultAvatars = [
@@ -42,6 +43,12 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
     const webcamRef = useRef<Webcam>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
+
+    // Drag to pan state
+    const [isDragging, setIsDragging] = useState(false);
+    const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+    const [startOffset, setStartOffset] = useState({ x: 0, y: 0 });
+    
 
     useEffect(() => {
         setImage(currentImage);
@@ -108,6 +115,49 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
         onSave(image);
     };
 
+     const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        setStartPos({ x: clientX, y: clientY });
+        setStartOffset(offset);
+    };
+
+    const handleDragMove = useCallback((e: MouseEvent | TouchEvent) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        
+        const dx = (clientX - startPos.x) / zoom;
+        const dy = (clientY - startPos.y) / zoom;
+
+        setOffset({
+            x: startOffset.x + dx,
+            y: startOffset.y + dy,
+        });
+    }, [isDragging, startPos, startOffset, zoom]);
+
+    const handleDragEnd = useCallback(() => {
+        setIsDragging(false);
+    }, []);
+
+    useEffect(() => {
+        if (isDragging) {
+            window.addEventListener('mousemove', handleDragMove);
+            window.addEventListener('touchmove', handleDragMove);
+            window.addEventListener('mouseup', handleDragEnd);
+            window.addEventListener('touchend', handleDragEnd);
+        }
+        return () => {
+            window.removeEventListener('mousemove', handleDragMove);
+            window.removeEventListener('touchmove', handleDragMove);
+            window.removeEventListener('mouseup', handleDragEnd);
+            window.removeEventListener('touchend', handleDragEnd);
+        };
+    }, [isDragging, handleDragMove, handleDragEnd]);
+
     return (
         <div className="w-full max-w-2xl mx-auto bg-card rounded-2xl shadow-lg border p-6">
             <header className="flex justify-between items-center mb-6">
@@ -118,8 +168,12 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
             {mode === "edit" ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="flex flex-col items-center gap-4">
-                        <div className="w-48 h-48 rounded-full overflow-hidden flex items-center justify-center bg-muted">
-                           <Avatar className="w-full h-full">
+                        <div
+                            className={cn("w-48 h-48 rounded-full overflow-hidden flex items-center justify-center bg-muted", isDragging ? "cursor-grabbing" : "cursor-grab")}
+                            onMouseDown={handleDragStart}
+                            onTouchStart={handleDragStart}
+                        >
+                           <Avatar className="w-full h-full pointer-events-none">
                                 <AvatarImage src={image ?? undefined} alt={t('photoEditor.previewAlt')} style={{ transform: `scale(${zoom}) translateX(${offset.x}px) translateY(${offset.y}px)` }} />
                                 <AvatarFallback className="text-6xl"><User/></AvatarFallback>
                            </Avatar>
@@ -134,28 +188,6 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
                                     step={0.1}
                                     value={[zoom]}
                                     onValueChange={(value) => setZoom(value[0])}
-                                />
-                            </div>
-                             <div>
-                                <Label htmlFor="offset-x">Left / Right</Label>
-                                <Slider
-                                    id="offset-x"
-                                    min={-50}
-                                    max={50}
-                                    step={1}
-                                    value={[offset.x]}
-                                    onValueChange={(value) => setOffset(prev => ({...prev, x: value[0]}))}
-                                />
-                            </div>
-                             <div>
-                                <Label htmlFor="offset-y">Up / Down</Label>
-                                <Slider
-                                    id="offset-y"
-                                    min={-50}
-                                    max={50}
-                                    step={1}
-                                    value={[offset.y]}
-                                    onValueChange={(value) => setOffset(prev => ({...prev, y: value[0]}))}
                                 />
                             </div>
                         </div>
