@@ -8,7 +8,7 @@ import { LanguageProvider } from '@/context/language-context';
 import { ThemeProvider } from '@/context/theme-context';
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { listenToGlobalMaintenanceMode } from '@/services/firestore';
+import { listenToGlobalMaintenanceMode, UserData, listenToUserData } from '@/services/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { SidebarProvider, Sidebar, SidebarClose, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X } from 'lucide-react';
+import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X, User, Info, Newspaper, Rocket } from 'lucide-react';
 import { Logo } from '@/components/logo';
 
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
@@ -75,7 +75,10 @@ const navLinks = [
     { href: "/notes", label: "Notes", icon: NotebookPen },
     { href: "/history", label: "History", icon: History },
     { href: "/time", label: "Timer", icon: Timer },
+    { href: "/profile", label: "Profile", icon: User },
     { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/updates", label: "Updates", icon: Rocket },
+    { href: "/about", label: "About", icon: Info },
     { href: "/how-to-use", label: "Help", icon: HelpCircle },
 ]
 
@@ -85,6 +88,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
+  const [profile, setProfile] = useState<Partial<UserData> | null>(null);
   const noHeaderPaths = ['/welcome', '/signup', '/forgot-password', '/profile/edit', '/logout', '/profile/success', '/maintenance'];
   const devPaths = /^\/dev(\/.*)?$/;
   const [isCalculatorFullScreen, setIsCalculatorFullScreen] = useState(false);
@@ -105,6 +109,16 @@ export default function RootLayout({
 
     return () => observer.disconnect();
   }, [pathname]);
+
+  useEffect(() => {
+    const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
+    if (userEmail) {
+        const unsub = listenToUserData(userEmail, (data) => {
+            setProfile(data);
+        });
+        return () => unsub();
+    }
+  }, []);
 
   
   const hideHeader = noHeaderPaths.includes(pathname) || devPaths.test(pathname) || pathname.startsWith('/notes/') || pathname.startsWith('/profile') || isCalculatorFullScreen;
@@ -136,18 +150,23 @@ export default function RootLayout({
                       </div>
                       <Sidebar>
                           <SidebarContent>
-                               <div className="absolute top-4 right-4">
+                               <div className="absolute top-4">
                                 <SidebarClose asChild>
-                                  <Button variant="ghost" size="icon">
-                                    <X className="h-6 w-6" />
+                                  <Button variant="ghost" size="icon" className="text-black hover:bg-black/10 rounded-full">
+                                    <X className="h-8 w-8" />
                                   </Button>
                                 </SidebarClose>
+                              </div>
+                              <div className="text-center text-black mb-10">
+                                <h2 className="text-xl font-medium">Welcome back,</h2>
+                                <p className="text-3xl font-bold">{profile?.fullName || 'Guest'}</p>
                               </div>
                               <SidebarMenu>
                                   {navLinks.map((link) => (
                                       <SidebarMenuItem key={link.href}>
                                           <Link href={link.href} passHref>
                                               <SidebarMenuButton isActive={pathname === link.href}>
+                                                  <link.icon className="w-6 h-6"/>
                                                   <span>{link.label}</span>
                                               </SidebarMenuButton>
                                           </Link>
