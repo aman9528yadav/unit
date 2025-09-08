@@ -75,7 +75,11 @@ export function Header() {
                             transition={{ duration: 0.3, ease: 'easeInOut' }}
                             className="flex items-center gap-2"
                         >
-                             <Notifications />
+                            <SidebarTrigger asChild>
+                                 <Button variant="ghost" size="icon">
+                                    <Menu />
+                                </Button>
+                            </SidebarTrigger>
                              <h1 className="font-bold text-lg">Sutradhaar</h1>
                         </motion.div>
                     )}
@@ -103,6 +107,7 @@ export function Header() {
 
 
                 <div className="flex items-center gap-1">
+                     <Notifications />
                      <Button variant="ghost" size="icon" className="rounded-full h-9 w-9" onClick={handleProfileClick}>
                         {profile ? (
                             <Avatar className="h-8 w-8 border border-border bg-card text-foreground">
@@ -113,11 +118,6 @@ export function Header() {
                              <User />
                         )}
                     </Button>
-                    <SidebarTrigger asChild>
-                         <Button variant="ghost" size="icon">
-                            <Menu />
-                        </Button>
-                    </SidebarTrigger>
                 </div>
             </div>
         </header>
