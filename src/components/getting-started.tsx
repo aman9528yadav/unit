@@ -9,6 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { listenToBetaWelcomeMessage, BetaWelcomeMessage } from "@/services/firestore";
+import Link from "next/link";
+import { BookOpen, Rocket } from "lucide-react";
 
 const defaultContent: BetaWelcomeMessage = {
     title: 'Gets things with Sutradhaar',
@@ -70,17 +72,31 @@ export function GettingStarted() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-                className="w-full max-w-sm space-y-6"
+                className="w-full max-w-sm space-y-4"
             >
-                <div className="flex items-center justify-center space-x-2">
+                 <Button onClick={handleGetStarted} className="w-full h-12 text-lg">
+                    Get Started
+                </Button>
+                 <div className="grid grid-cols-2 gap-4">
+                    <Button asChild variant="outline">
+                        <Link href="/updates">
+                            <Rocket className="mr-2 h-4 w-4" />
+                            See What's New
+                        </Link>
+                    </Button>
+                     <Button asChild variant="outline">
+                        <Link href="/how-to-use">
+                            <BookOpen className="mr-2 h-4 w-4" />
+                           Learn How to Use
+                        </Link>
+                    </Button>
+                </div>
+                <div className="flex items-center justify-center space-x-2 pt-2">
                     <Checkbox id="dont-show-again" checked={doNotShowAgain} onCheckedChange={(checked) => setDoNotShowAgain(checked as boolean)} />
                     <Label htmlFor="dont-show-again" className="text-sm font-medium text-muted-foreground">
                         Don't show this again
                     </Label>
                 </div>
-                <Button onClick={handleGetStarted} className="w-full h-12 text-lg">
-                    Get Started
-                </Button>
             </motion.div>
         </div>
     );
