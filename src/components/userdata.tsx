@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -118,8 +119,8 @@ export function UserData() {
                 className="w-full max-w-lg"
             >
                 <div className="mb-4">
-                     <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => router.push('/')}>
-                        <ArrowLeft size={16} /> Back to Dashboard
+                     <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => router.back()}>
+                        <ArrowLeft size={16} /> Back
                     </Button>
                 </div>
                 

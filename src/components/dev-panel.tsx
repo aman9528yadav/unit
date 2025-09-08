@@ -339,7 +339,7 @@ export function DevPanel() {
                         Authenticate
                     </Button>
                 </div>
-                 <Button onClick={() => router.push('/')} variant="outline" className="mt-4">Back to App</Button>
+                 <Button onClick={() => router.back()} variant="outline" className="mt-4">Back to App</Button>
             </div>
         );
     }
@@ -614,7 +614,7 @@ export function DevPanel() {
                 </TabsContent>
             </Tabs>
             
-            <Button onClick={() => router.push('/')} variant="outline" className="mt-4">Back to App</Button>
+            <Button onClick={() => router.back()} variant="outline" className="mt-4">Back to App</Button>
         </div>
     );
 }

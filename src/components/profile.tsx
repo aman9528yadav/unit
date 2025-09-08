@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -150,7 +151,7 @@ export function Profile() {
                              <div className="mt-6 space-y-3 text-left">
                                 <div className="flex justify-between items-center"><span className="font-medium">Default Region</span><span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{settings.defaultRegion || 'International'}</span></div>
                                 <div className="flex justify-between items-center"><span className="font-medium">Theme</span><span className="px-3 py-1 bg-gray-200 rounded-full text-sm">{settings.theme || 'Default'}</span></div>
-                                <div className="flex justify-between items-center"><span className="font-medium">Save History</span><Switch checked={settings.saveConversionHistory} disabled/></div>
+                                <div className="flex justify-between items-center"><span className="font-medium">Save History</span><Switch checked={settings.saveHistory} disabled/></div>
                             </div>
                         )}
 

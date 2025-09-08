@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -50,8 +51,9 @@ export function Header() {
     const pageInfo = pageTitles[pathname] || { title: 'Sutradhaar', icon: Home };
     const defaultPage = userData?.settings?.defaultPage || 'dashboard';
 
-    // Correctly determine if the current page is the effective "home" page.
-    const isHomePage = (pathname === '/') || (pathname === `/${defaultPage}`);
+    // A page is only the "home" page if it's the root and the default is dashboard,
+    // or if it's the specific default page.
+    const isHomePage = (pathname === `/${defaultPage}`) || (pathname === '/' && defaultPage === 'dashboard');
 
     
     useEffect(() => {
@@ -86,18 +88,13 @@ export function Header() {
             router.push('/welcome');
         }
     };
-    
-    const handleBackClick = () => {
-        const homeRoute = defaultPage === 'dashboard' ? '/' : `/${defaultPage}`;
-        router.push(homeRoute);
-    };
 
     return (
         <header className="sticky top-0 z-40 w-full max-w-lg border-b bg-background/80 backdrop-blur-sm py-4">
             <div className="flex items-center gap-4">
                  <div className="flex items-center gap-2 mr-auto">
                     {!isHomePage && (
-                        <Button variant="ghost" size="icon" onClick={handleBackClick}>
+                        <Button variant="ghost" size="icon" onClick={() => router.back()}>
                             <ArrowLeft />
                         </Button>
                     )}
