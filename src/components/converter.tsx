@@ -726,9 +726,7 @@ export function Converter() {
 }
 
 const CompareButton = ({ category, fromUnit, inputValue, t }: { category: ConversionCategory; fromUnit: string; inputValue: string, t: any }) => {
-    const comparisonUnits = category.units
-        .filter(u => u.symbol !== fromUnit)
-        .slice(0, 5); // Show up to 5 other units
+    const comparisonUnits = category.units.filter(u => u.symbol !== fromUnit);
 
     const getComparisonResults = () => {
         const value = parseFloat(inputValue);
@@ -741,9 +739,9 @@ const CompareButton = ({ category, fromUnit, inputValue, t }: { category: Conver
                 useGrouping: false,
             });
             return {
-                unitName: unit.name,
+                name: t(`units.${unit.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: unit.name }),
                 unitSymbol: unit.symbol,
-                value: formattedResult,
+                value: parseFloat(formattedResult),
             };
         });
     };
@@ -757,23 +755,50 @@ const CompareButton = ({ category, fromUnit, inputValue, t }: { category: Conver
                     <GitCompareArrows className="mr-2 h-4 w-4" /> Compare
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-3xl">
                 <DialogHeader>
                     <DialogTitle>Conversion Comparison</DialogTitle>
                     <DialogDescription>
                         Comparing {inputValue} {fromUnit} to other units in the {category.name} category.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-2">
-                    {results.map(res => (
-                        <div key={res.unitSymbol} className="flex justify-between items-center bg-secondary p-3 rounded-lg">
-                           <div>
-                                <p className="font-semibold text-foreground">{t(`units.${res.unitName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: res.unitName })}</p>
-                                <p className="text-xs text-muted-foreground">{res.unitSymbol}</p>
-                           </div>
-                           <p className="text-lg font-bold text-primary">{res.value}</p>
-                        </div>
-                    ))}
+                 <div className="grid md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto p-1">
+                    {/* Chart */}
+                    <div className="h-80 pr-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={results} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis type="number" />
+                                <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 12 }} />
+                                <RechartsTooltip 
+                                    cursor={{fill: 'hsl(var(--muted))'}}
+                                    content={({ active, payload }) => {
+                                        if (active && payload && payload.length) {
+                                            return (
+                                                <div className="bg-background border p-2 rounded-lg shadow-lg">
+                                                   <p className="font-semibold">{`${payload[0].payload.name}: ${payload[0].value}`}</p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
+                                />
+                                <Bar dataKey="value" fill="hsl(var(--primary))" barSize={20} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                    {/* List */}
+                    <div className="space-y-2">
+                        {results.map(res => (
+                            <div key={res.unitSymbol} className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                               <div>
+                                    <p className="font-semibold text-foreground">{res.name}</p>
+                                    <p className="text-xs text-muted-foreground">{res.unitSymbol}</p>
+                               </div>
+                               <p className="text-lg font-bold text-primary">{res.value.toLocaleString()}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
                  <DialogFooter>
                     <Button onClick={() => navigator.clipboard.writeText(results.map(r => `${r.value} ${r.unitSymbol}`).join('\n'))}>
