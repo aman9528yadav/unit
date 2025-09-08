@@ -43,6 +43,8 @@ body {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
     --radius: 0.5rem;
+    
+    --sidebar-background: 240 10% 100%;
   }
   .dark {
     --background: 222.2 84% 4.9%;
@@ -69,6 +71,8 @@ body {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+
+    --sidebar-background: 222.2 84% 4.9%;
   }
 
   .retro {
