@@ -28,7 +28,8 @@ import {
   BarChart3,
   Users,
   EyeOff,
-  ChevronDown
+  ChevronDown,
+  PieChart as PieChartIcon
 } from "lucide-react";
 import { addDays, format, formatDistanceToNow, parseISO, isValid } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -36,7 +37,7 @@ import { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { DailyActivity, processUserDataForStats } from "@/lib/stats";
-import { LineChart, Line, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart as RechartsBarChart } from "recharts";
+import { LineChart, Line, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart as RechartsBarChart, Legend } from "recharts";
 import { useLanguage } from "@/context/language-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -266,6 +267,15 @@ export function Analytics() {
         date: format(new Date(day.date), 'MMM d')
     }));
 
+    const pieChartData = [
+        { name: 'Conversions', value: stats.totalConversions },
+        { name: 'Date Calcs', value: stats.totalDateCalculations },
+        { name: 'Notes', value: stats.savedNotes },
+    ];
+    
+    const PIE_COLORS = ['#6366f1', '#f97316', '#3b82f6'];
+
+
     return (
         <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
           {/* Header */}
@@ -384,6 +394,46 @@ export function Analytics() {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
+
+             <Card className="rounded-2xl shadow-md">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><PieChartIcon /> Activity Breakdown</CardTitle>
+                    <CardDescription>A percentage breakdown of your most common activities.</CardDescription>
+                </CardHeader>
+                <CardContent className="h-96">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Tooltip formatter={(value, name) => [`${value} ops`, name]}/>
+                            <Legend />
+                            <Pie
+                                data={pieChartData}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+                                    const RADIAN = Math.PI / 180;
+                                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                                    return (
+                                        <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+                                            {`${(percent * 100).toFixed(0)}%`}
+                                        </text>
+                                    );
+                                }}
+                                outerRadius={120}
+                                innerRadius={60}
+                                paddingAngle={5}
+                                dataKey="value"
+                            >
+                                {pieChartData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                                ))}
+                            </Pie>
+                        </PieChart>
+                    </ResponsiveContainer>
+                </CardContent>
+             </Card>
 
             <Card className="rounded-2xl shadow-md">
                 <CardHeader>
