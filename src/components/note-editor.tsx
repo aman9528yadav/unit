@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon, ArrowRightLeft, CheckSquare, Baseline, Highlighter, File } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon, ArrowRightLeft, CheckSquare, Baseline, Highlighter, File, Lock, Unlock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +21,7 @@ import {
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { useLanguage } from '@/context/language-context';
 import { listenToUserNotes, updateUserNotes } from '@/services/firestore';
+import { cn } from '@/lib/utils';
 
 
 const FONT_COLORS = [
@@ -52,6 +53,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
     const { t } = useLanguage();
     const [allNotes, setAllNotes] = useState<Note[]>([]);
+    const [isLocked, setIsLocked] = useState(false);
 
 
     const router = useRouter();
@@ -87,6 +89,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     setIsFavorite(noteToEdit.isFavorite || false);
                     setCategory(noteToEdit.category || '');
                     setAttachment(noteToEdit.attachment || null);
+                    setIsLocked(noteToEdit.isLocked || false);
                 } else {
                     toast({ title: t('noteEditor.toast.notFound'), variant: "destructive" });
                     router.push('/notes');
@@ -263,7 +266,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 attachment: attachment || null,
                 createdAt: now,
                 updatedAt: now,
-                deletedAt: null
+                deletedAt: null,
+                isLocked,
             };
             notes.push(newNote);
         } else {
@@ -277,6 +281,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     category: category || '',
                     attachment: attachment || null,
                     updatedAt: now,
+                    isLocked,
                 };
             }
         }
@@ -360,6 +365,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <ArrowLeft />
                 </Button>
                 <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => { setIsLocked(!isLocked); setIsDirty(true); }} className={cn(isLocked && "bg-primary/10 text-primary")}>
+                       {isLocked ? <Lock /> : <Unlock/>}
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => handleSave()}>
                         <Save />
                     </Button>
@@ -451,7 +459,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     style={{ direction: 'ltr' }}
                 />
                 <div className="flex items-center gap-2 pt-2 border-t border-border">
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => fileInputRef.current?.click()}><Paperclip /></Button>
+                    <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); fileInputRef.current?.click(); }}>
+                        <Paperclip />
+                    </Button>
                     <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
                     <Button variant="ghost" size="icon" onClick={() => handleInsertEmoji('😀')}><Smile /></Button>
                     <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={handleSoftDelete}><Trash2 /></Button>
@@ -484,5 +494,3 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     );
 }
 
-
-    

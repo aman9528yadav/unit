@@ -454,6 +454,7 @@ export interface UserData {
     github?: string;
     instagram?: string;
     skills?: string[];
+    notePassword?: string;
     settings?: {
         language?: string;
         theme?: string;
@@ -609,5 +610,3 @@ export async function setFavorites(email: string | null, favorites: string[]) {
      if(!email) return;
      await setRealtimeDb(ref(rtdb, `users/${sanitizeEmail(email)}/favoriteConversions`), favorites);
 }
-
-    

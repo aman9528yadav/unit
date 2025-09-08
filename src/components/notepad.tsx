@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home, ShieldX, ChevronDown } from 'lucide-react';
+import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home, ShieldX, ChevronDown, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -35,7 +35,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { useLanguage } from '@/context/language-context';
-import { listenToUserNotes, updateUserNotes } from '@/services/firestore';
+import { listenToUserData, listenToUserNotes, updateUserNotes, UserData } from '@/services/firestore';
+import { Label } from './ui/label';
 
 
 export interface Note {
@@ -48,6 +49,7 @@ export interface Note {
     deletedAt: string | null;
     category: string;
     attachment: string | null;
+    isLocked: boolean;
 }
 
 export const NOTES_STORAGE_KEY_BASE = 'notes';
@@ -71,6 +73,9 @@ export function Notepad() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchVisible, setIsSearchVisible] = useState(false);
     const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [userData, setUserData] = useState<UserData | null>(null);
+    const [passwordPrompt, setPasswordPrompt] = useState<{noteId: string} | null>(null);
+    const [passwordInput, setPasswordInput] = useState('');
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
     const { language, t } = useLanguage();
     const dateLocale = language === 'hi' ? hi : enUS;
@@ -94,7 +99,7 @@ export function Notepad() {
     useEffect(() => {
         if (!profile) return; // Don't do anything until profile is loaded
 
-        const unsubscribe = listenToUserNotes(profile.email, (notesFromDb) => {
+        const unsubNotes = listenToUserNotes(profile.email, (notesFromDb) => {
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             
@@ -111,10 +116,40 @@ export function Notepad() {
                 updateUserNotes(profile.email, freshNotes);
             }
         });
+        
+        const unsubUserData = listenToUserData(profile.email, setUserData);
 
-        return () => unsubscribe();
+        return () => {
+            unsubNotes();
+            unsubUserData();
+        };
     }, [profile]);
     
+    const handleNoteClick = (note: Note) => {
+        if(note.isLocked) {
+            const sessionPassword = sessionStorage.getItem('notePassword');
+            if (sessionPassword && sessionPassword === userData?.notePassword) {
+                 router.push(`/notes/view/${note.id}`);
+            } else {
+                 setPasswordPrompt({noteId: note.id});
+            }
+        } else {
+            router.push(`/notes/view/${note.id}`);
+        }
+    }
+
+    const handlePasswordSubmit = () => {
+        if (passwordInput === userData?.notePassword) {
+            sessionStorage.setItem('notePassword', passwordInput);
+            toast({ title: "Unlocked!", description: "You can now view locked notes for this session." });
+            router.push(`/notes/view/${passwordPrompt!.noteId}`);
+            setPasswordPrompt(null);
+            setPasswordInput('');
+        } else {
+            toast({ title: "Incorrect Password", variant: "destructive" });
+        }
+    };
+
 
     const handleSoftDelete = (noteId: string) => {
         if (!profile) return;
@@ -343,27 +378,28 @@ export function Notepad() {
                     {sortedNotes.length > 0 ? (
                         <ul className={layout === 'list' ? "space-y-2" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
                             {sortedNotes.map(note => (
-                                <li key={note.id} className="bg-card p-4 rounded-lg flex flex-col justify-between">
-                                    <div>
-                                        <Link href={`/notes/view/${note.id}`} className="cursor-pointer group">
-                                            <div className="flex items-center justify-between">
-                                                <h2 className="font-semibold truncate group-hover:text-primary">{note.title || t('notepad.untitled')}</h2>
+                                <li key={note.id} className="bg-card p-4 rounded-lg flex flex-col justify-between" onClick={() => handleNoteClick(note)}>
+                                    <div className="cursor-pointer group">
+                                        <div className="flex items-center justify-between">
+                                            <h2 className="font-semibold truncate group-hover:text-primary">{note.title || t('notepad.untitled')}</h2>
+                                            <div className='flex items-center gap-1'>
+                                                {note.isLocked && <Lock size={14} className="text-muted-foreground"/>}
                                                 {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
                                             </div>
-                                            {note.attachment && layout === 'card' && (
-                                                <div className="relative w-full h-32 my-2 rounded-md overflow-hidden">
+                                        </div>
+                                        {note.attachment && layout === 'card' && (
+                                            <div className="relative w-full h-32 my-2 rounded-md overflow-hidden">
+                                                <Image src={note.attachment} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="cover" />
+                                            </div>
+                                        )}
+                                        <div className="flex gap-2 mt-1">
+                                            {note.attachment && layout === 'list' && (
+                                                <div className="relative w-16 h-16 my-1 rounded-md overflow-hidden flex-shrink-0">
                                                     <Image src={note.attachment} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="cover" />
                                                 </div>
                                             )}
-                                            <div className="flex gap-2 mt-1">
-                                                {note.attachment && layout === 'list' && (
-                                                    <div className="relative w-16 h-16 my-1 rounded-md overflow-hidden flex-shrink-0">
-                                                        <Image src={note.attachment} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="cover" />
-                                                    </div>
-                                                )}
-                                                <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: note.content || t('notepad.noContent') }} />
-                                            </div>
-                                        </Link>
+                                            <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: note.content || t('notepad.noContent') }} />
+                                        </div>
                                     </div>
                                     <div>
                                         <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
@@ -376,16 +412,16 @@ export function Notepad() {
                                         <div className="flex items-center justify-end gap-2 mt-2">
                                             {view === 'trash' ? (
                                                 <>
-                                                    <Button size="sm" variant="ghost" onClick={() => handleRestore(note.id)}><RotateCcw size={16} /> {t('notepad.actions.restore')}</Button>
-                                                    <Button size="sm" variant="destructive" onClick={() => setNoteToDelete(note.id)}><Trash2 size={16} /> {t('notepad.actions.delete')}</Button>
+                                                    <Button size="sm" variant="ghost" onClick={(e) => {e.stopPropagation(); handleRestore(note.id)}}><RotateCcw size={16} /> {t('notepad.actions.restore')}</Button>
+                                                    <Button size="sm" variant="destructive" onClick={(e) => {e.stopPropagation(); setNoteToDelete(note.id)}}><Trash2 size={16} /> {t('notepad.actions.delete')}</Button>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <Button size="sm" variant="ghost" onClick={() => router.push(`/notes/edit/${note.id}`)}><Edit size={16} /></Button>
-                                                    <Button size="sm" variant="ghost" onClick={() => handleToggleFavorite(note.id)}>
+                                                    <Button size="sm" variant="ghost" onClick={(e) => {e.stopPropagation(); router.push(`/notes/edit/${note.id}`)}}><Edit size={16} /></Button>
+                                                    <Button size="sm" variant="ghost" onClick={(e) => {e.stopPropagation(); handleToggleFavorite(note.id)}}>
                                                         <Star size={16} className={note.isFavorite ? 'text-yellow-400 fill-yellow-400' : ''}/>
                                                     </Button>
-                                                    <Button size="sm" variant="destructive" onClick={() => handleSoftDelete(note.id)}><Trash2 size={16} /></Button>
+                                                    <Button size="sm" variant="destructive" onClick={(e) => {e.stopPropagation(); handleSoftDelete(note.id)}}><Trash2 size={16} /></Button>
                                                 </>
                                             )}
                                         </div>
@@ -438,6 +474,24 @@ export function Notepad() {
                         <AlertDialogAction onClick={handleEmptyTrash}>
                             {t('notepad.dialog.emptyTrash.confirm')}
                         </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+             <AlertDialog open={!!passwordPrompt} onOpenChange={(open) => !open && setPasswordPrompt(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Enter Password</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This note is locked. Please enter your note password to view it.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="space-y-2">
+                        <Label htmlFor="note-password">Password</Label>
+                        <Input id="note-password" type="password" value={passwordInput} onChange={e => setPasswordInput(e.target.value)} />
+                    </div>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handlePasswordSubmit}>Unlock</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

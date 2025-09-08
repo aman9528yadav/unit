@@ -1,11 +1,10 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2, Pencil, Phone, MapPin, Linkedin, Twitter, Github, Instagram, KeyRound, ShieldCheck, Star } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2, Pencil, Phone, MapPin, Linkedin, Twitter, Github, Instagram, KeyRound, ShieldCheck, Star, NotebookPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,12 +26,24 @@ import { Textarea } from "./ui/textarea";
 export function ProfileEditForm() {
   const [profile, setProfile] = useState<Partial<UserData> | null>(null);
   const [skillsString, setSkillsString] = useState("");
+  
+  // Security Tab state
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Note Password Tab state
+  const [notePassword, setNotePassword] = useState('');
+  const [confirmNotePassword, setConfirmNotePassword] = useState('');
+  const [currentNotePassword, setCurrentNotePassword] = useState('');
+  const [showNotePassword, setShowNotePassword] = useState(false);
+  const [showConfirmNotePassword, setShowConfirmNotePassword] = useState(false);
+  const [showCurrentNotePassword, setShowCurrentNotePassword] = useState(false);
+
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
@@ -64,18 +75,11 @@ export function ProfileEditForm() {
         return;
       };
       setProfile({
+        ...data,
         fullName: data.fullName || '',
         email: userEmail,
-        dob: data.dob || '',
-        profileImage: data.profileImage || '',
-        phone: data.phone || '',
-        address: data.address || '',
-        linkedin: data.linkedin || '',
-        twitter: data.twitter || '',
-        github: data.github || '',
-        instagram: data.instagram || '',
-        skills: data.skills || [],
       });
+      setNotePassword(data.notePassword || '');
       setSkillsString((data.skills || []).join(', '));
     });
 
@@ -103,6 +107,8 @@ export function ProfileEditForm() {
         await handleSaveAccount();
     } else if (activeTab === 'security') {
         await handleChangePassword();
+    } else if (activeTab === 'note-pass') {
+        await handleSaveNotePassword();
     }
   }
 
@@ -188,6 +194,34 @@ export function ProfileEditForm() {
       }
     }
   };
+  
+  const handleSaveNotePassword = async () => {
+    if (notePassword !== confirmNotePassword) {
+        toast({ title: "Passwords do not match", variant: "destructive" });
+        return;
+    }
+    if (profile?.notePassword && !currentNotePassword) {
+        toast({ title: "Current password required", description: "Please enter your current note password to set a new one.", variant: "destructive" });
+        return;
+    }
+    if (profile?.notePassword && currentNotePassword !== profile.notePassword) {
+        toast({ title: "Incorrect current password", variant: "destructive" });
+        return;
+    }
+
+    setIsSubmitting(true);
+    try {
+        await updateUserData(profile?.email!, { notePassword });
+        toast({ title: "Note Password Updated", description: "Your notes password has been set successfully." });
+        setConfirmNotePassword('');
+        setCurrentNotePassword('');
+    } catch(err) {
+        toast({ title: "Update failed", variant: "destructive" });
+    } finally {
+        setIsSubmitting(false);
+    }
+
+  };
 
 
   if (!isClient || !profile) {
@@ -224,9 +258,10 @@ export function ProfileEditForm() {
             <p className="text-sm text-gray-500 mb-8 text-center">Update your personal information and security settings.</p>
 
             <Tabs defaultValue="account" onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-2 mb-8 bg-gray-100 rounded-lg p-1">
+              <TabsList className="grid grid-cols-3 mb-8 bg-gray-100 rounded-lg p-1">
                 <TabsTrigger value="account" className="rounded-md">Account</TabsTrigger>
                 <TabsTrigger value="security" className="rounded-md">Security</TabsTrigger>
+                <TabsTrigger value="note-pass" className="rounded-md">Note Pass</TabsTrigger>
               </TabsList>
 
               <TabsContent value="account">
@@ -347,6 +382,35 @@ export function ProfileEditForm() {
                       <span className="text-sm font-medium">Two-Factor Authentication</span>
                     </div>
                     <Button variant="outline" size="sm" onClick={() => toast({ title: "Coming Soon!", description: "2FA will be available in a future update."})}>Enable</Button>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="note-pass">
+                <div className="space-y-5 text-left">
+                  <p className="text-sm text-muted-foreground">Set a password to lock and protect sensitive notes.</p>
+                  {profile.notePassword && (
+                    <div>
+                        <Label className="text-sm font-medium">Current Note Password</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                            <Lock size={18} className="text-gray-500" />
+                            <Input type={showCurrentNotePassword ? "text" : "password"} placeholder="Enter current note password" value={currentNotePassword} onChange={e => setCurrentNotePassword(e.target.value)} />
+                        </div>
+                    </div>
+                  )}
+                  <div>
+                    <Label className="text-sm font-medium">New Note Password</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <KeyRound size={18} className="text-gray-500" />
+                      <Input type={showNotePassword ? "text" : "password"} placeholder="Enter new note password" value={notePassword} onChange={e => setNotePassword(e.target.value)} />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Confirm New Password</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <KeyRound size={18} className="text-gray-500" />
+                      <Input type={showConfirmNotePassword ? "text" : "password"} placeholder="Confirm new note password" value={confirmNotePassword} onChange={e => setConfirmNotePassword(e.target.value)} />
+                    </div>
                   </div>
                 </div>
               </TabsContent>
