@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music, Sigma, Home } from "lucide-react";
+import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music, Sigma, Home, Rocket } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { useTheme, type CustomTheme } from "@/context/theme-context";
 import {
@@ -133,6 +133,7 @@ export function Settings() {
   const [saveConversionHistory, setSaveConversionHistory] = useState(true);
   const [defaultRegion, setDefaultRegion] = useState<Region>('International');
   const [defaultPage, setDefaultPage] = useState<DefaultPage>('dashboard');
+  const [showGettingStarted, setShowGettingStarted] = useState(true);
 
   const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>('basic');
   const [calculatorTheme, setCalculatorTheme] = useState<CalculatorTheme>('original');
@@ -160,6 +161,7 @@ export function Settings() {
             if (userSettings.defaultPage) setDefaultPage(userSettings.defaultPage);
             if (userSettings.calculatorMode) setCalculatorMode(userSettings.calculatorMode);
             if (userSettings.calculatorTheme) setCalculatorTheme(userSettings.calculatorTheme);
+            setShowGettingStarted(userSettings.showGettingStarted ?? true);
             setCalculatorSound(userSettings.calculatorSound ?? true);
         });
         return () => unsub();
@@ -213,6 +215,7 @@ export function Settings() {
         saveConversionHistory,
         defaultRegion,
         defaultPage,
+        showGettingStarted,
         calculatorMode,
         calculatorTheme,
         calculatorSound
@@ -373,6 +376,11 @@ export function Settings() {
                         </Select>
                     }
                 />
+                <SettingRow
+                    label="Show Getting Started"
+                    description="Display the intro screen on next launch"
+                    control={<Switch checked={showGettingStarted} onCheckedChange={setShowGettingStarted} />}
+                />
                 {profile?.email === "amanyadavyadav9458@gmail.com" && (
                   <SettingRow
                       isLink
@@ -508,5 +516,3 @@ export function Settings() {
     </div>
   );
 }
-
-    

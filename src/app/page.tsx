@@ -47,23 +47,15 @@ export default function Home() {
             setAuthStatus('unauthenticated');
             return;
         }
-
-        if (!hasSeenGettingStarted && !hasNavigatedFromGettingStarted) {
-            router.replace('/getting-started');
-            return;
-        }
-
-        if (hasSkippedLogin) {
-            setAuthStatus('authenticated');
-            // Allow guest to see dashboard
-            return;
-        }
-
+        
         if (userEmail) {
             const unsub = listenToUserData(userEmail, (data: UserData) => {
+                if ((!hasSeenGettingStarted || data?.settings?.showGettingStarted) && !hasNavigatedFromGettingStarted) {
+                     router.replace('/getting-started');
+                     return;
+                }
+
                 const page = data?.settings?.defaultPage;
-                // This logic runs once when the component mounts to handle initial redirect
-                // We check if this is the first navigation after login.
                 const hasRedirected = sessionStorage.getItem('hasRedirected');
 
                 if (!hasRedirected && page && page !== 'dashboard') {
@@ -73,6 +65,13 @@ export default function Home() {
                 setAuthStatus('authenticated');
             });
             return () => unsub();
+        } else {
+            // For guest users
+            if (!hasSeenGettingStarted && !hasNavigatedFromGettingStarted) {
+                router.replace('/getting-started');
+                return;
+            }
+             setAuthStatus('authenticated');
         }
 
     }, [router]);
@@ -85,7 +84,6 @@ export default function Home() {
         );
     }
     
-    // Always render the Dashboard component if authenticated and on the root path
     if (authStatus === 'authenticated') {
          return (
             <main className="w-full flex-grow p-4 sm:p-6">
