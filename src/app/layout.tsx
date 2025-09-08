@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { SidebarProvider, Sidebar, SidebarClose, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X, User, Info, Newspaper, Rocket } from 'lucide-react';
+import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X, User, Info, Newspaper, Rocket, Palette, Languages } from 'lucide-react';
 import { Logo } from '@/components/logo';
 
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
@@ -77,6 +77,8 @@ const navLinks = [
     { href: "/time", label: "Timer", icon: Timer },
     { href: "/profile", label: "Profile", icon: User },
     { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/settings/theme", label: "Theme", icon: Palette },
+    { href: "/settings", label: "Language", icon: Languages },
     { href: "/updates", label: "Updates", icon: Rocket },
     { href: "/about", label: "About", icon: Info },
     { href: "/how-to-use", label: "Help", icon: HelpCircle },
