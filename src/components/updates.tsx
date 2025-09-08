@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Timer } from "lucide-react";
+import { ArrowLeft, Timer, CheckCircle } from "lucide-react";
 import { format, intervalToDuration, differenceInDays, parseISO } from "date-fns";
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/language-context';
@@ -14,6 +14,7 @@ import * as LucideIcons from "lucide-react";
 export function Updates() {
   const [targetDate, setTargetDate] = useState<Date | null>(null);
   const [timeLeft, setTimeLeft] = useState<Duration & { totalDays?: number } | null>(null);
+  const [timerFinished, setTimerFinished] = useState(false);
   const [updateText, setUpdateText] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
@@ -34,11 +35,14 @@ export function Updates() {
             const date = new Date(info.targetDate);
              if (!isNaN(date.getTime()) && date > new Date()) {
                 setTargetDate(date);
+                setTimerFinished(false);
             } else {
                 setTargetDate(null);
+                if (info.targetDate) setTimerFinished(true);
             }
         } else {
             setTargetDate(null);
+             setTimerFinished(false);
         }
        setUpdateText(info.updateText || "General improvements and bug fixes.");
     });
@@ -62,6 +66,7 @@ export function Updates() {
       } else {
         setTimeLeft(null);
         setTargetDate(null);
+        setTimerFinished(true);
         clearInterval(timer);
       }
     }, 1000);
@@ -110,6 +115,13 @@ export function Updates() {
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">{updateText}</p>
                 </div>
             )}
+        </div>
+      )}
+
+      {isClient && timerFinished && (
+        <div className="border p-4 rounded-lg flex items-center gap-4 bg-green-100 border-green-200 text-green-800">
+            <CheckCircle className="w-6 h-6" />
+            <p className="font-semibold">Congratulations! The new update is now live. Enjoy the new features.</p>
         </div>
       )}
 
