@@ -352,6 +352,8 @@ export interface NextUpdateInfo {
   targetDate: string | null;
   updateText: string | null;
   showOnDashboard?: boolean;
+  category?: string;
+  customCategoryTitle?: string;
 }
 
 export interface BroadcastNotification {
@@ -657,3 +659,5 @@ export async function setFavorites(email: string | null, favorites: string[]) {
      if(!email) return;
      await setRealtimeDb(ref(rtdb, `users/${sanitizeEmail(email)}/favoriteConversions`), favorites);
 }
+
+    

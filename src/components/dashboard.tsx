@@ -38,7 +38,10 @@ import {
   Lightbulb,
   Beaker,
   BookOpen,
-  Globe2
+  Globe2,
+  Bug,
+  Shield,
+  AlertTriangle
 } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useRouter } from "next/navigation";
@@ -157,6 +160,13 @@ const CountdownBox = ({ value, label }: { value: number; label: string }) => (
     </div>
 );
 
+const categoryIcons: { [key: string]: React.ElementType } = {
+  "New Feature": Rocket,
+  "Bug Fix": Bug,
+  "Improvement": Beaker,
+  "Security": Shield,
+  "Face Issue": AlertTriangle,
+};
 
 function UpdateBanner() {
     const [updateInfo, setUpdateInfo] = useState<NextUpdateInfo | null>(null);
@@ -198,6 +208,9 @@ function UpdateBanner() {
     if (!updateInfo?.showOnDashboard) {
         return null;
     }
+    
+    const Icon = categoryIcons[updateInfo.category || ''] || Rocket;
+    const categoryTitle = updateInfo.category === 'Custom' ? updateInfo.customCategoryTitle : updateInfo.category;
 
     if (updateInfo.targetDate && isPast(new Date(updateInfo.targetDate))) {
         return (
@@ -235,6 +248,14 @@ function UpdateBanner() {
                     <CountdownBox value={timeLeft.minutes ?? 0} label="Minutes" />
                     <CountdownBox value={timeLeft.seconds ?? 0} label="Seconds" />
                 </div>
+                 {categoryTitle && (
+                    <div className="mt-4 flex justify-center">
+                       <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground p-2 px-4 rounded-full text-sm font-medium">
+                          <Icon className="w-5 h-5 text-primary" />
+                          <span>{categoryTitle}</span>
+                       </div>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );
@@ -554,3 +575,5 @@ export function Dashboard() {
     </motion.div>
   );
 }
+
+    

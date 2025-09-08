@@ -47,6 +47,8 @@ export function DevPanel() {
     const [updateDuration, setUpdateDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const [updateText, setUpdateText] = useState('');
     const [showUpdateOnDashboard, setShowUpdateOnDashboard] = useState(false);
+    const [updateCategory, setUpdateCategory] = useState('New Feature');
+    const [customUpdateCategoryTitle, setCustomUpdateCategoryTitle] = useState('');
 
     // State for Broadcast Tab
     const [notificationTitle, setNotificationTitle] = useState('');
@@ -118,6 +120,8 @@ export function DevPanel() {
         const unsubNextUpdateInfo = listenToNextUpdateInfo((info) => {
             setUpdateText(info.updateText || '');
             setShowUpdateOnDashboard(info.showOnDashboard || false);
+            setUpdateCategory(info.category || 'New Feature');
+            setCustomUpdateCategoryTitle(info.customCategoryTitle || '');
             if (info.targetDate) {
                 const target = new Date(info.targetDate);
                 const now = new Date();
@@ -222,6 +226,8 @@ export function DevPanel() {
                 targetDate: targetDateTime?.toISOString() ?? null, 
                 updateText: updateText,
                 showOnDashboard: showUpdateOnDashboard,
+                category: updateCategory,
+                customCategoryTitle: updateCategory === 'Custom' ? customUpdateCategoryTitle : ''
             });
              toast({ title: 'Next Update Info Saved' });
         } catch(e) {
@@ -253,7 +259,9 @@ export function DevPanel() {
         setUpdateDuration({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         setUpdateText('');
         setShowUpdateOnDashboard(false);
-        await setNextUpdateInfo({ targetDate: null, updateText: '', showOnDashboard: false });
+        setUpdateCategory('New Feature');
+        setCustomUpdateCategoryTitle('');
+        await setNextUpdateInfo({ targetDate: null, updateText: '', showOnDashboard: false, category: 'New Feature', customCategoryTitle: '' });
         toast({ title: 'Next Update Info Cleared' });
     }
 
@@ -537,6 +545,32 @@ export function DevPanel() {
                             </div>
                         </div>
                     </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="updateCategory" className="flex items-center gap-2"><Wrench /> Banner Category</Label>
+                        <Select value={updateCategory} onValueChange={setUpdateCategory}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="New Feature">New Feature</SelectItem>
+                                <SelectItem value="Bug Fix">Bug Fix</SelectItem>
+                                <SelectItem value="Face Issue">Face Issue</SelectItem>
+                                <SelectItem value="Security">Security</SelectItem>
+                                <SelectItem value="Custom">Custom</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {updateCategory === 'Custom' && (
+                        <div className="space-y-2">
+                            <Label htmlFor="customUpdateCategoryTitle" className="flex items-center gap-2"><Info /> Custom Title</Label>
+                            <Input
+                                id="customUpdateCategoryTitle"
+                                value={customUpdateCategoryTitle}
+                                onChange={(e) => setCustomUpdateCategoryTitle(e.target.value)}
+                                placeholder="e.g., Performance Boost"
+                            />
+                        </div>
+                    )}
                      <div className="space-y-2">
                         <Label htmlFor="updateText" className="flex items-center gap-2"><NotebookText /> Upcoming Feature Details</Label>
                         <Textarea 
@@ -650,3 +684,5 @@ export function DevPanel() {
         </div>
     );
 }
+
+    
