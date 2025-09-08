@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { db, rtdb } from '@/lib/firebase';
@@ -373,6 +374,59 @@ export interface BetaWelcomeMessage {
     description: string;
 }
 
+export interface PremiumTier {
+    title: string;
+    features: string[];
+}
+
+export interface PremiumInfoContent {
+    title: string;
+    description: string;
+    memberTier: PremiumTier;
+    premiumTier: PremiumTier;
+    howToUpgrade: string;
+}
+
+const defaultPremiumInfo: PremiumInfoContent = {
+    title: "Unlock Premium",
+    description: "Upgrade to a Premium Membership to unlock exclusive features and enhance your productivity.",
+    memberTier: {
+        title: "Standard Member",
+        features: ["Access to all core converters", "Calculation History", "Basic Note-Taking"]
+    },
+    premiumTier: {
+        title: "Premium Member",
+        features: ["All Standard features", "Custom Unit Creation", "Advanced Theming Options", "Scientific Calculator", "Ad-Free Experience"]
+    },
+    howToUpgrade: "Become a Premium Member by completing 10,000 operations or maintaining a 15-day activity streak."
+};
+
+
+export async function setPremiumInfoContent(content: PremiumInfoContent) {
+    try {
+        const refPath = ref(rtdb, 'settings/premiumInfoContent');
+        await setRealtimeDb(refPath, content);
+    } catch (error) {
+        console.error("Error setting premium info content:", error);
+        throw error;
+    }
+}
+
+export function listenToPremiumInfoContent(callback: (content: PremiumInfoContent | null) => void) {
+    const refPath = ref(rtdb, 'settings/premiumInfoContent');
+    return onValue(refPath, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            callback(data);
+        } else {
+            // Set default if it doesn't exist
+            setPremiumInfoContent(defaultPremiumInfo);
+            callback(defaultPremiumInfo);
+        }
+    });
+}
+
+
 export async function setBetaWelcomeMessage(content: BetaWelcomeMessage) {
     try {
         const refPath = ref(rtdb, 'settings/betaWelcomeMessage');
@@ -659,5 +713,3 @@ export async function setFavorites(email: string | null, favorites: string[]) {
      if(!email) return;
      await setRealtimeDb(ref(rtdb, `users/${sanitizeEmail(email)}/favoriteConversions`), favorites);
 }
-
-    

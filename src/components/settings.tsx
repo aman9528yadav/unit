@@ -1,11 +1,12 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music, Sigma, Home, Rocket, Crown } from "lucide-react";
+import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music, Sigma, Home, Rocket, Crown, HelpCircle } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { useTheme, type CustomTheme } from "@/context/theme-context";
 import {
@@ -29,6 +30,7 @@ import { Label } from "./ui/label";
 import { listenToUserData, updateUserData } from "@/services/firestore";
 import { getStreakData } from "@/lib/streak";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
+import { PremiumInfoDialog } from "./premium-info-dialog";
 
 
 export type CalculatorMode = 'basic' | 'scientific';
@@ -112,6 +114,7 @@ export function Settings() {
   const [isClient, setIsClient] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>('Member');
   const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
+  const [isPremiumInfoOpen, setIsPremiumInfoOpen] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -285,6 +288,11 @@ export function Settings() {
                             label={t('settings.account.editProfile.label')}
                             description={t('settings.account.editProfile.description')}
                         />
+                         <div className="px-4 py-2 text-center">
+                            <Button variant="link" onClick={() => setIsPremiumInfoOpen(true)} className="text-primary">
+                                Learn more about Premium
+                            </Button>
+                        </div>
                     </AccordionContent>
                 </AccordionItem>
                 
@@ -546,6 +554,7 @@ export function Settings() {
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+        <PremiumInfoDialog open={isPremiumInfoOpen} onOpenChange={setIsPremiumInfoOpen} />
     </div>
   );
 }

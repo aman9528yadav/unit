@@ -7,15 +7,16 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
-import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send, Wrench, Info, Shield, BellOff, Newspaper, User, MessageSquare, ArrowLeft } from 'lucide-react';
+import { ShieldAlert, Trash2, Code, KeyRound, Lock, Eye, EyeOff, Timer, NotebookText, FileText, ServerCog, Send, Wrench, Info, Shield, BellOff, Newspaper, User, MessageSquare, ArrowLeft, Crown, Plus } from 'lucide-react';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Switch } from './ui/switch';
-import { setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo, setBroadcastNotification, listenToBroadcastNotification, deleteBroadcastNotification, listenToWelcomeContent, setWelcomeContent, setBetaWelcomeMessage, listenToBetaWelcomeMessage } from '@/services/firestore';
+import { setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo, setNextUpdateInfo, listenToUpdateInfo, listenToNextUpdateInfo, setBroadcastNotification, listenToBroadcastNotification, deleteBroadcastNotification, listenToWelcomeContent, setWelcomeContent, setBetaWelcomeMessage, listenToBetaWelcomeMessage, listenToPremiumInfoContent, setPremiumInfoContent, PremiumInfoContent, PremiumTier } from '@/services/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { intervalToDuration } from 'date-fns';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import { v4 as uuidv4 } from 'uuid';
 
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
@@ -55,12 +56,13 @@ export function DevPanel() {
     const [notificationTitle, setNotificationTitle] = useState('');
     const [notificationDescription, setNotificationDescription] = useState('');
     
-    // State for UI Content Tab
-    const [welcomeTitle, setWelcomeTitle] = useState('');
-    const [welcomeDescription, setWelcomeDescription] = useState('');
-    const [gettingStartedTitle, setGettingStartedTitle] = useState('');
-    const [gettingStartedDescription, setGettingStartedDescription] = useState('');
-
+    const [premiumInfoContent, setPremiumInfoContent] = useState<PremiumInfoContent>({
+        title: '',
+        description: '',
+        memberTier: { title: '', features: [] },
+        premiumTier: { title: '', features: [] },
+        howToUpgrade: ''
+    });
 
     // State for Security Tab
     const [currentDevPassword, setCurrentDevPassword] = useState('');
@@ -147,14 +149,10 @@ export function DevPanel() {
             setNotificationDescription(info?.description || '');
         });
         
-        const unsubWelcomeContent = listenToWelcomeContent((content) => {
-            setWelcomeTitle(content?.title || '');
-            setWelcomeDescription(content?.description || '');
-        });
-
-        const unsubBetaWelcome = listenToBetaWelcomeMessage((content) => {
-            setGettingStartedTitle(content?.title || '');
-            setGettingStartedDescription(content?.description || '');
+        const unsubPremiumInfo = listenToPremiumInfoContent((content) => {
+            if (content) {
+                setPremiumInfoContent(content);
+            }
         });
 
         return () => {
@@ -162,8 +160,7 @@ export function DevPanel() {
             unsubUpdateInfo();
             unsubNextUpdateInfo();
             unsubBroadcast();
-            unsubWelcomeContent();
-            unsubBetaWelcome();
+            unsubPremiumInfo();
         };
     }, [isAuthorized, isAuthenticated]);
     
@@ -285,6 +282,45 @@ export function DevPanel() {
             toast({ title: "Broadcast Failed", description: "Could not update notification. Check console for errors.", variant: "destructive" });
         }
     };
+    
+    const handlePremiumInfoChange = (field: keyof PremiumInfoContent, value: string) => {
+        setPremiumInfoContent(prev => ({...prev, [field]: value}));
+    };
+    
+    const handleTierChange = (tier: 'memberTier' | 'premiumTier', field: keyof PremiumTier, value: string | string[]) => {
+         setPremiumInfoContent(prev => ({
+            ...prev,
+            [tier]: {
+                ...prev[tier],
+                [field]: value
+            }
+        }));
+    };
+
+    const handleFeatureChange = (tier: 'memberTier' | 'premiumTier', index: number, value: string) => {
+        const newFeatures = [...premiumInfoContent[tier].features];
+        newFeatures[index] = value;
+        handleTierChange(tier, 'features', newFeatures);
+    };
+
+    const addFeature = (tier: 'memberTier' | 'premiumTier') => {
+        handleTierChange(tier, 'features', [...premiumInfoContent[tier].features, 'New Feature']);
+    };
+    
+    const removeFeature = (tier: 'memberTier' | 'premiumTier', index: number) => {
+        const newFeatures = premiumInfoContent[tier].features.filter((_, i) => i !== index);
+        handleTierChange(tier, 'features', newFeatures);
+    };
+    
+    const handleSavePremiumInfo = async () => {
+        try {
+            await setPremiumInfoContent(premiumInfoContent);
+            toast({ title: "Premium Info Saved" });
+        } catch (error) {
+            toast({ title: "Error saving premium info", variant: "destructive" });
+        }
+    };
+
 
     const handleDeleteBroadcast = async () => {
         try {
@@ -310,24 +346,6 @@ export function DevPanel() {
         }
     };
     
-    const handleSetWelcomeContent = async () => {
-        try {
-            await setWelcomeContent({ title: welcomeTitle, description: welcomeDescription });
-            toast({ title: 'Welcome Content Updated' });
-        } catch (error) {
-             toast({ title: "Update Failed", description: "Could not update welcome content.", variant: "destructive" });
-        }
-    };
-    
-    const handleSetBetaWelcome = async () => {
-        try {
-            await setBetaWelcomeMessage({ title: gettingStartedTitle, description: gettingStartedDescription });
-            toast({ title: 'Getting Started Content Updated' });
-        } catch (error) {
-             toast({ title: "Update Failed", description: "Could not update Getting Started content.", variant: "destructive" });
-        }
-    };
-
     const handleDevPasswordChange = () => {
         if (!currentDevPassword || !newDevPassword) {
             toast({ title: "Error", description: "Please fill both password fields.", variant: "destructive" });
@@ -674,6 +692,62 @@ export function DevPanel() {
                         </div>
                     </AccordionContent>
                 </AccordionItem>
+                
+                <AccordionItem value="premium-content">
+                    <AccordionTrigger className="p-4 bg-card rounded-lg border">
+                        <div className='flex items-center gap-4'>
+                            <Crown />
+                            <div>
+                               <p className="font-semibold text-base text-left">Premium Info Content</p>
+                               <p className="text-sm text-muted-foreground text-left">Edit the content of the premium dialog.</p>
+                            </div>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-4 bg-card border-t-0 rounded-b-lg border space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="premium-title">Dialog Title</Label>
+                            <Input id="premium-title" value={premiumInfoContent.title} onChange={(e) => handlePremiumInfoChange('title', e.target.value)} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="premium-description">Description</Label>
+                            <Textarea id="premium-description" value={premiumInfoContent.description} onChange={(e) => handlePremiumInfoChange('description', e.target.value)} />
+                        </div>
+                        
+                        <div className="space-y-2 p-3 bg-secondary rounded-lg">
+                            <Label htmlFor="member-title">Member Tier Title</Label>
+                            <Input id="member-title" value={premiumInfoContent.memberTier.title} onChange={(e) => handleTierChange('memberTier', 'title', e.target.value)} />
+                             <Label>Member Features</Label>
+                             {premiumInfoContent.memberTier.features.map((feature, index) => (
+                                <div key={index} className="flex items-center gap-2">
+                                    <Input value={feature} onChange={(e) => handleFeatureChange('memberTier', index, e.target.value)} />
+                                    <Button size="icon" variant="ghost" onClick={() => removeFeature('memberTier', index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
+                                </div>
+                             ))}
+                             <Button size="sm" variant="outline" onClick={() => addFeature('memberTier')}><Plus className="w-4 h-4 mr-2"/> Add Feature</Button>
+                        </div>
+                        
+                         <div className="space-y-2 p-3 bg-secondary rounded-lg">
+                            <Label htmlFor="premium-tier-title">Premium Tier Title</Label>
+                            <Input id="premium-tier-title" value={premiumInfoContent.premiumTier.title} onChange={(e) => handleTierChange('premiumTier', 'title', e.target.value)} />
+                            <Label>Premium Features</Label>
+                             {premiumInfoContent.premiumTier.features.map((feature, index) => (
+                                <div key={index} className="flex items-center gap-2">
+                                    <Input value={feature} onChange={(e) => handleFeatureChange('premiumTier', index, e.target.value)} />
+                                    <Button size="icon" variant="ghost" onClick={() => removeFeature('premiumTier', index)}><Trash2 className="w-4 h-4 text-destructive"/></Button>
+                                </div>
+                             ))}
+                            <Button size="sm" variant="outline" onClick={() => addFeature('premiumTier')}><Plus className="w-4 h-4 mr-2"/> Add Feature</Button>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <Label htmlFor="how-to-upgrade">"How to Upgrade" Text</Label>
+                            <Textarea id="how-to-upgrade" value={premiumInfoContent.howToUpgrade} onChange={(e) => handlePremiumInfoChange('howToUpgrade', e.target.value)} />
+                        </div>
+                        
+                        <Button onClick={handleSavePremiumInfo} className="w-full">Save Premium Info</Button>
+                    </AccordionContent>
+                </AccordionItem>
+
 
                  <AccordionItem value="security">
                     <AccordionTrigger className="p-4 bg-card rounded-lg border">
