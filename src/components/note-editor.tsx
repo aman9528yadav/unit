@@ -338,10 +338,10 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                          <Image src={dataUri} alt={t('noteEditor.attachmentAlt')} layout="fill" objectFit="contain" className="rounded-md" />
                     </div>
                 ) : (
-                    <div className="flex items-center gap-2">
+                    <a href={dataUri} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:underline">
                         <File className="w-6 h-6 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground truncate">{fileName}</span>
-                    </div>
+                    </a>
                 )}
                  <Button variant="destructive" size="icon" className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={handleRemoveImage}>
                    <X size={14}/>
