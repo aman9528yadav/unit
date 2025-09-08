@@ -72,23 +72,23 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
 }
 
 
-const navLinks = [
-    { href: "/", label: "Dashboard", icon: Home },
-    { href: "/converter", label: "Converter", icon: Sigma },
-    { href: "/calculator", label: "Calculator", icon: Calculator },
-    { href: "/notes", label: "Notes", icon: NotebookPen },
-    { href: "/translator", label: "AI Translator", icon: Languages },
-    { href: "/history", label: "History", icon: History },
-    { href: "/time?tab=timer", label: "Timer", icon: Timer },
-    { href: "/time?tab=stopwatch", label: "Stopwatch", icon: Hourglass },
-    { href: "/time?tab=date-diff", label: "Date Calc", icon: Calendar },
-    { href: "/news", label: "News", icon: Newspaper },
-    { href: "/profile", label: "Profile", icon: User },
-    { href: "/settings", label: "Settings", icon: Settings },
-    { href: "/updates", label: "Updates", icon: Rocket },
-    { href: "/about", label: "About", icon: Info },
-    { href: "/how-to-use", label: "Help", icon: HelpCircle },
-     { href: "https://aman9528.wixstudio.com/my-site-3/aman", label: "Contact Us", icon: Mail, isExternal: true },
+const allNavLinks = [
+    { href: "/", label: "Dashboard", icon: Home, requiresAuth: false },
+    { href: "/converter", label: "Converter", icon: Sigma, requiresAuth: false },
+    { href: "/calculator", label: "Calculator", icon: Calculator, requiresAuth: false },
+    { href: "/notes", label: "Notes", icon: NotebookPen, requiresAuth: false },
+    { href: "/translator", label: "AI Translator", icon: Languages, requiresAuth: false },
+    { href: "/history", label: "History", icon: History, requiresAuth: true },
+    { href: "/time?tab=timer", label: "Timer", icon: Timer, requiresAuth: false },
+    { href: "/time?tab=stopwatch", label: "Stopwatch", icon: Hourglass, requiresAuth: false },
+    { href: "/time?tab=date-diff", label: "Date Calc", icon: Calendar, requiresAuth: false },
+    { href: "/news", label: "News", icon: Newspaper, requiresAuth: false },
+    { href: "/profile", label: "Profile", icon: User, requiresAuth: true },
+    { href: "/settings", label: "Settings", icon: Settings, requiresAuth: true },
+    { href: "/updates", label: "Updates", icon: Rocket, requiresAuth: false },
+    { href: "/about", label: "About", icon: Info, requiresAuth: false },
+    { href: "/how-to-use", label: "Help", icon: HelpCircle, requiresAuth: false },
+    { href: "https://aman9528.wixstudio.com/my-site-3/aman", label: "Contact Us", icon: Mail, isExternal: true, requiresAuth: false },
 ]
 
 function SidebarSelectors() {
@@ -232,6 +232,7 @@ export default function RootLayout({
 }>) {
   const pathname = usePathname();
   const [profile, setProfile] = useState<Partial<UserData> | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
   const noHeaderPaths = ['/welcome', '/signup', '/forgot-password', '/getting-started', '/maintenance', '/logout', '/profile/success'];
   const devPaths = /^\/dev(\/.*)?$/;
@@ -256,6 +257,8 @@ export default function RootLayout({
 
   useEffect(() => {
     const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
+    setIsLoggedIn(!!userEmail);
+
     if (userEmail) {
         const unsub = listenToUserData(userEmail, (data) => {
             setProfile(data);
@@ -273,6 +276,8 @@ export default function RootLayout({
 
   
   const hideHeader = noHeaderPaths.includes(pathname) || devPaths.test(pathname) || isCalculatorFullScreen;
+  
+  const navLinks = allNavLinks.filter(link => !link.requiresAuth || isLoggedIn);
 
   return (
     <ThemeProvider>

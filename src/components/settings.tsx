@@ -27,11 +27,12 @@ import { getStats } from "@/lib/stats";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { cn } from "@/lib/utils";
 import { Label } from "./ui/label";
-import { listenToUserData, updateUserData, listenToFeatureLocks, FeatureLocks, listenToPremiumInfoContent, PremiumInfoContent, defaultPremiumInfo } from "@/services/firestore";
+import { listenToUserData, updateUserData, listenToPremiumInfoContent, PremiumInfoContent, defaultPremiumInfo } from "@/services/firestore";
 import { getStreakData } from "@/lib/streak";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import { PremiumInfoDialog } from "./premium-info-dialog";
 
+const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 
 export type CalculatorMode = 'basic' | 'scientific';
 type DefaultPage = 'dashboard' | 'calculator' | 'notes' | 'converter' | 'time';
@@ -167,7 +168,7 @@ export function Settings() {
   }, []);
   
   const updateUserRole = async (email: string | null) => {
-    if(email === "amanyadavyadav9458@gmail.com") {
+    if(email === DEVELOPER_EMAIL) {
         setUserRole('Owner');
         return;
     }
@@ -401,7 +402,7 @@ export function Settings() {
                             description="Display the intro screen on next launch"
                             control={<Switch checked={showGettingStarted} onCheckedChange={setShowGettingStarted} />}
                         />
-                        {profile?.email === "amanyadavyadav9458@gmail.com" && (
+                        {profile?.email === DEVELOPER_EMAIL && (
                           <SettingRow
                               isLink
                               href="/dev"

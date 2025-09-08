@@ -26,11 +26,15 @@ export function Header() {
     const { t } = useLanguage();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [isSearchActive, setIsSearchActive] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
         const storedProfileData = localStorage.getItem("userProfile");
         if(storedProfileData) {
             setProfile(JSON.parse(storedProfileData));
+            setIsLoggedIn(true);
+        } else {
+            setIsLoggedIn(false);
         }
 
         const userEmail = storedProfileData ? JSON.parse(storedProfileData).email : null;
@@ -41,8 +45,15 @@ export function Header() {
         });
 
         const handleStorageChange = (event: StorageEvent) => {
-            if (event.key === 'userProfile' && event.newValue) {
-                setProfile(JSON.parse(event.newValue));
+            if (event.key === 'userProfile') {
+                const newProfile = event.newValue;
+                if (newProfile) {
+                    setProfile(JSON.parse(newProfile));
+                    setIsLoggedIn(true);
+                } else {
+                    setProfile(null);
+                    setIsLoggedIn(false);
+                }
             }
         };
 
@@ -97,7 +108,7 @@ export function Header() {
                                 exit={{ opacity: 0 }}
                                 className="w-full max-w-xs flex justify-center"
                             >
-                                <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsSearchActive(true)}>
+                                <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsSearchActive(true)} disabled={!isLoggedIn}>
                                    <Search className="text-muted-foreground"/>
                                </Button>
                            </motion.div>
