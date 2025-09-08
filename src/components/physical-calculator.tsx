@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from "@/lib/utils";
 import { incrementCalculationCount } from '@/lib/stats';
@@ -40,8 +40,9 @@ export function PhysicalCalculator({ isFullScreen, onFullScreenToggle }: { isFul
     const [memory, setMemory] = useState(0);
     const [profile, setProfile] = useState<{email: string} | null>(null);
     const [recentCalculations, setRecentCalculations] = useState<string[]>([]);
+    const [soundEnabled, setSoundEnabled] = useState(true);
     const router = useRouter();
-
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
         const storedProfile = localStorage.getItem("userProfile");
@@ -52,10 +53,25 @@ export function PhysicalCalculator({ isFullScreen, onFullScreenToggle }: { isFul
             const unsub = listenToUserData(parsedProfile.email, (data: UserData) => {
                 const history = data?.calculationHistory || [];
                 setRecentCalculations(history.slice(0, 4));
+                 setSoundEnabled(data?.settings?.calculatorSound ?? true);
             });
             return () => unsub();
         }
     }, []);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            audioRef.current = new Audio('/keypress.mp3');
+        }
+    }, [])
+
+    const playSound = () => {
+        if (soundEnabled && audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch(e => console.error("Error playing sound:", e));
+        }
+    };
+
 
     const handleSaveToHistory = (calculation: string, result: string) => {
         if (!profile?.email) return;
@@ -68,6 +84,7 @@ export function PhysicalCalculator({ isFullScreen, onFullScreenToggle }: { isFul
     };
 
     const handleButtonClick = (value: string) => {
+        playSound();
         const buttonActions: { [key: string]: () => void } = {
             'AC': () => {
                 setCurrentOperand('0');

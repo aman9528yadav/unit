@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music, Sigma, Home, Rocket } from "lucide-react";
+import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music, Sigma, Home, Rocket, Crown } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { useTheme, type CustomTheme } from "@/context/theme-context";
 import {
@@ -41,12 +41,14 @@ type UserRole = 'Member' | 'Premium Member' | 'Owner';
 const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
 
 
-const SettingRow = ({ label, description, control, isLink = false, href, children, isLocked = false, onLockClick }: { label:string, description?:string, control?:React.ReactNode, isLink?:boolean, href?:string, children?:React.ReactNode, isLocked?:boolean, onLockClick?:()=>void }) => {
+const SettingRow = ({ label, description, control, isLink = false, href, children, isLocked = false, onLockClick, isPremium = false }: { label:string, description?:string, control?:React.ReactNode, isLink?:boolean, href?:string, children?:React.ReactNode, isLocked?:boolean, onLockClick?:()=>void, isPremium?: boolean }) => {
     const content = (
         <div className="flex justify-between items-center py-4">
             <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2">
-                    {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
+                    {isPremium && (
+                        <Crown className={cn("h-4 w-4", isLocked ? 'text-red-500' : 'text-green-500')} />
+                    )}
                     <p className="font-medium">{label}</p>
                 </div>
                 {description && <p className="text-sm text-muted-foreground">{description}</p>}
@@ -338,6 +340,7 @@ export function Settings() {
                             href="/settings/theme"
                             label={t('settings.appearance.customizeTheme.label')}
                             description={t('settings.appearance.customizeTheme.description')}
+                            isPremium
                             isLocked={isPremiumFeatureLocked}
                             onLockClick={() => setShowPremiumLockDialog(true)}
                         />
@@ -415,7 +418,7 @@ export function Settings() {
                         </div>
                     </AccordionTrigger>
                     <AccordionContent className="p-0 bg-card border-t-0 rounded-b-lg border mt-[-8px] pt-2">
-                        <SettingRow
+                         <SettingRow
                             label={t('settings.unitConverter.defaultRegion')}
                             control={
                                 <Select value={defaultRegion} onValueChange={(v) => setDefaultRegion(v as Region)}>
@@ -435,6 +438,7 @@ export function Settings() {
                             href="/settings/custom-units"
                             label={t('settings.unitConverter.customUnit.label')}
                             description={t('settings.unitConverter.customUnit.description')}
+                            isPremium
                             isLocked={isPremiumFeatureLocked}
                             onLockClick={() => setShowPremiumLockDialog(true)}
                         />
@@ -459,6 +463,7 @@ export function Settings() {
                          <SettingRow
                             label={t('settings.calculator.mode.label')}
                             description={t('settings.calculator.mode.description')}
+                            isPremium
                             isLocked={isPremiumFeatureLocked}
                             onLockClick={() => setShowPremiumLockDialog(true)}
                             control={
