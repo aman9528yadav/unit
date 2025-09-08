@@ -43,7 +43,7 @@ export default function CalculatorPage() {
 
   return (
     <main className={cn(
-        "flex min-h-screen w-full flex-col items-center",
+        "flex w-full flex-grow flex-col items-center",
         !isFullScreen && "p-4 sm:p-6",
         calculatorTheme === 'physical' ? 'bg-gradient-to-br from-slate-700 to-slate-900' : 'bg-background'
     )}>

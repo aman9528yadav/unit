@@ -23,7 +23,7 @@ export default function SettingsPage() {
 
   if (!isClient || !isAuthorized) {
     return (
-      <main className="flex min-h-screen w-full flex-col items-center bg-background p-6">
+      <main className="w-full flex-grow p-6">
           <div className="w-full max-w-md mx-auto flex flex-col gap-6">
               <div className="space-y-8">
                   <div>
@@ -48,7 +48,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="flex min-h-screen w-full flex-col items-center bg-background">
+    <main className="w-full flex-grow">
       <Settings />
     </main>
   );

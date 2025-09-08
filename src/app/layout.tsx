@@ -23,7 +23,7 @@ function AppFooter() {
     }
 
     return (
-        <footer className="text-center p-4 bg-card text-muted-foreground text-sm border-t">
+        <footer className="text-center p-4 bg-card text-muted-foreground text-sm border-t flex-shrink-0">
             <p>&copy; {new Date().getFullYear()} Sutradhaar | Owned by Aman Yadav. All Rights Reserved.</p>
         </footer>
     );
@@ -130,12 +130,12 @@ export default function RootLayout({
             <body className="font-body antialiased" suppressHydrationWarning>
                 <MaintenanceRedirect>
                 <div className="flex flex-col min-h-screen">
-                    <main className="flex-grow flex flex-col items-center">
+                    <div className="flex-grow flex flex-col items-center">
                          {!hideHeader && (
                             <Header />
                         )}
                         {children}
-                    </main>
+                    </div>
                     <AppFooter />
                 </div>
                 </MaintenanceRedirect>
