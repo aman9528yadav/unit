@@ -393,7 +393,7 @@ export type FeatureLocks = {
 };
 
 
-const defaultPremiumInfo: PremiumInfoContent = {
+export const defaultPremiumInfo: PremiumInfoContent = {
     title: "Unlock Premium",
     description: "Upgrade to a Premium Membership to unlock exclusive features and enhance your productivity.",
     memberTier: {
@@ -418,7 +418,7 @@ export async function setPremiumInfoContent(content: PremiumInfoContent) {
     }
 }
 
-export function listenToPremiumInfoContent(callback: (content: PremiumInfoContent | null) => void) {
+export function listenToPremiumInfoContent(callback: (content: PremiumInfoContent) => void) {
     const refPath = ref(rtdb, 'settings/premiumInfoContent');
     return onValue(refPath, (snapshot) => {
         const data = snapshot.val();
@@ -429,6 +429,9 @@ export function listenToPremiumInfoContent(callback: (content: PremiumInfoConten
             setPremiumInfoContent(defaultPremiumInfo);
             callback(defaultPremiumInfo);
         }
+    }, (error) => {
+        console.error("Error listening to premium info content from RTDB:", error);
+        callback(defaultPremiumInfo);
     });
 }
 

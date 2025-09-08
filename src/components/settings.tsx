@@ -27,7 +27,7 @@ import { getStats } from "@/lib/stats";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { cn } from "@/lib/utils";
 import { Label } from "./ui/label";
-import { listenToUserData, updateUserData, listenToFeatureLocks, FeatureLocks, listenToPremiumInfoContent, PremiumInfoContent } from "@/services/firestore";
+import { listenToUserData, updateUserData, listenToFeatureLocks, FeatureLocks, listenToPremiumInfoContent, PremiumInfoContent, defaultPremiumInfo } from "@/services/firestore";
 import { getStreakData } from "@/lib/streak";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 import { PremiumInfoDialog } from "./premium-info-dialog";
@@ -108,7 +108,7 @@ export function Settings() {
   const [userRole, setUserRole] = useState<UserRole>('Member');
   const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
   const [isPremiumInfoOpen, setIsPremiumInfoOpen] = useState(false);
-  const [premiumInfoContent, setPremiumInfoContent] = useState<PremiumInfoContent | null>(null);
+  const [premiumInfoContent, setPremiumInfoContent] = useState<PremiumInfoContent>(defaultPremiumInfo);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -153,7 +153,11 @@ export function Settings() {
             setCalculatorSound(userSettings.calculatorSound ?? true);
         });
         
-         const unsubPremiumInfo = listenToPremiumInfoContent(setPremiumInfoContent);
+         const unsubPremiumInfo = listenToPremiumInfoContent((content) => {
+            if(content) {
+                setPremiumInfoContent(content);
+            }
+         });
         
         return () => {
             unsub();
