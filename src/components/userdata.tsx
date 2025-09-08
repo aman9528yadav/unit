@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -124,7 +123,21 @@ export function UserData() {
                     </Button>
                 </div>
 
-                <Card className="p-6 text-center shadow-xl rounded-2xl">
+                <div className="relative rounded-2xl overflow-hidden shadow-lg mb-4">
+                    <div className="h-32 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+                    <div className="absolute top-20 left-1/2 -translate-x-1/2">
+                        <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white flex items-center justify-center">
+                            <img
+                                src={profileImage || 'https://i.pravatar.cc/150?u=amanyadav9458'}
+                                alt="Profile"
+                                className="w-full h-full object-contain"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+
+                <Card className="mt-20 p-6 text-center shadow-xl rounded-2xl">
                     <CardContent className="p-0">
                         <h2 className="text-xl font-semibold flex items-center justify-center gap-2">
                             {fullName} {userRole !== 'Member' && <Crown className="text-yellow-500" size={20} />}
@@ -219,3 +232,4 @@ export function UserData() {
     );
 }
 
+    
