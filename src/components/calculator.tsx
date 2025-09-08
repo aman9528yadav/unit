@@ -385,9 +385,9 @@ const BasicLayout = () => (
                 <CardContent>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                         {recentCalculations.map((calc, i) => (
-                            <li key={i} className="flex justify-between items-center p-2 bg-secondary rounded-md group">
+                            <li key={i} className="flex justify-between items-center p-2 bg-secondary rounded-md">
                                <span className="truncate">{calc.split('|')[0]}</span>
-                               <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                               <div className="flex items-center">
                                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteCalculation(calc)}>
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>

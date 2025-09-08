@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -342,48 +343,52 @@ export function Notepad() {
                     {sortedNotes.length > 0 ? (
                         <ul className={layout === 'list' ? "space-y-2" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
                             {sortedNotes.map(note => (
-                                <li key={note.id} className={layout === 'card' ? "bg-card p-4 rounded-lg group" : "bg-card p-2 rounded-lg group hover:bg-background"}>
-                                    <Link href={`/notes/view/${note.id}`} className="cursor-pointer">
-                                        <div className="flex items-center justify-between">
-                                            <h2 className="font-semibold truncate">{note.title || t('notepad.untitled')}</h2>
-                                            {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
-                                        </div>
-                                         {note.attachment && layout === 'card' && (
-                                            <div className="relative w-full h-32 my-2 rounded-md overflow-hidden">
-                                                <Image src={note.attachment} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="cover" />
+                                <li key={note.id} className="bg-card p-4 rounded-lg flex flex-col justify-between">
+                                    <div>
+                                        <Link href={`/notes/view/${note.id}`} className="cursor-pointer group">
+                                            <div className="flex items-center justify-between">
+                                                <h2 className="font-semibold truncate group-hover:text-primary">{note.title || t('notepad.untitled')}</h2>
+                                                {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
                                             </div>
-                                        )}
-                                        <div className="flex gap-2">
-                                            {note.attachment && layout === 'list' && (
-                                                <div className="relative w-16 h-16 my-1 rounded-md overflow-hidden flex-shrink-0">
+                                            {note.attachment && layout === 'card' && (
+                                                <div className="relative w-full h-32 my-2 rounded-md overflow-hidden">
                                                     <Image src={note.attachment} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="cover" />
                                                 </div>
                                             )}
-                                            <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: note.content || t('notepad.noContent') }} />
-                                        </div>
+                                            <div className="flex gap-2 mt-1">
+                                                {note.attachment && layout === 'list' && (
+                                                    <div className="relative w-16 h-16 my-1 rounded-md overflow-hidden flex-shrink-0">
+                                                        <Image src={note.attachment} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="cover" />
+                                                    </div>
+                                                )}
+                                                <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: note.content || t('notepad.noContent') }} />
+                                            </div>
+                                        </Link>
+                                    </div>
+                                    <div>
                                         <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
                                             <span>{format(new Date(note.updatedAt), "d MMM yyyy, h:mm a", { locale: dateLocale })}</span>
                                             {note.category && <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full">{note.category}</span>}
                                         </div>
-                                         {note.deletedAt && (
+                                        {note.deletedAt && (
                                             <p className="text-xs text-destructive mt-1">{t('notepad.inTrash', { time: formatDistanceToNow(new Date(note.deletedAt), { locale: dateLocale }) })}</p>
-                                         )}
-                                    </Link>
-                                    <div className="flex items-center justify-end gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        {view === 'trash' ? (
-                                            <>
-                                                <Button size="sm" variant="ghost" onClick={() => handleRestore(note.id)}><RotateCcw size={16} /> {t('notepad.actions.restore')}</Button>
-                                                <Button size="sm" variant="destructive" onClick={() => setNoteToDelete(note.id)}><Trash2 size={16} /> {t('notepad.actions.delete')}</Button>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Button size="sm" variant="ghost" onClick={() => router.push(`/notes/edit/${note.id}`)}><Edit size={16} /></Button>
-                                                <Button size="sm" variant="ghost" onClick={() => handleToggleFavorite(note.id)}>
-                                                    <Star size={16} className={note.isFavorite ? 'text-yellow-400 fill-yellow-400' : ''}/>
-                                                </Button>
-                                                <Button size="sm" variant="destructive" onClick={() => handleSoftDelete(note.id)}><Trash2 size={16} /></Button>
-                                            </>
                                         )}
+                                        <div className="flex items-center justify-end gap-2 mt-2">
+                                            {view === 'trash' ? (
+                                                <>
+                                                    <Button size="sm" variant="ghost" onClick={() => handleRestore(note.id)}><RotateCcw size={16} /> {t('notepad.actions.restore')}</Button>
+                                                    <Button size="sm" variant="destructive" onClick={() => setNoteToDelete(note.id)}><Trash2 size={16} /> {t('notepad.actions.delete')}</Button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Button size="sm" variant="ghost" onClick={() => router.push(`/notes/edit/${note.id}`)}><Edit size={16} /></Button>
+                                                    <Button size="sm" variant="ghost" onClick={() => handleToggleFavorite(note.id)}>
+                                                        <Star size={16} className={note.isFavorite ? 'text-yellow-400 fill-yellow-400' : ''}/>
+                                                    </Button>
+                                                    <Button size="sm" variant="destructive" onClick={() => handleSoftDelete(note.id)}><Trash2 size={16} /></Button>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                 </li>
                             ))}

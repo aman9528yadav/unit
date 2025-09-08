@@ -275,15 +275,17 @@ function HistoryItem({ item, onRestore, onDelete, t, language }: { item: History
     };
 
     return (
-        <div className="bg-secondary p-3 rounded-lg group relative">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                <Icon size={14} className={item.type === 'favorite' ? 'text-yellow-500' : ''}/> 
-                {item.categoryName && <span>{t(`categories.${item.categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: item.categoryName })}</span>}
-                {item.categoryName && <span>•</span>}
-                <span>{formatTimestamp(item.timestamp)}</span>
+        <div className="bg-secondary p-3 rounded-lg flex flex-col justify-between">
+            <div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                    <Icon size={14} className={item.type === 'favorite' ? 'text-yellow-500' : ''}/> 
+                    {item.categoryName && <span>{t(`categories.${item.categoryName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: item.categoryName })}</span>}
+                    {item.categoryName && <span>•</span>}
+                    <span>{formatTimestamp(item.timestamp)}</span>
+                </div>
+                <p className="font-semibold text-foreground break-all">{item.display}</p>
             </div>
-            <p className="font-semibold text-foreground break-all">{item.display}</p>
-            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-2 right-2">
+            <div className="flex justify-end gap-1 mt-2">
                  {item.type !== 'calculation' && 
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onRestore}>
                         <RotateCcw className="h-4 w-4"/>
