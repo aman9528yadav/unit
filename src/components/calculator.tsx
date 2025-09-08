@@ -2,9 +2,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { cn } from "@/lib/utils";
 import { incrementCalculationCount } from '@/lib/stats';
-import { addCalculationToHistory } from '@/services/firestore';
+import { addCalculationToHistory, listenToUserData, UserData } from '@/services/firestore';
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { Button } from './ui/button';
+import { History } from 'lucide-react';
 
 const CalculatorButton = ({
   onClick,
@@ -39,11 +44,21 @@ export function Calculator() {
     const [operation, setOperation] = useState<string | undefined>(undefined);
     const [memory, setMemory] = useState(0);
     const [profile, setProfile] = useState<{email: string} | null>(null);
+    const [recentCalculations, setRecentCalculations] = useState<string[]>([]);
+    const router = useRouter();
+
 
     useEffect(() => {
         const storedProfile = localStorage.getItem("userProfile");
         if (storedProfile) {
-            setProfile(JSON.parse(storedProfile));
+            const parsedProfile = JSON.parse(storedProfile);
+            setProfile(parsedProfile);
+            
+            const unsub = listenToUserData(parsedProfile.email, (data: UserData) => {
+                const history = data?.calculationHistory || [];
+                setRecentCalculations(history.slice(0, 4));
+            });
+            return () => unsub();
         }
     }, []);
 
@@ -154,7 +169,7 @@ export function Calculator() {
     };
 
   return (
-    <div className="w-full max-w-lg mx-auto p-4">
+    <div className="w-full max-w-lg mx-auto p-4 space-y-4">
       <div className="bg-card/80 rounded-2xl p-6 shadow-lg border-2 border-border/20">
         <div className="header flex justify-between items-center mb-5">
             <div className="font-bold text-xl text-foreground/70 tracking-widest">CALCPRO</div>
@@ -212,6 +227,28 @@ export function Calculator() {
           <CalculatorButton onClick={handleButtonClick} label="±" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
         </div>
       </div>
+       {recentCalculations.length > 0 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center justify-between text-base">
+                        <div className="flex items-center gap-2">
+                           <History size={18} />
+                           Recent Calculations
+                        </div>
+                        <Button variant="link" size="sm" onClick={() => router.push('/history?tab=calculator')}>See All</Button>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                        {recentCalculations.map((calc, i) => (
+                            <li key={i} className="flex justify-between items-center p-2 bg-secondary rounded-md group">
+                               <span className="truncate">{calc.split('|')[0]}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </CardContent>
+            </Card>
+        )}
     </div>
   );
 }
