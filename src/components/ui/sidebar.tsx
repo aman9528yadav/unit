@@ -115,7 +115,7 @@ const SidebarContent = React.forwardRef<
     exit={{ y: "-100%" }}
     transition={{ type: "spring", stiffness: 300, damping: 30 }}
     className={cn(
-      "fixed inset-0 z-50 flex h-full w-full flex-col items-center justify-center bg-background bg-[url('https://images.pexels.com/photos/1669416/pexels-photo-1669416.jpeg')] bg-cover bg-center text-foreground shadow-lg",
+      "fixed inset-0 z-50 flex h-full w-full flex-col items-center justify-center bg-background/70 backdrop-blur-lg bg-cover bg-center text-foreground shadow-lg",
       className
     )}
     {...props}
