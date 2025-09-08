@@ -79,7 +79,7 @@ export function Header() {
     };
 
     return (
-        <header className="sticky top-0 z-40 w-[389px] mx-auto border-b bg-background/80 backdrop-blur-sm py-1">
+        <header className="sticky top-0 z-40 w-[412px] mx-auto border-b bg-background/80 backdrop-blur-sm py-1">
             <div className="flex items-center justify-between gap-2">
                  <div className="flex items-center gap-2 mr-auto">
                     {!isHomePage && (

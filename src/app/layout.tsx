@@ -116,7 +116,7 @@ export default function RootLayout({
             <body className="font-body antialiased" suppressHydrationWarning>
                 <MaintenanceRedirect>
                 <div className="flex flex-col min-h-screen items-center">
-                    <div className={cn("w-full flex-grow flex flex-col", "max-w-[389px]")}>
+                    <div className={cn("w-full flex-grow flex flex-col", "max-w-[412px]")}>
                          {!hideHeader && (
                             <Header />
                         )}
