@@ -451,6 +451,8 @@ export interface UserData {
     address?: string;
     linkedin?: string;
     twitter?: string;
+    github?: string;
+    instagram?: string;
     skills?: string[];
     settings?: {
         language?: string;

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Crown, LogOut, Settings, Palette, Globe, Shield, History, CheckCircle, Award, ArrowLeft, Calendar, MapPin, Phone, Linkedin, Twitter, Star, Github } from "lucide-react";
+import { Crown, LogOut, Settings, Palette, Globe, Shield, History, CheckCircle, Award, ArrowLeft, Calendar, MapPin, Phone, Linkedin, Twitter, Star, Github, Edit } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
@@ -17,6 +17,7 @@ import { listenToUserData, UserData } from "@/services/firestore";
 import { getStats } from "@/lib/stats";
 import { getStreakData } from "@/lib/streak";
 import { format } from "date-fns";
+import { Progress } from "./ui/progress";
 
 type UserRole = 'Member' | 'Premium Member' | 'Owner';
 const PREMIUM_MEMBER_THRESHOLD = 10000;
@@ -26,7 +27,7 @@ const defaultSkills = ["React", "Tailwind CSS", "UI/UX Design", "Content Writing
 
 export function UserData() {
     const [profileData, setProfileData] = useState<UserData | null>(null);
-    const [stats, setStats] = useState({ conversions: 0, notes: 0, daysActive: 0 });
+    const [stats, setStats] = useState({ conversions: 0, notes: 0, daysActive: 0, totalOps: 0 });
     const [userRole, setUserRole] = useState<UserRole>('Member');
     const [achievements, setAchievements] = useState<string[]>([]);
     
@@ -57,6 +58,7 @@ export function UserData() {
             conversions: userStats.totalConversions,
             notes: userStats.savedNotes,
             daysActive: streakData.bestStreak,
+            totalOps: userStats.totalOps,
         });
 
         if (email === DEVELOPER_EMAIL) {
@@ -106,6 +108,8 @@ export function UserData() {
         settings,
     } = profileData;
 
+    const premiumProgress = Math.min((stats.totalOps / PREMIUM_MEMBER_THRESHOLD) * 100, 100);
+
     return (
         <div className="min-h-screen flex justify-center p-4 sm:p-6 bg-gray-50 text-gray-900">
             <motion.div
@@ -127,7 +131,7 @@ export function UserData() {
                             <img
                                 src={profileImage || 'https://i.pravatar.cc/150?u=amanyadav9458'}
                                 alt="Profile"
-                                className="w-full h-full rounded-full object-cover"
+                                className="w-full h-full rounded-full object-contain"
                             />
                         </div>
                     </div>
@@ -170,6 +174,15 @@ export function UserData() {
                             <div><p className="text-lg font-bold">{stats.daysActive}</p><p className="text-xs text-gray-500">Days Active</p></div>
                         </div>
 
+                        {userRole === 'Member' && (
+                            <div className="mt-6 text-left">
+                                <h3 className="font-semibold flex items-center gap-2 text-lg"><Crown size={18} /> Premium Progress</h3>
+                                <p className="text-xs text-gray-500 mt-1">Complete {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} operations to unlock premium features.</p>
+                                <Progress value={premiumProgress} className="mt-2" />
+                                <p className="text-xs text-gray-500 mt-1 text-right">{stats.totalOps.toLocaleString()} / {PREMIUM_MEMBER_THRESHOLD.toLocaleString()}</p>
+                            </div>
+                        )}
+
                         {achievements.length > 0 && (
                             <div className="mt-6 text-left">
                                 <h3 className="font-semibold flex items-center gap-2 text-lg"><Award size={18} /> Achievements</h3>
@@ -179,7 +192,7 @@ export function UserData() {
                             </div>
                         )}
 
-                        {skills.length > 0 && (
+                        {skills && skills.length > 0 && (
                              <div className="mt-6 text-left">
                                 <h3 className="font-semibold flex items-center gap-2 text-lg"><Star size={18} /> Skills & Interests</h3>
                                 <div className="mt-2 flex flex-wrap gap-2">
@@ -195,9 +208,15 @@ export function UserData() {
                             {instagram && <a href={instagram} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:underline flex items-center gap-1 text-sm"><Instagram size={16} /> Instagram</a>}
                         </div>
 
-                        <div className="flex justify-between mt-8">
-                            <Button variant="outline" className="flex gap-2" onClick={handleLogout}><LogOut size={16} /> Log out</Button>
-                            <Button asChild className="flex gap-2"><Link href="/settings"><Settings size={16} /> Manage Settings</Link></Button>
+                        <div className="grid grid-cols-2 gap-4 mt-8">
+                             <Button asChild variant="outline" className="flex gap-2">
+                                <Link href="/profile/edit">
+                                    <Edit size={16} /> Edit Profile
+                                </Link>
+                            </Button>
+                            <Button variant="destructive" className="flex gap-2" onClick={handleLogout}>
+                                <LogOut size={16} /> Log out
+                            </Button>
                         </div>
                         
                         <p className="mt-6 text-xs text-gray-500">© 2025 Sutradhar | Owned by Aman Yadav. v1.5.2</p>

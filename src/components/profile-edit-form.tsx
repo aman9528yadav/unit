@@ -1,10 +1,11 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2, Pencil, Phone, MapPin, Linkedin, Twitter, Github, Instagram, KeyRound, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Calendar as CalendarIcon, User, Lock, Trash2, Pencil, Phone, MapPin, Linkedin, Twitter, Github, Instagram, KeyRound, ShieldCheck, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,9 +22,11 @@ import { useLanguage } from "@/context/language-context";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { ProfilePhotoEditor } from "./profile-photo-editor";
 import { updateUserData, listenToUserData, UserData } from "@/services/firestore";
+import { Textarea } from "./ui/textarea";
 
 export function ProfileEditForm() {
   const [profile, setProfile] = useState<Partial<UserData> | null>(null);
+  const [skillsString, setSkillsString] = useState("");
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -71,17 +74,23 @@ export function ProfileEditForm() {
         twitter: data.twitter || '',
         github: data.github || '',
         instagram: data.instagram || '',
+        skills: data.skills || [],
       });
+      setSkillsString((data.skills || []).join(', '));
     });
 
     return () => unsub();
   }, [router]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (!profile) return;
     const { name, value } = e.target;
     setProfile(prev => prev ? ({ ...prev, [name]: value }) : null);
   };
+  
+  const handleSkillsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setSkillsString(e.target.value);
+  }
 
   const handleDateChange = (date: Date | undefined) => {
     if (date && profile) {
@@ -111,12 +120,17 @@ export function ProfileEditForm() {
           photoURL: profile.profileImage
         });
         
-        await updateUserData(user.email, {
-            ...profile
-        });
+        const skillsArray = skillsString.split(',').map(s => s.trim()).filter(Boolean);
 
-        localStorage.setItem("userProfile", JSON.stringify(profile));
-        window.dispatchEvent(new StorageEvent('storage', { key: 'userProfile', newValue: JSON.stringify(profile) }));
+        const profileToSave = {
+            ...profile,
+            skills: skillsArray,
+        };
+
+        await updateUserData(user.email, profileToSave);
+
+        localStorage.setItem("userProfile", JSON.stringify(profileToSave));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'userProfile', newValue: JSON.stringify(profileToSave) }));
         
         toast({ title: "Profile Updated", description: "Your personal information has been updated." });
         router.push("/profile");
@@ -266,6 +280,13 @@ export function ProfileEditForm() {
                             <Calendar mode="single" selected={profile.dob ? parseISO(profile.dob) : undefined} onSelect={handleDateChange} captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear()} initialFocus/>
                         </PopoverContent>
                     </Popover>
+                  </div>
+                   <div>
+                    <Label className="text-sm font-medium">Skills & Interests</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                        <Star size={18} className="text-gray-500" />
+                        <Textarea name="skills" value={skillsString} onChange={handleSkillsChange} placeholder="e.g., React, UI/UX, Cricket" />
+                    </div>
                   </div>
                   <div>
                     <Label className="text-sm font-medium">LinkedIn</Label>
