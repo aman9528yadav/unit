@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import './globals.css';
@@ -14,6 +13,11 @@ import { useRouter } from 'next/navigation';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { Header } from '@/components/header';
 import { cn } from '@/lib/utils';
+import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle } from 'lucide-react';
+import { Logo } from '@/components/logo';
 
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean | null>(null);
@@ -63,6 +67,17 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
 }
 
 
+const navLinks = [
+    { href: "/", label: "Dashboard", icon: Home },
+    { href: "/converter", label: "Converter", icon: Sigma },
+    { href: "/calculator", label: "Calculator", icon: Calculator },
+    { href: "/notes", label: "Notes", icon: NotebookPen },
+    { href: "/history", label: "History", icon: History },
+    { href: "/time", label: "Timer", icon: Timer },
+    { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/how-to-use", label: "Help", icon: HelpCircle },
+]
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -73,14 +88,9 @@ export default function RootLayout({
   const devPaths = /^\/dev(\/.*)?$/;
   const [isCalculatorFullScreen, setIsCalculatorFullScreen] = useState(false);
   
-  // A bit of a hack to communicate from a page to the layout.
-  // In a real app, you might use a context provider.
   useEffect(() => {
     const checkFullScreen = () => {
         if (pathname === '/calculator') {
-             // This is a simplistic check. A more robust solution might involve a global state manager (Context, Zustand, etc.)
-             // For this prototype, we'll assume a certain DOM structure or a global flag could be set.
-             // Let's assume the child page will add a class to the body.
              const isFullScreen = document.body.classList.contains('calculator-fullscreen');
              setIsCalculatorFullScreen(isFullScreen);
         } else {
@@ -89,7 +99,6 @@ export default function RootLayout({
     }
     checkFullScreen();
 
-    // Re-check on path changes
     const observer = new MutationObserver(checkFullScreen);
     observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
@@ -115,14 +124,36 @@ export default function RootLayout({
             </head>
             <body className="font-body antialiased" suppressHydrationWarning>
                 <MaintenanceRedirect>
-                <div className="flex flex-col min-h-screen items-center">
-                    <div className={cn("w-full flex-grow flex flex-col", "max-w-[412px]")}>
-                         {!hideHeader && (
-                            <Header />
-                        )}
-                        {children}
-                    </div>
-                </div>
+                  <SidebarProvider>
+                      <div className="flex flex-col min-h-screen items-center">
+                          <div className={cn("w-full flex-grow flex flex-col", "max-w-[412px] relative")}>
+                              {!hideHeader && (
+                                  <Header />
+                              )}
+                              {children}
+                          </div>
+                      </div>
+                      <Sidebar>
+                          <SidebarContent>
+                               <div className="flex items-center gap-2 p-4">
+                                  <Logo className="w-8 h-8"/>
+                                  <h2 className="text-lg font-semibold">Sutradhaar</h2>
+                               </div>
+                              <SidebarMenu>
+                                  {navLinks.map((link) => (
+                                      <SidebarMenuItem key={link.href}>
+                                          <Link href={link.href} passHref>
+                                              <SidebarMenuButton isActive={pathname === link.href}>
+                                                  <link.icon />
+                                                  <span>{link.label}</span>
+                                              </SidebarMenuButton>
+                                          </Link>
+                                      </SidebarMenuItem>
+                                  ))}
+                              </SidebarMenu>
+                          </SidebarContent>
+                      </Sidebar>
+                  </SidebarProvider>
                 </MaintenanceRedirect>
                 <Toaster />
             </body>
