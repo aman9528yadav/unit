@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Edit } from 'lucide-react';
+import { ArrowLeft, Edit, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Note } from './notepad';
@@ -54,6 +54,33 @@ export function NoteViewer({ noteId }: { noteId: string }) {
 
     }, [noteId, router, toast, profile, t]);
 
+    const renderAttachment = () => {
+        if (!note?.attachment) return null;
+
+        const parts = note.attachment.split('|');
+        const fileName = parts.length > 1 ? parts[0] : 'attachment';
+        const dataUri = parts.length > 1 ? parts[1] : note.attachment;
+
+        const isImage = dataUri.startsWith('data:image/');
+
+        if (isImage) {
+            return (
+                <div className="relative w-full h-64 my-4 rounded-lg overflow-hidden">
+                    <Image src={dataUri} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="contain" />
+                </div>
+            )
+        }
+
+        return (
+            <div className="p-4 border rounded-lg my-4 bg-secondary">
+                <a href={dataUri} download={fileName} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:underline">
+                    <File className="w-6 h-6 text-muted-foreground" />
+                    <span className="text-sm text-foreground truncate font-medium">{fileName}</span>
+                </a>
+            </div>
+        )
+    }
+
     if (!note) {
         // You can return a skeleton loader here
         return null;
@@ -85,11 +112,7 @@ export function NoteViewer({ noteId }: { noteId: string }) {
                     )}
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {note.attachment && (
-                        <div className="relative w-full h-64 my-4 rounded-lg overflow-hidden">
-                            <Image src={note.attachment} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="contain" />
-                        </div>
-                    )}
+                    {renderAttachment()}
                     <div 
                         className="prose dark:prose-invert max-w-none"
                         dangerouslySetInnerHTML={{ __html: note.content }}
