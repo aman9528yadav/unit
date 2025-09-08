@@ -8,11 +8,38 @@ import { type Note } from '@/components/notepad';
 import { ref, runTransaction } from 'firebase/database';
 import { rtdb } from '@/lib/firebase';
 
+const getGuestStats = () => {
+    if (typeof window === 'undefined') return {};
+    const stats = localStorage.getItem('guest_stats');
+    return stats ? JSON.parse(stats) : {};
+};
+
+const setGuestStats = (stats: any) => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('guest_stats', JSON.stringify(stats));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'guest_stats' }));
+};
+
 const incrementStat = async (field: 'totalConversions' | 'totalCalculations' | 'totalDateCalculations') => {
     const userEmail = typeof window !== 'undefined' ? (localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null) : null;
-    if (!userEmail) return;
-
     const today = format(new Date(), 'yyyy-MM-dd');
+
+    if (!userEmail) {
+        // Guest user logic
+        const stats = getGuestStats();
+        
+        stats[field] = (stats[field] || 0) + 1;
+        
+        if (!stats.dailyStats) stats.dailyStats = {};
+        if (!stats.dailyStats[today]) stats.dailyStats[today] = {};
+        
+        stats.dailyStats[today][field] = (stats.dailyStats[today][field] || 0) + 1;
+
+        setGuestStats(stats);
+        return;
+    }
+
+    // Logged-in user logic
     const sanitizedEmail = userEmail.replace(/[.#$[\]]/g, '_');
     
     // Use a transaction to safely increment both total and daily counts
@@ -106,9 +133,8 @@ export const processUserDataForStats = (userData: any, email: string | null): {
     const savedNotes = notes.filter(note => !note.deletedAt).length;
     const recycledNotes = notes.filter(note => !!note.deletedAt).length;
 
-    // Get favorite stats from localStorage (remains local for now, can be migrated)
-    const favoritesData = typeof window !== 'undefined' ? localStorage.getItem('favoriteConversions') : null;
-    const favoriteConversions = favoritesData ? JSON.parse(favoritesData).length : 0;
+    // Get favorite stats
+    const favoriteConversions = (userData.favoriteConversions || []).length;
 
 
     // Prepare activity based on date range

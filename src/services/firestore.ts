@@ -607,9 +607,25 @@ export async function getUserData(email: string | null): Promise<UserData> {
         const notes = localStorage.getItem('guest_notes');
         const conversionHistory = localStorage.getItem('guest_conversionHistory');
         const calculationHistory = localStorage.getItem('guest_calculationHistory');
+        const favoriteConversions = localStorage.getItem('guest_favoriteConversions');
+        const customUnits = localStorage.getItem('guest_customUnits');
+        const customCategories = localStorage.getItem('guest_customCategories');
+        const stats = localStorage.getItem('guest_stats');
+
         if (notes) guestData.notes = JSON.parse(notes);
         if (conversionHistory) guestData.conversionHistory = JSON.parse(conversionHistory);
         if (calculationHistory) guestData.calculationHistory = JSON.parse(calculationHistory);
+        if (favoriteConversions) guestData.favoriteConversions = JSON.parse(favoriteConversions);
+        if (customUnits) guestData.customUnits = JSON.parse(customUnits);
+        if (customCategories) guestData.customCategories = JSON.parse(customCategories);
+        if (stats) {
+            const parsedStats = JSON.parse(stats);
+            guestData.dailyStats = parsedStats.dailyStats;
+            guestData.totalConversions = parsedStats.totalConversions;
+            guestData.totalCalculations = parsedStats.totalCalculations;
+            guestData.totalDateCalculations = parsedStats.totalDateCalculations;
+        }
+
         return guestData as UserData;
     }
     try {
@@ -652,23 +668,32 @@ export async function updateUserData(email: string | null, data: Partial<UserDat
  */
 export function listenToUserData(email: string | null, callback: (data: UserData) => void) {
      if (!email) {
-        const guestData = {
-            notes: JSON.parse(localStorage.getItem('guest_notes') || '[]'),
-            conversionHistory: JSON.parse(localStorage.getItem('guest_conversionHistory') || '[]'),
-            calculationHistory: JSON.parse(localStorage.getItem('guest_calculationHistory') || '[]'),
-            favoriteConversions: JSON.parse(localStorage.getItem('guest_favoriteConversions') || '[]'),
-        } as UserData;
-        callback(guestData);
+        const getGuestData = () => {
+            return {
+                notes: JSON.parse(localStorage.getItem('guest_notes') || '[]'),
+                conversionHistory: JSON.parse(localStorage.getItem('guest_conversionHistory') || '[]'),
+                calculationHistory: JSON.parse(localStorage.getItem('guest_calculationHistory') || '[]'),
+                favoriteConversions: JSON.parse(localStorage.getItem('guest_favoriteConversions') || '[]'),
+                customUnits: JSON.parse(localStorage.getItem('guest_customUnits') || '[]'),
+                customCategories: JSON.parse(localStorage.getItem('guest_customCategories') || '[]'),
+                ...JSON.parse(localStorage.getItem('guest_stats') || '{}'),
+            } as UserData;
+        };
+
+        callback(getGuestData());
 
         const storageHandler = (e: StorageEvent) => {
-             if (e.key === 'guest_notes' || e.key === 'guest_conversionHistory' || e.key === 'guest_calculationHistory' || e.key === 'guest_favoriteConversions') {
-                const updatedGuestData = {
-                    notes: JSON.parse(localStorage.getItem('guest_notes') || '[]'),
-                    conversionHistory: JSON.parse(localStorage.getItem('guest_conversionHistory') || '[]'),
-                    calculationHistory: JSON.parse(localStorage.getItem('guest_calculationHistory') || '[]'),
-                    favoriteConversions: JSON.parse(localStorage.getItem('guest_favoriteConversions') || '[]'),
-                } as UserData;
-                callback(updatedGuestData);
+             const guestKeys = [
+                'guest_notes', 
+                'guest_conversionHistory', 
+                'guest_calculationHistory', 
+                'guest_favoriteConversions', 
+                'guest_customUnits', 
+                'guest_customCategories',
+                'guest_stats'
+            ];
+            if (e.key && guestKeys.includes(e.key)) {
+                callback(getGuestData());
             }
         };
 
@@ -738,7 +763,7 @@ export async function updateUserNotes(email: string | null, notes: Note[]) {
 export type HistoryType = 'conversionHistory' | 'calculationHistory' | 'favoriteConversions';
 
 // Centralize local storage key generation
-export const getHistoryKey = (email: string | null, historyType: HistoryType) => email ? `${email}_${historyType}` : `guest_${historyType}`;
+export const getHistoryKey = (email: string | null, historyType: HistoryType) => email ? `user_${email}_${historyType}` : `guest_${historyType}`;
 
 
 async function addToHistory(email: string | null, historyType: HistoryType, item: string) {
@@ -770,7 +795,6 @@ async function addToHistory(email: string | null, historyType: HistoryType, item
 
 export const addConversionToHistory = (email: string | null, item: string) => addToHistory(email, 'conversionHistory', item);
 export const addCalculationToHistory = (email: string | null, item: string) => addToHistory(email, 'calculationHistory', item);
-export const addFavoriteToHistory = (email: string | null, item: string) => addToHistory(email, 'favoriteConversions', item);
 
 
 export async function deleteHistoryItem(email: string | null, historyType: HistoryType, itemToDelete: string) {
@@ -815,37 +839,48 @@ export async function setFavorites(email: string | null, favorites: string[]) {
 export const mergeLocalDataWithFirebase = async (email: string) => {
     if (!email) return;
 
-    const guestNotes = JSON.parse(localStorage.getItem('guest_notes') || '[]');
-    const guestConvHistory = JSON.parse(localStorage.getItem('guest_conversionHistory') || '[]');
-    const guestCalcHistory = JSON.parse(localStorage.getItem('guest_calculationHistory') || '[]');
-    const guestFavs = JSON.parse(localStorage.getItem('guest_favoriteConversions') || '[]');
-    
-    if (guestNotes.length === 0 && guestConvHistory.length === 0 && guestCalcHistory.length === 0 && guestFavs.length === 0) {
-        return; // No guest data to merge
-    }
-
+    const guestData = await getUserData(null);
     const userData = await getUserData(email);
 
-    // Merge notes
-    const mergedNotes = merge(userData.notes || [], guestNotes);
+    const mergedData: Partial<UserData> = {};
 
-    // Merge histories (prepend guest history and take unique items, limit to 100)
-    const mergedConvHistory = [...new Set([...guestConvHistory, ...(userData.conversionHistory || [])])].slice(0, 100);
-    const mergedCalcHistory = [...new Set([...guestCalcHistory, ...(userData.calculationHistory || [])])].slice(0, 100);
-    const mergedFavs = [...new Set([...guestFavs, ...(userData.favoriteConversions || [])])];
+    // Merge notes
+    if (guestData.notes && guestData.notes.length > 0) {
+        mergedData.notes = [...(userData.notes || []), ...guestData.notes];
+    }
+    // Merge histories
+    if (guestData.conversionHistory && guestData.conversionHistory.length > 0) {
+        mergedData.conversionHistory = [...new Set([...guestData.conversionHistory, ...(userData.conversionHistory || [])])].slice(0, 100);
+    }
+    if (guestData.calculationHistory && guestData.calculationHistory.length > 0) {
+        mergedData.calculationHistory = [...new Set([...guestData.calculationHistory, ...(userData.calculationHistory || [])])].slice(0, 100);
+    }
+    // Merge favorites
+    if (guestData.favoriteConversions && guestData.favoriteConversions.length > 0) {
+        mergedData.favoriteConversions = [...new Set([...guestData.favoriteConversions, ...(userData.favoriteConversions || [])])];
+    }
+    // Merge custom units/categories
+    if (guestData.customUnits && guestData.customUnits.length > 0) {
+        mergedData.customUnits = [...(userData.customUnits || []), ...guestData.customUnits];
+    }
+     if (guestData.customCategories && guestData.customCategories.length > 0) {
+        mergedData.customCategories = [...(userData.customCategories || []), ...guestData.customCategories];
+    }
     
-    const dataToUpdate = {
-        notes: mergedNotes,
-        conversionHistory: mergedConvHistory,
-        calculationHistory: mergedCalcHistory,
-        favoriteConversions: mergedFavs,
-    };
+    // Merge stats
+    mergedData.totalConversions = (userData.totalConversions || 0) + (guestData.totalConversions || 0);
+    mergedData.totalCalculations = (userData.totalCalculations || 0) + (guestData.totalCalculations || 0);
+    mergedData.totalDateCalculations = (userData.totalDateCalculations || 0) + (guestData.totalDateCalculations || 0);
+    mergedData.dailyStats = merge({}, userData.dailyStats, guestData.dailyStats);
     
-    await updateUserData(email, dataToUpdate);
+    if (Object.keys(mergedData).length > 0) {
+        await updateUserData(email, mergedData);
+    }
 
     // Clear guest data from local storage
-    localStorage.removeItem('guest_notes');
-    localStorage.removeItem('guest_conversionHistory');
-    localStorage.removeItem('guest_calculationHistory');
-    localStorage.removeItem('guest_favoriteConversions');
+    const guestKeys = [
+        'guest_notes', 'guest_conversionHistory', 'guest_calculationHistory', 
+        'guest_favoriteConversions', 'guest_customUnits', 'guest_customCategories', 'guest_stats'
+    ];
+    guestKeys.forEach(key => localStorage.removeItem(key));
 }
