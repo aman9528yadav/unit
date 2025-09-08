@@ -1,401 +1,214 @@
 
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { RefreshCw, Delete, Divide, X, Minus, Plus, Equal, Sigma, CalculatorIcon, Home, User, History, Trash2, Lock } from 'lucide-react';
-import type { CalculatorMode } from '../settings';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { incrementCalculationCount, getStats } from '@/lib/stats';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { addCalculationToHistory, deleteHistoryItem, listenToUserData, CALCULATION_HISTORY_KEY } from '@/services/firestore';
-import { getStreakData } from '@/lib/streak';
-
-const buttonClasses = {
-  gray: "bg-muted hover:bg-muted/80 text-foreground",
-  blue: "bg-primary text-primary-foreground hover:bg-primary/90 text-2xl",
-  dark: "bg-secondary hover:bg-secondary/80 text-foreground",
-  accent: "bg-accent hover:bg-accent/80 text-accent-foreground"
-};
+import { cn } from "@/lib/utils";
 
 const CalculatorButton = ({
   onClick,
   label,
   className = "",
-  span = "col-span-1",
+  buttonLabel,
+  children
 }: {
-  onClick: () => void;
-  label: React.ReactNode;
+  onClick: (value: string) => void;
+  label: string;
   className?: string;
-  span?: string;
+  buttonLabel?: string;
+  children?: React.ReactNode;
 }) => (
-  <Button
-    onClick={onClick}
-    className={`h-16 md:h-20 text-2xl md:text-3xl rounded-xl ${span} ${className}`}
+  <button
+    onClick={() => onClick(label)}
+    className={cn(
+        "relative flex items-center justify-center rounded-xl p-4 text-2xl font-semibold text-primary-foreground shadow-md transition-all duration-100 ease-in-out active:translate-y-1 active:shadow-sm",
+        "before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/20 before:to-transparent before:clip-q",
+        className
+    )}
   >
-    {label}
-  </Button>
+    {children || label}
+    {buttonLabel && <span className="absolute bottom-1.5 right-2.5 text-xs font-bold uppercase opacity-60">{buttonLabel}</span>}
+  </button>
 );
 
-const PREMIUM_MEMBER_THRESHOLD = 10000;
-type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 export function Calculator() {
-  const [expression, setExpression] = useState('');
-  const [result, setResult] = useState('');
-  const [mode, setMode] = useState<CalculatorMode>('basic');
-  const [angleMode, setAngleMode] = useState<'deg' | 'rad'>('deg');
-  const [isClient, setIsClient] = useState(false);
-  const [profile, setProfile] = useState<{fullName: string, email: string, profileImage?: string} | null>(null);
-  const router = useRouter();
-  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [recentCalculations, setRecentCalculations] = useState<string[]>([]);
-  const [userRole, setUserRole] = useState<UserRole>('Member');
-  const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
+    const [currentOperand, setCurrentOperand] = useState('0');
+    const [previousOperand, setPreviousOperand] = useState('');
+    const [operation, setOperation] = useState<string | undefined>(undefined);
+    const [memory, setMemory] = useState(0);
 
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const [isSoundEnabled, setIsSoundEnabled] = useState(true);
 
-  // A simple and safe expression evaluator
-  const evaluateExpression = (expr: string, currentAngleMode: 'deg' | 'rad'): number => {
-      // Regular expression to match trig functions like sin(90), cos(45), etc.
-      const trigRegex = /(sin|cos|tan)\(([^)]+)\)/g;
-  
-      // Process trig functions based on the angle mode
-      let processedExpr = expr.replace(trigRegex, (match, func, angleStr) => {
-          let angle = parseFloat(angleStr);
-          if (isNaN(angle)) {
-              // Attempt to evaluate the inner expression if it's complex, e.g., sin(45+45)
-              try {
-                  angle = evaluateExpression(angleStr, currentAngleMode);
-              } catch {
-                  throw new Error('Invalid angle expression');
-              }
-          }
-
-          const angleInRadians = currentAngleMode === 'deg' ? angle * (Math.PI / 180) : angle;
-          return `Math.${func}(${angleInRadians})`;
-      });
-  
-      // Replace other user-friendly symbols with JS Math functions
-      processedExpr = processedExpr
-          .replace(/√/g, 'Math.sqrt')
-          .replace(/\^/g, '**')
-          .replace(/log/g, 'Math.log10')
-          .replace(/ln/g, 'Math.log')
-          .replace(/π/g, 'Math.PI')
-          .replace(/e/g, 'Math.E');
-  
-      // Basic validation to prevent arbitrary code execution
-      if (/[^0-9+\-*/()., MathsqrtcoantlgPIEa-z]/.test(processedExpr)) {
-          throw new Error('Invalid characters in expression');
-      }
-      
-      // Using Function constructor is safer than eval, but still requires caution.
-      return new Function('return ' + processedExpr)();
-  };
-  
-  const updateUserRole = async (email: string | null) => {
-    if(email === "amanyadavyadav9458@gmail.com") {
-        setUserRole('Owner');
-        return;
-    }
-    if (email) {
-        const stats = await getStats(email);
-        const streakData = await getStreakData(email);
-        if(stats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
-            setUserRole('Premium Member');
-        } else {
-            setUserRole('Member');
+    useEffect(() => {
+        const soundEnabled = localStorage.getItem('calculatorSoundEnabled');
+        if (soundEnabled !== null) {
+            setIsSoundEnabled(JSON.parse(soundEnabled));
         }
-    } else {
-        setUserRole('Member');
-    }
-  };
 
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'calculatorSoundEnabled') {
+                setIsSoundEnabled(e.newValue === null ? true : JSON.parse(e.newValue));
+            }
+        };
 
-  useEffect(() => {
-    setIsClient(true);
-    const storedProfile = localStorage.getItem('userProfile');
-    const email = storedProfile ? JSON.parse(storedProfile).email : null;
-    
-    if (email) {
-      updateUserRole(email);
-    } else {
-      updateUserRole(null); // Guest user
-    }
+        window.addEventListener('storage', handleStorageChange);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []);
 
-    const unsub = listenToUserData(email, (data) => {
-      setRecentCalculations((data?.calculationHistory || []).slice(0, 4));
-      if (data && data.fullName && data.email) {
-          setProfile(data);
-      } else if (storedProfile) {
-          setProfile(JSON.parse(storedProfile));
-      }
-    });
-    
-    const savedMode = localStorage.getItem('calculatorMode') as CalculatorMode;
-    const soundEnabled = localStorage.getItem('calculatorSoundEnabled');
-    
-    if (savedMode) setMode(savedMode);
-    if (soundEnabled !== null) setIsSoundEnabled(JSON.parse(soundEnabled));
-    
-    const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'calculatorSoundEnabled') {
-            setIsSoundEnabled(e.newValue === null ? true : JSON.parse(e.newValue));
+    const playSound = () => {
+        if (isSoundEnabled && audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch(e => console.error("Error playing sound:", e));
         }
     };
-    
-    window.addEventListener('storage', handleStorageChange);
 
-    return () => {
-        window.removeEventListener('storage', handleStorageChange);
-        unsub();
+    const handleButtonClick = (value: string) => {
+        playSound();
+
+        const buttonActions: { [key: string]: () => void } = {
+            'AC': () => {
+                setCurrentOperand('0');
+                setPreviousOperand('');
+                setOperation(undefined);
+            },
+            'DEL': () => {
+                setCurrentOperand(currentOperand.slice(0, -1) || '0');
+            },
+            '.': () => {
+                if (!currentOperand.includes('.')) {
+                    setCurrentOperand(currentOperand + '.');
+                }
+            },
+            '=': () => {
+                if (previousOperand === '' || operation === undefined) return;
+                let result;
+                const prev = parseFloat(previousOperand);
+                const curr = parseFloat(currentOperand);
+
+                switch (operation) {
+                    case '+': result = prev + curr; break;
+                    case '-': result = prev - curr; break;
+                    case '×': result = prev * curr; break;
+                    case '÷': result = prev / curr; break;
+                    case '%': result = prev % curr; break;
+                    default: return;
+                }
+                setCurrentOperand(String(result));
+                setPreviousOperand('');
+                setOperation(undefined);
+            },
+            '√': () => {
+                setCurrentOperand(String(Math.sqrt(parseFloat(currentOperand))));
+            },
+            'x²': () => {
+                setCurrentOperand(String(parseFloat(currentOperand) ** 2));
+            },
+            '1/x': () => {
+                setCurrentOperand(String(1 / parseFloat(currentOperand)));
+            },
+            '±': () => {
+                setCurrentOperand(String(parseFloat(currentOperand) * -1));
+            },
+            'MC': () => setMemory(0),
+            'MR': () => setCurrentOperand(String(memory)),
+            'M+': () => setMemory(memory + parseFloat(currentOperand)),
+            'M-': () => setMemory(memory - parseFloat(currentOperand)),
+            '+': () => handleOperation('+'),
+            '-': () => handleOperation('-'),
+            '×': () => handleOperation('×'),
+            '÷': () => handleOperation('÷'),
+            '%': () => handleOperation('%'),
+            '(': () => { /* Not implemented yet */ },
+            ')': () => { /* Not implemented yet */ },
+        };
+        
+        const action = buttonActions[value];
+        if (action) {
+            action();
+        } else if (!isNaN(Number(value))) {
+            // It's a number
+            if (currentOperand === '0') {
+                setCurrentOperand(value);
+            } else {
+                setCurrentOperand(currentOperand + value);
+            }
+        }
     };
-  }, []);
-  
-  const playSound = () => {
-    if (isSoundEnabled && audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(e => console.error("Error playing sound:", e));
-    }
-  }
 
-  const handleButtonClick = (value: string) => {
-    playSound();
-    if (result && !['+', '-', '*', '/', '^'].includes(value)) {
-        setExpression(value);
-        setResult('');
-    } else if (result && ['+', '-', '*', '/', '^'].includes(value)) {
-        setExpression(result + value);
-        setResult('');
-    } else {
-        setExpression(prev => prev + value);
-    }
-  };
-  
-  const handleFunctionClick = (func: string) => {
-    if(userRole === 'Member') {
-        setShowPremiumLockDialog(true);
-        return;
-    }
-    playSound();
-    setExpression(prev => prev + `${func}(`);
-  }
-
-  const handleClear = () => {
-    playSound();
-    setExpression('');
-    setResult('');
-  };
-
-  const handleBackspace = () => {
-    playSound();
-    if (result) {
-        setExpression('');
-        setResult('');
-    } else {
-        setExpression(prev => prev.slice(0, -1));
-    }
-  };
-
-  const handleCalculate = async () => {
-    playSound();
-    try {
-      if (!expression || /[+\-*/.^]$/.test(expression)) return;
-      
-      const evalResult = evaluateExpression(expression, angleMode);
-
-      if (isNaN(evalResult) || !isFinite(evalResult)) {
-        setResult('Error');
-        return;
-      }
-      const formattedResult = evalResult.toLocaleString(undefined, { maximumFractionDigits: 10, useGrouping: true });
-      setResult(formattedResult);
-      
-      const userEmail = profile ? profile.email : null;
-      await incrementCalculationCount();
-      await updateUserRole(userEmail);
-
-      const historyEntry = `${expression} = ${formattedResult}`;
-      const historyStringForStorage = `${historyEntry}|${new Date().toISOString()}`;
-      
-      if(userEmail) {
-        addCalculationToHistory(userEmail, historyStringForStorage);
-      }
-
-      localStorage.setItem('lastCalculation', historyStringForStorage);
-      window.dispatchEvent(new StorageEvent('storage', { key: 'lastCalculation', newValue: historyStringForStorage }));
-      
-      // Update local storage for immediate reflection in other components if needed
-      const localHistoryKey = CALCULATION_HISTORY_KEY(userEmail);
-      const localHistory = JSON.parse(localStorage.getItem(localHistoryKey) || '[]');
-      const newLocalHistory = [historyStringForStorage, ...localHistory].slice(0, 100);
-      localStorage.setItem(localHistoryKey, JSON.stringify(newLocalHistory));
-      window.dispatchEvent(new StorageEvent('storage', { key: localHistoryKey, newValue: JSON.stringify(newLocalHistory)}));
-
-
-    } catch (error) {
-      console.error(error)
-      setResult('Error');
-    }
-  };
-
-  const handleDeleteCalculation = (itemToDelete: string) => {
-    if (profile?.email) {
-      deleteHistoryItem(profile.email, 'calculationHistory', itemToDelete);
-    }
-  };
-  
-  if (!isClient) {
-    return null; // Or a skeleton loader
-  }
-
-const ScientificLayout = () => (
-    <div className="grid grid-cols-5 gap-3">
-        {/* Row 1 */}
-        <CalculatorButton onClick={handleClear} label="AC" className={buttonClasses.gray} />
-        <CalculatorButton onClick={handleBackspace} label={<Delete />} className={buttonClasses.gray} />
-        <CalculatorButton onClick={() => handleFunctionClick('(')} label="(" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleFunctionClick(')')} label=")" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => { playSound(); setAngleMode(a => a === 'deg' ? 'rad' : 'deg')}} label={angleMode.toUpperCase()} className={buttonClasses.accent} />
-
-        {/* Row 2 */}
-        <CalculatorButton onClick={() => handleFunctionClick('sin')} label="sin" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleFunctionClick('cos')} label="cos" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleFunctionClick('tan')} label="tan" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleFunctionClick('^')} label="xʸ" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('/')} label={<Divide />} className={buttonClasses.blue} />
-
-        {/* Row 3 */}
-        <CalculatorButton onClick={() => handleFunctionClick('log')} label="log" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('7')} label="7" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('8')} label="8" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('9')} label="9" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('*')} label={<X />} className={buttonClasses.blue} />
-
-        {/* Row 4 */}
-        <CalculatorButton onClick={() => handleFunctionClick('ln')} label="ln" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('4')} label="4" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('5')} label="5" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('6')} label="6" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('-')} label={<Minus />} className={buttonClasses.blue} />
-        
-        {/* Row 5 */}
-        <CalculatorButton onClick={() => handleFunctionClick('√')} label="√" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('1')} label="1" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('2')} label="2" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('3')} label="3" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('+')} label={<Plus />} className={buttonClasses.blue} />
-
-        {/* Row 6 */}
-        <CalculatorButton onClick={() => handleFunctionClick('π')} label="π" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleFunctionClick('e')} label="e" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('0')} label="0" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('.')} label="." className={buttonClasses.dark} />
-        <CalculatorButton onClick={handleCalculate} label={<Equal />} className={buttonClasses.blue} />
-    </div>
-);
-
-
-const BasicLayout = () => (
-    <div className="grid grid-cols-4 gap-3">
-        <CalculatorButton onClick={handleClear} label="AC" className={`${buttonClasses.gray} col-span-2`} />
-        <CalculatorButton onClick={handleBackspace} label={<Delete />} className={buttonClasses.gray} />
-        <CalculatorButton onClick={() => handleButtonClick('/')} label={<Divide />} className={buttonClasses.blue} />
-
-        <CalculatorButton onClick={() => handleButtonClick('7')} label="7" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('8')} label="8" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('9')} label="9" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('*')} label={<X />} className={buttonClasses.blue} />
-
-        <CalculatorButton onClick={() => handleButtonClick('4')} label="4" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('5')} label="5" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('6')} label="6" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('-')} label={<Minus />} className={buttonClasses.blue} />
-
-        <CalculatorButton onClick={() => handleButtonClick('1')} label="1" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('2')} label="2" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('3')} label="3" className={buttonClasses.dark} />
-        <CalculatorButton onClick={() => handleButtonClick('+')} label={<Plus />} className={buttonClasses.blue} />
-        
-        <CalculatorButton onClick={() => handleButtonClick('0')} label="0" className={`${buttonClasses.dark} col-span-2`} />
-        <CalculatorButton onClick={() => handleButtonClick('.')} label="." className={buttonClasses.dark} />
-        <CalculatorButton onClick={handleCalculate} label={<Equal />} className={buttonClasses.blue} />
-    </div>
-);
-
+    const handleOperation = (op: string) => {
+        if (currentOperand === '') return;
+        if (previousOperand !== '') {
+           handleButtonClick('=');
+        }
+        setOperation(op);
+        setPreviousOperand(currentOperand);
+        setCurrentOperand('');
+    };
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col gap-4">
+    <div className="w-full max-w-lg mx-auto p-4">
        <audio ref={audioRef} src="/alarm.mp3" preload="auto"></audio>
-       
-        <div className="bg-card p-4 rounded-xl flex flex-col gap-4">
-            {/* Display */}
-            <div className="text-right h-28 flex flex-col justify-end p-4">
-                <p className="text-3xl text-muted-foreground break-all">{expression || ' '}</p>
-                <p className="text-6xl font-bold break-all">{result ? `=${result}`: ' '}</p>
+      <div className="bg-card/80 rounded-2xl p-6 shadow-lg border-2 border-border/20">
+        <div className="header flex justify-between items-center mb-5">
+            <div className="font-bold text-xl text-foreground/70 tracking-widest">CALCPRO</div>
+            <div className="flex justify-between w-36 bg-secondary/50 rounded-md p-1.5 border border-border/20">
+                <div className="flex-1 h-6 bg-gradient-to-b from-secondary to-background/50 mx-1 rounded-sm"></div>
+                <div className="flex-1 h-6 bg-gradient-to-b from-secondary to-background/50 mx-1 rounded-sm"></div>
+                <div className="flex-1 h-6 bg-gradient-to-b from-secondary to-background/50 mx-1 rounded-sm"></div>
             </div>
-
-            {/* Buttons */}
-             <div className="min-h-[460px] md:min-h-[520px]">
-                {mode === 'scientific' ? (
-                  <ScientificLayout />
-                ) : (
-                  <BasicLayout />
-                )}
+            <div className="text-right">
+                <div className="font-semibold text-sm text-foreground/60">X-8000</div>
             </div>
         </div>
-        
-         {recentCalculations.length > 0 && (
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center justify-between text-base">
-                        <div className="flex items-center gap-2">
-                           <History size={18} />
-                           Recent Calculations
-                        </div>
-                        <Button variant="link" size="sm" onClick={() => router.push('/history?tab=calculator')}>View All</Button>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                        {recentCalculations.map((calc, i) => (
-                            <li key={i} className="flex justify-between items-center p-2 bg-secondary rounded-md">
-                               <span className="truncate">{calc.split('|')[0]}</span>
-                               <div className="flex items-center">
-                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteCalculation(calc)}>
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
-                               </div>
-                            </li>
-                        ))}
-                    </ul>
-                </CardContent>
-            </Card>
-        )}
-        <AlertDialog open={showPremiumLockDialog} onOpenChange={setShowPremiumLockDialog}>
-            <AlertDialogContent>
-                <AlertDialogHeader className="items-center text-center">
-                     <div className="p-4 bg-primary/10 rounded-full mb-4">
-                        <Lock className="w-10 h-10 text-primary" />
-                    </div>
-                    <AlertDialogTitle className="text-2xl">Premium Feature Locked</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This feature is available to Premium Members. Complete {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} operations or maintain a 15-day streak to unlock this feature and more!
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="sm:justify-center flex-col-reverse sm:flex-row gap-2">
-                     <AlertDialogCancel onClick={() => setShowPremiumLockDialog(false)}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => router.push('/profile')}>
-                        Check Your Progress
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+
+        <div className="display-container bg-muted/50 rounded-lg p-2 mb-6 border-2 border-border/20 shadow-inner">
+             <div className="display bg-gradient-to-b from-background/80 to-background/50 rounded-md p-4 h-28 text-right flex flex-col justify-end">
+                <div className="previous-operand text-foreground/60 text-xl min-h-7 break-all">{previousOperand} {operation}</div>
+                <div className="current-operand text-foreground text-5xl font-semibold break-all">{currentOperand}</div>
+            </div>
+        </div>
+
+        <div className="buttons grid grid-cols-5 grid-rows-5 gap-3">
+          <CalculatorButton onClick={handleButtonClick} label="MC" className="bg-accent text-accent-foreground shadow-accent/50" buttonLabel="MEM" />
+          <CalculatorButton onClick={handleButtonClick} label="MR" className="bg-accent text-accent-foreground shadow-accent/50" buttonLabel="RECALL" />
+          <CalculatorButton onClick={handleButtonClick} label="M+" className="bg-accent text-accent-foreground shadow-accent/50" buttonLabel="STORE" />
+          <CalculatorButton onClick={handleButtonClick} label="AC" className="bg-destructive text-destructive-foreground shadow-destructive/50" buttonLabel="OFF" />
+          <CalculatorButton onClick={handleButtonClick} label="DEL" className="bg-destructive text-destructive-foreground shadow-destructive/50" buttonLabel="ON" />
+          
+          <CalculatorButton onClick={handleButtonClick} label="√" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
+          <CalculatorButton onClick={handleButtonClick} label="%" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
+          <CalculatorButton onClick={handleButtonClick} label="(" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
+          <CalculatorButton onClick={handleButtonClick} label=")" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
+          <CalculatorButton onClick={handleButtonClick} label="÷" className="bg-primary text-primary-foreground shadow-primary/50" />
+          
+          <CalculatorButton onClick={handleButtonClick} label="7" className="bg-muted text-muted-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="8" className="bg-muted text-muted-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="9" className="bg-muted text-muted-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="×" className="bg-primary text-primary-foreground shadow-primary/50" />
+          <CalculatorButton onClick={handleButtonClick} label="M-" className="bg-accent text-accent-foreground shadow-accent/50" />
+
+          <CalculatorButton onClick={handleButtonClick} label="4" className="bg-muted text-muted-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="5" className="bg-muted text-muted-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="6" className="bg-muted text-muted-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="-" className="bg-primary text-primary-foreground shadow-primary/50" />
+          <CalculatorButton onClick={handleButtonClick} label="x²" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
+
+          <CalculatorButton onClick={handleButtonClick} label="1" className="bg-muted text-muted-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="2" className="bg-muted text-muted-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="3" className="bg-muted text-muted-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="+" className="bg-primary text-primary-foreground shadow-primary/50" />
+          <CalculatorButton onClick={handleButtonClick} label="1/x" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
+          
+          <CalculatorButton onClick={handleButtonClick} label="0" className="bg-muted text-muted-foreground col-span-2" />
+          <CalculatorButton onClick={handleButtonClick} label="." className="bg-muted text-muted-foreground" />
+          <CalculatorButton onClick={handleButtonClick} label="=" className="bg-primary text-primary-foreground shadow-primary/50" />
+          <CalculatorButton onClick={handleButtonClick} label="±" className="bg-secondary text-secondary-foreground shadow-secondary/50" />
+        </div>
+      </div>
     </div>
   );
 }
+

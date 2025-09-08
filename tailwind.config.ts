@@ -15,6 +15,9 @@ export default {
         headline: ['Inter', 'sans-serif'],
         code: ['monospace'],
       },
+      clipPath: {
+        q: 'polygon(0 0, 100% 0, 100% 70%, 0 100%)',
+      },
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
@@ -96,5 +99,15 @@ export default {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    function ({ addUtilities }: { addUtilities: any }) {
+      addUtilities({
+        '.clip-q': {
+          'clip-path': 'polygon(0 0, 100% 0, 100% 70%, 0 100%)',
+        },
+      });
+    },
+  ],
 } satisfies Config;
+
