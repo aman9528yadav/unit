@@ -280,7 +280,7 @@ export function Analytics() {
         <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
           {/* Header */}
           <header className="flex items-center justify-between">
-            <h1 className="text-3xl font-extrabold tracking-tight">📊 Analytics Dashboard</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">📊 {t('analytics.title')}</h1>
             <Button asChild>
                 <Link href="/">
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
@@ -354,8 +354,8 @@ export function Analytics() {
                         </Popover>
                         <Tabs value={timeRange} onValueChange={(v) => handleTimeRangeChange(v as TimeRangePreset)}>
                             <TabsList>
-                                <TabsTrigger value="weekly">Weekly</TabsTrigger>
-                                <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                                <TabsTrigger value="weekly">{t('analytics.weekly')}</TabsTrigger>
+                                <TabsTrigger value="monthly">{t('analytics.monthly')}</TabsTrigger>
                                 <TabsTrigger value="yearly">Yearly</TabsTrigger>
                             </TabsList>
                         </Tabs>
