@@ -78,7 +78,7 @@ export const offlineParseConversionQuery = (query: string, allUnits: Unit[], cat
 };
 
 
-export function GlobalSearch({isSearchOpen, onSearchToggle}: {isSearchOpen: boolean, onSearchToggle: (open: boolean) => void}) {
+export function GlobalSearch({ isSearchActive, onSearchToggle }: { isSearchActive: boolean, onSearchToggle: (open: boolean) => void }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -88,6 +88,7 @@ export function GlobalSearch({isSearchOpen, onSearchToggle}: {isSearchOpen: bool
   
   const [customUnits, setCustomUnits] = useState<CustomUnit[]>([]);
   const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
   
   const conversionCategories = React.useMemo(() => {
     // This logic should be kept in sync with the converter component
@@ -127,7 +128,7 @@ export function GlobalSearch({isSearchOpen, onSearchToggle}: {isSearchOpen: bool
 
 
   useEffect(() => {
-    if (!isSearchOpen) return;
+    if (!isSearchActive) return;
     const storedProfile = localStorage.getItem('userProfile');
     const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
     
@@ -138,7 +139,21 @@ export function GlobalSearch({isSearchOpen, onSearchToggle}: {isSearchOpen: bool
     });
 
     return () => unsub();
-  }, [isSearchOpen]);
+  }, [isSearchActive]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        onSearchToggle(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onSearchToggle]);
+
 
   const search = useCallback(() => {
     if (!debouncedQuery) {
@@ -295,49 +310,58 @@ export function GlobalSearch({isSearchOpen, onSearchToggle}: {isSearchOpen: bool
   };
 
   return (
-    <Dialog open={isSearchOpen} onOpenChange={onSearchToggle}>
-        <DialogContent className="p-0 gap-0 max-w-lg">
-            <DialogHeader className="sr-only">
-              <DialogTitle>Global Search</DialogTitle>
-              <DialogDescription>Search for notes, history, conversions, and more.</DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center gap-2 p-4 border-b">
-                <Search className="size-5 text-muted-foreground" />
-                <Input 
-                    placeholder={t('globalSearch.placeholder')}
-                    className="border-none focus-visible:ring-0 h-auto p-0" 
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && results.length > 0 && handleSelectResult(results[0])}
-                    autoFocus
-                />
-            </div>
-
-             <div className="p-4 max-h-[400px] overflow-y-auto">
-                {debouncedQuery && results.length > 0 ? (
-                    <ul className="space-y-2">
-                        {results.map((result) => (
-                            <li 
-                              key={`${result.type}-${result.id}`} 
-                              className="flex items-center gap-4 p-2 rounded-lg hover:bg-secondary cursor-pointer"
-                              onClick={() => handleSelectResult(result)}
-                            >
-                                <ResultIcon type={result.type} />
-                                <div className="flex-1 overflow-hidden">
-                                    <p className="font-semibold truncate">{result.title}</p>
-                                    {result.description && <p className="text-sm text-muted-foreground truncate">{result.description}</p>}
-                                </div>
-                                <CornerDownLeft className="w-4 h-4 text-muted-foreground" />
-                            </li>
-                        ))}
-                    </ul>
-                ) : debouncedQuery ? (
-                    <p className="text-center text-muted-foreground py-8">{t('globalSearch.noResults', { query: debouncedQuery })}</p>
-                ) : (
-                    <p className="text-center text-muted-foreground py-8">{t('globalSearch.prompt')}</p>
-                )}
-            </div>
-        </DialogContent>
-    </Dialog>
+    <motion.div
+        key="search-input"
+        ref={searchContainerRef}
+        initial={{ opacity: 0, width: "50%" }}
+        animate={{ opacity: 1, width: "100%" }}
+        exit={{ opacity: 0, width: "50%" }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        className="w-full relative"
+    >
+        <div className="flex items-center gap-2">
+            <Search className="size-5 text-muted-foreground" />
+            <Input 
+                placeholder={t('globalSearch.placeholder')}
+                className="border-none focus-visible:ring-0 h-auto p-0 bg-transparent" 
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && results.length > 0 && handleSelectResult(results[0])}
+                autoFocus
+            />
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => onSearchToggle(false)}><X className="w-4 h-4"/></Button>
+        </div>
+        <AnimatePresence>
+            {debouncedQuery && (
+                 <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute top-full mt-2 w-full bg-card rounded-lg border shadow-lg max-h-96 overflow-y-auto p-2"
+                >
+                    {results.length > 0 ? (
+                        <ul className="space-y-1">
+                            {results.map((result) => (
+                                <li 
+                                  key={`${result.type}-${result.id}`} 
+                                  className="flex items-center gap-4 p-2 rounded-md hover:bg-secondary cursor-pointer"
+                                  onClick={() => handleSelectResult(result)}
+                                >
+                                    <ResultIcon type={result.type} />
+                                    <div className="flex-1 overflow-hidden">
+                                        <p className="font-semibold truncate">{result.title}</p>
+                                        {result.description && <p className="text-sm text-muted-foreground truncate">{result.description}</p>}
+                                    </div>
+                                    <CornerDownLeft className="w-4 h-4 text-muted-foreground" />
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-center text-muted-foreground py-4">{t('globalSearch.noResults', { query: debouncedQuery })}</p>
+                    )}
+                 </motion.div>
+            )}
+        </AnimatePresence>
+    </motion.div>
   );
 }
