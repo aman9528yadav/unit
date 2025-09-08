@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
-import { listenToUserData, UserData } from "@/services/firestore";
+import { listenToUserData, UserData, listenToPremiumInfoContent, PremiumInfoContent } from "@/services/firestore";
 import { getStats } from "@/lib/stats";
 import { getStreakData } from "@/lib/streak";
 import { format } from "date-fns";
@@ -41,6 +41,7 @@ export function UserData() {
     const [userRole, setUserRole] = useState<UserRole>('Member');
     const [achievements, setAchievements] = useState<string[]>([]);
     const [isPremiumInfoOpen, setIsPremiumInfoOpen] = useState(false);
+    const [premiumInfoContent, setPremiumInfoContent] = useState<PremiumInfoContent | null>(null);
     
     const router = useRouter();
     const { toast } = useToast();
@@ -53,41 +54,47 @@ export function UserData() {
             return;
         }
 
+        const updateUserRoleAndStats = async (email: string, userData: UserData) => {
+            const userStats = await getStats(email);
+            const streakData = await getStreakData(email);
+
+            setStats({
+                conversions: userStats.totalConversions,
+                notes: userStats.savedNotes,
+                daysActive: streakData.bestStreak,
+                totalOps: userStats.totalOps,
+            });
+            
+            let role: UserRole = 'Member';
+            if (email === DEVELOPER_EMAIL) {
+                role = 'Owner';
+            } else if (userStats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
+                role = 'Premium Member';
+            }
+            setUserRole(role);
+
+            const newAchievements: string[] = [];
+            if (auth.currentUser?.emailVerified) newAchievements.push("⭐ Verified User");
+            if (userStats.totalConversions >= 100) newAchievements.push("🏆 100+ Conversions");
+            if (streakData.bestStreak >= 30) newAchievements.push("📅 30 Days Active");
+            if (streakData.bestStreak >= 7) newAchievements.push("🔥 7 Day Streak");
+            if (role === 'Premium Member' || role === 'Owner') newAchievements.push("👑 Premium Member");
+            setAchievements(newAchievements);
+        };
+
+
         const unsubscribe = listenToUserData(userEmail, (data) => {
             setProfileData(data);
             updateUserRoleAndStats(userEmail, data);
         });
-
-        return () => unsubscribe();
-    }, [router]);
-
-    const updateUserRoleAndStats = async (email: string, userData: UserData) => {
-        const userStats = await getStats(email);
-        const streakData = await getStreakData(email);
-
-        setStats({
-            conversions: userStats.totalConversions,
-            notes: userStats.savedNotes,
-            daysActive: streakData.bestStreak,
-            totalOps: userStats.totalOps,
-        });
         
-        let role: UserRole = 'Member';
-        if (email === DEVELOPER_EMAIL) {
-            role = 'Owner';
-        } else if (userStats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
-            role = 'Premium Member';
-        }
-        setUserRole(role);
+        const unsubPremium = listenToPremiumInfoContent(setPremiumInfoContent);
 
-        const newAchievements: string[] = [];
-        if (auth.currentUser?.emailVerified) newAchievements.push("⭐ Verified User");
-        if (userStats.totalConversions >= 100) newAchievements.push("🏆 100+ Conversions");
-        if (streakData.bestStreak >= 30) newAchievements.push("📅 30 Days Active");
-        if (streakData.bestStreak >= 7) newAchievements.push("🔥 7 Day Streak");
-        if (role === 'Premium Member' || role === 'Owner') newAchievements.push("👑 Premium Member");
-        setAchievements(newAchievements);
-    };
+        return () => {
+            unsubscribe();
+            unsubPremium();
+        };
+    }, [router]);
 
     const handleLogout = () => {
         auth.signOut().then(() => {
@@ -241,7 +248,7 @@ export function UserData() {
                     </CardContent>
                 </Card>
             </motion.div>
-             <PremiumInfoDialog open={isPremiumInfoOpen} onOpenChange={setIsPremiumInfoOpen} />
+             <PremiumInfoDialog open={isPremiumInfoOpen} onOpenChange={setIsPremiumInfoOpen} content={premiumInfoContent} />
         </div>
     );
 }

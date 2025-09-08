@@ -41,41 +41,43 @@ export function Profile() {
             return;
         }
 
+        const updateUserRoleAndStats = async (email: string, userData: UserData) => {
+            const userStats = await getStats(email);
+            const streakData = await getStreakData(email);
+
+            setStats({
+                conversions: userStats.totalConversions,
+                notes: userStats.savedNotes,
+                daysActive: streakData.bestStreak,
+                history: userStats.totalHistory,
+            });
+
+            if (email === DEVELOPER_EMAIL) {
+                setUserRole('Owner');
+            } else if (userStats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
+                setUserRole('Premium Member');
+            } else {
+                setUserRole('Member');
+            }
+
+            const newAchievements: string[] = [];
+            if (auth.currentUser?.emailVerified) newAchievements.push("⭐ Verified User");
+            if (userStats.totalConversions >= 100) newAchievements.push("🏆 100+ Conversions");
+            if (streakData.bestStreak >= 30) newAchievements.push("📅 30 Days Active");
+            if (streakData.bestStreak >= 7) newAchievements.push("🔥 7 Day Streak");
+            if (userRole === 'Premium Member' || userRole === 'Owner') newAchievements.push("👑 Premium Member");
+            setAchievements(newAchievements);
+        };
+
+
         const unsubscribe = listenToUserData(userEmail, (data) => {
             setProfileData(data);
             updateUserRoleAndStats(userEmail, data);
         });
 
         return () => unsubscribe();
-    }, [router]);
+    }, [router, userRole, t]);
 
-    const updateUserRoleAndStats = async (email: string, userData: UserData) => {
-        const userStats = await getStats(email);
-        const streakData = await getStreakData(email);
-
-        setStats({
-            conversions: userStats.totalConversions,
-            notes: userStats.savedNotes,
-            daysActive: streakData.bestStreak,
-            history: userStats.totalHistory,
-        });
-
-        if (email === DEVELOPER_EMAIL) {
-            setUserRole('Owner');
-        } else if (userStats.totalOps >= PREMIUM_MEMBER_THRESHOLD || streakData.bestStreak >= 15) {
-            setUserRole('Premium Member');
-        } else {
-            setUserRole('Member');
-        }
-
-        const newAchievements: string[] = [];
-        if (auth.currentUser?.emailVerified) newAchievements.push("⭐ Verified User");
-        if (userStats.totalConversions >= 100) newAchievements.push("🏆 100+ Conversions");
-        if (streakData.bestStreak >= 30) newAchievements.push("📅 30 Days Active");
-        if (streakData.bestStreak >= 7) newAchievements.push("🔥 7 Day Streak");
-        if (userRole === 'Premium Member' || userRole === 'Owner') newAchievements.push("👑 Premium Member");
-        setAchievements(newAchievements);
-    };
 
     const handleLogout = () => {
         auth.signOut().then(() => {
@@ -206,4 +208,3 @@ export function Profile() {
         </div>
     );
 }
-
