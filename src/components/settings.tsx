@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music, Sigma, Home, Rocket, Crown, HelpCircle } from "lucide-react";
+import { ArrowLeft, ChevronRight, User, Bell, Languages, Palette, LayoutGrid, SlidersHorizontal, CalculatorIcon, Info, LogOut, Trash2, KeyRound, Globe, Code, Lock, Music, Sigma, Home, Rocket, Crown, HelpCircle, Star } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { useTheme, type CustomTheme } from "@/context/theme-context";
 import {
@@ -49,7 +49,7 @@ const SettingRow = ({ label, description, control, isLink = false, href, childre
             <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2">
                     {isPremium && (
-                        <Crown className={cn("h-4 w-4", isLocked ? 'text-red-500' : 'text-green-500')} />
+                        <Star className={cn("h-4 w-4", isLocked ? 'text-muted-foreground' : 'text-yellow-500 fill-yellow-500')} />
                     )}
                     <p className="font-medium">{label}</p>
                 </div>
@@ -328,7 +328,7 @@ export function Settings() {
                                             {themes.map((themeItem) => (
                                                 <SelectItem key={themeItem.value} value={themeItem.value} disabled={themeItem.isLocked}>
                                                     <div className="flex items-center gap-2">
-                                                        {themeItem.isLocked && <Lock className="w-3 h-3"/>}
+                                                        {themeItem.isLocked && <Star className="w-3 h-3 text-muted-foreground"/>}
                                                         {themeItem.name}
                                                     </div>
                                                 </SelectItem>
@@ -539,7 +539,7 @@ export function Settings() {
             <AlertDialogContent>
                 <AlertDialogHeader className="items-center text-center">
                      <div className="p-4 bg-primary/10 rounded-full mb-4">
-                        <Lock className="w-10 h-10 text-primary" />
+                        <Star className="w-10 h-10 text-primary" />
                     </div>
                     <AlertDialogTitle className="text-2xl">Premium Feature Locked</AlertDialogTitle>
                     <AlertDialogDescription>

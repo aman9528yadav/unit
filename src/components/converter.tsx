@@ -540,7 +540,7 @@ export function Converter() {
                                     return (
                                         <SelectItem key={r} value={r} disabled={isLocked}>
                                             <div className="flex items-center gap-2">
-                                                {isLocked && <Lock className="w-3 h-3" />}
+                                                {isLocked && <Star className="w-3 h-3 text-muted-foreground" />}
                                                 {r}
                                             </div>
                                         </SelectItem>
@@ -561,7 +561,7 @@ export function Converter() {
                                     return (
                                         <SelectItem key={cat.name} value={cat.name} disabled={isLocked}>
                                             <div className="flex items-center gap-2">
-                                                {isLocked && <Lock className="w-3 h-3" />}
+                                                {isLocked && <Star className="w-4 h-4 text-muted-foreground" />}
                                                 <cat.icon className="w-4 h-4" />
                                                 {t(`categories.${cat.name.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: cat.name })}
                                             </div>
@@ -661,9 +661,9 @@ export function Converter() {
             <AlertDialogContent>
                 <AlertDialogHeader className="items-center text-center">
                      <div className="p-4 bg-primary/10 rounded-full mb-4">
-                        <Lock className="w-10 h-10 text-primary" />
+                        <Star className="w-10 h-10 text-primary" />
                     </div>
-                    <AlertDialogTitle className="text-2xl">Premium Feature Locked</AlertDialogTitle>
+                    <AlertDialogTitle className="text-2xl">Premium Feature</AlertDialogTitle>
                     <AlertDialogDescription>
                         This feature is available to Premium Members. Complete {PREMIUM_MEMBER_THRESHOLD.toLocaleString()} operations or maintain a 15-day streak to unlock this feature and more!
                     </AlertDialogDescription>
@@ -758,5 +758,3 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
   }
 );
 ConversionImage.displayName = 'ConversionImage';
-
-    
