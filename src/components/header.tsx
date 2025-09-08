@@ -90,37 +90,37 @@ export function Header() {
     };
 
     return (
-        <header className="sticky top-0 z-40 w-full max-w-lg border-b bg-background/80 backdrop-blur-sm py-4">
-            <div className="flex items-center gap-4">
+        <header className="sticky top-0 z-40 w-full max-w-lg border-b bg-background/80 backdrop-blur-sm py-2">
+            <div className="flex items-center gap-2">
                  <div className="flex items-center gap-2 mr-auto">
                     {!isHomePage && (
-                        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                            <ArrowLeft />
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
+                            <ArrowLeft className="h-4 w-4" />
                         </Button>
                     )}
-                    <pageInfo.icon className="h-6 w-6 text-primary" />
-                    <h1 className="text-lg font-bold tracking-tight text-foreground">{pageInfo.title}</h1>
+                    <pageInfo.icon className="h-5 w-5 text-primary" />
+                    <h1 className="text-base font-bold tracking-tight text-foreground">{pageInfo.title}</h1>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                     <GlobalSearch />
                     <LanguageToggle />
                     <Notifications />
-                    <Button variant="ghost" size="icon" className="rounded-full" onClick={handleProfileClick}>
-                        <Avatar className="h-10 w-10 border border-border bg-card text-foreground">
+                    <Button variant="ghost" size="icon" className="rounded-full h-9 w-9" onClick={handleProfileClick}>
+                        <Avatar className="h-8 w-8 border border-border bg-card text-foreground">
                             <AvatarImage src={profile?.profileImage}/>
                             <AvatarFallback><User /></AvatarFallback>
                         </Avatar>
                     </Button>
                 </div>
             </div>
-             <ScrollArea className="w-full whitespace-nowrap rounded-lg mt-4">
+             <ScrollArea className="w-full whitespace-nowrap rounded-lg mt-2">
                 <nav className="flex w-max space-x-2 pb-2">
                     {navLinks.map(link => (
                         <Link key={link.href} href={link.href} passHref>
                             <Button
                                 variant={pathname === link.href ? "secondary" : "ghost"}
-                                className="text-sm px-3 py-1.5 h-auto flex-shrink-0"
+                                className="text-sm px-3 py-1 h-auto flex-shrink-0"
                             >
                                 {link.label}
                             </Button>
@@ -142,7 +142,7 @@ const LanguageToggle = () => {
     const { language, setLanguage } = useLanguage();
     return (
         <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'hi')}>
-            <SelectTrigger className="w-[120px] bg-card border-border">
+            <SelectTrigger className="w-[80px] h-9 bg-card border-border">
                 <Languages className="mr-2 h-4 w-4" />
                 <span>{language === 'en' ? 'En' : 'Hi'}</span>
             </SelectTrigger>
