@@ -64,11 +64,12 @@ SidebarTrigger.displayName = "SidebarTrigger"
 
 const SidebarClose = React.forwardRef<
   HTMLButtonElement,
-  React.ComponentProps<"button">
->(({ onClick, ...props }, ref) => {
+  React.ComponentProps<"button"> & { asChild?: boolean }
+>(({ onClick, asChild = false, ...props }, ref) => {
   const { setOpen } = useSidebar()
+  const Comp = asChild ? Slot : "button"
   return (
-    <button
+    <Comp
       ref={ref}
       onClick={(event) => {
         onClick?.(event)
