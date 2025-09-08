@@ -157,15 +157,15 @@ export default function RootLayout({
                           </div>
                       </div>
                       <Sidebar>
-                          <SidebarContent>
-                               <div className="absolute top-4">
+                          <SidebarContent className="p-4">
+                               <div className="absolute top-2">
                                 <SidebarClose asChild>
                                   <Button variant="ghost" size="icon" className="text-black hover:bg-black/10 rounded-full">
-                                    <X className="h-8 w-8" />
+                                    <X className="h-6 w-6" />
                                   </Button>
                                 </SidebarClose>
                               </div>
-                              <div className="text-center text-black mb-10">
+                              <div className="text-center text-black mb-8">
                                 <h2 className="text-xl font-medium">Welcome back,</h2>
                                 <p className="text-3xl font-bold">{profile?.fullName || 'Guest'}</p>
                               </div>
@@ -174,14 +174,14 @@ export default function RootLayout({
                                       <SidebarMenuItem key={link.href}>
                                           <Link href={link.href} passHref>
                                               <SidebarMenuButton isActive={pathname === link.href}>
-                                                  <link.icon className="w-6 h-6"/>
+                                                  <link.icon className="w-5 h-5"/>
                                                   <span>{link.label}</span>
                                               </SidebarMenuButton>
                                           </Link>
                                       </SidebarMenuItem>
                                   ))}
                               </SidebarMenu>
-                               <div className="absolute bottom-6 text-center text-black/60 text-sm">
+                               <div className="absolute bottom-4 text-center text-black/60 text-sm">
                                 <p>Sutradhaar {appInfo?.version || ''}</p>
                                 <p>Made by Aman Yadav</p>
                               </div>
