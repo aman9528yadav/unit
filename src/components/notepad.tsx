@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import { useLanguage } from '@/context/language-context';
 import { listenToUserData, listenToUserNotes, updateUserNotes, UserData } from '@/services/firestore';
 import { Label } from './ui/label';
@@ -293,7 +293,7 @@ export function Notepad() {
         }
 
         if (layout === 'card' && isImage) {
-            return (
+             return (
                  <div className="relative w-full h-32 my-2 rounded-md overflow-hidden">
                     <Image src={note.attachment} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="cover" />
                 </div>
@@ -418,8 +418,8 @@ export function Notepad() {
                                                 {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
                                             </div>
                                         </div>
-                                        <NoteAttachment note={note} />
                                         <div className="flex gap-2 mt-1">
+                                            <NoteAttachment note={note} />
                                             <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: note.content || t('notepad.noContent') }} />
                                         </div>
                                     </div>
