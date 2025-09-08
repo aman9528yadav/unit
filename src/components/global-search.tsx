@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Search, StickyNote, History, HelpCircle, Settings, X, CornerDownLeft, ArrowRightLeft, Loader2, Sigma, LayoutGrid } from 'lucide-react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Note } from './notepad';
@@ -251,7 +251,7 @@ export function GlobalSearch() {
         localStorage.setItem('restoreConversion', `1 ${category.units[0].symbol} to ${category.units[1]?.symbol || category.units[0].symbol}`);
       }
     }
-    if (result.type === 'Unit') {
+     if (result.type === 'Unit') {
       const unit = allUnits.find(u => u.symbol === result.id);
       if(unit) {
         const category = conversionCategories.find(c => c.units.some(u => u.symbol === unit.symbol));
