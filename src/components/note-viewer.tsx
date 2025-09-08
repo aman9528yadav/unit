@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Edit, File as FileIcon, Share2 } from 'lucide-react';
+import { ArrowLeft, Edit, File as FileIcon, Share2, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Note } from './notepad';
@@ -14,7 +14,7 @@ import { listenToUserNotes } from '@/services/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 interface UserProfile {
     fullName: string;
@@ -57,7 +57,7 @@ export function NoteViewer({ noteId }: { noteId: string }) {
 
     }, [noteId, router, toast, profile, t]);
 
-    const handleShare = async () => {
+    const handleShareAsImage = async () => {
         if (!note || !noteContentRef.current) return;
 
         if (!navigator.share || !navigator.canShare) {
@@ -89,6 +89,24 @@ export function NoteViewer({ noteId }: { noteId: string }) {
             console.error('Error sharing note:', error);
             toast({ title: "Sharing Failed", description: "Could not share the note as an image.", variant: "destructive" });
         }
+    };
+    
+    const handleExportAsTxt = () => {
+        if (!note || !noteContentRef.current) return;
+        
+        const textContent = noteContentRef.current.innerText || '';
+        const noteString = `Title: ${note.title}\nCategory: ${note.category || 'N/A'}\n\n${textContent}`;
+        
+        const blob = new Blob([noteString], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${note.title || 'note'}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast({ title: "Exported as TXT!" });
     };
 
     const renderAttachment = () => {
@@ -130,9 +148,23 @@ export function NoteViewer({ noteId }: { noteId: string }) {
                     <ArrowLeft />
                 </Button>
                 <div className="flex items-center gap-2">
-                     <Button variant="outline" size="icon" onClick={handleShare}>
-                        <Share2 className="h-4 w-4" />
-                    </Button>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon">
+                                <Share2 className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem onSelect={handleShareAsImage}>
+                                <ImageIcon className="mr-2 h-4 w-4" />
+                                <span>Share as Image</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={handleExportAsTxt}>
+                                <FileIcon className="mr-2 h-4 w-4" />
+                                <span>Export as TXT</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                      <Button asChild>
                         <Link href={`/notes/edit/${note.id}`}>
                             <Edit className="mr-2 h-4 w-4" />

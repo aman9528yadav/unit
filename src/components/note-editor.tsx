@@ -24,7 +24,6 @@ import { listenToUserNotes, updateUserNotes, listenToUserData, UserData } from '
 import { cn } from '@/lib/utils';
 import { Label } from './ui/label';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 
 const FONT_COLORS = [
@@ -39,7 +38,7 @@ const FONT_COLORS = [
 interface UserProfile {
     fullName: string;
     email: string;
-    [key: string]: any;
+    [key:string]: any;
 }
 
 
@@ -367,7 +366,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         }
     };
 
-    const handleShare = async () => {
+    const handleShareAsImage = async () => {
         const contentEl = editorRef.current;
         if (!contentEl) return;
 
@@ -398,6 +397,25 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             console.error('Error sharing note:', error);
             toast({ title: "Sharing Failed", variant: "destructive" });
         }
+    };
+
+    const handleExportAsTxt = () => {
+        const contentEl = editorRef.current;
+        if (!contentEl) return;
+
+        const textContent = contentEl.innerText || '';
+        const noteString = `Title: ${title}\nCategory: ${category}\n\n${textContent}`;
+        
+        const blob = new Blob([noteString], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${title || 'note'}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast({ title: "Exported as TXT!" });
     };
     
     const renderAttachment = () => {
@@ -445,9 +463,23 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <ArrowLeft />
                 </Button>
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={handleShare}>
-                        <Share2 />
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <Share2 />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem onSelect={handleShareAsImage}>
+                                <ImageIcon className="mr-2 h-4 w-4" />
+                                <span>Share as Image</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={handleExportAsTxt}>
+                                <File className="mr-2 h-4 w-4" />
+                                <span>Export as TXT</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                     <Button variant="ghost" size="icon" onClick={handleLockToggle} className={cn(isLocked && "bg-primary/10 text-primary")}>
                        {isLocked ? <Lock /> : <Unlock/>}
                     </Button>
