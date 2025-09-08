@@ -174,13 +174,13 @@ export function Notepad() {
         }
 
         const user = auth.currentUser;
-        if (!user) {
+        if (!user || !user.email) {
             toast({ title: "Authentication error", description: "No user is currently signed in.", variant: "destructive" });
             return;
         }
 
         try {
-            const credential = EmailAuthProvider.credential(profile.email, loginPassword);
+            const credential = EmailAuthProvider.credential(user.email, loginPassword);
             await reauthenticateWithCredential(user, credential);
             setResetStep('new_pass');
             toast({ title: "Verification Successful", description: "You can now set a new note password." });
@@ -609,4 +609,3 @@ export function Notepad() {
         </div>
     );
 }
-
