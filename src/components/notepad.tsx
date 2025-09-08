@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home, ShieldX, ChevronDown, Lock } from 'lucide-react';
+import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home, ShieldX, ChevronDown, Lock, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
+import { Tabs, TabsList, TabsContent } from './ui/tabs';
 import { useLanguage } from '@/context/language-context';
 import { listenToUserData, listenToUserNotes, updateUserNotes, UserData } from '@/services/firestore';
 import { Label } from './ui/label';
@@ -273,6 +273,37 @@ export function Notepad() {
         )
     }
 
+    const NoteAttachment = ({ note }: { note: Note }) => {
+        if (!note.attachment) return null;
+        
+        const isImage = note.attachment.startsWith('data:image/');
+
+        if (layout === 'list') {
+            return (
+                <div className="relative w-16 h-16 my-1 rounded-md overflow-hidden flex-shrink-0">
+                    {isImage ? (
+                        <Image src={note.attachment} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="cover" />
+                    ) : (
+                        <div className="w-full h-full bg-secondary flex items-center justify-center">
+                            <FileText className="w-8 h-8 text-muted-foreground"/>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (layout === 'card' && isImage) {
+            return (
+                 <div className="relative w-full h-32 my-2 rounded-md overflow-hidden">
+                    <Image src={note.attachment} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="cover" />
+                </div>
+            )
+        }
+        
+        return null;
+    };
+
+
     return (
         <div className="w-full max-w-md mx-auto flex flex-col h-screen">
              <header className="flex items-center justify-between p-4 flex-shrink-0 sticky top-0 z-50 bg-background">
@@ -387,17 +418,8 @@ export function Notepad() {
                                                 {note.isFavorite && view !== 'favorites' && <Star size={14} className="text-yellow-400 fill-yellow-400"/>}
                                             </div>
                                         </div>
-                                        {note.attachment && layout === 'card' && (
-                                            <div className="relative w-full h-32 my-2 rounded-md overflow-hidden">
-                                                <Image src={note.attachment} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="cover" />
-                                            </div>
-                                        )}
+                                        <NoteAttachment note={note} />
                                         <div className="flex gap-2 mt-1">
-                                            {note.attachment && layout === 'list' && (
-                                                <div className="relative w-16 h-16 my-1 rounded-md overflow-hidden flex-shrink-0">
-                                                    <Image src={note.attachment} alt={t('notepad.attachmentAlt')} layout="fill" objectFit="cover" />
-                                                </div>
-                                            )}
                                             <div className="text-sm text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: note.content || t('notepad.noContent') }} />
                                         </div>
                                     </div>
