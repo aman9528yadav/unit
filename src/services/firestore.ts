@@ -4,7 +4,7 @@
 
 import { db, rtdb } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
-import { ref, set as setRealtimeDb, onValue, remove as removeRealtimeDb, get, update, goOffline, goOnline } from "firebase/database";
+import { ref, set as setRealtimeDb, onValue, remove as removeRealtimeDb, get, update } from "firebase/database";
 import type { AppNotification } from '@/lib/notifications';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
@@ -567,7 +567,7 @@ export function listenToFeatureLocks(callback: (locks: FeatureLocks | null) => v
 
 // --- USER DATA (RTDB & LocalStorage) ---
 
-const getGuestKey = (key: string) => `guest_${key}`;
+export const getGuestKey = (key: string) => `guest_${key}`;
 
 const getGuestData = (): UserData => {
     if (typeof window === 'undefined') return {} as UserData;
