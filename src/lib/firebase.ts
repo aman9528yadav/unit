@@ -3,7 +3,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getDatabase, enablePersistence } from "firebase/database";
+import { getDatabase } from "firebase/database";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -26,14 +26,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const rtdb = getDatabase(app);
 
-// Enable offline persistence for the Realtime Database
-try {
-    enablePersistence(rtdb);
-} catch (error: any) {
-    if (error.code !== 'failed-precondition') {
-       console.error("Firebase offline persistence error:", error);
-    }
-}
-
+// Firebase Realtime Database SDK automatically handles offline persistence.
+// No extra configuration is needed for web clients.
 
 export { app, auth, db, rtdb };
