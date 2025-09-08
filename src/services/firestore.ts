@@ -669,7 +669,7 @@ export function listenToUserData(email: string | null, callback: (data: UserData
              const guestKeys = [
                 getGuestKey('notes'), getGuestKey('conversionHistory'), getGuestKey('calculationHistory'), 
                 getGuestKey('favoriteConversions'), getGuestKey('customUnits'), getGuestKey('customCategories'),
-                getGuestKey('stats')
+                getGuestKey('stats'), getGuestKey('userVisitHistory'),
             ];
             if (e.key && guestKeys.includes(e.key)) {
                 callback(getGuestData());
@@ -851,6 +851,9 @@ export const mergeLocalDataWithFirebase = async (email: string) => {
     mergedData.totalCalculations = (userData.totalCalculations || 0) + (guestData.totalCalculations || 0);
     mergedData.totalDateCalculations = (userData.totalDateCalculations || 0) + (guestData.totalDateCalculations || 0);
     mergedData.dailyStats = merge({}, userData.dailyStats, guestData.dailyStats);
+     if (guestData.userVisitHistory && guestData.userVisitHistory.length > 0) {
+        mergedData.userVisitHistory = [...new Set([...guestData.userVisitHistory, ...(userData.userVisitHistory || [])])].sort();
+    }
     
     if (Object.keys(mergedData).length > 0) {
         await updateUserData(email, mergedData);
@@ -859,7 +862,8 @@ export const mergeLocalDataWithFirebase = async (email: string) => {
     // Clear guest data from local storage
     const guestKeys = [
         'guest_notes', 'guest_conversionHistory', 'guest_calculationHistory', 
-        'guest_favoriteConversions', 'guest_customUnits', 'guest_customCategories', 'guest_stats'
+        'guest_favoriteConversions', 'guest_customUnits', 'guest_customCategories', 
+        'guest_stats', 'guest_userVisitHistory'
     ];
     guestKeys.forEach(key => localStorage.removeItem(key));
 }
