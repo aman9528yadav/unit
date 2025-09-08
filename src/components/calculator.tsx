@@ -37,37 +37,7 @@ export function Calculator() {
     const [operation, setOperation] = useState<string | undefined>(undefined);
     const [memory, setMemory] = useState(0);
 
-    const audioRef = useRef<HTMLAudioElement>(null);
-    const [isSoundEnabled, setIsSoundEnabled] = useState(true);
-
-    useEffect(() => {
-        const soundEnabled = localStorage.getItem('calculatorSoundEnabled');
-        if (soundEnabled !== null) {
-            setIsSoundEnabled(JSON.parse(soundEnabled));
-        }
-
-        const handleStorageChange = (e: StorageEvent) => {
-            if (e.key === 'calculatorSoundEnabled') {
-                setIsSoundEnabled(e.newValue === null ? true : JSON.parse(e.newValue));
-            }
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-        };
-    }, []);
-
-    const playSound = () => {
-        if (isSoundEnabled && audioRef.current) {
-            audioRef.current.currentTime = 0;
-            audioRef.current.play().catch(e => console.error("Error playing sound:", e));
-        }
-    };
-
     const handleButtonClick = (value: string) => {
-        playSound();
-
         const buttonActions: { [key: string]: () => void } = {
             'AC': () => {
                 setCurrentOperand('0');
@@ -150,7 +120,6 @@ export function Calculator() {
 
   return (
     <div className="w-full max-w-lg mx-auto p-4">
-       <audio ref={audioRef} src="/alarm.mp3" preload="auto"></audio>
       <div className="bg-card/80 rounded-2xl p-6 shadow-lg border-2 border-border/20">
         <div className="header flex justify-between items-center mb-5">
             <div className="font-bold text-xl text-foreground/70 tracking-widest">CALCPRO</div>
@@ -211,4 +180,3 @@ export function Calculator() {
     </div>
   );
 }
-
