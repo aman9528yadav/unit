@@ -324,13 +324,13 @@ export function Dashboard() {
         }
 
         const updateStatsAndStreak = async (email: string | null) => {
-            const processedStats = processUserDataForStats(await (async () => {
-                const data = await listenToUserData(email, () => {});
-                return data;
-            })(), email);
-            setStats(processedStats);
-            const newStreakData = await getStreakData(email);
-            setStreakData(newStreakData);
+             const unsub = listenToUserData(userEmail, (userData) => {
+                const processedStats = processUserDataForStats(userData, userEmail);
+                setStats(processedStats);
+                
+                getStreakData(userEmail).then(setStreakData);
+            });
+            return unsub;
         };
         
         const unsubUpdates = listenToUpdatesFromRtdb((updates) => {
@@ -338,30 +338,26 @@ export function Dashboard() {
             setRecentUpdates(sortedUpdates);
         });
 
-        const unsub = listenToUserData(userEmail, (userData) => {
-            const processedStats = processUserDataForStats(userData, userEmail);
-            setStats(processedStats);
-            
-            getStreakData(userEmail).then(setStreakData);
-        });
+        const unsubStats = updateStatsAndStreak(userEmail);
 
         recordVisit(userEmail);
-        updateStatsAndStreak(userEmail);
 
         const handleStorageChange = (event: StorageEvent) => {
+            const guestStatsKey = 'guest_stats';
             if (event.key === 'userProfile' && event.newValue) {
                 setProfile(JSON.parse(event.newValue));
+                updateStatsAndStreak(JSON.parse(event.newValue).email);
             }
-            if (event.key && (event.key.startsWith('guest_') || event.key.startsWith('user_'))) {
-                updateStatsAndStreak(userEmail);
+             if (!userEmail && event.key === guestStatsKey) {
+                updateStatsAndStreak(null);
             }
         };
         
         window.addEventListener('storage', handleStorageChange);
         return () => {
             window.removeEventListener('storage', handleStorageChange);
-            unsub();
             unsubUpdates();
+            unsubStats.then(unsub => unsub());
         }
     }, []);
   
