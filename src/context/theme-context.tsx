@@ -127,9 +127,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         });
     } else if (['light', 'dark', 'retro', 'glass', 'nord', 'rose-pine', 'sutradhaar'].includes(themeToApply)) {
         root.classList.add(themeToApply);
-        if (themeToApply === 'sutradhaar') {
-           body.classList.add('bg-gradient-to-br', 'from-purple-500', 'to-pink-500');
-        }
     }
   }, []);
   
