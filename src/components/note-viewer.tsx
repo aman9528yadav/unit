@@ -91,22 +91,33 @@ export function NoteViewer({ noteId }: { noteId: string }) {
         }
     };
     
-    const handleExportAsTxt = () => {
+    const handleExportAsTxt = async () => {
         if (!note || !noteContentRef.current) return;
-        
+
+        if (!navigator.share || !navigator.canShare) {
+            toast({ title: "Sharing Not Supported", variant: "destructive" });
+            return;
+        }
+
         const textContent = noteContentRef.current.innerText || '';
         const noteString = `Title: ${note.title}\nCategory: ${note.category || 'N/A'}\n\n${textContent}`;
         
         const blob = new Blob([noteString], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${note.title || 'note'}.txt`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        toast({ title: "Exported as TXT!" });
+        const file = new File([blob], `${note.title || 'note'}.txt`, { type: 'text/plain' });
+
+        try {
+             if (navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: note.title || 'note.txt',
+                    files: [file],
+                });
+            } else {
+                toast({ title: "Cannot share text file", description: "Your browser does not support sharing files.", variant: "destructive" });
+            }
+        } catch (error) {
+            console.error('Error sharing text file:', error);
+            toast({ title: "Sharing Failed", description: "Could not share the note as a text file.", variant: "destructive" });
+        }
     };
 
     const renderAttachment = () => {
