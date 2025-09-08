@@ -41,7 +41,11 @@ import {
   Globe2,
   Bug,
   Shield,
-  AlertTriangle
+  AlertTriangle,
+  FileClock,
+  BookCopy,
+  Receipt,
+  GraduationCap
 } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useRouter } from "next/navigation";
@@ -286,8 +290,8 @@ export function Dashboard() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [showMoreTools, setShowMoreTools] = useState(false);
-  const [showFeatureDialog, setShowFeatureDialog] = useState(false);
   const [featureDialogContent, setFeatureDialogContent] = useState({ title: '', description: '' });
+  const [showFeatureDialog, setShowFeatureDialog] = useState(false);
   const router = useRouter();
 
   const [stats, setStats] = useState<{
@@ -373,7 +377,11 @@ export function Dashboard() {
     ];
     
     const comingSoonTools = [
-        { label: 'AI Smart Search', icon: Wand2, onClick: () => openFeatureDialog("AI Smart Search (Coming Soon)", "A powerful new search experience that understands natural language to find notes, perform conversions, and navigate the app faster than ever."), color: 'text-indigo-400', comingSoon: true },
+        { label: 'AI Smart Search', icon: Wand2, onClick: () => openFeatureDialog("AI Smart Search", "A powerful new search that understands natural language to find notes, perform conversions, and navigate the app faster than ever."), color: 'text-indigo-400', comingSoon: true },
+        { label: 'Shared Notes', icon: BookCopy, onClick: () => openFeatureDialog("Shared Notes & Collab", "Collaborate on notes with friends or colleagues in real-time. Perfect for shopping lists, project planning, and more."), color: 'text-blue-400', comingSoon: true },
+        { label: 'Smart Recipe Converter', icon: GraduationCap, onClick: () => openFeatureDialog("Smart Recipe Converter", "Instantly scale recipe ingredients up or down. Convert volumes (cups, tsp) to weights (grams, oz) for perfect baking results."), color: 'text-orange-400', comingSoon: true },
+        { label: 'Time Zone Converter', icon: FileClock, onClick: () => openFeatureDialog("Time Zone Converter", "Easily schedule meetings and calls across different time zones. See current times around the world at a glance."), color: 'text-green-400', comingSoon: true },
+        { label: 'Expense Tracker', icon: Receipt, onClick: () => openFeatureDialog("Expense Tracker", "A simple way to track daily expenses. Categorize spending, set budgets, and visualize where your money goes."), color: 'text-red-400', comingSoon: true },
     ];
 
     const allTools = [...quickTools, ...moreTools];
@@ -473,15 +481,20 @@ export function Dashboard() {
         </Card>
       </section>
       
-      <section>
-          <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-foreground">Coming Soon</h2>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            {comingSoonTools.map((tool) => (
-                <ToolButton key={tool.label} {...tool} />
-            ))}
-          </div>
+       <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-foreground">Coming Soon</h2>
+        </div>
+        <ScrollArea className="w-full whitespace-nowrap rounded-lg">
+            <div className="flex gap-4 pb-4">
+                {comingSoonTools.map((tool) => (
+                    <div key={tool.label} className="w-32 flex-shrink-0">
+                       <ToolButton {...tool} />
+                    </div>
+                ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </section>
       
       <section>

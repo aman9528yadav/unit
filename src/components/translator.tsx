@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { ArrowRightLeft, Loader2, Languages, Copy, Lightbulb, MessageSquare } from 'lucide-react';
 import { translateText, TranslateTextOutput } from '@/ai/flows/translate-text-flow';
 import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from './ui/scroll-area';
 
 const languages = [
     { value: 'English', label: 'English' },
@@ -124,11 +125,13 @@ export function Translator() {
                             <SelectValue placeholder="Select language" />
                         </SelectTrigger>
                         <SelectContent>
-                            {languages.map(lang => (
-                                <SelectItem key={lang.value} value={lang.value}>
-                                    {lang.label}
-                                </SelectItem>
-                            ))}
+                            <ScrollArea className="h-72">
+                                {languages.map(lang => (
+                                    <SelectItem key={lang.value} value={lang.value}>
+                                        {lang.label}
+                                    </SelectItem>
+                                ))}
+                            </ScrollArea>
                         </SelectContent>
                     </Select>
                     

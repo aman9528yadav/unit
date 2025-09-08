@@ -25,12 +25,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, Info, Copy, Share2, Globe, LayoutGrid, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, User, Lock, ChevronDown, Sparkles, LogIn, Scale, Power, History, Star, Trash2 } from "lucide-react";
+import { ArrowRightLeft, Info, Copy, Share2, Globe, LayoutGrid, RotateCcw, Search, Loader2, Home, FileText, Image as ImageIcon, User, Lock, ChevronDown, Sparkles, LogIn, Scale, Power, History, Star, Trash2, GitCompareArrows } from "lucide-react";
 import { conversionCategories as baseConversionCategories, ConversionCategory, Unit, Region } from "@/lib/conversions";
 import type { ParseConversionQueryOutput } from "@/ai/flows/parse-conversion-flow.ts";
 import { useToast } from "@/hooks/use-toast";
@@ -639,6 +641,7 @@ export function Converter() {
                 </div>
                 
                 <div className="flex flex-col md:flex-row justify-between items-center mt-2 gap-4">
+                     <CompareButton category={selectedCategory} fromUnit={fromUnit} inputValue={inputValue} t={t} />
                     <Button onClick={handleConvertClick} className="w-full">
                         <Power className="mr-2 h-4 w-4"/>
                         {t('converter.convertButton')}
@@ -721,6 +724,67 @@ export function Converter() {
     </div>
   );
 }
+
+const CompareButton = ({ category, fromUnit, inputValue, t }: { category: ConversionCategory; fromUnit: string; inputValue: string, t: any }) => {
+    const comparisonUnits = category.units
+        .filter(u => u.symbol !== fromUnit)
+        .slice(0, 5); // Show up to 5 other units
+
+    const getComparisonResults = () => {
+        const value = parseFloat(inputValue);
+        if (isNaN(value)) return [];
+
+        return comparisonUnits.map(unit => {
+            const result = category.convert(value, fromUnit, unit.symbol) as number;
+            const formattedResult = result.toLocaleString(undefined, {
+                maximumFractionDigits: 5,
+                useGrouping: false,
+            });
+            return {
+                unitName: unit.name,
+                unitSymbol: unit.symbol,
+                value: formattedResult,
+            };
+        });
+    };
+    
+    const results = getComparisonResults();
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="outline" className="w-full">
+                    <GitCompareArrows className="mr-2 h-4 w-4" /> Compare
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Conversion Comparison</DialogTitle>
+                    <DialogDescription>
+                        Comparing {inputValue} {fromUnit} to other units in the {category.name} category.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2">
+                    {results.map(res => (
+                        <div key={res.unitSymbol} className="flex justify-between items-center bg-secondary p-3 rounded-lg">
+                           <div>
+                                <p className="font-semibold text-foreground">{t(`units.${res.unitName.toLowerCase().replace(/[\s().-]/g, '')}`, { defaultValue: res.unitName })}</p>
+                                <p className="text-xs text-muted-foreground">{res.unitSymbol}</p>
+                           </div>
+                           <p className="text-lg font-bold text-primary">{res.value}</p>
+                        </div>
+                    ))}
+                </div>
+                 <DialogFooter>
+                    <Button onClick={() => navigator.clipboard.writeText(results.map(r => `${r.value} ${r.unitSymbol}`).join('\n'))}>
+                        <Copy className="mr-2 h-4 w-4" /> Copy All
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 
 interface ConversionImageProps {
     category: ConversionCategory;
