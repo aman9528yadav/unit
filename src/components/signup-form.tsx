@@ -27,6 +27,7 @@ const handleSuccessfulSignup = async (user: User) => {
         dob: '', // DOB is not available on signup
     };
     localStorage.setItem("userProfile", JSON.stringify(profile));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'userProfile', newValue: JSON.stringify(profile) }));
 
     if (user.email && user.displayName) {
          await logUserEvent({

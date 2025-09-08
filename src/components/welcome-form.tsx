@@ -43,6 +43,8 @@ const handleSuccessfulLogin = async (user: User) => {
     });
 
     localStorage.setItem("userProfile", JSON.stringify(profile));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'userProfile', newValue: JSON.stringify(profile) }));
+
 
     if (user.email && user.displayName) {
          await logUserEvent({
