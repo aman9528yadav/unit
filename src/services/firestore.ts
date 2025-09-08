@@ -4,7 +4,7 @@
 
 import { db, rtdb } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
-import { ref, set as setRealtimeDb, onValue, remove as removeRealtimeDb, get, update } from "firebase/database";
+import { ref, set as setRealtimeDb, onValue, remove as removeRealtimeDb, get, update, goOffline, goOnline } from "firebase/database";
 import type { AppNotification } from '@/lib/notifications';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
@@ -565,7 +565,33 @@ export function listenToFeatureLocks(callback: (locks: FeatureLocks | null) => v
     });
 }
 
-// --- USER DATA (RTDB) ---
+// --- USER DATA (RTDB & LocalStorage) ---
+
+const getGuestKey = (key: string) => `guest_${key}`;
+
+const getGuestData = (): UserData => {
+    if (typeof window === 'undefined') return {} as UserData;
+    const notes = localStorage.getItem(getGuestKey('notes'));
+    const conversionHistory = localStorage.getItem(getGuestKey('conversionHistory'));
+    const calculationHistory = localStorage.getItem(getGuestKey('calculationHistory'));
+    const favoriteConversions = localStorage.getItem(getGuestKey('favoriteConversions'));
+    const customUnits = localStorage.getItem(getGuestKey('customUnits'));
+    const customCategories = localStorage.getItem(getGuestKey('customCategories'));
+    const stats = localStorage.getItem(getGuestKey('stats'));
+
+    const data: Partial<UserData> = {};
+    if (notes) data.notes = JSON.parse(notes);
+    if (conversionHistory) data.conversionHistory = JSON.parse(conversionHistory);
+    if (calculationHistory) data.calculationHistory = JSON.parse(calculationHistory);
+    if (favoriteConversions) data.favoriteConversions = JSON.parse(favoriteConversions);
+    if (customUnits) data.customUnits = JSON.parse(customUnits);
+    if (customCategories) data.customCategories = JSON.parse(customCategories);
+    if (stats) Object.assign(data, JSON.parse(stats));
+
+    return data as UserData;
+};
+
+
 export interface UserData {
     fullName: string;
     email: string;
@@ -597,36 +623,12 @@ export interface UserData {
 }
 /**
  * Retrieves a user's data document from Realtime Database.
- * @param email - The user's email. Returns an empty object if null.
+ * @param email - The user's email. Returns guest data if null.
  * @returns The user data object.
  */
 export async function getUserData(email: string | null): Promise<UserData> {
     if (!email) {
-        // For guest users, aggregate data from localStorage
-        const guestData: Partial<UserData> = {};
-        const notes = localStorage.getItem('guest_notes');
-        const conversionHistory = localStorage.getItem('guest_conversionHistory');
-        const calculationHistory = localStorage.getItem('guest_calculationHistory');
-        const favoriteConversions = localStorage.getItem('guest_favoriteConversions');
-        const customUnits = localStorage.getItem('guest_customUnits');
-        const customCategories = localStorage.getItem('guest_customCategories');
-        const stats = localStorage.getItem('guest_stats');
-
-        if (notes) guestData.notes = JSON.parse(notes);
-        if (conversionHistory) guestData.conversionHistory = JSON.parse(conversionHistory);
-        if (calculationHistory) guestData.calculationHistory = JSON.parse(calculationHistory);
-        if (favoriteConversions) guestData.favoriteConversions = JSON.parse(favoriteConversions);
-        if (customUnits) guestData.customUnits = JSON.parse(customUnits);
-        if (customCategories) guestData.customCategories = JSON.parse(customCategories);
-        if (stats) {
-            const parsedStats = JSON.parse(stats);
-            guestData.dailyStats = parsedStats.dailyStats;
-            guestData.totalConversions = parsedStats.totalConversions;
-            guestData.totalCalculations = parsedStats.totalCalculations;
-            guestData.totalDateCalculations = parsedStats.totalDateCalculations;
-        }
-
-        return guestData as UserData;
+        return getGuestData();
     }
     try {
         const userRef = ref(rtdb, `users/${sanitizeEmail(email)}`);
@@ -640,8 +642,6 @@ export async function getUserData(email: string | null): Promise<UserData> {
 
 /**
  * Creates or updates a user's data in Realtime Database.
- * This uses `update` which is equivalent to a merge, so it won't overwrite entire objects.
- * If the user doesn't exist, it will be created.
  * @param email - The user's email. Does nothing if null.
  * @param data - The data object to merge with existing data.
  */
@@ -649,11 +649,7 @@ export async function updateUserData(email: string | null, data: Partial<UserDat
     if (!email) return;
     try {
         const userRef = ref(rtdb, `users/${sanitizeEmail(email)}`);
-        const snapshot = await get(userRef);
-        const existingData = snapshot.val() || {};
-        const newData = { ...existingData, ...data };
-        
-        await setRealtimeDb(userRef, newData);
+        await update(userRef, data);
     } catch (error) {
         console.error("Error updating user data in RTDB:", error);
     }
@@ -661,36 +657,19 @@ export async function updateUserData(email: string | null, data: Partial<UserDat
 
 
 /**
- * Listens to a user's data document from Realtime Database.
+ * Listens to a user's data document from Realtime Database or local storage for guests.
  * @param email - The user's email.
  * @param callback - The function to call with the user data.
  * @returns An unsubscribe function.
  */
 export function listenToUserData(email: string | null, callback: (data: UserData) => void) {
      if (!email) {
-        const getGuestData = () => {
-            return {
-                notes: JSON.parse(localStorage.getItem('guest_notes') || '[]'),
-                conversionHistory: JSON.parse(localStorage.getItem('guest_conversionHistory') || '[]'),
-                calculationHistory: JSON.parse(localStorage.getItem('guest_calculationHistory') || '[]'),
-                favoriteConversions: JSON.parse(localStorage.getItem('guest_favoriteConversions') || '[]'),
-                customUnits: JSON.parse(localStorage.getItem('guest_customUnits') || '[]'),
-                customCategories: JSON.parse(localStorage.getItem('guest_customCategories') || '[]'),
-                ...JSON.parse(localStorage.getItem('guest_stats') || '{}'),
-            } as UserData;
-        };
-
         callback(getGuestData());
-
         const storageHandler = (e: StorageEvent) => {
              const guestKeys = [
-                'guest_notes', 
-                'guest_conversionHistory', 
-                'guest_calculationHistory', 
-                'guest_favoriteConversions', 
-                'guest_customUnits', 
-                'guest_customCategories',
-                'guest_stats'
+                getGuestKey('notes'), getGuestKey('conversionHistory'), getGuestKey('calculationHistory'), 
+                getGuestKey('favoriteConversions'), getGuestKey('customUnits'), getGuestKey('customCategories'),
+                getGuestKey('stats')
             ];
             if (e.key && guestKeys.includes(e.key)) {
                 callback(getGuestData());
@@ -719,10 +698,10 @@ export function listenToUserData(email: string | null, callback: (data: UserData
  */
 export function listenToUserNotes(email: string | null, callback: (notes: Note[]) => void) {
     if (!email) {
-        const localNotes = localStorage.getItem('guest_notes');
+        const localNotes = localStorage.getItem(getGuestKey('notes'));
         callback(localNotes ? JSON.parse(localNotes) : []);
         const storageHandler = (e: StorageEvent) => {
-            if (e.key === 'guest_notes') {
+            if (e.key === getGuestKey('notes')) {
                 callback(e.newValue ? JSON.parse(e.newValue) : []);
             }
         };
@@ -746,8 +725,9 @@ export function listenToUserNotes(email: string | null, callback: (notes: Note[]
  */
 export async function updateUserNotes(email: string | null, notes: Note[]) {
     if (!email) {
-        localStorage.setItem('guest_notes', JSON.stringify(notes));
-        window.dispatchEvent(new StorageEvent('storage', { key: 'guest_notes', newValue: JSON.stringify(notes) }));
+        const key = getGuestKey('notes');
+        localStorage.setItem(key, JSON.stringify(notes));
+        window.dispatchEvent(new StorageEvent('storage', { key, newValue: JSON.stringify(notes) }));
         return;
     }
     try {
@@ -767,9 +747,8 @@ export const getHistoryKey = (email: string | null, historyType: HistoryType) =>
 
 
 async function addToHistory(email: string | null, historyType: HistoryType, item: string) {
-    const key = getHistoryKey(email, historyType);
-    
     if (!email) {
+        const key = getGuestKey(historyType);
         const currentHistory = JSON.parse(localStorage.getItem(key) || '[]');
         const newHistory = [item, ...currentHistory].slice(0, 100);
         localStorage.setItem(key, JSON.stringify(newHistory));
@@ -798,8 +777,8 @@ export const addCalculationToHistory = (email: string | null, item: string) => a
 
 
 export async function deleteHistoryItem(email: string | null, historyType: HistoryType, itemToDelete: string) {
-    const key = getHistoryKey(email, historyType);
     if(!email) {
+         const key = getGuestKey(historyType);
          const currentHistory = JSON.parse(localStorage.getItem(key) || '[]');
          const newHistory = currentHistory.filter((item: string) => item !== itemToDelete);
          localStorage.setItem(key, JSON.stringify(newHistory));
@@ -815,8 +794,8 @@ export async function deleteHistoryItem(email: string | null, historyType: Histo
 
 
 export async function clearAllHistory(email: string | null, historyType: HistoryType) {
-    const key = getHistoryKey(email, historyType);
     if(!email) {
+        const key = getGuestKey(historyType);
         localStorage.setItem(key, '[]');
         window.dispatchEvent(new StorageEvent('storage', { key, newValue: '[]' }));
         return;
@@ -826,8 +805,8 @@ export async function clearAllHistory(email: string | null, historyType: History
 
 
 export async function setFavorites(email: string | null, favorites: string[]) {
-     const key = getHistoryKey(email, 'favoriteConversions');
      if(!email) {
+        const key = getGuestKey('favoriteConversions');
         localStorage.setItem(key, JSON.stringify(favorites));
         window.dispatchEvent(new StorageEvent('storage', { key, newValue: JSON.stringify(favorites) }));
         return;
