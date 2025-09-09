@@ -52,7 +52,8 @@ import {
   Clipboard,
   Layers,
   Bell,
-  Menu
+  Menu,
+  TrendingDown
 } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useRouter } from "next/navigation";
@@ -151,7 +152,7 @@ export function Dashboard() {
     const unsub = listenToUserData(userEmail, (userData) => {
       if (userData) {
         const processedStats = processUserDataForStats(userData, userEmail);
-        setStats(processedStats);
+        setStats(processedStats as any);
       }
     });
 
@@ -169,7 +170,7 @@ export function Dashboard() {
   const chartConfig = {
       ops: {
           label: "Operations",
-          color: "hsl(var(--accent))",
+          color: "hsl(var(--primary))",
       },
   };
   
@@ -178,9 +179,22 @@ export function Dashboard() {
       'Calculator': <Calculator size={16} className="text-blue-600" />,
       'Date Calcs': <Calendar size={16} className="text-red-600" />,
   }
+  
+  const calculateChange = (key: 'total') => {
+      if (stats.activity.length < 2) {
+          return { changeType: 'neutral' as const };
+      }
+      const today = stats.activity[stats.activity.length - 1]?.[key] || 0;
+      const yesterday = stats.activity[stats.activity.length - 2]?.[key] || 0;
+      const change = today - yesterday;
+      return { changeType: change > 0 ? 'increase' : change < 0 ? 'decrease' : 'neutral' };
+  };
+  
+  const todaysOpsStats = calculateChange('total');
+
 
   const statsData = [
-    { key: "Today", value: stats.todaysOps, icon: <Clock size={16} className="text-purple-700" /> },
+    { key: "Today", value: stats.todaysOps, icon: <Clock size={16} className="text-purple-700" />, changeType: todaysOpsStats.changeType },
     { key: "Streak", value: streakData.currentStreak, icon: <Flame size={16} className="text-orange-500" /> },
     { key: "Saved", value: stats.savedNotes, icon: <Bookmark size={16} className="text-pink-600" /> },
     { key: "All time", value: stats.totalOps, icon: <Star size={16} className="text-yellow-500" /> },
@@ -196,8 +210,12 @@ export function Dashboard() {
             <div className="flex gap-3 pb-2">
             {statsData.map((s) => (
                 <div key={s.key} className="min-w-[120px] flex-shrink-0 p-3 rounded-2xl bg-white shadow-md">
-                <div className="flex items-center gap-2 text-xs text-gray-700">
-                    {s.icon} {s.key}
+                <div className="flex items-center justify-between text-xs text-gray-700">
+                    <div className="flex items-center gap-2">
+                      {s.icon} {s.key}
+                    </div>
+                    {s.changeType === 'increase' && <TrendingUp className="h-4 w-4 text-green-500" />}
+                    {s.changeType === 'decrease' && <TrendingDown className="h-4 w-4 text-red-500" />}
                 </div>
                 <div className="text-xl font-bold mt-1 text-purple-800">{s.value}</div>
                 </div>

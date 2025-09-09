@@ -131,7 +131,7 @@ export function Analytics() {
         const unsub = listenToUserData(userEmail, (userData) => {
             if (userData) {
                 const processed = processUserDataForStats(userData, userEmail);
-                setStats(processed);
+                setStats(processed as any);
                 
                 if (userEmail) {
                     getStreakData(userEmail).then(setStreakData);
@@ -156,7 +156,7 @@ export function Analytics() {
         }
     }, [loadLastActivities]);
     
-    const calculateChange = (key: 'conversions' | 'calculations' | 'dateCalculations') => {
+    const calculateChange = (key: 'conversions' | 'calculations' | 'dateCalculations' | 'notes' | 'total') => {
         if (stats.activity.length < 2) {
             return { today: 0, yesterday: 0, change: 0, percent: 0, changeType: 'neutral' as const };
         }
@@ -171,16 +171,16 @@ export function Analytics() {
     const conversionsStats = calculateChange("conversions");
     const calculationsStats = calculateChange("calculations");
     const dateCalcStats = calculateChange("dateCalculations");
+    const notesStats = calculateChange("notes");
     
     const statCards = [
         { title: "Total Conversions", value: stats.totalConversions, sub: `${conversionsStats.percent > 0 ? '+' : ''}${conversionsStats.percent.toFixed(0)}% vs prev day`, type: conversionsStats.changeType },
         { title: "Calculator Ops", value: stats.totalCalculations, sub: `${calculationsStats.percent > 0 ? '+' : ''}${calculationsStats.percent.toFixed(0)}% vs prev day`, type: calculationsStats.changeType },
         { title: "Date Calculations", value: stats.totalDateCalculations, sub: `${dateCalcStats.percent > 0 ? '+' : ''}${dateCalcStats.percent.toFixed(0)}% vs prev day`, type: dateCalcStats.changeType },
         { title: "Current Streak", value: `${streakData.currentStreak} days`, sub: `Best Streak: ${streakData.bestStreak} days` },
-        { title: "Days Since Last Visit", value: `${streakData.daysNotOpened} days`, sub: "Active today" },
-        { title: "Saved Notes", value: stats.savedNotes, sub: "Total notes saved" },
+        { title: "Saved Notes", value: stats.savedNotes, sub: `${notesStats.change > 0 ? '+' : ''}${notesStats.change} vs prev day`, type: notesStats.changeType },
         { title: "Recycle Bin", value: stats.recycledNotes, sub: "Items in bin" },
-        { title: "Favorite Conversions", value: stats.favoriteConversions, sub: "No favorites yet" },
+        { title: "Favorite Conversions", value: stats.favoriteConversions, sub: "Your top conversions" },
     ];
     
     const chartData = filterActivityData(stats.activity, dateFilter).map(day => ({
@@ -422,4 +422,3 @@ export function Analytics() {
         </div>
     );
 }
-

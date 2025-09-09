@@ -96,6 +96,7 @@ export interface DailyActivity {
     conversions: number;
     calculations: number;
     dateCalculations: number;
+    notes: number;
     total: number;
 }
 
@@ -130,7 +131,7 @@ export const processUserDataForStats = (userData: any, email: string | null): {
     const calculationHistory = userData.calculationHistory || [];
     const totalHistory = conversionHistory.length + calculationHistory.length;
 
-    const todaysOps = (todaysDailyStats.totalConversions || 0) + (todaysDailyStats.totalCalculations || 0) + (todaysDailyStats.totalDateCalculations || 0);
+    const todaysOps = (todaysDailyStats.totalConversions || 0) + (todaysDailyStats.totalCalculations || 0) + (todaysDailyStats.totalDateCalculations || 0) + (todaysDailyStats.notes || 0);
     const totalOps = totalConversions + totalCalculations + totalDateCalculations;
 
     // Get note stats from user data
@@ -158,13 +159,15 @@ export const processUserDataForStats = (userData: any, email: string | null): {
             const conversions = dayStats.totalConversions || 0;
             const calculations = dayStats.totalCalculations || 0;
             const dateCalcs = dayStats.totalDateCalculations || 0;
+            const notesEdited = dayStats.notes || 0;
             
             activity.push({ 
                 date: dateString, 
                 conversions,
                 calculations,
                 dateCalculations: dateCalcs,
-                total: conversions + calculations + dateCalcs
+                notes: notesEdited,
+                total: conversions + calculations + dateCalcs + notesEdited,
             });
          })
     }
@@ -198,4 +201,3 @@ export const getStats = async (email: string | null) => {
     const userData = await getUserData(email);
     return processUserDataForStats(userData, email);
 };
-
