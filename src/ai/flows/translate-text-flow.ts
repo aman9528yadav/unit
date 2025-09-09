@@ -49,12 +49,10 @@ Translate the following text from {{sourceLanguage}} to {{targetLanguage}}.
 Text to translate:
 "{{text}}"
 
-{{#if (eq targetLanguage "Hindi")}}
-IMPORTANT: You must provide TWO translations for Hindi:
+IMPORTANT: If the target language is Hindi, you must provide TWO translations:
 1.  'translatedText': A standard, formal Hindi translation.
 2.  'regionalTranslation': A casual, conversational translation using an accent and phrasing common in the Uttar Pradesh and Bihar regions of India.
 3.  The 'suggestions' should also be in the UP/Bihar regional style.
-{{/if}}
 
 Return ONLY the structured JSON output with no additional commentary.
 `,
