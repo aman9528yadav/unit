@@ -211,7 +211,12 @@ export function Dashboard() {
 
       {/* WEEKLY SUMMARY WITH BARS */}
       <div className="mb-5">
-        <h3 className="text-sm font-semibold mb-2 text-purple-700">Weekly Summary</h3>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-purple-700">Weekly Summary</h3>
+          <Button asChild variant="link" size="sm" className="text-purple-600">
+            <Link href="/analytics">View Analytics</Link>
+          </Button>
+        </div>
         <div className="h-28 px-1">
           <ChartContainer config={chartConfig} className="h-full w-full">
             <RechartsBarChart accessibilityLayer data={chartData}>
