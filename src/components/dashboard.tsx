@@ -167,7 +167,7 @@ export function Dashboard() {
   const chartConfig = {
       ops: {
           label: "Operations",
-          color: "hsl(345 80% 65%)",
+          color: "hsl(var(--primary))",
       },
   };
 
