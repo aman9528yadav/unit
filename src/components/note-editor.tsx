@@ -483,8 +483,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     return (
         <div className="w-full max-w-md mx-auto flex flex-col h-screen">
             <header className="flex items-center justify-between p-4 flex-shrink-0 sticky top-0 z-50 bg-background">
-                <Button variant="ghost" size="icon" onClick={handleBack}>
-                    <ArrowLeft />
+                <Button variant="secondary" className="rounded-xl shadow-md" onClick={handleBack}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
                 </Button>
                 <div className="flex items-center gap-2">
                     <DropdownMenu>

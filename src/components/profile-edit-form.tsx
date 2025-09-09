@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -254,8 +255,9 @@ export function ProfileEditForm() {
         className="w-full max-w-3xl"
       >
         <div className="mb-6">
-          <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => router.back()}>
-            <ArrowLeft size={16} /> Back
+          <Button variant="secondary" className="rounded-xl shadow-md" onClick={() => router.back()}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
           </Button>
         </div>
 
@@ -427,7 +429,7 @@ export function ProfileEditForm() {
               {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
 
-            <p className="mt-8 text-xs text-gray-500 text-center">© 2025 Sutradhar | Owned by Aman Yadav.</p>
+            <p className="mt-8 text-xs text-gray-500 text-center">© 2025 Sutradhaar | Owned by Aman Yadav.</p>
           </CardContent>
         </Card>
       </motion.div>

@@ -36,7 +36,7 @@ import { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DailyActivity, processUserDataForStats } from "@/lib/stats";
+import { DailyActivity, processUserDataForStats, TopFeature } from "@/lib/stats";
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ComposedChart, Bar as RechartsBar, Legend, Sector, AreaChart, Area } from "recharts";
 import { useLanguage } from "@/context/language-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
@@ -47,6 +47,7 @@ import { cn } from "@/lib/utils";
 import { listenToUserData, UserData } from "@/services/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { useRouter } from "next/navigation";
 
 
 type ChartType = "bar" | "line" | "area";
@@ -61,6 +62,7 @@ interface LastActivityItem {
 
 export function Analytics() {
     const { t } = useLanguage();
+    const router = useRouter();
     const [stats, setStats] = useState({
         totalConversions: 0,
         totalCalculations: 0,
@@ -243,8 +245,9 @@ export function Analytics() {
             <div className="max-w-md mx-auto space-y-6 pb-10">
                 <div className="flex justify-between items-center sticky top-0 bg-background/70 backdrop-blur z-10 py-2">
                     <h1 className="text-2xl font-bold text-primary">Analytics</h1>
-                    <Button asChild variant="secondary" className="rounded-xl shadow-md px-3 py-1 text-sm">
-                        <Link href="/">Back</Link>
+                    <Button variant="secondary" className="rounded-xl shadow-md" onClick={() => router.push('/')}>
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back
                     </Button>
                 </div>
 

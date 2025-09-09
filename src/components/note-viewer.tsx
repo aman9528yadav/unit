@@ -165,8 +165,9 @@ export function NoteViewer({ noteId }: { noteId: string }) {
     return (
         <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
             <header className="flex items-center justify-between sticky top-0 z-10 bg-background/80 backdrop-blur-sm py-4">
-                <Button variant="ghost" size="icon" onClick={() => router.push('/notes')}>
-                    <ArrowLeft />
+                <Button variant="secondary" className="rounded-xl shadow-md" onClick={() => router.push('/notes')}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
                 </Button>
                 <div className="flex items-center gap-2">
                      <DropdownMenu>

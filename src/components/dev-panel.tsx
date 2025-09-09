@@ -416,9 +416,10 @@ export function DevPanel() {
     return (
         <div className="w-full max-w-lg mx-auto flex flex-col gap-6 p-4">
             <header className="flex items-center gap-4">
-                 <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                    <ArrowLeft />
-                </Button>
+                 <Button variant="secondary" className="rounded-xl shadow-md" onClick={() => router.back()}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
+                 </Button>
                 <div>
                     <h1 className="text-2xl font-bold">Developer Panel</h1>
                     <p className="text-muted-foreground">Tools for testing and debugging.</p>

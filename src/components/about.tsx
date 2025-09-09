@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Link from "next/link";
@@ -93,8 +92,9 @@ export function About() {
   return (
     <div className="relative p-4 sm:p-8 space-y-16 bg-background text-foreground overflow-hidden">
       <header className="absolute top-4 left-4 z-10">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft />
+        <Button variant="secondary" className="rounded-xl shadow-md" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
         </Button>
       </header>
       {/* Floating Background Animation */}

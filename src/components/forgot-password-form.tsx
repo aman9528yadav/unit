@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -73,8 +74,9 @@ export function ForgotPasswordForm() {
   return (
     <div className="w-full max-w-sm mx-auto flex flex-col justify-center min-h-screen bg-background text-foreground p-6">
       <header className="flex items-center gap-4 mb-8">
-        <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10" onClick={() => router.back()}>
-            <ArrowLeft />
+        <Button variant="secondary" className="rounded-xl shadow-md" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
         </Button>
         <h1 className="text-2xl font-bold text-primary">{t('forgotPassword.title')}</h1>
       </header>
