@@ -75,8 +75,8 @@ import { Checkbox } from "./ui/checkbox";
 import { DailyActivity, processUserDataForStats, TopFeature } from "@/lib/stats";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart as RechartsBarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { format, intervalToDuration, isPast } from "date-fns";
-import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData, listenToUpdatesFromRtdb, UpdateItem, listenToDashboardWelcomeMessage, setDashboardWelcomeMessage, BetaWelcomeMessage, listenToBetaWelcomeMessage, listenToComingSoonItems, ComingSoonItem, defaultComingSoonItems } from '@/services/firestore';
+import { format, intervalToDuration, isPast, parseISO } from "date-fns";
+import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData, listenToUpdatesFromRtdb, UpdateItem, listenToDashboardWelcomeMessage, setDashboardWelcomeMessage, BetaWelcomeMessage, listenToBetaWelcomeMessage, listenToComingSoonItems, ComingSoonItem, defaultComingSoonItems, HowToUseFeature, listenToHowToUseFeaturesFromRtdb } from '@/services/firestore';
 import { getStreakData, recordVisit, StreakData } from "@/lib/streak";
 import { SidebarTrigger } from "./ui/sidebar";
 
@@ -106,18 +106,6 @@ const moreQuickAccessItems = [
     { icon: <Info size={18} />, label: "Help", href: "/how-to-use" },
 ];
 
-const newsItems = [
-    { title: "Live sync by email", desc: "Now user can sync data live like history", href:"/updates" },
-    { title: "Profile Tools", desc: "Manage your profile and preferences", href:"/profile" },
-];
-
-const discoverItems = [
-    { icon: <Search size={16} />, title: "Smart Search", subtitle: "Type conversions like '10kg to lbs'", href: "/how-to-use" },
-    { icon: <Layers size={16} />, title: "Custom Units", subtitle: "Add your own units", href: "/settings/custom-units"},
-    { icon: <Calendar size={16} />, title: "Time Utilities", subtitle: "Pomodoro, timer, stopwatch", href: "/time" },
-];
-
-
 export function Dashboard() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [showAllShortcuts, setShowAllShortcuts] = useState(false);
@@ -134,6 +122,9 @@ export function Dashboard() {
   });
   const [streakData, setStreakData] = useState<StreakData>({ currentStreak: 0, bestStreak: 0, daysNotOpened: 0});
   const [comingSoonItems, setComingSoonItems] = useState<ComingSoonItem[]>(defaultComingSoonItems);
+  const [whatsNewItems, setWhatsNewItems] = useState<UpdateItem[]>([]);
+  const [discoverItems, setDiscoverItems] = useState<HowToUseFeature[]>([]);
+
 
   useEffect(() => {
     const userEmail = localStorage.getItem("userProfile")
@@ -144,7 +135,7 @@ export function Dashboard() {
       recordVisit(userEmail);
     }
 
-    const unsub = listenToUserData(userEmail, (userData) => {
+    const unsubUserData = listenToUserData(userEmail, (userData) => {
       if (userData) {
         const processedStats = processUserDataForStats(userData, userEmail);
         setStats(processedStats as any);
@@ -156,10 +147,21 @@ export function Dashboard() {
     }
     
     const unsubComingSoon = listenToComingSoonItems(setComingSoonItems);
+    
+    const unsubUpdates = listenToUpdatesFromRtdb((updates) => {
+        const sortedUpdates = [...updates].sort((a,b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+        setWhatsNewItems(sortedUpdates.slice(0, 2));
+    });
+    
+    const unsubDiscover = listenToHowToUseFeaturesFromRtdb((features) => {
+        setDiscoverItems(features.slice(-3).reverse());
+    });
 
     return () => {
-        unsub();
+        unsubUserData();
         unsubComingSoon();
+        unsubUpdates();
+        unsubDiscover();
     };
   }, []);
 
@@ -299,22 +301,25 @@ export function Dashboard() {
             <Link href="/updates" className="text-xs text-primary hover:underline">See all</Link>
         </div>
         <div className="space-y-2">
-          {newsItems.map((item, index) => (
-            <NewsItem key={index} title={item.title} desc={item.desc} href={item.href} />
+          {whatsNewItems.map((item, index) => (
+            <NewsItem key={index} title={item.title} desc={item.description} href="/updates" />
           ))}
         </div>
       </div>
 
-      {/* DISCOVER / ABOUT */}
+      {/* DISCOVER SUTRADHAAR */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-primary">Discover Sutradhaar</h3>
              <Link href="/how-to-use" className="text-xs text-primary hover:underline">See all</Link>
         </div>
         <div className="space-y-2">
-          {discoverItems.map((item, index) => (
-            <InfoItem key={index} icon={item.icon} title={item.title} subtitle={item.subtitle} href={item.href} />
-          ))}
+          {discoverItems.map((item, index) => {
+               const Icon = (LucideIcons as any)[item.icon] || LucideIcons.Zap;
+               return (
+                    <InfoItem key={index} icon={<Icon size={16} />} title={item.title} subtitle={item.description} href="/how-to-use" />
+               )
+          })}
         </div>
       </div>
 
