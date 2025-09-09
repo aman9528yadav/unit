@@ -216,7 +216,7 @@ body {
   }
 
   .sutradhaar {
-    --background: 240 10% 99%;
+    --background: 220 13% 98%; /* #F6F7FC */
     --foreground: 240 5.1% 45.1%; /* #71717A */
     --card: 240 10% 100%;
     --card-foreground: 240 5.1% 45.1%;
@@ -236,7 +236,7 @@ body {
     --input: 240 40% 95%;
     --ring: 262.1 83.3% 57.8%;
     --radius: 0.7rem;
-    --sidebar-background: 240 10% 100%;
+    --sidebar-background: 220 13% 98%; /* #F6F7FC */
   }
 }
 
@@ -273,4 +273,3 @@ body {
 
 
     
-
