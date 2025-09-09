@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { ArrowRightLeft, Loader2, Languages, Copy, Lightbulb, MessageSquare } from 'lucide-react';
+import { ArrowRightLeft, Loader2, Languages, Copy } from 'lucide-react';
 import { translateText, TranslateTextOutput } from '@/ai/flows/translate-text-flow';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from './ui/scroll-area';
@@ -29,7 +29,7 @@ const languages = [
 
 export function Translator() {
     const [inputText, setInputText] = useState('');
-    const [translationResult, setTranslationResult] = useState<TranslateTextOutput | null>(null);
+    const [translatedText, setTranslatedText] = useState('');
     const [targetLanguage, setTargetLanguage] = useState('Hindi');
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
@@ -55,7 +55,7 @@ export function Translator() {
         startTransition(async () => {
             try {
                 const result = await translateText({ text: inputText, targetLanguage });
-                setTranslationResult(result);
+                setTranslatedText(result.translatedText);
             } catch (error) {
                 console.error("Translation failed:", error);
                 toast({
@@ -68,9 +68,9 @@ export function Translator() {
     };
     
     const handleSwap = () => {
-        if (!translationResult?.translatedText) return;
-        setInputText(translationResult.translatedText);
-        setTranslationResult(null);
+        if (!translatedText) return;
+        setInputText(translatedText);
+        setTranslatedText('');
     }
     
     const handleCopyToClipboard = (text: string) => {
@@ -90,7 +90,7 @@ export function Translator() {
                     <Languages className="text-primary"/>
                     AI Translator
                 </CardTitle>
-                <CardDescription>Translate text into different languages and get word suggestions using AI.</CardDescription>
+                <CardDescription>Translate text into different languages using AI.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -103,7 +103,7 @@ export function Translator() {
                     <div className="relative">
                          <Textarea 
                             placeholder="Translation will appear here..."
-                            value={translationResult?.translatedText || ''}
+                            value={translatedText}
                             readOnly
                             className="min-h-[150px] bg-secondary text-base pr-12"
                         />
@@ -111,8 +111,8 @@ export function Translator() {
                             variant="ghost"
                             size="icon"
                             className="absolute top-2 right-2"
-                            onClick={() => handleCopyToClipboard(translationResult?.translatedText || '')}
-                            disabled={!translationResult?.translatedText}
+                            onClick={() => handleCopyToClipboard(translatedText)}
+                            disabled={!translatedText}
                         >
                             <Copy className="w-5 h-5"/>
                         </Button>
@@ -135,7 +135,7 @@ export function Translator() {
                         </SelectContent>
                     </Select>
                     
-                    <Button onClick={handleSwap} variant="outline" size="icon" className="flex-shrink-0" disabled={!translationResult?.translatedText}>
+                    <Button onClick={handleSwap} variant="outline" size="icon" className="flex-shrink-0" disabled={!translatedText}>
                         <ArrowRightLeft className="w-5 h-5"/>
                     </Button>
 
@@ -144,43 +144,6 @@ export function Translator() {
                         Translate
                     </Button>
                 </div>
-
-                {translationResult?.suggestions && translationResult.suggestions.length > 0 && (
-                    <div className="pt-4 border-t">
-                        <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
-                            <Lightbulb className="text-yellow-500" />
-                            Suggestions
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {translationResult.suggestions.map((suggestion, index) => (
-                                <div key={index} className="bg-secondary p-3 rounded-lg flex flex-col gap-3">
-                                    <div className="flex justify-between items-start">
-                                        <p className="font-bold text-primary">{suggestion.word}</p>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8"
-                                            onClick={() => handleCopyToClipboard(suggestion.word)}
-                                        >
-                                            <Copy className="w-4 h-4"/>
-                                        </Button>
-                                    </div>
-                                    <div className="text-sm text-muted-foreground space-y-1">
-                                        <p><strong>Source:</strong> {suggestion.meaning.sourceLanguage}</p>
-                                        <p><strong>{targetLanguage}:</strong> {suggestion.meaning.targetLanguage}</p>
-                                    </div>
-                                     {suggestion.example && (
-                                        <div className="text-sm text-muted-foreground space-y-2 border-t border-border/50 pt-3 mt-1">
-                                            <p className="font-semibold flex items-center gap-1.5"><MessageSquare className="w-4 h-4" /> Examples</p>
-                                            <p className="italic">"{suggestion.example.sourceLanguage}"</p>
-                                            <p className="italic">"{suggestion.example.targetLanguage}"</p>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
             </CardContent>
         </Card>
     );
