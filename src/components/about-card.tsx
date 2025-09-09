@@ -30,7 +30,7 @@ export function AboutCard() {
     }, []);
 
     return (
-        <Card className="bg-card border-border shadow-sm">
+        <Card className="bg-white shadow-md">
             <CardHeader>
                 <CardTitle>About</CardTitle>
             </CardHeader>
