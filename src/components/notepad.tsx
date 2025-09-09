@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home, ShieldX, ChevronDown, Lock, FileText, Eye, EyeOff, KeyRound } from 'lucide-react';
+import { Menu, Search, MoreVertical, Edit, Star, Trash2, RotateCcw, StickyNote, LayoutGrid, List, Folder, Tag, X, Home, ShieldX, ChevronDown, Lock, FileText, Eye, EyeOff, KeyRound, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -371,7 +371,7 @@ export function Notepad() {
                 <div>
                      <Link href="/notes/edit/new">
                         <Button variant="ghost" size="icon">
-                            <Edit size={20} />
+                            <Plus size={20} />
                         </Button>
                     </Link>
                 </div>
