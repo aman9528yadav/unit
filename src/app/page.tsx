@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { Dashboard } from "@/components/dashboard";
 import { Skeleton } from '@/components/ui/skeleton';
 import { listenToUserData, UserData } from '@/services/firestore';
+import { cn } from '@/lib/utils';
+import { useTheme } from '@/context/theme-context';
 
 function DashboardSkeleton() {
     return (
@@ -34,6 +36,7 @@ function DashboardSkeleton() {
 export default function Home() {
     const router = useRouter();
     const [authStatus, setAuthStatus] = useState<'loading' | 'unauthenticated' | 'authenticated'>('loading');
+    const { theme } = useTheme();
 
     useEffect(() => {
         const storedProfile = localStorage.getItem("userProfile");
@@ -86,7 +89,10 @@ export default function Home() {
     
     if (authStatus === 'authenticated') {
          return (
-            <main className="w-full flex-grow p-4 sm:p-6">
+            <main className={cn(
+                "w-full flex-grow p-4 font-sans",
+                theme === 'sutradhaar' && 'sutradhaar-theme'
+            )}>
                 <Dashboard />
             </main>
         );
@@ -94,3 +100,5 @@ export default function Home() {
 
     return null;
 }
+
+    

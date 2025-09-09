@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
@@ -45,7 +44,14 @@ import {
   FileClock,
   BookCopy,
   Receipt,
-  GraduationCap
+  GraduationCap,
+  Bookmark,
+  Clock,
+  PieChart,
+  Clipboard,
+  Layers,
+  Bell,
+  Menu
 } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useRouter } from "next/navigation";
@@ -66,551 +72,263 @@ import { Label } from "./ui/label";
 import { Checkbox } from "./ui/checkbox";
 import { DailyActivity, processUserDataForStats } from "@/lib/stats";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Bar, BarChart as RechartsBarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { format, intervalToDuration, isPast } from "date-fns";
 import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData, listenToUpdatesFromRtdb, UpdateItem, listenToDashboardWelcomeMessage, setDashboardWelcomeMessage, BetaWelcomeMessage, listenToBetaWelcomeMessage } from "@/services/firestore";
 import { getStreakData, recordVisit, StreakData } from "@/lib/streak";
+import { SidebarTrigger } from "./ui/sidebar";
 
 
-const ToolButton = ({ icon: Icon, label, href, color, target, onClick, comingSoon = false }: any) => {
-    const content = (
-        <motion.div
-            className={cn(
-                "group aspect-square rounded-xl border border-border bg-card hover:bg-secondary transition-all p-4 flex flex-col items-center justify-center gap-2 shadow-sm text-center",
-                comingSoon && "opacity-60 cursor-not-allowed"
-            )}
-            whileHover={{ scale: comingSoon ? 1 : 1.05 }}
-            whileTap={{ scale: comingSoon ? 1 : 0.95 }}
-        >
-            {comingSoon && <Badge variant="secondary" className="absolute top-2 right-2">Soon</Badge>}
-            <div className={cn("size-12 grid place-items-center rounded-full bg-secondary", color)}>
-                <Icon className="size-6" />
-            </div>
-            <p className="font-semibold text-foreground text-sm">{label}</p>
-        </motion.div>
-    );
+const statsData = [
+  { key: "Today", value: 9, icon: <Clock size={16} className="text-purple-700" /> },
+  { key: "Streak", value: 2, icon: <Flame size={16} className="text-orange-500" /> },
+  { key: "Saved", value: 2, icon: <Bookmark size={16} className="text-pink-600" /> },
+  { key: "All time", value: 39, icon: <Star size={16} className="text-yellow-500" /> }
+];
 
-    const isInternalLink = href && href.startsWith('/');
+const weeklySummaryData = [
+  { day: "Mon", value: 5 },
+  { day: "Tue", value: 7 },
+  { day: "Wed", value: 3 },
+  { day: "Thu", value: 6 },
+  { day: "Fri", value: 8 },
+  { day: "Sat", value: 2 },
+  { day: "Sun", value: 4 }
+];
 
-    if (onClick) {
-        return <div onClick={onClick} className="cursor-pointer">{content}</div>;
-    }
+const quickAccessItems = [
+    { icon: <PieChart size={18} />, label: "Converter", href: "/converter" },
+    { icon: <Zap size={18} />, label: "Calculator", href: "/calculator" },
+    { icon: <BookOpen size={18} />, label: "Notes", href: "/notes" },
+    { icon: <Layers size={18} />, label: "Translator", href: "/translator" },
+    { icon: <Clock size={18} />, label: "History", href: "/history" },
+    { icon: <Clipboard size={18} />, label: "News", href: "/news" },
+];
 
-    if (isInternalLink) {
-        return <Link href={href}>{content}</Link>;
-    }
+const moreQuickAccessItems = [
+    { icon: <Calendar size={18} />, label: "Events" },
+    { icon: <Star size={18} />, label: "Favorites", href: "/history?tab=favorites" },
+    { icon: <Info size={18} />, label: "Help", href: "/how-to-use" },
+];
 
-    if (href) {
-        return (
-            <a href={href} target={target || '_blank'} rel="noopener noreferrer">
-                {content}
-            </a>
-        );
-    }
-    
-    return <div className="cursor-pointer">{content}</div>;
-};
+const comingSoonItems = [
+    { title: "AI Smart Search", subtitle: "Type conversions like '10kg to lbs'" },
+    { title: "Shared Notes", subtitle: "Collaborate with others" },
+    { title: "Smart Recipes", subtitle: "Context-aware steps", soon: true },
+];
 
+const newsItems = [
+    { title: "Live sync by email", desc: "Now user can sync data live like history" },
+    { title: "Profile Tools", desc: "Manage your profile and preferences" },
+];
 
-const UpdateCard = ({ update }: { update: UpdateItem }) => {
-    const Icon = (LucideIcons as any)[update.icon] || Rocket;
-    return (
-        <Card className="bg-card border-border shadow-sm hover:bg-secondary transition-colors w-[240px] flex-shrink-0 flex flex-col p-4">
-          <div className="flex items-start gap-3 flex-1">
-              <div 
-                className="size-10 grid place-items-center rounded-lg"
-                style={{ backgroundColor: update.bgColor, color: update.textColor }}
-              >
-                <Icon className="size-5" />
-              </div>
-              <div className="flex-1">
-                  <p className="font-semibold text-foreground">{update.title}</p>
-              </div>
-          </div>
-          <p className="text-xs text-muted-foreground pt-2 line-clamp-2">
-              {update.description}
-          </p>
-        </Card>
-    );
-};
-
-
-const HowToUseCard = ({ icon: Icon, title, description, href }: any) => (
-  <Link href={href}>
-    <motion.div
-      className="bg-card p-4 rounded-lg border border-border flex items-start gap-4 hover:bg-secondary transition-colors cursor-pointer"
-      whileHover={{ y: -2 }}
-    >
-      <div className="p-3 bg-primary/10 rounded-full text-primary">
-        <Icon className="size-6" />
-      </div>
-      <div>
-        <p className="font-semibold text-foreground">{title}</p>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
-    </motion.div>
-  </Link>
-);
-
-
-interface UserProfile {
-    fullName: string;
-    email: string;
-    profileImage?: string;
-    [key: string]: any;
-}
-
-
-const CountdownBox = ({ value, label }: { value: number; label: string }) => (
-    <div className="bg-primary/10 p-3 rounded-lg text-primary text-center">
-        <p className="text-2xl font-bold">{String(value).padStart(2, '0')}</p>
-        <p className="text-xs text-primary/80">{label}</p>
-    </div>
-);
-
-const categoryIcons: { [key: string]: React.ElementType } = {
-  "New Feature": Rocket,
-  "Bug Fix": Bug,
-  "Improvement": Beaker,
-  "Security": Shield,
-  "Face Issue": AlertTriangle,
-};
-
-function UpdateBanner() {
-    const [updateInfo, setUpdateInfo] = useState<NextUpdateInfo | null>(null);
-    const [timeLeft, setTimeLeft] = useState<Duration | null>(null);
-    const { t } = useLanguage();
-
-    useEffect(() => {
-        const unsubscribe = listenToNextUpdateInfo((info) => {
-            setUpdateInfo(info);
-        });
-        return () => unsubscribe();
-    }, []);
-
-    useEffect(() => {
-        if (!updateInfo?.targetDate) {
-            setTimeLeft(null);
-            return;
-        }
-
-        const targetDate = new Date(updateInfo.targetDate);
-        if (isPast(targetDate)) {
-             setTimeLeft(null);
-             return;
-        }
-
-        const timer = setInterval(() => {
-            const now = new Date();
-            if (targetDate > now) {
-                setTimeLeft(intervalToDuration({ start: now, end: targetDate }));
-            } else {
-                setTimeLeft(null);
-                clearInterval(timer);
-            }
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, [updateInfo?.targetDate]);
-
-    if (!updateInfo?.showOnDashboard) {
-        return null;
-    }
-    
-    const Icon = categoryIcons[updateInfo.category || ''] || Rocket;
-    const categoryTitle = updateInfo.category === 'Custom' ? updateInfo.customCategoryTitle : updateInfo.category;
-
-    if (updateInfo.targetDate && isPast(new Date(updateInfo.targetDate))) {
-        return (
-             <Card className="bg-green-50 border-green-200 text-green-800">
-                <CardHeader className="flex-row items-center justify-between">
-                    <CardTitle className="text-base flex items-center gap-2"><CheckCircle2 className="text-green-600"/> Update is Live!</CardTitle>
-                    <Link href="/updates">
-                        <Button variant="ghost" size="sm" className="text-green-800 hover:bg-green-100">
-                            See What's New <ArrowRight className="ml-2 h-4 w-4"/>
-                        </Button>
-                    </Link>
-                </CardHeader>
-             </Card>
-        )
-    }
-
-    if (!timeLeft) {
-        return null;
-    }
-
-    return (
-        <Card className="bg-primary/5 border-primary/20">
-            <CardHeader>
-                <div className="flex items-center justify-between">
-                    <CardTitle className="text-base flex items-center gap-2"><Timer className="text-primary"/> Next Update In</CardTitle>
-                    <Link href="/updates">
-                         <Button variant="ghost" size="sm">Details <ArrowRight className="ml-2 h-4 w-4"/></Button>
-                    </Link>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <div className="flex gap-2 sm:gap-4 justify-center">
-                    <CountdownBox value={timeLeft.days ?? 0} label="Days" />
-                    <CountdownBox value={timeLeft.hours ?? 0} label="Hours" />
-                    <CountdownBox value={timeLeft.minutes ?? 0} label="Minutes" />
-                    <CountdownBox value={timeLeft.seconds ?? 0} label="Seconds" />
-                </div>
-                 {categoryTitle && (
-                    <div className="mt-4 flex justify-center">
-                       <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground p-2 px-4 rounded-full text-sm font-medium">
-                          <Icon className="w-5 h-5 text-primary" />
-                          <span>{categoryTitle}</span>
-                       </div>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
-    );
-}
-
-const StatCard = ({ title, value, unit, icon: Icon, color }: { title: string, value: string | number, unit?: string, icon: React.ElementType, color: string }) => (
-    <div className="bg-card rounded-xl p-4 flex items-center gap-4 shadow-sm border border-border">
-        <div className={cn("size-10 grid place-items-center rounded-lg", color)}>
-            <Icon className="size-5" />
-        </div>
-        <div>
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="font-bold text-lg text-foreground">
-                {value} {unit && <span className="text-sm font-medium">{unit}</span>}
-            </p>
-        </div>
-    </div>
-);
+const discoverItems = [
+    { icon: <Search size={16} />, title: "Smart Search", subtitle: "Type conversions like '10kg to lbs'", href: "/how-to-use" },
+    { icon: <Layers size={16} />, title: "Custom Units", subtitle: "Add your own units", href: "/settings/custom-units"},
+    { icon: <Calendar size={16} />, title: "Time Utilities", subtitle: "Pomodoro, timer, stopwatch", href: "/time" },
+];
 
 
 export function Dashboard() {
-  const { t } = useLanguage();
-  const [isClient, setIsClient] = useState(false);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [showLoginDialog, setShowLoginDialog] = useState(false);
-  const [showMoreTools, setShowMoreTools] = useState(false);
-  const [featureDialogContent, setFeatureDialogContent] = useState({ title: '', description: '' });
-  const [showFeatureDialog, setShowFeatureDialog] = useState(false);
-  const router = useRouter();
-
-  const [stats, setStats] = useState<{
-      todaysOps: number;
-      totalOps: number;
-      savedNotes: number;
-      activity: DailyActivity[];
-  }>({
-      todaysOps: 0,
-      totalOps: 0,
-      savedNotes: 0,
-      activity: [],
-  });
-
-  const [streakData, setStreakData] = useState<StreakData>({
-      currentStreak: 0,
-      bestStreak: 0,
-      daysNotOpened: 0,
-  });
-
-  const [recentUpdates, setRecentUpdates] = useState<UpdateItem[]>([]);
-
-    useEffect(() => {
-        setIsClient(true);
-        const storedProfileData = localStorage.getItem("userProfile");
-        const userEmail = storedProfileData ? JSON.parse(storedProfileData).email : null;
-        
-        if(storedProfileData) {
-            setProfile(JSON.parse(storedProfileData));
-        }
-
-        const updateStatsAndStreak = async (email: string | null) => {
-             const unsub = listenToUserData(userEmail, (userData) => {
-                const processedStats = processUserDataForStats(userData, userEmail);
-                setStats(processedStats);
-                
-                getStreakData(userEmail).then(setStreakData);
-            });
-            return unsub;
-        };
-        
-        const unsubUpdates = listenToUpdatesFromRtdb((updates) => {
-            const sortedUpdates = updates.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            setRecentUpdates(sortedUpdates);
-        });
-
-        const unsubStats = updateStatsAndStreak(userEmail);
-
-        recordVisit(userEmail);
-
-        const handleStorageChange = (event: StorageEvent) => {
-            const guestStatsKey = 'guest_stats';
-            if (event.key === 'userProfile' && event.newValue) {
-                setProfile(JSON.parse(event.newValue));
-                updateStatsAndStreak(JSON.parse(event.newValue).email);
-            }
-             if (!userEmail && event.key === guestStatsKey) {
-                updateStatsAndStreak(null);
-            }
-        };
-        
-        window.addEventListener('storage', handleStorageChange);
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-            unsubUpdates();
-            unsubStats.then(unsub => unsub());
-        }
-    }, []);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [showAllShortcuts, setShowAllShortcuts] = useState(false);
   
-  
-  const openFeatureDialog = (title: string, description: string) => {
-    setFeatureDialogContent({ title, description });
-    setShowFeatureDialog(true);
-  };
-
-    const quickTools = [
-      { label: t('dashboard.tools.converter'), icon: Sigma, href: "/converter", color: "text-blue-400" },
-      { label: t('dashboard.tools.calculator'), icon: Calculator, href: "/calculator", color: "text-orange-400" },
-      { label: t('dashboard.tools.notes'), icon: NotebookPen, href: "/notes", color: "text-yellow-400" },
-      { label: 'Translator', icon: Globe2, href: "/translator", color: 'text-purple-400' },
-      { label: t('dashboard.tools.history'), icon: History, href: "/history", color: "text-blue-400" },
-      { label: 'News & Updates', icon: Newspaper, href: "/news", color: 'text-green-400' },
-    ];
-    
-    const moreTools = [
-        { label: t('dashboard.tools.favorites'), icon: Star, href: '/history?tab=favorites', color: 'text-yellow-500' },
-        { label: t('dashboard.tools.dateCalc'), icon: Calendar, href: "/time?tab=date-diff", color: "text-green-400" },
-        { label: t('dashboard.tools.timer'), icon: Timer, href: '/time?tab=timer', color: 'text-red-500' },
-        { label: t('dashboard.tools.stopwatch'), icon: Hourglass, href: '/time?tab=stopwatch', color: 'text-indigo-500' },
-        { label: t('dashboard.tools.settings'), icon: Settings, href: "/settings", color: "text-gray-400" },
-    ];
-    
-    const comingSoonTools = [
-        { label: 'AI Smart Search', icon: Wand2, onClick: () => openFeatureDialog("AI Smart Search", "A powerful new search that understands natural language to find notes, perform conversions, and navigate the app faster than ever."), color: 'text-indigo-400', comingSoon: true },
-        { label: 'Shared Notes', icon: BookCopy, onClick: () => openFeatureDialog("Shared Notes & Collab", "Collaborate on notes with friends or colleagues in real-time. Perfect for shopping lists, project planning, and more."), color: 'text-blue-400', comingSoon: true },
-        { label: 'Smart Recipe Converter', icon: GraduationCap, onClick: () => openFeatureDialog("Smart Recipe Converter", "Instantly scale recipe ingredients up or down. Convert volumes (cups, tsp) to weights (grams, oz) for perfect baking results."), color: 'text-orange-400', comingSoon: true },
-        { label: 'Time Zone Converter', icon: FileClock, onClick: () => openFeatureDialog("Time Zone Converter", "Easily schedule meetings and calls across different time zones. See current times around the world at a glance."), color: 'text-green-400', comingSoon: true },
-        { label: 'Expense Tracker', icon: Receipt, onClick: () => openFeatureDialog("Expense Tracker", "A simple way to track daily expenses. Categorize spending, set budgets, and visualize where your money goes."), color: 'text-red-400', comingSoon: true },
-    ];
-
-    const allTools = [...quickTools, ...moreTools];
-    const toolsToShow = showMoreTools ? allTools : allTools.slice(0, 6);
-
-
-    const howToUseItems = [
-      {
-        icon: Search,
-        title: "Smart Search",
-        description: "Type conversions like '10kg to lbs' directly.",
-        href: "/how-to-use"
-      },
-      {
-        icon: Beaker,
-        title: "Custom Units",
-        description: "Add your own units for specialized tasks.",
-        href: "/how-to-use"
-      },
-      {
-        icon: Timer,
-        title: "Time Utilities",
-        description: "Use the Pomodoro timer, stopwatch, and more.",
-        href: "/how-to-use"
-      },
-    ];
-    
-    const chartConfig = {
-      conversions: {
-        label: "Conversions",
-        color: "hsl(var(--chart-1))",
-      },
-      calculations: {
-        label: "Calculator Ops",
-        color: "hsl(var(--chart-2))",
-      },
-      dateCalculations: {
-        label: "Date Calcs",
-        color: "hsl(var(--chart-3))",
-      },
-    };
-
-    const formattedChartData = (stats.activity || []).map(item => ({
-        ...item,
-        date: format(new Date(item.date), "EEE")
-    }))
-
-  if (!isClient) {
-    return null;
-  }
+  const allQuickAccess = [...quickAccessItems, ...moreQuickAccessItems];
+  const shortcutsToShow = showAllShortcuts ? allQuickAccess : quickAccessItems;
 
   return (
-    <motion.div 
-        className="w-full max-w-lg mx-auto flex flex-col gap-8 py-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-    >
-        
-      <UpdateBanner />
-
-      <section>
-          <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-foreground">Statistics</h2>
-              <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
-                    <Link href="/analytics">View Analytics <ArrowRight className="size-4" /></Link>
-                </Button>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-             <StatCard title={t('dashboard.todayOps')} value={stats.todaysOps} icon={TrendingUp} color="text-green-500 bg-green-500/10" />
-             <StatCard title={t('dashboard.currentStreak')} value={streakData.currentStreak} icon={Flame} color="text-orange-500 bg-orange-500/10" unit={t('dashboard.days')} />
-             <StatCard title={t('dashboard.savedNotes')} value={stats.savedNotes} icon={NotebookPen} color="text-yellow-500 bg-yellow-500/10" />
-             <StatCard title={t('dashboard.allTimeOps')} value={stats.totalOps} icon={BarChart3} color="text-blue-500 bg-blue-500/10" />
-          </div>
-      </section>
-
-      <section>
-        <Card className="bg-card border-border shadow-sm">
-          <CardHeader>
-            <CardTitle>{t('dashboard.quickAccess')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-3">
-              {toolsToShow.map((t) => (
-                <ToolButton key={t.label} {...t} />
-              ))}
-            </div>
-             <Button 
-                variant="outline" 
-                className="w-full mt-4"
-                onClick={() => setShowMoreTools(!showMoreTools)}
-            >
-                {showMoreTools ? t('dashboard.showLess') : t('dashboard.showMore')}
-                <ChevronDown className={cn("ml-2 h-4 w-4 transition-transform", showMoreTools && "rotate-180")} />
-            </Button>
-          </CardContent>
-        </Card>
-      </section>
-      
-       <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Coming Soon</h2>
+    <div className="text-gray-800 max-w-sm mx-auto">
+      {/* NAVBAR */}
+      <div className="flex items-center gap-3 justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <SidebarTrigger asChild>
+            <button className="p-2 rounded-xl bg-white shadow-md">
+                <Menu size={18} />
+            </button>
+          </SidebarTrigger>
+          <div className="text-base font-bold text-purple-700">Sutradhaar</div>
         </div>
-        <ScrollArea className="w-full whitespace-nowrap rounded-lg">
-            <div className="flex gap-4 pb-4">
-                {comingSoonTools.map((tool) => (
-                    <div key={tool.label} className="w-32 flex-shrink-0">
-                       <ToolButton {...tool} />
-                    </div>
-                ))}
+        <div className="flex items-center gap-2">
+           <button className="p-2 rounded-xl bg-white shadow-md">
+            <Search size={16} />
+          </button>
+          <Notifications />
+           <Link href="/profile">
+             <button className="p-2 rounded-xl bg-white shadow-md">
+                <User size={16} />
+            </button>
+          </Link>
+        </div>
+      </div>
+
+      {/* STAT CARDS - HORIZONTAL SCROLL */}
+      <div className="mb-5">
+        <ScrollArea className="w-full whitespace-nowrap">
+            <div className="flex gap-3 pb-2">
+            {statsData.map((s) => (
+                <div key={s.key} className="min-w-[120px] flex-shrink-0 p-3 rounded-2xl bg-white shadow-md">
+                <div className="flex items-center gap-2 text-xs text-gray-700">
+                    {s.icon} {s.key}
+                </div>
+                <div className="text-xl font-bold mt-1 text-purple-800">{s.value}</div>
+                </div>
+            ))}
             </div>
             <ScrollBar orientation="horizontal" />
         </ScrollArea>
-      </section>
-      
-      <section>
-         <Card>
-            <CardHeader className="flex-row items-center justify-between">
-                <div>
-                    <CardTitle>Weekly Report</CardTitle>
-                    <CardDescription>Your activity over the last 7 days.</CardDescription>
-                </div>
-                <Button asChild variant="outline" size="sm">
-                    <Link href="/analytics">View Analytics</Link>
-                </Button>
-            </CardHeader>
-            <CardContent>
-                <ChartContainer config={chartConfig} className="h-48 w-full">
-                    <BarChart data={formattedChartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                       <CartesianGrid vertical={false} strokeDasharray="3 3"/>
-                       <XAxis dataKey="date" tickLine={false} axisLine={false} />
-                       <YAxis tickLine={false} axisLine={false} />
-                       <ChartTooltip 
-                        content={<ChartTooltipContent />}
-                       />
-                       <Bar dataKey="conversions" fill="var(--color-conversions)" radius={4} stackId="a" />
-                       <Bar dataKey="calculations" fill="var(--color-calculations)" radius={4} stackId="a" />
-                       <Bar dataKey="dateCalculations" fill="var(--color-dateCalculations)" radius={4} stackId="a" />
-                    </BarChart>
-                </ChartContainer>
-            </CardContent>
-         </Card>
-      </section>
+      </div>
 
-      <section>
-          <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-foreground">{t('dashboard.whatsNew')}</h2>
-              <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
-                  <Link href="/updates">
-                      {t('dashboard.seeAll')} <ArrowRight className="size-4" />
-                  </Link>
-              </Button>
-          </div>
-          <ScrollArea className="w-full whitespace-nowrap rounded-lg">
-            <div className="flex gap-4 pb-4">
-                {recentUpdates.map((update) => (
-                    <UpdateCard key={update.id} update={update} />
-                ))}
+      {/* WEEKLY SUMMARY WITH BARS */}
+      <div className="mb-5">
+        <h3 className="text-sm font-semibold mb-2 text-purple-700">Weekly Summary</h3>
+        <div className="flex items-end gap-2 h-28 px-1">
+          {weeklySummaryData.map((w) => (
+            <div key={w.day} className="flex flex-col items-center flex-1">
+              <motion.div 
+                className="w-6 bg-gradient-to-t from-purple-300 to-pink-300 rounded-md"
+                initial={{ height: 0 }}
+                animate={{ height: `${w.value * 10}px` }}
+                transition={{ duration: 0.5, delay: Math.random() * 0.5 }}
+              />
+              <div className="text-xs text-gray-500 mt-1">{w.day}</div>
             </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-      </section>
-
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Discover Sutradhaar</h2>
-           <Button asChild variant="link" className="gap-1 text-primary hover:text-primary/90">
-              <Link href="/how-to-use">
-                  {t('dashboard.seeAll')} <ArrowRight className="size-4" />
-              </Link>
-          </Button>
-        </div>
-        <div className="space-y-3">
-          {howToUseItems.map((item) => (
-            <HowToUseCard key={item.title} {...item} />
           ))}
         </div>
-      </section>
-      
-    <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
-      <AlertDialogContent>
-        <AlertDialogHeader className="items-center text-center">
-          <div className="p-3 bg-primary/10 rounded-full mb-4 w-fit">
-            <Sparkles className="w-8 h-8 text-primary" />
-          </div>
-          <AlertDialogTitle className="text-2xl">{t('dashboard.unlockProfile.title')}</AlertDialogTitle>
-          <AlertDialogDescription className="max-w-xs">
-            {t('dashboard.unlockProfile.description')}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="flex-col-reverse sm:flex-col-reverse gap-2">
-          <AlertDialogCancel>{t('dashboard.unlockProfile.cancel')}</AlertDialogCancel>
-          <AlertDialogAction onClick={() => router.push('/welcome')} className="bg-primary hover:bg-primary/90">
-            <LogIn className="mr-2"/>
-            {t('dashboard.unlockProfile.confirm')}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-    
-      
-      <AlertDialog open={showFeatureDialog} onOpenChange={setShowFeatureDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader className="items-center text-center">
-            <div className="p-3 bg-primary/10 rounded-full mb-4 w-fit">
-              <Sparkles className="w-8 h-8 text-primary" />
-            </div>
-            <AlertDialogTitle className="text-2xl">{featureDialogContent.title}</AlertDialogTitle>
-            <AlertDialogDescription className="max-w-xs">
-              {featureDialogContent.description}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setShowFeatureDialog(false)}>Got it!</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      </div>
 
-    <section>
-        <AboutCard />
-      </section>
-    </motion.div>
+      {/* QUICK ACCESS */}
+      <div className="mb-5">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-purple-700">Quick Access</h3>
+          <button className="text-xs text-purple-600">Customize</button>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {shortcutsToShow.map((item, index) => (
+            <Shortcut key={index} icon={item.icon} label={item.label} href={item.href} />
+          ))}
+        </div>
+        <div className="flex justify-center mt-3">
+          <button onClick={() => setShowAllShortcuts(!showAllShortcuts)} className="px-3 py-1 text-xs rounded-lg bg-gradient-to-r from-purple-200 to-pink-200 text-purple-800">
+            {showAllShortcuts ? "Show Less" : "Show More"}
+          </button>
+        </div>
+      </div>
+
+      {/* COMING SOON - HORIZONTAL */}
+      <div className="mb-5">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-purple-700">Coming Soon</h3>
+          <span className="text-xs text-gray-500">Preview</span>
+        </div>
+        <ScrollArea className="w-full whitespace-nowrap">
+            <div className="flex gap-3 pb-2">
+            {comingSoonItems.map((item, index) => (
+                <ComingCard key={index} title={item.title} subtitle={item.subtitle} soon={item.soon} />
+            ))}
+            </div>
+             <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </div>
+
+      {/* WHATS NEW */}
+      <div className="mb-5">
+        <h3 className="text-sm font-semibold mb-2 text-purple-700">What's New</h3>
+        <div className="space-y-2">
+          {newsItems.map((item, index) => (
+            <NewsItem key={index} title={item.title} desc={item.desc} />
+          ))}
+        </div>
+      </div>
+
+      {/* DISCOVER / ABOUT */}
+      <div className="mb-6">
+        <h3 className="text-sm font-semibold mb-2 text-purple-700">Discover Sutradhaar</h3>
+        <div className="space-y-2">
+          {discoverItems.map((item, index) => (
+            <InfoItem key={index} icon={item.icon} title={item.title} subtitle={item.subtitle} href={item.href} />
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-12">
+        <div className="p-3 rounded-2xl bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold text-purple-700">About</div>
+              <div className="text-xs text-gray-600">Sutradhaar · Unit Converter</div>
+            </div>
+            <button onClick={() => setAboutOpen((v) => !v)} className="text-xs text-purple-600">
+              {aboutOpen ? "Hide" : "Details"}
+            </button>
+          </div>
+
+          {aboutOpen && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 text-xs text-gray-700">
+              <div>Version: beta 1.2</div>
+              <div>Developer: Aman Yadav</div>
+              <div className="mt-2 flex gap-2">
+                <button className="px-3 py-1 rounded-lg bg-purple-200 text-purple-800 text-xs">Contact</button>
+                <button className="px-3 py-1 rounded-lg bg-pink-200 text-pink-800 text-xs">About Us</button>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
+
+/* --- Helper components --- */
+function Shortcut({ icon, label, href }: { icon: React.ReactNode, label: string, href?: string }) {
+    const content = (
+        <div className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white shadow-sm text-xs text-purple-800">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-purple-200 to-pink-200">{icon}</div>
+            <div>{label}</div>
+        </div>
+    );
+
+    if (href) {
+        return <Link href={href}>{content}</Link>
+    }
+    return <button>{content}</button>;
+}
+
+
+function ComingCard({ title, subtitle, soon }: { title: string, subtitle: string, soon?: boolean }) {
+  return (
+    <div className="min-w-[180px] p-3 rounded-2xl bg-white shadow-sm">
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-medium text-purple-800">{title}</div>
+        {soon && <div className="text-[10px] px-2 py-1 rounded-full bg-yellow-200 text-yellow-800">Soon</div>}
+      </div>
+      <div className="text-xs text-gray-500 mt-2">{subtitle}</div>
+    </div>
+  );
+}
+
+function NewsItem({ title, desc }: { title: string, desc: string }) {
+  return (
+    <div className="p-3 rounded-xl bg-white shadow-sm">
+      <div className="text-sm font-medium text-purple-800">{title}</div>
+      <div className="text-xs text-gray-500 mt-1">{desc}</div>
+    </div>
+  );
+}
+
+function InfoItem({ icon, title, subtitle, href }: { icon: React.ReactNode, title: string, subtitle: string, href?: string }) {
+    const content = (
+        <div className="p-3 rounded-2xl bg-white shadow-sm flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-blue-200 to-purple-200">{icon}</div>
+            <div>
+                <div className="text-sm font-medium text-purple-800">{title}</div>
+                <div className="text-xs text-gray-500">{subtitle}</div>
+            </div>
+        </div>
+    );
+    if (href) {
+        return <Link href={href}>{content}</Link>;
+    }
+    return <div>{content}</div>;
+}
+
+    

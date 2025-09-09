@@ -14,6 +14,7 @@ export default {
         body: ['Inter', 'sans-serif'],
         headline: ['Inter', 'sans-serif'],
         code: ['monospace'],
+        sans: ['Inter', 'sans-serif'],
       },
       clipPath: {
         q: 'polygon(0 0, 100% 0, 100% 70%, 0 100%)',
@@ -110,3 +111,5 @@ export default {
     },
   ],
 } satisfies Config;
+
+    
