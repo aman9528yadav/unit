@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
@@ -168,7 +169,7 @@ export function Dashboard() {
   const chartConfig = {
       ops: {
           label: "Operations",
-          color: "hsl(var(--primary))",
+          color: "hsl(var(--accent))",
       },
   };
   
@@ -213,7 +214,7 @@ export function Dashboard() {
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-purple-700">Weekly Summary</h3>
-          <Button asChild variant="link" size="sm" className="text-purple-600">
+           <Button asChild variant="link" size="sm" className="text-purple-600">
             <Link href="/analytics">View Analytics</Link>
           </Button>
         </div>

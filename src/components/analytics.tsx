@@ -195,9 +195,9 @@ export function Analytics() {
                     <XAxis dataKey="day" fontSize={12} />
                     <YAxis fontSize={12} />
                     <Tooltip />
-                    <Line type="monotone" dataKey="conversions" stroke="#a78bfa" strokeWidth={2} />
-                    <Line type="monotone" dataKey="notes" stroke="#f0abfc" strokeWidth={2} />
-                    <Line type="monotone" dataKey="dateCalculations" stroke="#f9a8d4" strokeWidth={2} />
+                    <Line type="monotone" dataKey="conversions" stroke="hsl(var(--primary))" strokeWidth={2} />
+                    <Line type="monotone" dataKey="notes" stroke="hsl(var(--accent))" strokeWidth={2} />
+                    <Line type="monotone" dataKey="dateCalculations" stroke="hsl(var(--secondary))" strokeWidth={2} />
                 </LineChart>
             );
             case "area": return (
@@ -205,9 +205,9 @@ export function Analytics() {
                     <XAxis dataKey="day" fontSize={12} />
                     <YAxis fontSize={12} />
                     <Tooltip />
-                    <Area type="monotone" dataKey="conversions" stackId="1" stroke="#a78bfa" fill="#ede9fe" />
-                    <Area type="monotone" dataKey="notes" stackId="1" stroke="#f0abfc" fill="#fae8ff" />
-                    <Area type="monotone" dataKey="dateCalculations" stackId="1" stroke="#f9a8d4" fill="#fdf2f8" />
+                    <Area type="monotone" dataKey="conversions" stackId="1" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.2)" />
+                    <Area type="monotone" dataKey="notes" stackId="1" stroke="hsl(var(--accent))" fill="hsl(var(--accent) / 0.2)" />
+                    <Area type="monotone" dataKey="dateCalculations" stackId="1" stroke="hsl(var(--secondary))" fill="hsl(var(--secondary) / 0.2)" />
                 </AreaChart>
             );
             case "bar": default: return (
@@ -216,10 +216,10 @@ export function Analytics() {
                     <YAxis fontSize={12} />
                     <Tooltip />
                     <Legend />
-                    <RechartsBar dataKey="conversions" fill="#a78bfa" barSize={30} />
-                    <RechartsBar dataKey="notes" fill="#f0abfc" barSize={30} />
-                    <RechartsBar dataKey="dateCalculations" fill="#f9a8d4" barSize={30} />
-                    <Line type="monotone" dataKey="conversions" stroke="#fb7185" strokeWidth={3} dot={false} />
+                    <RechartsBar dataKey="conversions" fill="hsl(var(--primary))" barSize={30} />
+                    <RechartsBar dataKey="notes" fill="hsl(var(--accent))" barSize={30} />
+                    <RechartsBar dataKey="dateCalculations" fill="hsl(var(--secondary))" barSize={30} />
+                    <Line type="monotone" dataKey="conversions" stroke="hsl(var(--destructive))" strokeWidth={3} dot={false} />
                 </ComposedChart>
             );
         }
@@ -232,17 +232,17 @@ export function Analytics() {
         { name: 'Notes', value: stats.savedNotes },
     ].filter(item => item.value > 0);
     
-    const PIE_COLORS = ["#a78bfa", "#f0abfc", "#f9a8d4", "#a5b4fc"];
+    const PIE_COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--secondary))", "#a5b4fc"];
 
     const onPieEnter = useCallback((_: any, index: number) => {
         setActiveIndex(index);
     }, []);
 
     return (
-        <div className="min-h-screen flex flex-col bg-gradient-to-b from-purple-50 via-pink-50 to-white p-4 overflow-y-auto">
+        <div className="min-h-screen flex flex-col bg-background p-4 overflow-y-auto">
             <div className="max-w-md mx-auto space-y-6 pb-10">
-                <div className="flex justify-between items-center sticky top-0 bg-purple-50/70 backdrop-blur z-10 py-2">
-                    <h1 className="text-2xl font-bold text-purple-700">Analytics</h1>
+                <div className="flex justify-between items-center sticky top-0 bg-background/70 backdrop-blur z-10 py-2">
+                    <h1 className="text-2xl font-bold text-primary">Analytics</h1>
                     <Button asChild variant="secondary" className="rounded-xl shadow-md px-3 py-1 text-sm">
                         <Link href="/">Back</Link>
                     </Button>
@@ -322,7 +322,7 @@ export function Analytics() {
                         </div>
                     </CardHeader>
                     <CardContent className="h-72 overflow-x-auto">
-                        <div className="min-w-[600px] h-64">
+                        <div className="min-w-[600px] sm:min-w-full h-64">
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={chartType + dateFilter}
