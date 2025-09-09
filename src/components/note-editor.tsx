@@ -131,7 +131,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             unsubUserData();
         };
 
-    }, [noteId, isNewNote, router, toast, profile, t, allNotes]);
+    }, [isNewNote, noteId, router, toast, profile, t]);
 
     useEffect(() => {
         if (editorRef.current && content && !contentSetRef.current) {
