@@ -235,7 +235,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
           <MaintenanceRedirect>
             <SidebarProvider>
                 <div className="flex min-h-screen items-start justify-center flex-col">
-                    <div className="w-full max-w-[412px] mx-auto flex flex-col flex-grow bg-background/80 backdrop-blur-sm">
+                    <div className="w-full max-w-[412px] mx-auto flex flex-col flex-grow bg-background">
                         <Header />
                         <PageContent>{children}</PageContent>
                     </div>
