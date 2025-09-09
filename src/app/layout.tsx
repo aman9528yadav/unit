@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { cn } from '@/lib/utils';
-import { SidebarProvider, Sidebar, SidebarClose, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarClose, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X, User, Info, Newspaper, Rocket, Palette, Languages, Hourglass, Calendar, Mail, Crown, Sparkles, LogIn, LogOut } from 'lucide-react';
@@ -24,6 +24,7 @@ import { motion, PanInfo } from 'framer-motion';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Header } from '@/components/header';
+import { auth } from '@/lib/firebase';
 
 
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
@@ -116,26 +117,6 @@ const navSections = [
 
 function PageContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const [profile, setProfile] = useState<Partial<UserData> | null>(null);
-  const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
-
-  useEffect(() => {
-    const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
-    if (userEmail) {
-        const unsub = listenToUserData(userEmail, (data) => {
-            setProfile(data);
-        });
-        return () => unsub();
-    }
-     const unsubAppInfo = listenToAboutInfoFromRtdb((data) => {
-      if (data?.appInfo) {
-        setAppInfo(data.appInfo);
-      }
-    });
-
-    return () => unsubAppInfo();
-  }, []);
 
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     // Navigate back if swiped right with enough velocity
@@ -164,27 +145,8 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
   const [profile, setProfile] = useState<Partial<UserData> | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
-  const [isCalculatorFullScreen, setIsCalculatorFullScreen] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   
-  useEffect(() => {
-    const checkFullScreen = () => {
-        if (pathname === '/calculator') {
-             const isFullScreen = document.body.classList.contains('calculator-fullscreen');
-             setIsCalculatorFullScreen(isFullScreen);
-        } else {
-            setIsCalculatorFullScreen(false);
-        }
-    }
-    checkFullScreen();
-
-    const observer = new MutationObserver(checkFullScreen);
-    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-
-    return () => observer.disconnect();
-  }, [pathname]);
-
   useEffect(() => {
     const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
     setIsLoggedIn(!!userEmail);
@@ -195,13 +157,6 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
         });
         return () => unsub();
     }
-     const unsubAppInfo = listenToAboutInfoFromRtdb((data) => {
-      if (data?.appInfo) {
-        setAppInfo(data.appInfo);
-      }
-    });
-
-    return () => unsubAppInfo();
   }, []);
 
 
