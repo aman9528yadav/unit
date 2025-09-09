@@ -17,12 +17,13 @@ import { cn } from '@/lib/utils';
 import { SidebarProvider, Sidebar, SidebarClose, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X, User, Info, Newspaper, Rocket, Palette, Languages, Hourglass, Calendar, Mail, Crown, Sparkles, LogIn } from 'lucide-react';
+import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X, User, Info, Newspaper, Rocket, Palette, Languages, Hourglass, Calendar, Mail, Crown, Sparkles, LogIn, LogOut } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { motion, PanInfo } from 'framer-motion';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
@@ -73,93 +74,45 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
 }
 
 
-const allNavLinks = [
-    { href: "/", label: "Dashboard", icon: Home, requiresAuth: false },
-    { href: "/converter", label: "Converter", icon: Sigma, requiresAuth: false },
-    { href: "/calculator", label: "Calculator", icon: Calculator, requiresAuth: false },
-    { href: "/notes", label: "Notes", icon: NotebookPen, requiresAuth: false },
-    { href: "/translator", label: "AI Translator", icon: Languages, requiresAuth: false },
-    { href: "/history", label: "History", icon: History, requiresAuth: true },
-    { href: "/time?tab=timer", label: "Timer", icon: Timer, requiresAuth: false },
-    { href: "/time?tab=stopwatch", label: "Stopwatch", icon: Hourglass, requiresAuth: false },
-    { href: "/time?tab=date-diff", label: "Date Calc", icon: Calendar, requiresAuth: false },
-    { href: "/premium", label: "Go Premium", icon: Crown, requiresAuth: false },
-    { href: "https://aman9528.wixstudio.com/my-site-3", label: "News", icon: Newspaper, isExternal: true, requiresAuth: false },
-    { href: "/profile", label: "Profile", icon: User, requiresAuth: true },
-    { href: "/settings", label: "Settings", icon: Settings, requiresAuth: true },
-    { href: "/updates", label: "Updates", icon: Rocket, requiresAuth: false },
-    { href: "/about", label: "About", icon: Info, requiresAuth: false },
-    { href: "/how-to-use", label: "Help", icon: HelpCircle, requiresAuth: false },
-    { href: "https://aman9528.wixstudio.com/my-site-3/aman", label: "Contact Us", icon: Mail, isExternal: true, requiresAuth: false },
-]
-
-function SidebarSelectors() {
-    const { language, setLanguage } = useLanguage();
-    const { theme, setTheme, customTheme } = useTheme();
-    const [profile, setProfile] = useState<{email:string} | null>(null);
-
-    useEffect(() => {
-        const storedProfile = localStorage.getItem("userProfile");
-        if (storedProfile) {
-            setProfile(JSON.parse(storedProfile));
-        }
-    }, [])
-
-    const isGuest = !profile;
-
-    const handleThemeChange = (newTheme: string) => {
-        setTheme(newTheme as any);
-        if (profile?.email) {
-            updateUserData(profile.email, { settings: { theme: newTheme } });
-        }
+const navSections = [
+    { 
+        title: "📊 Productivity", 
+        links: [
+            { href: "/", label: "Dashboard", icon: Home },
+            { href: "/converter", label: "Converter", icon: Sigma },
+            { href: "/calculator", label: "Calculator", icon: Calculator },
+            { href: "/notes", label: "Notes", icon: NotebookPen },
+            { href: "/time?tab=date-diff", label: "Date Calc", icon: Calendar },
+        ]
+    },
+    { 
+        title: "⏱️ Time Tools", 
+        links: [
+            { href: "/history", label: "History", icon: History, requiresAuth: true },
+            { href: "/time?tab=timer", label: "Timer", icon: Timer },
+            { href: "/time?tab=stopwatch", label: "Stopwatch", icon: Hourglass },
+        ]
+    },
+    {
+        title: "🌐 Online Tools",
+        links: [
+            { href: "/translator", label: "AI Translator", icon: Languages },
+            { href: "https://aman9528.wixstudio.com/my-site-3", label: "News", icon: Newspaper, isExternal: true },
+        ]
+    },
+    {
+        title: "⚙️ Settings",
+        links: [
+            { href: "/profile", label: "Profile", icon: User, requiresAuth: true },
+            { href: "/settings", label: "Settings", icon: Settings, requiresAuth: true },
+            { href: "/updates", label: "Updates", icon: Rocket },
+            { href: "/premium", label: "Go Premium", icon: Crown },
+            { href: "/about", label: "About", icon: Info },
+            { href: "/how-to-use", label: "Help", icon: HelpCircle },
+            { href: "https://aman9528.wixstudio.com/my-site-3/aman", label: "Contact Us", icon: Mail, isExternal: true },
+        ]
     }
-    
-    const handleLanguageChange = (newLang: string) => {
-        setLanguage(newLang as 'en' | 'hi');
-         if (profile?.email) {
-            updateUserData(profile.email, { settings: { language: newLang } });
-        }
-    }
-
-    const themes = [
-      { name: 'Light', value: 'light' },
-      { name: 'Dark', value: 'dark' },
-      { name: 'Sutradhaar', value: 'sutradhaar' },
-      { name: 'Retro', value: 'retro' },
-      { name: 'Glass', value: 'glass' },
-      { name: 'Nord', value: 'nord' },
-      { name: 'Rose Pine', value: 'rose-pine' },
-      ...(customTheme ? [{ name: 'Custom', value: 'custom' }] : [])
-    ];
-
-    return (
-        <div className="grid grid-cols-2 gap-4 w-[250px] mb-8">
-            <div>
-                 <Label className="text-xs text-black/70">Theme</Label>
-                 <Select value={theme} onValueChange={handleThemeChange} disabled={isGuest}>
-                    <SelectTrigger className="h-8 text-black bg-white/50 border-black/20">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {themes.map(t => <SelectItem key={t.value} value={t.value}>{t.name}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-            </div>
-             <div>
-                <Label className="text-xs text-black/70">Language</Label>
-                <Select value={language} onValueChange={handleLanguageChange} disabled={isGuest}>
-                     <SelectTrigger className="h-8 text-black bg-white/50 border-black/20">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="hi">Hindi</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-        </div>
-    )
-}
+];
 
 function PageContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -275,7 +228,6 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
     return () => unsubAppInfo();
   }, []);
 
-  const navLinks = allNavLinks.filter(link => !link.requiresAuth || isLoggedIn);
 
   const handleLinkClick = (e: React.MouseEvent, href: string, requiresAuth: boolean) => {
     if (requiresAuth && !isLoggedIn) {
@@ -283,6 +235,13 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
       setShowLoginDialog(true);
     }
   };
+  
+  const handleLogout = () => {
+    auth.signOut().then(() => {
+        localStorage.removeItem("userProfile");
+        router.push("/logout");
+    });
+  }
 
   return (
     <html lang="en">
@@ -303,40 +262,72 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
                     <PageContent>{children}</PageContent>
                 </div>
                 <Sidebar>
-                    <SidebarContent className="p-4 flex flex-col items-center justify-center">
-                          <div className="absolute top-4 flex flex-col items-center gap-4">
-                          <SidebarSelectors />
-                          <SidebarClose asChild>
-                            <Button variant="ghost" size="icon" className="text-black hover:bg-black/10 rounded-full">
-                              <X className="h-6 w-6" />
+                    <SidebarContent>
+                         <SidebarClose asChild>
+                            <Button
+                                variant="ghost"
+                                className="absolute top-4 right-4 text-2xl font-bold text-gray-600 dark:text-gray-300 hover:text-red-500"
+                            >
+                                ✕
                             </Button>
-                          </SidebarClose>
+                        </SidebarClose>
+
+                        <div className="flex items-center gap-4 mb-8 mt-10 p-3 bg-white/70 dark:bg-neutral-800/70 rounded-2xl shadow-md">
+                            <Avatar className="w-14 h-14 bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg">
+                                <AvatarImage src={profile?.profileImage || ''} />
+                                <AvatarFallback className="text-white font-bold text-lg bg-transparent">{profile?.fullName?.[0] || 'G'}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Welcome back,</p>
+                                <p className="text-lg font-semibold text-gray-900 dark:text-white">{profile?.fullName || 'Guest'}</p>
+                                {isLoggedIn ? (
+                                    <button onClick={() => router.push('/profile')} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">View Profile</button>
+                                ): (
+                                    <button onClick={() => router.push('/welcome')} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Login</button>
+                                )}
+                            </div>
                         </div>
-                        <div className="text-center text-black mb-8 mt-24">
-                          <h2 className="text-xl font-medium">Welcome back,</h2>
-                          <p className="text-3xl font-bold">{profile?.fullName || 'Guest'}</p>
+
+                         <div className="space-y-8 overflow-y-auto h-[65vh] pb-6 pr-2 custom-scrollbar">
+                           {navSections.map(section => {
+                                const filteredLinks = section.links.filter(link => !link.requiresAuth || isLoggedIn);
+                                if(filteredLinks.length === 0) return null;
+
+                               return (
+                                <section key={section.title}>
+                                    <h2 className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-3">{section.title}</h2>
+                                    <SidebarMenu>
+                                         {filteredLinks.map((link) => (
+                                            <SidebarMenuItem key={link.href}>
+                                                <Link 
+                                                href={link.href} 
+                                                passHref
+                                                onClick={(e) => handleLinkClick(e, link.href, !!link.requiresAuth)}
+                                                target={link.isExternal ? "_blank" : undefined}
+                                                rel={link.isExternal ? "noopener noreferrer" : undefined}
+                                                >
+                                                    <SidebarMenuButton isActive={pathname === link.href}>
+                                                        <link.icon size={20}/>
+                                                        <span>{link.label}</span>
+                                                    </SidebarMenuButton>
+                                                </Link>
+                                            </SidebarMenuItem>
+                                        ))}
+                                    </SidebarMenu>
+                                </section>
+                               )
+                           })}
                         </div>
-                        <SidebarMenu>
-                            {allNavLinks.map((link) => (
-                                <SidebarMenuItem key={link.href}>
-                                    <Link 
-                                      href={link.href} 
-                                      passHref
-                                      onClick={(e) => handleLinkClick(e, link.href, link.requiresAuth)}
-                                      target={link.isExternal ? "_blank" : undefined}
-                                      rel={link.isExternal ? "noopener noreferrer" : undefined}
-                                    >
-                                        <SidebarMenuButton isActive={pathname === link.href}>
-                                            <link.icon className="w-5 h-5"/>
-                                            <span>{link.label}</span>
-                                        </SidebarMenuButton>
-                                    </Link>
-                                </SidebarMenuItem>
-                            ))}
-                        </SidebarMenu>
-                          <div className="absolute bottom-4 text-center text-black/60 text-sm">
-                          <p>Sutradhaar {appInfo?.version || ''}</p>
-                          <p>Made by Aman Yadav</p>
+                        
+                         <div className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400 border-t pt-4">
+                            Sutradhaar <br /> Made by Aman Yadav
+                            {isLoggedIn && (
+                                <div className="flex justify-center mt-3">
+                                <button onClick={handleLogout} className="flex items-center gap-1 text-red-500 text-sm hover:underline">
+                                    <LogOut size={16} /> Logout
+                                </button>
+                                </div>
+                            )}
                         </div>
                     </SidebarContent>
                 </Sidebar>

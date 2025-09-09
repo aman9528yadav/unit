@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -84,7 +85,7 @@ const Sidebar = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<typeof motion.div>
 >(({ children, ...props }, ref) => {
-  const { open } = useSidebar()
+  const { open, setOpen } = useSidebar()
 
   return (
     <AnimatePresence>
@@ -96,6 +97,7 @@ const Sidebar = React.forwardRef<
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
           className="fixed inset-0 z-50 bg-black/50"
+          onClick={() => setOpen(false)}
           {...props}
         >
           {children}
@@ -112,12 +114,14 @@ const SidebarContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <motion.div
     ref={ref}
-    initial={{ y: "-100%" }}
-    animate={{ y: "0%" }}
-    exit={{ y: "-100%" }}
-    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+    initial={{ x: "-100%" }}
+    animate={{ x: 0 }}
+    exit={{ x: "-100%" }}
+    transition={{ type: "spring", stiffness: 260, damping: 30 }}
+    onClick={(e) => e.stopPropagation()}
     className={cn(
-      "fixed inset-0 z-50 flex h-full w-full flex-col items-center justify-center bg-background/70 backdrop-blur-lg bg-cover bg-center text-foreground shadow-lg",
+      "fixed inset-y-0 left-0 z-50 p-5 w-72 max-w-full shadow-2xl rounded-r-3xl",
+      "bg-gradient-to-b from-white to-gray-100 dark:from-neutral-900 dark:to-neutral-950",
       className
     )}
     {...props}
@@ -126,26 +130,25 @@ const SidebarContent = React.forwardRef<
 SidebarContent.displayName = "SidebarContent"
 
 const SidebarMenu = React.forwardRef<
-  HTMLUListElement,
-  React.ComponentProps<"ul">
+  HTMLDivElement,
+  React.ComponentProps<"div">
 >(({ className, ...props }, ref) => (
-  <ul
+  <div
     ref={ref}
-    className={cn("grid w-full max-w-[380px] grid-cols-4 gap-x-4 gap-y-4", className)}
+    className={cn("grid grid-cols-2 gap-4 sm:grid-cols-3", className)}
     {...props}
   />
 ))
 SidebarMenu.displayName = "SidebarMenu"
 
 const SidebarMenuItem = React.forwardRef<
-  HTMLLIElement,
-  React.ComponentProps<typeof motion.li>
+  HTMLDivElement,
+  React.ComponentProps<typeof motion.div>
 >(({ className, ...props }, ref) => {
   const { setOpen } = useSidebar()
   return (
-    <motion.li
+    <motion.div
       ref={ref}
-      whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
       onClick={() => setOpen(false)}
       className={cn("relative", className)}
@@ -158,19 +161,21 @@ SidebarMenuItem.displayName = "SidebarMenuItem"
 const SidebarMenuButton = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button"> & { isActive?: boolean }
->(({ isActive, className, ...props }, ref) => {
+>(({ isActive, className, children, ...props }, ref) => {
   return (
     <button
       ref={ref}
       className={cn(
-        "flex flex-col items-center justify-center gap-1 text-center text-sm font-semibold text-black transition-colors hover:text-primary",
-        {
-          "text-primary": isActive,
-        },
+        "flex flex-col items-center justify-center p-4 rounded-2xl shadow-md transition w-full text-sm font-medium tracking-wide backdrop-blur-sm hover:shadow-lg",
+        isActive
+          ? "bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700 dark:from-blue-900/40 dark:to-blue-800/20"
+          : "bg-white/80 dark:bg-neutral-800/80 text-gray-700 dark:text-gray-200",
         className
       )}
       {...props}
-    />
+    >
+      {children}
+    </button>
   )
 })
 SidebarMenuButton.displayName = "SidebarMenuButton"
