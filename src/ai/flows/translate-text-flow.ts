@@ -43,11 +43,7 @@ You must provide the following:
 
 Translate the following text from {{sourceLanguage}} to {{targetLanguage}}.
 
-{{#if (eq targetLanguage "Hindi")}}
-When translating to Hindi, please ensure the translation uses a natural, conversational accent and phrasing common in the Uttar Pradesh and Bihar regions of India.
-{{else}}
-If the target language is Hindi, please ensure the Hindi translation uses a natural, conversational Indian accent and phrasing.
-{{/if}}
+If the target language is Hindi, please ensure the translation uses a natural, conversational accent and phrasing common in the Uttar Pradesh and Bihar regions of India.
 
 Text to translate:
 "{{text}}"
