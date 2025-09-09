@@ -20,7 +20,12 @@ const TranslateTextInputSchema = z.object({
 export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
 
 const TranslateTextOutputSchema = z.object({
-  translatedText: z.string().describe('The translated text.'),
+  translatedText: z.string().describe('The main, most accurate translation of the text.'),
+  suggestions: z.array(z.string()).describe('A list of alternative translations or related phrases.'),
+  examples: z.array(z.object({
+    original: z.string().describe('An example sentence in the source language using the original text.'),
+    translated: z.string().describe('The translation of the example sentence in the target language.'),
+  })).describe('A list of example sentences demonstrating usage.'),
 });
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
 
@@ -29,12 +34,22 @@ const prompt = ai.definePrompt({
   name: 'translateTextPrompt',
   input: {schema: TranslateTextInputSchema},
   output: {schema: TranslateTextOutputSchema},
-  prompt: `Translate the following text from {{sourceLanguage}} to {{targetLanguage}}.
+  prompt: `You are an expert translator. Your task is to translate the given text from a source language to a target language.
 
-Return ONLY the translated text, with no additional commentary or explanations.
+You must provide the following:
+1.  The primary, most accurate translation.
+2.  A list of 2-3 alternative translations or suggestions for the user.
+3.  Two example sentences showing the original text in a sentence and its corresponding translation.
+
+Translate the following text from {{sourceLanguage}} to {{targetLanguage}}.
+{{#if (eq targetLanguage "Hindi")}}
+Please ensure the Hindi translation uses a natural, conversational Indian accent and phrasing.
+{{/if}}
 
 Text to translate:
 "{{text}}"
+
+Return ONLY the structured JSON output with no additional commentary.
 `,
 });
 
