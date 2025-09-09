@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Trash2, Edit, Save } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit, Save, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,6 +21,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from 'next/navigation';
 import { setComingSoonItemsInRtdb, listenToComingSoonItems, ComingSoonItem } from '@/services/firestore';
 import { Switch } from '../ui/switch';
+import * as LucideIcons from 'lucide-react';
 
 
 export function ComingSoonEditor() {
@@ -34,6 +35,7 @@ export function ComingSoonEditor() {
         title: '',
         description: '',
         soon: false,
+        icon: 'Sparkles',
     });
 
     const { toast } = useToast();
@@ -56,6 +58,7 @@ export function ComingSoonEditor() {
                 title: '',
                 description: '',
                 soon: false,
+                icon: 'Sparkles',
             });
         }
         setIsDialogOpen(true);
@@ -119,23 +122,29 @@ export function ComingSoonEditor() {
             </header>
 
             <div className="flex-grow space-y-2 overflow-y-auto">
-                {items.map((item) => (
-                    <div key={item.id} className="bg-card p-4 rounded-lg flex justify-between items-center">
-                        <div className="flex-1 overflow-hidden">
-                            <p className="font-bold truncate">{item.title}</p>
-                            <p className="text-sm text-muted-foreground">{item.description}</p>
-                            {item.soon && <span className="text-xs text-yellow-600 font-semibold">SOON</span>}
+                {items.map((item) => {
+                    const Icon = (LucideIcons as any)[item.icon] || LucideIcons.Sparkles;
+                    return (
+                        <div key={item.id} className="bg-card p-4 rounded-lg flex justify-between items-center">
+                            <div className="flex items-center gap-4 overflow-hidden">
+                                <Icon className="w-6 h-6 text-primary flex-shrink-0" />
+                                <div className="flex-1 overflow-hidden">
+                                    <p className="font-bold truncate">{item.title}</p>
+                                    <p className="text-sm text-muted-foreground">{item.description}</p>
+                                    {item.soon && <span className="text-xs text-yellow-600 font-semibold">SOON</span>}
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 ml-4">
+                                <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(item)}>
+                                    <Edit className="text-muted-foreground" />
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}>
+                                    <Trash2 className="text-destructive" />
+                                </Button>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 ml-4">
-                            <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(item)}>
-                                <Edit className="text-muted-foreground" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}>
-                                <Trash2 className="text-destructive" />
-                            </Button>
-                        </div>
-                    </div>
-                ))}
+                    )
+                })}
                 {items.length === 0 && (
                     <div className="text-center text-muted-foreground mt-8 flex flex-col items-center gap-4 bg-card p-6 rounded-lg">
                         <p>No "Coming Soon" items found.</p>
@@ -157,6 +166,10 @@ export function ComingSoonEditor() {
                         <div className="space-y-2">
                             <Label htmlFor="description">Description</Label>
                             <Textarea id="description" value={formState.description} onChange={(e) => handleInputChange('description', e.target.value)} placeholder="Describe the feature..."/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="icon">Icon Name</Label>
+                            <Input id="icon" value={formState.icon} onChange={(e) => handleInputChange('icon', e.target.value)} placeholder="e.g., Search, Users, BrainCircuit"/>
                         </div>
                          <div className="flex items-center space-x-2">
                             <Switch id="soon-switch" checked={formState.soon} onCheckedChange={(checked) => handleInputChange('soon', checked)} />

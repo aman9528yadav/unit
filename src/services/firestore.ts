@@ -286,12 +286,13 @@ export interface ComingSoonItem {
     title: string;
     description: string;
     soon: boolean;
+    icon: string;
 }
 
 export const defaultComingSoonItems: ComingSoonItem[] = [
-    { id: '1', title: 'AI Smart Search', description: "Type conversions like '10kg to lbs'", soon: true },
-    { id: '2', title: 'Shared Notes', description: 'Collaborate with others', soon: false },
-    { id: '3', title: 'Smart Recipes', description: 'Context-aware steps', soon: true },
+    { id: '1', title: 'AI Smart Search', description: "Type conversions like '10kg to lbs'", soon: true, icon: 'Search' },
+    { id: '2', title: 'Shared Notes', description: 'Collaborate with others', soon: false, icon: 'Users' },
+    { id: '3', title: 'Smart Recipes', description: 'Context-aware steps', soon: true, icon: 'BrainCircuit' },
 ];
 
 export async function setComingSoonItemsInRtdb(items: ComingSoonItem[]) {

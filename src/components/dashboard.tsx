@@ -286,8 +286,8 @@ export function Dashboard() {
         </div>
         <ScrollArea className="w-full whitespace-nowrap">
             <div className="flex gap-3 pb-2">
-            {comingSoonItems.map((item, index) => (
-                <ComingCard key={index} title={item.title} subtitle={item.description} soon={item.soon} />
+            {comingSoonItems.map((item) => (
+                <ComingCard key={item.id} {...item} />
             ))}
             </div>
              <ScrollBar orientation="horizontal" />
@@ -346,11 +346,12 @@ function Shortcut({ icon, label, href }: { icon: React.ReactNode, label: string,
 }
 
 
-function ComingCard({ title, subtitle, soon }: { title: string, subtitle: string, soon?: boolean }) {
+function ComingCard({ title, description, soon, icon }: ComingSoonItem) {
   const router = useRouter();
   const [profile, setProfile] = useState<{email: string} | null>(null);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [showComingSoonDialog, setShowComingSoonDialog] = useState(false);
+  const Icon = (LucideIcons as any)[icon] || LucideIcons.Sparkles;
 
    useEffect(() => {
     const storedProfile = localStorage.getItem("userProfile");
@@ -371,10 +372,13 @@ function ComingCard({ title, subtitle, soon }: { title: string, subtitle: string
     <>
       <button onClick={handleClick} className="min-w-[180px] p-3 rounded-2xl bg-card shadow-sm border text-left">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-medium text-primary">{title}</div>
+            <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                <Icon size={16} />
+                {title}
+            </div>
           {soon && <div className="text-[10px] px-2 py-1 rounded-full bg-yellow-200 text-yellow-800">Soon</div>}
         </div>
-        <div className="text-xs text-muted-foreground mt-2">{subtitle}</div>
+        <div className="text-xs text-muted-foreground mt-2">{description}</div>
       </button>
 
       <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
@@ -396,10 +400,13 @@ function ComingCard({ title, subtitle, soon }: { title: string, subtitle: string
       
       <AlertDialog open={showComingSoonDialog} onOpenChange={setShowComingSoonDialog}>
         <AlertDialogContent>
-          <AlertDialogHeader>
+          <AlertDialogHeader className="items-center text-center">
+             <div className="p-3 bg-primary/10 rounded-full mb-4">
+                <Icon className="w-8 h-8 text-primary" />
+            </div>
             <AlertDialogTitle>{title}</AlertDialogTitle>
             <AlertDialogDescription>
-              {subtitle} We'll notify you when it's ready!
+              {description} We'll notify you via Sutradhaar's notification system when it's ready!
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
