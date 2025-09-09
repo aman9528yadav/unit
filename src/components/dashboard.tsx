@@ -111,8 +111,8 @@ const comingSoonItems = [
 ];
 
 const newsItems = [
-    { title: "Live sync by email", desc: "Now user can sync data live like history" },
-    { title: "Profile Tools", desc: "Manage your profile and preferences" },
+    { title: "Live sync by email", desc: "Now user can sync data live like history", href:"/updates" },
+    { title: "Profile Tools", desc: "Manage your profile and preferences", href:"/profile" },
 ];
 
 const discoverItems = [
@@ -259,17 +259,23 @@ export function Dashboard() {
 
       {/* WHATS NEW */}
       <div className="mb-5">
-        <h3 className="text-sm font-semibold mb-2 text-purple-700">What's New</h3>
+        <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-purple-700">What's New</h3>
+            <Link href="/updates" className="text-xs text-purple-600 hover:underline">See more</Link>
+        </div>
         <div className="space-y-2">
           {newsItems.map((item, index) => (
-            <NewsItem key={index} title={item.title} desc={item.desc} />
+            <NewsItem key={index} title={item.title} desc={item.desc} href={item.href} />
           ))}
         </div>
       </div>
 
       {/* DISCOVER / ABOUT */}
       <div className="mb-6">
-        <h3 className="text-sm font-semibold mb-2 text-purple-700">Discover Sutradhaar</h3>
+        <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-purple-700">Discover Sutradhaar</h3>
+             <Link href="/how-to-use" className="text-xs text-purple-600 hover:underline">See more</Link>
+        </div>
         <div className="space-y-2">
           {discoverItems.map((item, index) => (
             <InfoItem key={index} icon={item.icon} title={item.title} subtitle={item.subtitle} href={item.href} />
@@ -333,13 +339,17 @@ function ComingCard({ title, subtitle, soon }: { title: string, subtitle: string
   );
 }
 
-function NewsItem({ title, desc }: { title: string, desc: string }) {
-  return (
-    <div className="p-3 rounded-xl bg-white shadow-sm">
-      <div className="text-sm font-medium text-purple-800">{title}</div>
-      <div className="text-xs text-gray-500 mt-1">{desc}</div>
-    </div>
-  );
+function NewsItem({ title, desc, href }: { title: string, desc: string, href?: string }) {
+    const content = (
+        <div className="p-3 rounded-xl bg-white shadow-sm">
+            <div className="text-sm font-medium text-purple-800">{title}</div>
+            <div className="text-xs text-gray-500 mt-1">{desc}</div>
+        </div>
+    );
+    if(href) {
+        return <Link href={href}>{content}</Link>
+    }
+    return content;
 }
 
 function InfoItem({ icon, title, subtitle, href }: { icon: React.ReactNode, title: string, subtitle: string, href?: string }) {

@@ -150,7 +150,7 @@ function PageContent({ children }: { children: React.ReactNode }) {
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
-        className={cn("w-full flex-grow flex flex-col", "max-w-[412px] relative bg-background")}
+        className={cn("w-full flex-grow flex flex-col", "relative bg-background")}
       >
           {children}
       </motion.div>
@@ -233,9 +233,11 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
       <body className="font-body antialiased" suppressHydrationWarning>
           <MaintenanceRedirect>
             <SidebarProvider>
-                <div className="flex min-h-screen items-center justify-center flex-col">
-                    <Header />
-                    <PageContent>{children}</PageContent>
+                <div className="flex min-h-screen items-start justify-center flex-col">
+                    <div className="w-full max-w-[412px] mx-auto flex flex-col flex-grow">
+                        <Header />
+                        <PageContent>{children}</PageContent>
+                    </div>
                 </div>
                 <Sidebar>
                     <SidebarContent>
