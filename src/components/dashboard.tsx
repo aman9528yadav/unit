@@ -70,7 +70,7 @@ import { AboutCard } from "./about-card";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import { Label } from "./ui/label";
 import { Checkbox } from "./ui/checkbox";
-import { DailyActivity, processUserDataForStats } from "@/lib/stats";
+import { DailyActivity, processUserDataForStats, TopFeature } from "@/lib/stats";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart as RechartsBarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { format, intervalToDuration, isPast } from "date-fns";
@@ -134,6 +134,7 @@ export function Dashboard() {
     totalOps: 0,
     savedNotes: 0,
     activity: [] as DailyActivity[],
+    topFeature: 'Converter' as TopFeature
   });
   const [streakData, setStreakData] = useState<StreakData>({ currentStreak: 0, bestStreak: 0, daysNotOpened: 0});
 
@@ -170,12 +171,19 @@ export function Dashboard() {
           color: "hsl(var(--primary))",
       },
   };
+  
+  const topFeatureIcon = {
+      'Converter': <Sigma size={16} className="text-green-600" />,
+      'Calculator': <Calculator size={16} className="text-blue-600" />,
+      'Date Calcs': <Calendar size={16} className="text-red-600" />,
+  }
 
   const statsData = [
     { key: "Today", value: stats.todaysOps, icon: <Clock size={16} className="text-purple-700" /> },
     { key: "Streak", value: streakData.currentStreak, icon: <Flame size={16} className="text-orange-500" /> },
     { key: "Saved", value: stats.savedNotes, icon: <Bookmark size={16} className="text-pink-600" /> },
-    { key: "All time", value: stats.totalOps, icon: <Star size={16} className="text-yellow-500" /> }
+    { key: "All time", value: stats.totalOps, icon: <Star size={16} className="text-yellow-500" /> },
+    { key: "Top Feature", value: stats.topFeature, icon: topFeatureIcon[stats.topFeature] }
   ];
 
 

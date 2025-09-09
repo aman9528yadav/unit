@@ -99,6 +99,8 @@ export interface DailyActivity {
     total: number;
 }
 
+export type TopFeature = 'Converter' | 'Calculator' | 'Date Calcs';
+
 export const processUserDataForStats = (userData: any, email: string | null): {
     todaysOps: number;
     totalOps: number;
@@ -110,6 +112,7 @@ export const processUserDataForStats = (userData: any, email: string | null): {
     totalCalculations: number;
     totalDateCalculations: number;
     totalHistory: number;
+    topFeature: TopFeature;
 } => {
     if (!userData) {
         userData = {};
@@ -166,6 +169,14 @@ export const processUserDataForStats = (userData: any, email: string | null): {
          })
     }
 
+    // Determine top feature
+    let topFeature: TopFeature = 'Converter';
+    if (totalCalculations > totalConversions && totalCalculations > totalDateCalculations) {
+        topFeature = 'Calculator';
+    } else if (totalDateCalculations > totalConversions && totalDateCalculations > totalCalculations) {
+        topFeature = 'Date Calcs';
+    }
+
 
     return { 
         todaysOps, 
@@ -178,6 +189,7 @@ export const processUserDataForStats = (userData: any, email: string | null): {
         totalCalculations,
         totalDateCalculations,
         totalHistory,
+        topFeature
     };
 };
 
@@ -186,5 +198,4 @@ export const getStats = async (email: string | null) => {
     const userData = await getUserData(email);
     return processUserDataForStats(userData, email);
 };
-
 
