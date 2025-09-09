@@ -301,9 +301,12 @@ export function Dashboard() {
             <Link href="/updates" className="text-xs text-primary hover:underline">See all</Link>
         </div>
         <div className="space-y-2">
-          {whatsNewItems.map((item, index) => (
-            <NewsItem key={index} title={item.title} desc={item.description} href="/updates" />
-          ))}
+            {whatsNewItems.map((item, index) => {
+                const Icon = (LucideIcons as any)[item.icon] || LucideIcons.Rocket;
+                return (
+                    <NewsItem key={index} icon={<Icon size={16} />} title={item.title} desc={item.description} href="/updates" />
+                )
+            })}
         </div>
       </div>
 
@@ -418,11 +421,14 @@ function ComingCard({ title, description, soon, icon }: ComingSoonItem) {
   );
 }
 
-function NewsItem({ title, desc, href }: { title: string, desc: string, href?: string }) {
+function NewsItem({ icon, title, desc, href }: { icon?: React.ReactNode, title: string, desc: string, href?: string }) {
     const content = (
-        <div className="p-3 rounded-xl bg-card shadow-sm border">
-            <div className="text-sm font-medium text-primary">{title}</div>
-            <div className="text-xs text-muted-foreground mt-1">{desc}</div>
+        <div className="p-3 rounded-xl bg-card shadow-sm border flex items-center gap-3">
+            {icon && <div className="p-2 rounded-lg bg-secondary text-primary">{icon}</div>}
+            <div>
+                <div className="text-sm font-medium text-primary">{title}</div>
+                <div className="text-xs text-muted-foreground mt-1">{desc}</div>
+            </div>
         </div>
     );
     if(href) {
