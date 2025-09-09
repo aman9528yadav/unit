@@ -9,7 +9,8 @@ const withPWA = require('@ducanh2912/next-pwa').default({
   register: true,
   skipWaiting: true,
   runtimeCaching: [
-    // Cache pages and static assets
+    // Cache pages and static assets with a Network First strategy.
+    // This ensures users get the latest content when online, but can still access it offline.
     {
       urlPattern: /^https?.*/,
       handler: 'NetworkFirst',
@@ -24,7 +25,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
         },
       },
     },
-     // Cache Google Fonts
+     // Cache Google Fonts stylesheets with a Cache First strategy for performance.
     {
       urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/,
       handler: "CacheFirst",
@@ -32,6 +33,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
         cacheName: "google-fonts-stylesheets",
       },
     },
+    // Cache Google Fonts webfonts with a long-lived Cache First strategy.
     {
       urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/,
       handler: "CacheFirst",
@@ -39,7 +41,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
         cacheName: "google-fonts-webfonts",
         expiration: {
           maxEntries: 30,
-          maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+          maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
         },
       },
     },
