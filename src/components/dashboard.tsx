@@ -399,7 +399,7 @@ function ComingCard({ title, subtitle, soon }: { title: string, subtitle: string
           <AlertDialogHeader>
             <AlertDialogTitle>{title}</AlertDialogTitle>
             <AlertDialogDescription>
-              This feature is under development in Sutradhaar. We'll notify you when it's ready!
+              {subtitle} We'll notify you when it's ready!
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
