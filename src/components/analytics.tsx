@@ -28,15 +28,16 @@ import {
   Users,
   EyeOff,
   ChevronDown,
-  PieChart as PieChartIcon
+  PieChart as PieChartIcon,
+  MoreVertical
 } from "lucide-react";
-import { addDays, format, formatDistanceToNow, parseISO, isValid } from "date-fns";
+import { addDays, format, formatDistanceToNow, parseISO, isValid, subDays } from "date-fns";
 import { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { DailyActivity, processUserDataForStats } from "@/lib/stats";
-import { LineChart, Line, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart as RechartsBarChart, Legend, Sector } from "recharts";
+import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ComposedChart, Bar as RechartsBar, Legend, Sector, AreaChart, Area } from "recharts";
 import { useLanguage } from "@/context/language-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -44,9 +45,11 @@ import { Calendar } from "./ui/calendar";
 import { getStreakData, StreakData } from "@/lib/streak";
 import { cn } from "@/lib/utils";
 import { listenToUserData, UserData } from "@/services/firestore";
+import { motion, AnimatePresence } from "framer-motion";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 
-type ChartType = "bar" | "line";
+type ChartType = "bar" | "line" | "area";
 type TimeRangePreset = "weekly" | "monthly" | "yearly";
 
 interface LastActivityItem {
@@ -55,80 +58,6 @@ interface LastActivityItem {
     timestamp: string;
     icon: React.ElementType;
 }
-
-const StatCard = ({ title, value, icon, change, changeType, description }: { title: string, value: string | number, icon: React.ReactNode, change?: string, changeType?: 'increase' | 'decrease' | 'neutral', description?: string }) => (
-    <Card className="rounded-2xl shadow-sm hover:shadow-lg transition flex flex-col p-4 bg-card border-border">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-             <div className="p-1 bg-secondary rounded-lg text-secondary-foreground">
-                {icon}
-             </div>
-            {title}
-        </div>
-        <div className="flex-1 flex flex-col justify-center items-center gap-1">
-            <p className="text-3xl font-extrabold">{value}</p>
-            {change &&
-                <p className={cn(
-                    "text-xs font-medium flex items-center gap-1",
-                    changeType === 'increase' && 'text-green-600',
-                    changeType === 'decrease' && 'text-red-600',
-                     changeType === 'neutral' && 'text-muted-foreground'
-                )}>
-                    {changeType === 'increase' && <TrendingUp className="inline-block w-3 h-3" />}
-                    {changeType === 'decrease' && <TrendingDown className="inline-block w-3 h-3" />}
-                     {change}
-                </p>
-            }
-        </div>
-         {description && <p className="text-xs text-muted-foreground mt-1 text-center">{description}</p>}
-    </Card>
-);
-
-const renderActiveShape = (props: any) => {
-  const RADIAN = Math.PI / 180;
-  const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
-  const sin = Math.sin(-RADIAN * midAngle);
-  const cos = Math.cos(-RADIAN * midAngle);
-  const sx = cx + (outerRadius + 6) * cos;
-  const sy = cy + (outerRadius + 6) * sin;
-  const mx = cx + (outerRadius + 20) * cos;
-  const my = cy + (outerRadius + 20) * sin;
-  const ex = mx + (cos >= 0 ? 1 : -1) * 12;
-  const ey = my;
-  const textAnchor = cos >= 0 ? 'start' : 'end';
-
-  return (
-    <g>
-      <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill} className="font-bold text-lg">
-        {payload.name}
-      </text>
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-      />
-      <Sector
-        cx={cx}
-        cy={cy}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        innerRadius={outerRadius + 4}
-        outerRadius={outerRadius + 8}
-        fill={fill}
-      />
-      <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
-      <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
-      <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="hsl(var(--foreground))" className="text-sm">{`${value} ops`}</text>
-      <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} fill="hsl(var(--muted-foreground))" className="text-xs">
-        {`(${(percent * 100).toFixed(2)}%)`}
-      </text>
-    </g>
-  );
-};
-
 
 export function Analytics() {
     const { t } = useLanguage();
@@ -149,15 +78,11 @@ export function Analytics() {
         daysNotOpened: 0,
     });
     
-    const [timeRange, setTimeRange] = useState<TimeRangePreset>("weekly");
-    const [dateRange, setDateRange] = useState<DateRange | undefined>({
-        from: addDays(new Date(), -6),
-        to: new Date(),
-    });
+    const [dateFilter, setDateFilter] = useState<TimeRangePreset>("weekly");
     const [lastActivities, setLastActivities] = useState<LastActivityItem[]>([]);
     const [showAllStats, setShowAllStats] = useState(false);
+    const [chartType, setChartType] = useState<ChartType>('bar');
     const [activeIndex, setActiveIndex] = useState(0);
-
 
     const loadLastActivities = useCallback((userData: UserData) => {
         const conversionHistory = userData.conversionHistory || [];
@@ -180,18 +105,25 @@ export function Analytics() {
              localActivities.push({ name: 'Unit Conversion', details, timestamp, icon: RefreshCw });
         }
 
-
         const sortedActivities = localActivities
             .filter((a): a is LastActivityItem => a !== null && a.timestamp !== undefined && isValid(parseISO(a.timestamp)))
-            .sort((a, b) => {
-                const dateA = new Date(a.timestamp).getTime();
-                const dateB = new Date(b.timestamp).getTime();
-                return dateB - dateA;
-            });
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
         setLastActivities(sortedActivities);
     }, []);
 
+    const filterActivityData = (activity: DailyActivity[], filter: TimeRangePreset): DailyActivity[] => {
+        const today = new Date();
+        let startDate: Date;
+        if (filter === 'weekly') {
+            startDate = subDays(today, 6);
+        } else if (filter === 'monthly') {
+            startDate = subDays(today, 29);
+        } else { // yearly
+            startDate = subDays(today, 364);
+        }
+        return activity.filter(d => parseISO(d.date) >= startDate);
+    };
 
     useEffect(() => {
         const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
@@ -224,273 +156,270 @@ export function Analytics() {
         }
     }, [loadLastActivities]);
     
-    const handleTimeRangeChange = (preset: TimeRangePreset) => {
-      setTimeRange(preset);
-      const to = new Date();
-      let from;
-      if (preset === 'weekly') {
-        from = addDays(to, -6);
-      } else if (preset === 'monthly') {
-        from = addDays(to, -29);
-      } else if (preset === 'yearly') {
-        from = addDays(to, -364);
-      }
-      setDateRange({ from, to });
-    }
-    
     const calculateChange = (key: 'conversions' | 'calculations' | 'dateCalculations') => {
         if (stats.activity.length < 2) {
-            return { today: 0, yesterday: 0, change: 0, percent: 0 };
+            return { today: 0, yesterday: 0, change: 0, percent: 0, changeType: 'neutral' as const };
         }
-        const today = stats.activity[stats.activity.length - 1][key];
-        const yesterday = stats.activity[stats.activity.length - 2][key];
+        const today = stats.activity[stats.activity.length - 1]?.[key] || 0;
+        const yesterday = stats.activity[stats.activity.length - 2]?.[key] || 0;
         const change = today - yesterday;
         const percent = yesterday === 0 ? (change > 0 ? 100 : 0) : (change / yesterday) * 100;
-        return { today, yesterday, change, percent };
+        const changeType = change > 0 ? 'increase' : change < 0 ? 'decrease' : 'neutral';
+        return { today, yesterday, change, percent, changeType };
     };
 
     const conversionsStats = calculateChange("conversions");
-    const dateCalcStats = calculateChange("dateCalculations");
     const calculationsStats = calculateChange("calculations");
+    const dateCalcStats = calculateChange("dateCalculations");
     
-    const allStatCards = [
-        { 
-            title: "Total Conversions", 
-            value: stats.totalConversions,
-            icon: <RefreshCw className="text-indigo-500 w-4 h-4"/>,
-            change: `${conversionsStats.percent > 0 ? '+' : ''}${conversionsStats.percent.toFixed(1)}% vs prev day`,
-            changeType: conversionsStats.change > 0 ? 'increase' : (conversionsStats.change < 0 ? 'decrease' : 'neutral'),
-        },
-        { 
-            title: "Calculator Ops", 
-            value: stats.totalCalculations,
-            icon: <Calculator className="text-green-500 w-4 h-4"/>,
-            change: `${calculationsStats.percent > 0 ? '+' : ''}${calculationsStats.percent.toFixed(1)}% vs prev day`,
-            changeType: calculationsStats.change > 0 ? 'increase' : (calculationsStats.change < 0 ? 'decrease' : 'neutral'),
-        },
-        { 
-            title: "Date Calculations", 
-            value: stats.totalDateCalculations,
-            icon: <CalendarIcon className="text-orange-500 w-4 h-4"/>,
-            change: `${dateCalcStats.percent > 0 ? '+' : ''}${dateCalcStats.percent.toFixed(1)}% vs prev day`,
-            changeType: dateCalcStats.change > 0 ? 'increase' : (dateCalcStats.change < 0 ? 'decrease' : 'neutral'),
-        },
-        { 
-            title: "Current Streak", 
-            value: `${streakData.currentStreak} days`,
-            icon: <Flame className="text-red-500 w-4 h-4"/>,
-        },
-        { 
-            title: "Best Streak", 
-            value: `${streakData.bestStreak} days`,
-            icon: <CheckCircle className="text-yellow-500 w-4 h-4"/>,
-        },
-        {
-            title: "Days Since Last Visit",
-            value: `${streakData.daysNotOpened} days`,
-            icon: <EyeOff className="text-gray-500 w-4 h-4" />,
-        },
-        { 
-            title: "Saved Notes", 
-            value: stats.savedNotes,
-            icon: <NotebookPen className="text-blue-500 w-4 h-4"/>,
-        },
-        { 
-            title: "Recycle Bin", 
-            value: stats.recycledNotes,
-            icon: <Trash2 className="text-gray-500 w-4 h-4"/>,
-        },
-        { 
-            title: "Favorite Conversions", 
-            value: stats.favoriteConversions,
-            icon: <Star className="text-pink-500 w-4 h-4"/>,
-        }
+    const statCards = [
+        { title: "Total Conversions", value: stats.totalConversions, sub: `${conversionsStats.percent > 0 ? '+' : ''}${conversionsStats.percent.toFixed(0)}% vs prev day`, type: conversionsStats.changeType },
+        { title: "Calculator Ops", value: stats.totalCalculations, sub: `${calculationsStats.percent > 0 ? '+' : ''}${calculationsStats.percent.toFixed(0)}% vs prev day`, type: calculationsStats.changeType },
+        { title: "Date Calculations", value: stats.totalDateCalculations, sub: `${dateCalcStats.percent > 0 ? '+' : ''}${dateCalcStats.percent.toFixed(0)}% vs prev day`, type: dateCalcStats.changeType },
+        { title: "Current Streak", value: `${streakData.currentStreak} days`, sub: `Best Streak: ${streakData.bestStreak} days` },
+        { title: "Days Since Last Visit", value: `${streakData.daysNotOpened} days`, sub: "Active today" },
+        { title: "Saved Notes", value: stats.savedNotes, sub: "Total notes saved" },
+        { title: "Recycle Bin", value: stats.recycledNotes, sub: "Items in bin" },
+        { title: "Favorite Conversions", value: stats.favoriteConversions, sub: "No favorites yet" },
     ];
-
-    const visibleStatCards = showAllStats ? allStatCards : allStatCards.slice(0, 6);
     
-    const formattedChartData = stats.activity.map(day => ({
+    const chartData = filterActivityData(stats.activity, dateFilter).map(day => ({
         ...day,
-        date: format(new Date(day.date), 'MMM d')
+        day: format(parseISO(day.date), dateFilter === 'weekly' ? 'EEE' : 'MMM d')
     }));
 
-    const pieChartData = [
+    const renderChart = () => {
+        switch (chartType) {
+            case "line": return (
+                <LineChart data={chartData}>
+                    <XAxis dataKey="day" fontSize={12} />
+                    <YAxis fontSize={12} />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="conversions" stroke="#a78bfa" strokeWidth={2} />
+                    <Line type="monotone" dataKey="notes" stroke="#f0abfc" strokeWidth={2} />
+                    <Line type="monotone" dataKey="dateCalculations" stroke="#f9a8d4" strokeWidth={2} />
+                </LineChart>
+            );
+            case "area": return (
+                <AreaChart data={chartData}>
+                    <XAxis dataKey="day" fontSize={12} />
+                    <YAxis fontSize={12} />
+                    <Tooltip />
+                    <Area type="monotone" dataKey="conversions" stackId="1" stroke="#a78bfa" fill="#ede9fe" />
+                    <Area type="monotone" dataKey="notes" stackId="1" stroke="#f0abfc" fill="#fae8ff" />
+                    <Area type="monotone" dataKey="dateCalculations" stackId="1" stroke="#f9a8d4" fill="#fdf2f8" />
+                </AreaChart>
+            );
+            case "bar": default: return (
+                <ComposedChart data={chartData}>
+                    <XAxis dataKey="day" fontSize={12} />
+                    <YAxis fontSize={12} />
+                    <Tooltip />
+                    <Legend />
+                    <RechartsBar dataKey="conversions" fill="#a78bfa" barSize={30} />
+                    <RechartsBar dataKey="notes" fill="#f0abfc" barSize={30} />
+                    <RechartsBar dataKey="dateCalculations" fill="#f9a8d4" barSize={30} />
+                    <Line type="monotone" dataKey="conversions" stroke="#fb7185" strokeWidth={3} dot={false} />
+                </ComposedChart>
+            );
+        }
+    };
+    
+    const activityPieData = [
         { name: 'Conversions', value: stats.totalConversions },
         { name: 'Date Calcs', value: stats.totalDateCalculations },
+        { name: 'Calculator Ops', value: stats.totalCalculations },
         { name: 'Notes', value: stats.savedNotes },
-    ];
+    ].filter(item => item.value > 0);
     
-    const PIE_COLORS = ['#06b6d4', '#ec4899', '#8b5cf6'];
-    
+    const PIE_COLORS = ["#a78bfa", "#f0abfc", "#f9a8d4", "#a5b4fc"];
+
     const onPieEnter = useCallback((_: any, index: number) => {
         setActiveIndex(index);
     }, []);
 
-
     return (
-        <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
-          {/* Header */}
-          <header className="flex items-center justify-between">
-            <h1 className="text-3xl font-extrabold tracking-tight">📊 {t('analytics.title')}</h1>
-            <Button asChild>
-                <Link href="/">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
-                </Link>
-            </Button>
-          </header>
-          
-           <Card>
-                <CardHeader>
-                    <CardTitle>Overview</CardTitle>
-                    <CardDescription>A complete overview of all your stats.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                        {visibleStatCards.map((cardProps, index) => (
-                            <StatCard key={index} {...cardProps} />
-                        ))}
-                    </div>
-                    {allStatCards.length > 6 && (
-                        <div className="flex justify-center mt-4">
-                            <Button variant="outline" onClick={() => setShowAllStats(!showAllStats)}>
-                                {showAllStats ? 'Show Less' : 'Show More'}
-                                <ChevronDown className={cn("ml-2 h-4 w-4 transition-transform", showAllStats && "rotate-180")} />
-                            </Button>
-                        </div>
-                    )}
-                </CardContent>
-           </Card>
-    
-          {/* Charts */}
-            <Card className="rounded-2xl shadow-md">
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <CardTitle>Usage Trend</CardTitle>
-                        <CardDescription>Your activity over the selected period.</CardDescription>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                         <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                id="date"
-                                variant={"outline"}
-                                className="w-[240px] justify-start text-left font-normal"
-                                >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {dateRange?.from ? (
-                                    dateRange.to ? (
-                                    <>
-                                        {format(dateRange.from, "LLL dd, y")} -{" "}
-                                        {format(dateRange.to, "LLL dd, y")}
-                                    </>
-                                    ) : (
-                                    format(dateRange.from, "LLL dd, y")
-                                    )
-                                ) : (
-                                    <span>Pick a date</span>
-                                )}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="end">
-                                <Calendar
-                                initialFocus
-                                mode="range"
-                                defaultMonth={dateRange?.from}
-                                selected={dateRange}
-                                onSelect={setDateRange}
-                                numberOfMonths={1}
-                                captionLayout="dropdown-buttons"
-                                fromYear={new Date().getFullYear() - 5}
-                                toYear={new Date().getFullYear()}
-                                />
-                            </PopoverContent>
-                        </Popover>
-                        <Tabs value={timeRange} onValueChange={(v) => handleTimeRangeChange(v as TimeRangePreset)}>
-                            <TabsList>
-                                <TabsTrigger value="weekly">{t('analytics.weekly')}</TabsTrigger>
-                                <TabsTrigger value="monthly">{t('analytics.monthly')}</TabsTrigger>
-                                <TabsTrigger value="yearly">Yearly</TabsTrigger>
-                            </TabsList>
-                        </Tabs>
-                    </div>
+        <div className="min-h-screen flex flex-col bg-gradient-to-b from-purple-50 via-pink-50 to-white p-4 overflow-y-auto">
+            <div className="max-w-md mx-auto space-y-6 pb-10">
+                <div className="flex justify-between items-center sticky top-0 bg-purple-50/70 backdrop-blur z-10 py-2">
+                    <h1 className="text-2xl font-bold text-purple-700">Analytics</h1>
+                    <Button asChild variant="secondary" className="rounded-xl shadow-md px-3 py-1 text-sm">
+                        <Link href="/">Back</Link>
+                    </Button>
                 </div>
-              </CardHeader>
-              <CardContent className="h-96">
-                <ResponsiveContainer width="100%" height="100%">
-                    <RechartsBarChart data={formattedChartData}>
-                         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="date" stroke="#6b7280" />
-                        <YAxis stroke="#6b7280" />
-                        <Tooltip />
-                        <Bar dataKey="conversions" name="Conversions" stackId="a" fill="#6366f1" />
-                        <Bar dataKey="calculations" name="Calculator" stackId="a" fill="#22c55e" />
-                        <Bar dataKey="dateCalculations" name="Date Calcs" stackId="a" fill="#f97316" />
-                    </RechartsBarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
 
-             <Card className="rounded-2xl shadow-md">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><PieChartIcon /> Activity Breakdown</CardTitle>
-                    <CardDescription>A percentage breakdown of your most common activities.</CardDescription>
-                </CardHeader>
-                <CardContent className="h-96">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                                activeIndex={activeIndex}
-                                activeShape={renderActiveShape}
-                                data={pieChartData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={80}
-                                outerRadius={110}
-                                fill="#8884d8"
-                                dataKey="value"
-                                onMouseEnter={onPieEnter}
-                                paddingAngle={5}
-                            >
-                                {pieChartData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                                ))}
-                            </Pie>
-                             <Legend />
-                        </PieChart>
-                    </ResponsiveContainer>
-                </CardContent>
-             </Card>
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                >
+                    {(showAllStats ? statCards : statCards.slice(0, 4)).map((item, i) => (
+                        <Card key={i} className="bg-white shadow-sm border-0 rounded-2xl">
+                            <CardHeader>
+                                <CardTitle className="text-base font-semibold text-gray-700 flex justify-between items-center">
+                                    {item.title}
+                                    {item.type === 'decrease' ? (
+                                        <TrendingDown className="h-4 w-4 text-red-500" />
+                                    ) : item.type === 'increase' ? (
+                                        <TrendingUp className="h-4 w-4 text-green-500" />
+                                    ) : (
+                                        <MoreVertical className="h-4 w-4 text-gray-400" />
+                                    )}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-xl font-bold text-gray-900">{item.value}</p>
+                                <p className="text-xs text-gray-500">{item.sub}</p>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </motion.div>
 
-            <Card className="rounded-2xl shadow-md">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Activity /> Last Activity</CardTitle>
-                    <CardDescription>Your most recent actions across the app.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ul className="space-y-3">
-                        {lastActivities.length > 0 ? lastActivities.map((activity, index) => {
+                {!showAllStats && (
+                    <div className="flex justify-center">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowAllStats(true)}
+                            className="rounded-full text-purple-600 border-purple-300"
+                        >
+                            Show More
+                        </Button>
+                    </div>
+                )}
+                
+                 {showAllStats && (
+                    <div className="flex justify-center">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowAllStats(false)}
+                            className="rounded-full text-purple-600 border-purple-300"
+                        >
+                            Show Less
+                        </Button>
+                    </div>
+                )}
+
+                <Card className="bg-white shadow-sm border-0 rounded-2xl">
+                    <CardHeader>
+                        <CardTitle className="text-lg">Usage Trend</CardTitle>
+                        <div className="flex gap-2 flex-wrap pt-2">
+                             <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as TimeRangePreset)}>
+                                <SelectTrigger className="text-sm border rounded-md px-2 py-1 h-auto">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="weekly">Weekly</SelectItem>
+                                    <SelectItem value="monthly">Monthly</SelectItem>
+                                    <SelectItem value="yearly">Yearly</SelectItem>
+                                </SelectContent>
+                             </Select>
+                            <Button size="sm" variant={chartType === "bar" ? "default" : "outline"} onClick={() => setChartType("bar")}>Bar</Button>
+                            <Button size="sm" variant={chartType === "line" ? "default" : "outline"} onClick={() => setChartType("line")}>Line</Button>
+                            <Button size="sm" variant={chartType === "area" ? "default" : "outline"} onClick={() => setChartType("area")}>Area</Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="h-72 overflow-x-auto">
+                        <div className="min-w-[600px] h-64">
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={chartType + dateFilter}
+                                    initial={{ opacity: 0, x: 30 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -30 }}
+                                    transition={{ duration: 0.4 }}
+                                    className="w-full h-full"
+                                >
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        {renderChart()}
+                                    </ResponsiveContainer>
+                                </motion.div>
+                            </AnimatePresence>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-white shadow-sm border-0 rounded-2xl">
+                    <CardHeader>
+                        <CardTitle className="text-lg">Activity Breakdown</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-center justify-center h-60">
+                        <ResponsiveContainer width="100%" height="80%">
+                            <PieChart>
+                                <Pie
+                                    data={activityPieData}
+                                    dataKey="value"
+                                    nameKey="name"
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius={70}
+                                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                >
+                                    {activityPieData.map((_, index) => (
+                                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                                    ))}
+                                </Pie>
+                            </PieChart>
+                        </ResponsiveContainer>
+                        <div className="flex flex-wrap justify-center gap-3 mt-2">
+                            {activityPieData.map((entry, index) => (
+                                <div key={index} className="flex items-center gap-1 text-xs text-gray-600">
+                                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}></span>
+                                    {entry.name} ({((entry.value / activityPieData.reduce((a, b) => a + b.value, 0)) * 100).toFixed(0)}%)
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+                
+                <Card className="bg-white shadow-sm border-0 rounded-2xl">
+                    <CardHeader>
+                        <CardTitle className="text-lg">Week-over-Week Comparison</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-700">Conversions</span>
+                            <span className={`text-sm font-bold ${conversionsStats.change >= 0 ? "text-green-600" : "text-red-600"}`}>
+                                {conversionsStats.change >= 0 ? `+${conversionsStats.change}` : conversionsStats.change}
+                            </span>
+                        </div>
+                         <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-700">Calculator</span>
+                            <span className={`text-sm font-bold ${calculationsStats.change >= 0 ? "text-green-600" : "text-red-600"}`}>
+                                {calculationsStats.change >= 0 ? `+${calculationsStats.change}` : calculationsStats.change}
+                            </span>
+                        </div>
+                         <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-700">Date Calcs</span>
+                            <span className={`text-sm font-bold ${dateCalcStats.change >= 0 ? "text-green-600" : "text-red-600"}`}>
+                                {dateCalcStats.change >= 0 ? `+${dateCalcStats.change}` : dateCalcStats.change}
+                            </span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-white shadow-sm border-0 rounded-2xl">
+                    <CardHeader>
+                        <CardTitle className="text-lg">Last Activity</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                         {lastActivities.length > 0 ? lastActivities.map((activity, index) => {
                             if (!isValid(parseISO(activity.timestamp))) return null;
                             return (
-                                <li key={index} className="flex items-center gap-4 p-2 bg-secondary rounded-lg">
-                                    <div className="p-2 bg-primary/10 text-primary rounded-full">
-                                        <activity.icon className="w-5 h-5"/>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-semibold">{activity.name}</p>
-                                        <p className="text-sm text-muted-foreground break-words">{activity.details}</p>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground whitespace-nowrap self-start">
-                                        {formatDistanceToNow(parseISO(activity.timestamp), { addSuffix: true })}
-                                    </p>
-                                </li>
+                                <div key={index} className="p-3 bg-gradient-to-r from-purple-50 via-pink-50 to-white rounded-lg shadow-sm">
+                                    <p className="font-medium text-gray-800 text-sm">{activity.name}</p>
+                                    <p className="text-xs text-gray-500">{formatDistanceToNow(parseISO(activity.timestamp), { addSuffix: true })}</p>
+                                </div>
                             )
                         }) : (
                             <p className="text-center text-muted-foreground py-8">No recent activity recorded.</p>
                         )}
-                    </ul>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
-      );
+    );
 }
+
