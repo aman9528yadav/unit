@@ -236,7 +236,7 @@ body {
     --input: 270 40% 95%;
     --ring: 262.1 83.3% 57.8%;
     --radius: 0.7rem;
-    --sidebar-background: 265 60% 97%;
+    --sidebar-background: transparent;
   }
 }
 
@@ -262,11 +262,11 @@ body {
   body {
     @apply bg-background text-foreground;
   }
-}
-
-.sutradhaar-theme {
+  .sutradhaar-body {
     background-image: linear-gradient(to bottom right, #fde2e4, #e2dcfc, #d2f2f1);
+  }
 }
     
 
     
+

@@ -150,7 +150,7 @@ function PageContent({ children }: { children: React.ReactNode }) {
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
-        className={cn("w-full flex-grow flex flex-col", "relative bg-background")}
+        className={cn("w-full flex-grow flex flex-col", "relative bg-transparent")}
       >
           {children}
       </motion.div>
@@ -161,6 +161,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useLanguage();
+  const { theme } = useTheme();
   const [profile, setProfile] = useState<Partial<UserData> | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
@@ -230,11 +231,11 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
           <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
           <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
-      <body className="font-body antialiased" suppressHydrationWarning>
+      <body className={cn("font-body antialiased", theme === 'sutradhaar' && 'sutradhaar-body')} suppressHydrationWarning>
           <MaintenanceRedirect>
             <SidebarProvider>
                 <div className="flex min-h-screen items-start justify-center flex-col">
-                    <div className="w-full max-w-[412px] mx-auto flex flex-col flex-grow">
+                    <div className="w-full max-w-[412px] mx-auto flex flex-col flex-grow bg-background/80 backdrop-blur-sm">
                         <Header />
                         <PageContent>{children}</PageContent>
                     </div>

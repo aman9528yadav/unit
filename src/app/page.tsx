@@ -36,7 +36,6 @@ function DashboardSkeleton() {
 export default function Home() {
     const router = useRouter();
     const [authStatus, setAuthStatus] = useState<'loading' | 'unauthenticated' | 'authenticated'>('loading');
-    const { theme } = useTheme();
 
     useEffect(() => {
         const storedProfile = localStorage.getItem("userProfile");
@@ -89,10 +88,7 @@ export default function Home() {
     
     if (authStatus === 'authenticated') {
          return (
-            <main className={cn(
-                "w-full flex-grow p-4 font-sans",
-                theme === 'sutradhaar' && 'sutradhaar-theme'
-            )}>
+            <main className="w-full flex-grow p-4 font-sans">
                 <Dashboard />
             </main>
         );
@@ -100,5 +96,3 @@ export default function Home() {
 
     return null;
 }
-
-    

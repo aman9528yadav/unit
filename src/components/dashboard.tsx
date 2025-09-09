@@ -175,9 +175,9 @@ export function Dashboard() {
   };
   
   const topFeatureIcon = {
-      'Converter': <Sigma size={16} className="text-green-600" />,
-      'Calculator': <Calculator size={16} className="text-blue-600" />,
-      'Date Calcs': <Calendar size={16} className="text-red-600" />,
+      'Converter': <Sigma size={16} className="text-primary" />,
+      'Calculator': <Calculator size={16} className="text-primary" />,
+      'Date Calcs': <Calendar size={16} className="text-primary" />,
   }
   
   const calculateChange = (key: 'total') => {
@@ -194,34 +194,34 @@ export function Dashboard() {
 
 
   const statsData = [
-    { key: "Today", value: stats.todaysOps, icon: <Clock size={16} className="text-purple-700" />, changeType: todaysOpsStats.changeType },
-    { key: "Streak", value: streakData.currentStreak, icon: <Flame size={16} className="text-orange-500" /> },
-    { key: "Saved", value: stats.savedNotes, icon: <Bookmark size={16} className="text-pink-600" /> },
-    { key: "All time", value: stats.totalOps, icon: <Star size={16} className="text-yellow-500" /> },
+    { key: "Today", value: stats.todaysOps, icon: <Clock size={16} className="text-primary" />, changeType: todaysOpsStats.changeType },
+    { key: "Streak", value: streakData.currentStreak, icon: <Flame size={16} className="text-primary" /> },
+    { key: "Saved", value: stats.savedNotes, icon: <Bookmark size={16} className="text-primary" /> },
+    { key: "All time", value: stats.totalOps, icon: <Star size={16} className="text-primary" /> },
     { key: "Top Feature", value: stats.topFeature, icon: topFeatureIcon[stats.topFeature] }
   ];
 
 
   return (
-    <div className="text-gray-800 max-w-sm mx-auto">
+    <div className="text-foreground max-w-sm mx-auto">
       {/* STAT CARDS - HORIZONTAL SCROLL */}
       <div className="mb-5">
         <ScrollArea className="w-full whitespace-nowrap">
             <div className="flex gap-3 pb-2">
             {statsData.map((s) => (
-                <div key={s.key} className="min-w-[120px] flex-shrink-0 p-3 rounded-2xl bg-white shadow-md">
-                <div className="flex items-center justify-between text-xs text-gray-700">
+                <div key={s.key} className="min-w-[120px] flex-shrink-0 p-3 rounded-2xl bg-card shadow-sm">
+                <div className="flex items-center justify-between text-xs text-card-foreground">
                     <div className="flex items-center gap-2">
                       {s.icon} {s.key}
                     </div>
                     {s.changeType === 'increase' && <TrendingUp className="h-4 w-4 text-green-500" />}
                     {s.changeType === 'decrease' && <TrendingDown className="h-4 w-4 text-red-500" />}
                 </div>
-                <div className="text-xl font-bold mt-1 text-purple-800">{s.value}</div>
+                <div className="text-xl font-bold mt-1 text-primary">{s.value}</div>
                 </div>
             ))}
-             <div className="min-w-[120px] flex-shrink-0 p-3 rounded-2xl bg-white shadow-md flex flex-col items-center justify-center">
-                 <Link href="/analytics" className="text-purple-700 font-semibold text-sm hover:underline">View Analytics</Link>
+             <div className="min-w-[120px] flex-shrink-0 p-3 rounded-2xl bg-card shadow-sm flex flex-col items-center justify-center">
+                 <Link href="/analytics" className="text-primary font-semibold text-sm hover:underline">View Analytics</Link>
              </div>
             </div>
             <ScrollBar orientation="horizontal" />
@@ -231,8 +231,8 @@ export function Dashboard() {
       {/* WEEKLY SUMMARY WITH BARS */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-purple-700">Weekly Summary</h3>
-           <Button asChild variant="link" size="sm" className="text-purple-600">
+          <h3 className="text-sm font-semibold text-primary">Weekly Summary</h3>
+           <Button asChild variant="link" size="sm" className="text-primary">
             <Link href="/analytics">View Analytics</Link>
           </Button>
         </div>
@@ -261,8 +261,8 @@ export function Dashboard() {
       {/* QUICK ACCESS */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-purple-700">Quick Access</h3>
-          <button className="text-xs text-purple-600">Customize</button>
+          <h3 className="text-sm font-semibold text-primary">Quick Access</h3>
+          <button className="text-xs text-primary hover:underline">Customize</button>
         </div>
         <div className="grid grid-cols-3 gap-3">
           {shortcutsToShow.map((item, index) => (
@@ -270,7 +270,7 @@ export function Dashboard() {
           ))}
         </div>
         <div className="flex justify-center mt-3">
-          <button onClick={() => setShowAllShortcuts(!showAllShortcuts)} className="px-3 py-1 text-xs rounded-lg bg-gradient-to-r from-purple-200 to-pink-200 text-purple-800">
+          <button onClick={() => setShowAllShortcuts(!showAllShortcuts)} className="px-3 py-1 text-xs rounded-lg bg-primary/10 text-primary">
             {showAllShortcuts ? "Show Less" : "Show More"}
           </button>
         </div>
@@ -279,8 +279,8 @@ export function Dashboard() {
       {/* COMING SOON - HORIZONTAL */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-purple-700">Coming Soon</h3>
-          <span className="text-xs text-gray-500">Preview</span>
+          <h3 className="text-sm font-semibold text-primary">Coming Soon</h3>
+          <span className="text-xs text-muted-foreground">Preview</span>
         </div>
         <ScrollArea className="w-full whitespace-nowrap">
             <div className="flex gap-3 pb-2">
@@ -295,8 +295,8 @@ export function Dashboard() {
       {/* WHATS NEW */}
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-purple-700">What's New</h3>
-            <Link href="/updates" className="text-xs text-purple-600 hover:underline">See all</Link>
+            <h3 className="text-sm font-semibold text-primary">What's New</h3>
+            <Link href="/updates" className="text-xs text-primary hover:underline">See all</Link>
         </div>
         <div className="space-y-2">
           {newsItems.map((item, index) => (
@@ -308,8 +308,8 @@ export function Dashboard() {
       {/* DISCOVER / ABOUT */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-purple-700">Discover Sutradhaar</h3>
-             <Link href="/how-to-use" className="text-xs text-purple-600 hover:underline">See all</Link>
+            <h3 className="text-sm font-semibold text-primary">Discover Sutradhaar</h3>
+             <Link href="/how-to-use" className="text-xs text-primary hover:underline">See all</Link>
         </div>
         <div className="space-y-2">
           {discoverItems.map((item, index) => (
@@ -328,8 +328,8 @@ export function Dashboard() {
 /* --- Helper components --- */
 function Shortcut({ icon, label, href }: { icon: React.ReactNode, label: string, href?: string }) {
     const content = (
-        <div className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white shadow-sm text-xs text-purple-800">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-purple-200 to-pink-200">{icon}</div>
+        <div className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-card shadow-sm text-xs text-primary">
+            <div className="p-2 rounded-lg bg-primary/10">{icon}</div>
             <div>{label}</div>
         </div>
     );
@@ -343,21 +343,21 @@ function Shortcut({ icon, label, href }: { icon: React.ReactNode, label: string,
 
 function ComingCard({ title, subtitle, soon }: { title: string, subtitle: string, soon?: boolean }) {
   return (
-    <div className="min-w-[180px] p-3 rounded-2xl bg-white shadow-sm">
+    <div className="min-w-[180px] p-3 rounded-2xl bg-card shadow-sm">
       <div className="flex items-center justify-between">
-        <div className="text-sm font-medium text-purple-800">{title}</div>
+        <div className="text-sm font-medium text-primary">{title}</div>
         {soon && <div className="text-[10px] px-2 py-1 rounded-full bg-yellow-200 text-yellow-800">Soon</div>}
       </div>
-      <div className="text-xs text-gray-500 mt-2">{subtitle}</div>
+      <div className="text-xs text-muted-foreground mt-2">{subtitle}</div>
     </div>
   );
 }
 
 function NewsItem({ title, desc, href }: { title: string, desc: string, href?: string }) {
     const content = (
-        <div className="p-3 rounded-xl bg-white shadow-sm">
-            <div className="text-sm font-medium text-purple-800">{title}</div>
-            <div className="text-xs text-gray-500 mt-1">{desc}</div>
+        <div className="p-3 rounded-xl bg-card shadow-sm">
+            <div className="text-sm font-medium text-primary">{title}</div>
+            <div className="text-xs text-muted-foreground mt-1">{desc}</div>
         </div>
     );
     if(href) {
@@ -368,11 +368,11 @@ function NewsItem({ title, desc, href }: { title: string, desc: string, href?: s
 
 function InfoItem({ icon, title, subtitle, href }: { icon: React.ReactNode, title: string, subtitle: string, href?: string }) {
     const content = (
-        <div className="p-3 rounded-2xl bg-white shadow-sm flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-blue-200 to-purple-200">{icon}</div>
+        <div className="p-3 rounded-2xl bg-card shadow-sm flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">{icon}</div>
             <div>
-                <div className="text-sm font-medium text-purple-800">{title}</div>
-                <div className="text-xs text-gray-500">{subtitle}</div>
+                <div className="text-sm font-medium text-primary">{title}</div>
+                <div className="text-xs text-muted-foreground">{subtitle}</div>
             </div>
         </div>
     );
