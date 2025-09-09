@@ -42,9 +42,8 @@ You must provide the following:
 3.  Two example sentences showing the original text in a sentence and its corresponding translation.
 
 Translate the following text from {{sourceLanguage}} to {{targetLanguage}}.
-{{#if (eq targetLanguage "Hindi")}}
-Please ensure the Hindi translation uses a natural, conversational Indian accent and phrasing.
-{{/if}}
+
+If the target language is Hindi, please ensure the Hindi translation uses a natural, conversational Indian accent and phrasing.
 
 Text to translate:
 "{{text}}"
