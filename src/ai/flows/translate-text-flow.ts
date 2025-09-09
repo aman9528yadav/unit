@@ -20,6 +20,7 @@ const TranslateTextInputSchema = z.object({
 export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
 
 const TranslateTextOutputSchema = z.object({
+  correctedText: z.string().describe('The corrected version of the original input text, fixing any grammar or spelling mistakes.'),
   translatedText: z.string().describe('The translated text.'),
   suggestions: z.array(z.string()).describe('Alternative translations or suggestions for the user.').optional(),
   examples: z.array(z.object({
@@ -34,14 +35,17 @@ const prompt = ai.definePrompt({
   name: 'translateTextPrompt',
   input: {schema: TranslateTextInputSchema},
   output: {schema: TranslateTextOutputSchema},
-  prompt: `Translate the following text from {{sourceLanguage}} into {{targetLanguage}}.
+  prompt: `First, correct any spelling or grammar mistakes in the following text from {{sourceLanguage}}.
+Provide the corrected text in the 'correctedText' field.
 
-Text to translate:
-"{{text}}"
-
+Then, translate the corrected text into {{targetLanguage}}.
 Provide the main translation in the 'translatedText' field.
+
 Also, provide up to 3 alternative translations or suggestions in the 'suggestions' field.
 Finally, provide 1-2 example sentences using the original text and their corresponding translations in the 'examples' field.
+
+Text to correct and translate:
+"{{text}}"
 
 If the target language is Hindi, please ensure the suggestions include some common, colloquial words used in different regions of India, particularly from areas like Uttar Pradesh and Bihar, to give a more authentic and regional flavor.
 `,

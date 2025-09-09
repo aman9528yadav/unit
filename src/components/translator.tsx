@@ -11,6 +11,7 @@ import { translateText, TranslateTextOutput } from '@/ai/flows/translate-text-fl
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 const languages = [
     { value: 'English', label: 'English' },
@@ -79,7 +80,7 @@ export function Translator() {
 
         // Swap text
         setInputText(translationResult?.translatedText || '');
-        setTranslationResult(currentInput ? { translatedText: currentInput } : null);
+        setTranslationResult(currentInput ? { translatedText: currentInput, correctedText: currentInput } : null);
     }
     
     const handleCopyToClipboard = (text: string) => {
@@ -99,16 +100,32 @@ export function Translator() {
                     <Languages className="text-primary"/>
                     AI Translator
                 </CardTitle>
-                <CardDescription>Translate text into different languages using AI, with suggestions and examples.</CardDescription>
+                <CardDescription>Translate text into different languages using AI, with grammar correction, suggestions and examples.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <Textarea 
-                        placeholder="Enter text to translate..."
-                        value={inputText}
-                        onChange={(e) => setInputText(e.target.value)}
-                        className="min-h-[150px] text-base"
-                    />
+                    <Tabs defaultValue="original" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="original">Original</TabsTrigger>
+                            <TabsTrigger value="corrected">Corrected</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="original">
+                             <Textarea 
+                                placeholder="Enter text to translate..."
+                                value={inputText}
+                                onChange={(e) => setInputText(e.target.value)}
+                                className="min-h-[150px] text-base mt-2"
+                            />
+                        </TabsContent>
+                        <TabsContent value="corrected">
+                             <Textarea 
+                                placeholder="Corrected text will appear here..."
+                                value={translationResult?.correctedText || ''}
+                                readOnly
+                                className="min-h-[150px] text-base mt-2 bg-secondary"
+                            />
+                        </TabsContent>
+                    </Tabs>
                     <div className="relative">
                          <Textarea 
                             placeholder="Translation will appear here..."
