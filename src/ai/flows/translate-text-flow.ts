@@ -2,9 +2,9 @@
 'use server';
 
 /**
- * @fileOverview A flow for translating text into a specified language.
+ * @fileOverview A flow for translating text into a specified language, including suggestions and examples.
  *
- * - translateText - Translates text to a target language.
+ * - translateText - Translates text to a target language and provides additional context.
  * - TranslateTextInput - The input type for the translateText function.
  * - TranslateTextOutput - The return type for the translateText function.
  */
@@ -20,6 +20,11 @@ export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
 
 const TranslateTextOutputSchema = z.object({
   translatedText: z.string().describe('The translated text.'),
+  suggestions: z.array(z.string()).describe('Alternative translations or suggestions for the user.').optional(),
+  examples: z.array(z.object({
+    original: z.string().describe('An example sentence using the original text.'),
+    translated: z.string().describe('The translation of the example sentence.'),
+  })).optional(),
 });
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
 
@@ -33,7 +38,9 @@ const prompt = ai.definePrompt({
 Text to translate:
 "{{text}}"
 
-Return only the translated text in the 'translatedText' field.
+Provide the main translation in the 'translatedText' field.
+Also, provide up to 3 alternative translations or suggestions in the 'suggestions' field.
+Finally, provide 1-2 example sentences using the original text and their corresponding translations in the 'examples' field.
 `,
 });
 
