@@ -83,14 +83,14 @@ const navSections = [
             { href: "/calculator", label: "Calculator", icon: Calculator },
             { href: "/notes", label: "Notes", icon: NotebookPen },
             { href: "/time?tab=date-diff", label: "Date Calc", icon: Calendar },
+            { href: "/time?tab=timer", label: "Timer", icon: Timer },
+            { href: "/time?tab=stopwatch", label: "Stopwatch", icon: Hourglass },
         ]
     },
     { 
         title: "⏱️ Time Tools", 
         links: [
             { href: "/history", label: "History", icon: History, requiresAuth: true },
-            { href: "/time?tab=timer", label: "Timer", icon: Timer },
-            { href: "/time?tab=stopwatch", label: "Stopwatch", icon: Hourglass },
         ]
     },
     {
@@ -224,7 +224,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
       <head>
           <title>Sutradhaar</title>
           <meta name="description" content="A straightforward unit converter app for various measurements." />
-          <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236B46C1' /><text x='50%' y='50%' dominant-baseline='central' text-anchor='middle' font-size='70' fill='white' font-family='sans-serif'>S</text></svg>" />
+          <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%237C3AED' /><text x='50%' y='50%' dominant-baseline='central' text-anchor='middle' font-size='70' fill='white' font-family='sans-serif'>S</text></svg>" />
           <meta name="manifest" content="/manifest.json" />
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -245,24 +245,24 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
                          <SidebarClose asChild>
                             <Button
                                 variant="ghost"
-                                className="absolute top-4 right-4 text-2xl font-bold text-gray-600 dark:text-gray-300 hover:text-red-500"
+                                className="absolute top-4 right-4 text-2xl font-bold"
                             >
                                 ✕
                             </Button>
                         </SidebarClose>
 
-                        <div className="flex items-center gap-4 mb-8 mt-10 p-3 bg-white/70 dark:bg-neutral-800/70 rounded-2xl shadow-md">
-                            <Avatar className="w-14 h-14 bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg">
+                        <div className="flex items-center gap-4 mb-8 mt-10 p-3 bg-card/70 dark:bg-card/70 rounded-2xl shadow-md">
+                            <Avatar className="w-14 h-14 bg-gradient-to-r from-primary to-accent shadow-lg">
                                 <AvatarImage src={profile?.profileImage || ''} />
                                 <AvatarFallback className="text-white font-bold text-lg bg-transparent">{profile?.fullName?.[0] || 'G'}</AvatarFallback>
                             </Avatar>
                             <div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Welcome back,</p>
-                                <p className="text-lg font-semibold text-gray-900 dark:text-white">{profile?.fullName || 'Guest'}</p>
+                                <p className="text-xs text-muted-foreground">Welcome back,</p>
+                                <p className="text-lg font-semibold text-foreground">{profile?.fullName || 'Guest'}</p>
                                 {isLoggedIn ? (
-                                    <button onClick={() => router.push('/profile')} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">View Profile</button>
+                                    <button onClick={() => router.push('/profile')} className="text-xs text-primary hover:underline">View Profile</button>
                                 ): (
-                                    <button onClick={() => router.push('/welcome')} className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Login</button>
+                                    <button onClick={() => router.push('/welcome')} className="text-xs text-primary hover:underline">Login</button>
                                 )}
                             </div>
                         </div>
@@ -274,7 +274,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
 
                                return (
                                 <section key={section.title}>
-                                    <h2 className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-3">{section.title}</h2>
+                                    <h2 className="text-sm font-bold text-muted-foreground mb-3">{section.title}</h2>
                                     <SidebarMenu>
                                          {filteredLinks.map((link) => (
                                             <SidebarMenuItem key={link.href}>
@@ -298,7 +298,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
                            })}
                         </div>
                         
-                         <div className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400 border-t pt-4">
+                         <div className="mt-6 text-center text-xs text-muted-foreground border-t pt-4">
                             Sutradhaar <br /> Made by Aman Yadav
                             {isLoggedIn && (
                                 <div className="flex justify-center mt-3">
@@ -352,5 +352,3 @@ export default function RootLayout({
     </ThemeProvider>
   );
 }
-
-    
