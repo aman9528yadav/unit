@@ -38,7 +38,7 @@ export function AboutCard() {
                 <div className="divide-y divide-border">
                     <DetailRow
                         label="App"
-                        value={<span>Sutradhaar • Unit Converter</span>}
+                        value={<span>Sutradhaar · Unit Converter</span>}
                     />
                     <DetailRow
                         label="Version"

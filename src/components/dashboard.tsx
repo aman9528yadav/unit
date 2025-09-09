@@ -167,7 +167,7 @@ export function Dashboard() {
   const chartConfig = {
       ops: {
           label: "Operations",
-          color: "hsl(var(--primary))",
+          color: "hsl(345 80% 65%)",
       },
   };
 
@@ -193,6 +193,9 @@ export function Dashboard() {
                 <div className="text-xl font-bold mt-1 text-purple-800">{s.value}</div>
                 </div>
             ))}
+             <div className="min-w-[120px] flex-shrink-0 p-3 rounded-2xl bg-white shadow-md flex flex-col items-center justify-center">
+                 <Link href="/analytics" className="text-purple-700 font-semibold text-sm hover:underline">View Analytics</Link>
+             </div>
             </div>
             <ScrollBar orientation="horizontal" />
         </ScrollArea>
@@ -261,7 +264,7 @@ export function Dashboard() {
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-purple-700">What's New</h3>
-            <Link href="/updates" className="text-xs text-purple-600 hover:underline">See more</Link>
+            <Link href="/updates" className="text-xs text-purple-600 hover:underline">See all</Link>
         </div>
         <div className="space-y-2">
           {newsItems.map((item, index) => (
@@ -274,7 +277,7 @@ export function Dashboard() {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-purple-700">Discover Sutradhaar</h3>
-             <Link href="/how-to-use" className="text-xs text-purple-600 hover:underline">See more</Link>
+             <Link href="/how-to-use" className="text-xs text-purple-600 hover:underline">See all</Link>
         </div>
         <div className="space-y-2">
           {discoverItems.map((item, index) => (
@@ -284,28 +287,7 @@ export function Dashboard() {
       </div>
 
       <div className="mb-12">
-        <div className="p-3 rounded-2xl bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm font-semibold text-purple-700">About</div>
-              <div className="text-xs text-gray-600">Sutradhaar · Unit Converter</div>
-            </div>
-            <button onClick={() => setAboutOpen((v) => !v)} className="text-xs text-purple-600">
-              {aboutOpen ? "Hide" : "Details"}
-            </button>
-          </div>
-
-          {aboutOpen && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 text-xs text-gray-700">
-              <div>Version: beta 1.2</div>
-              <div>Developer: Aman Yadav</div>
-              <div className="mt-2 flex gap-2">
-                <button className="px-3 py-1 rounded-lg bg-purple-200 text-purple-800 text-xs">Contact</button>
-                <button className="px-3 py-1 rounded-lg bg-pink-200 text-pink-800 text-xs">About Us</button>
-              </div>
-            </motion.div>
-          )}
-        </div>
+        <AboutCard />
       </div>
     </div>
   );
