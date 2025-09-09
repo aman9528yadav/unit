@@ -14,6 +14,7 @@ import {z} from 'genkit';
 
 const TranslateTextInputSchema = z.object({
   text: z.string().describe('The text to be translated.'),
+  sourceLanguage: z.string().describe('The language of the text to be translated (e.g., "English", "Spanish").'),
   targetLanguage: z.string().describe('The language to translate the text into (e.g., "Spanish", "French", "Hindi").'),
 });
 export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
@@ -33,7 +34,7 @@ const prompt = ai.definePrompt({
   name: 'translateTextPrompt',
   input: {schema: TranslateTextInputSchema},
   output: {schema: TranslateTextOutputSchema},
-  prompt: `Translate the following text into {{targetLanguage}}.
+  prompt: `Translate the following text from {{sourceLanguage}} into {{targetLanguage}}.
 
 Text to translate:
 "{{text}}"

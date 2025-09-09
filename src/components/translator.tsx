@@ -31,6 +31,7 @@ const languages = [
 export function Translator() {
     const [inputText, setInputText] = useState('');
     const [translationResult, setTranslationResult] = useState<TranslateTextOutput | null>(null);
+    const [sourceLanguage, setSourceLanguage] = useState('English');
     const [targetLanguage, setTargetLanguage] = useState('Hindi');
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
@@ -55,7 +56,7 @@ export function Translator() {
 
         startTransition(async () => {
             try {
-                const result = await translateText({ text: inputText, targetLanguage });
+                const result = await translateText({ text: inputText, sourceLanguage, targetLanguage });
                 setTranslationResult(result);
             } catch (error) {
                 console.error("Translation failed:", error);
@@ -69,9 +70,16 @@ export function Translator() {
     };
     
     const handleSwap = () => {
-        if (!translationResult?.translatedText) return;
-        setInputText(translationResult.translatedText);
-        setTranslationResult(null);
+        const currentInput = inputText;
+        const currentSource = sourceLanguage;
+        
+        // Swap languages
+        setSourceLanguage(targetLanguage);
+        setTargetLanguage(currentSource);
+
+        // Swap text
+        setInputText(translationResult?.translatedText || '');
+        setTranslationResult(currentInput ? { translatedText: currentInput } : null);
     }
     
     const handleCopyToClipboard = (text: string) => {
@@ -121,8 +129,8 @@ export function Translator() {
                 </div>
                 
                 <div className="flex flex-col sm:flex-row items-center gap-4">
-                    <Select value={targetLanguage} onValueChange={setTargetLanguage}>
-                        <SelectTrigger className="w-full sm:w-[200px]">
+                    <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
+                        <SelectTrigger className="w-full sm:w-auto flex-1">
                             <SelectValue placeholder="Select language" />
                         </SelectTrigger>
                         <SelectContent>
@@ -136,15 +144,30 @@ export function Translator() {
                         </SelectContent>
                     </Select>
                     
-                    <Button onClick={handleSwap} variant="outline" size="icon" className="flex-shrink-0" disabled={!translationResult?.translatedText}>
+                    <Button onClick={handleSwap} variant="outline" size="icon" className="flex-shrink-0" disabled={isPending}>
                         <ArrowRightLeft className="w-5 h-5"/>
                     </Button>
-
-                    <Button onClick={handleTranslate} disabled={isPending} className="w-full sm:w-auto">
-                        {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Translate
-                    </Button>
+                    
+                    <Select value={targetLanguage} onValueChange={setTargetLanguage}>
+                        <SelectTrigger className="w-full sm:w-auto flex-1">
+                            <SelectValue placeholder="Select language" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <ScrollArea className="h-72">
+                                {languages.map(lang => (
+                                    <SelectItem key={lang.value} value={lang.value}>
+                                        {lang.label}
+                                    </SelectItem>
+                                ))}
+                            </ScrollArea>
+                        </SelectContent>
+                    </Select>
                 </div>
+
+                <Button onClick={handleTranslate} disabled={isPending} className="w-full">
+                    {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Translate
+                </Button>
 
                 {translationResult && (
                     <div className="space-y-4 pt-4">
