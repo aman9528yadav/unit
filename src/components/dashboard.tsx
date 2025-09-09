@@ -76,7 +76,7 @@ import { DailyActivity, processUserDataForStats, TopFeature } from "@/lib/stats"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart as RechartsBarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { format, intervalToDuration, isPast } from "date-fns";
-import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData, listenToUpdatesFromRtdb, UpdateItem, listenToDashboardWelcomeMessage, setDashboardWelcomeMessage, BetaWelcomeMessage, listenToBetaWelcomeMessage } from "@/services/firestore";
+import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData, listenToUpdatesFromRtdb, UpdateItem, listenToDashboardWelcomeMessage, setDashboardWelcomeMessage, BetaWelcomeMessage, listenToBetaWelcomeMessage, listenToComingSoonItems, ComingSoonItem, defaultComingSoonItems } from '@/services/firestore';
 import { getStreakData, recordVisit, StreakData } from "@/lib/streak";
 import { SidebarTrigger } from "./ui/sidebar";
 
@@ -106,12 +106,6 @@ const moreQuickAccessItems = [
     { icon: <Info size={18} />, label: "Help", href: "/how-to-use" },
 ];
 
-const comingSoonItems = [
-    { title: "AI Smart Search", subtitle: "Type conversions like '10kg to lbs'" },
-    { title: "Shared Notes", subtitle: "Collaborate with others" },
-    { title: "Smart Recipes", subtitle: "Context-aware steps", soon: true },
-];
-
 const newsItems = [
     { title: "Live sync by email", desc: "Now user can sync data live like history", href:"/updates" },
     { title: "Profile Tools", desc: "Manage your profile and preferences", href:"/profile" },
@@ -139,6 +133,7 @@ export function Dashboard() {
     topFeature: 'Converter' as TopFeature
   });
   const [streakData, setStreakData] = useState<StreakData>({ currentStreak: 0, bestStreak: 0, daysNotOpened: 0});
+  const [comingSoonItems, setComingSoonItems] = useState<ComingSoonItem[]>(defaultComingSoonItems);
 
   useEffect(() => {
     const userEmail = localStorage.getItem("userProfile")
@@ -160,7 +155,12 @@ export function Dashboard() {
         getStreakData(userEmail).then(setStreakData);
     }
     
-    return () => unsub();
+    const unsubComingSoon = listenToComingSoonItems(setComingSoonItems);
+
+    return () => {
+        unsub();
+        unsubComingSoon();
+    };
   }, []);
 
   const chartData = stats.activity.map(day => ({
@@ -285,7 +285,7 @@ export function Dashboard() {
         <ScrollArea className="w-full whitespace-nowrap">
             <div className="flex gap-3 pb-2">
             {comingSoonItems.map((item, index) => (
-                <ComingCard key={index} title={item.title} subtitle={item.subtitle} soon={item.soon} />
+                <ComingCard key={index} title={item.title} subtitle={item.description} soon={item.soon} />
             ))}
             </div>
              <ScrollBar orientation="horizontal" />
@@ -342,14 +342,67 @@ function Shortcut({ icon, label, href }: { icon: React.ReactNode, label: string,
 
 
 function ComingCard({ title, subtitle, soon }: { title: string, subtitle: string, soon?: boolean }) {
+  const router = useRouter();
+  const [profile, setProfile] = useState<{email: string} | null>(null);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showComingSoonDialog, setShowComingSoonDialog] = useState(false);
+
+   useEffect(() => {
+    const storedProfile = localStorage.getItem("userProfile");
+    if (storedProfile) {
+        setProfile(JSON.parse(storedProfile));
+    }
+  }, []);
+  
+  const handleClick = () => {
+    if (!profile) {
+      setShowLoginDialog(true);
+    } else {
+      setShowComingSoonDialog(true);
+    }
+  };
+
   return (
-    <div className="min-w-[180px] p-3 rounded-2xl bg-card shadow-sm">
-      <div className="flex items-center justify-between">
-        <div className="text-sm font-medium text-primary">{title}</div>
-        {soon && <div className="text-[10px] px-2 py-1 rounded-full bg-yellow-200 text-yellow-800">Soon</div>}
-      </div>
-      <div className="text-xs text-muted-foreground mt-2">{subtitle}</div>
-    </div>
+    <>
+      <button onClick={handleClick} className="min-w-[180px] p-3 rounded-2xl bg-card shadow-sm text-left">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium text-primary">{title}</div>
+          {soon && <div className="text-[10px] px-2 py-1 rounded-full bg-yellow-200 text-yellow-800">Soon</div>}
+        </div>
+        <div className="text-xs text-muted-foreground mt-2">{subtitle}</div>
+      </button>
+
+      <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Login Required</AlertDialogTitle>
+            <AlertDialogDescription>
+              Please log in to be notified about this feature.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => router.push('/welcome')}>
+              Login
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <AlertDialog open={showComingSoonDialog} onOpenChange={setShowComingSoonDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Coming Soon!</AlertDialogTitle>
+            <AlertDialogDescription>
+              This feature is under development. We'll notify you when it's ready!
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Got it!</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 

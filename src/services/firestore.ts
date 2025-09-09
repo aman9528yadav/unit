@@ -280,6 +280,47 @@ export interface OwnerInfo {
     imageUrl: string;
 }
 
+// --- COMING SOON ---
+export interface ComingSoonItem {
+    id: string;
+    title: string;
+    description: string;
+    soon: boolean;
+}
+
+export const defaultComingSoonItems: ComingSoonItem[] = [
+    { id: '1', title: 'AI Smart Search', description: "Type conversions like '10kg to lbs'", soon: true },
+    { id: '2', title: 'Shared Notes', description: 'Collaborate with others', soon: false },
+    { id: '3', title: 'Smart Recipes', description: 'Context-aware steps', soon: true },
+];
+
+export async function setComingSoonItemsInRtdb(items: ComingSoonItem[]) {
+    try {
+        const refPath = ref(rtdb, 'app-content/comingSoon');
+        await setRealtimeDb(refPath, items);
+    } catch (error) {
+        console.error("Error saving Coming Soon items to RTDB:", error);
+        throw error;
+    }
+}
+
+export function listenToComingSoonItems(callback: (items: ComingSoonItem[]) => void): () => void {
+    const refPath = ref(rtdb, 'app-content/comingSoon');
+    return onValue(refPath, (snapshot) => {
+        const data = snapshot.val();
+        if (data && Array.isArray(data)) {
+            callback(data);
+        } else {
+            setComingSoonItemsInRtdb(defaultComingSoonItems);
+            callback(defaultComingSoonItems);
+        }
+    }, (error) => {
+        console.error("Error listening to Coming Soon items from RTDB:", error);
+        callback(defaultComingSoonItems);
+    });
+}
+
+
 export async function setAboutInfoInRtdb(info: AboutInfo) {
     try {
         const aboutRef = ref(rtdb, 'app-content/aboutInfo');
