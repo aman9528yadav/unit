@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 import { motion, PanInfo } from 'framer-motion';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Header } from '@/components/header';
 
 
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
@@ -149,7 +150,7 @@ function PageContent({ children }: { children: React.ReactNode }) {
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
-        className={cn("w-full flex-grow flex flex-col", "max-w-[415px] relative bg-background")}
+        className={cn("w-full flex-grow flex flex-col", "max-w-[412px] relative bg-background")}
       >
           {children}
       </motion.div>
@@ -232,7 +233,8 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
       <body className="font-body antialiased" suppressHydrationWarning>
           <MaintenanceRedirect>
             <SidebarProvider>
-                <div className="flex min-h-screen items-center justify-center">
+                <div className="flex min-h-screen items-center justify-center flex-col">
+                    <Header />
                     <PageContent>{children}</PageContent>
                 </div>
                 <Sidebar>

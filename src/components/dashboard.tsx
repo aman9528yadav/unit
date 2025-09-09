@@ -79,13 +79,6 @@ import { getStreakData, recordVisit, StreakData } from "@/lib/streak";
 import { SidebarTrigger } from "./ui/sidebar";
 
 
-const statsData = [
-  { key: "Today", value: 9, icon: <Clock size={16} className="text-purple-700" /> },
-  { key: "Streak", value: 2, icon: <Flame size={16} className="text-orange-500" /> },
-  { key: "Saved", value: 2, icon: <Bookmark size={16} className="text-pink-600" /> },
-  { key: "All time", value: 39, icon: <Star size={16} className="text-yellow-500" /> }
-];
-
 const weeklySummaryData = [
   { day: "Mon", value: 5 },
   { day: "Tue", value: 7 },
@@ -102,7 +95,7 @@ const quickAccessItems = [
     { icon: <BookOpen size={18} />, label: "Notes", href: "/notes" },
     { icon: <Layers size={18} />, label: "Translator", href: "/translator" },
     { icon: <Clock size={18} />, label: "History", href: "/history" },
-    { icon: <Clipboard size={18} />, label: "News", href: "/news" },
+    { icon: <Newspaper size={18} />, label: "News", href: "/news" },
 ];
 
 const moreQuickAccessItems = [
@@ -136,31 +129,58 @@ export function Dashboard() {
   const allQuickAccess = [...quickAccessItems, ...moreQuickAccessItems];
   const shortcutsToShow = showAllShortcuts ? allQuickAccess : quickAccessItems;
 
+  const [stats, setStats] = useState({
+    todaysOps: 0,
+    totalOps: 0,
+    savedNotes: 0,
+    activity: [] as DailyActivity[],
+  });
+  const [streakData, setStreakData] = useState<StreakData>({ currentStreak: 0, bestStreak: 0, daysNotOpened: 0});
+
+  useEffect(() => {
+    const userEmail = localStorage.getItem("userProfile")
+      ? JSON.parse(localStorage.getItem("userProfile")!).email
+      : null;
+
+    if (userEmail) {
+      recordVisit(userEmail);
+    }
+
+    const unsub = listenToUserData(userEmail, (userData) => {
+      if (userData) {
+        const processedStats = processUserDataForStats(userData, userEmail);
+        setStats(processedStats);
+      }
+    });
+
+    if (userEmail) {
+        getStreakData(userEmail).then(setStreakData);
+    }
+    
+    return () => unsub();
+  }, []);
+
+  const chartData = stats.activity.map(day => ({
+      date: format(new Date(day.date), 'EEE'),
+      ops: day.total,
+  }));
+  const chartConfig = {
+      ops: {
+          label: "Operations",
+          color: "hsl(var(--primary))",
+      },
+  };
+
+  const statsData = [
+    { key: "Today", value: stats.todaysOps, icon: <Clock size={16} className="text-purple-700" /> },
+    { key: "Streak", value: streakData.currentStreak, icon: <Flame size={16} className="text-orange-500" /> },
+    { key: "Saved", value: stats.savedNotes, icon: <Bookmark size={16} className="text-pink-600" /> },
+    { key: "All time", value: stats.totalOps, icon: <Star size={16} className="text-yellow-500" /> }
+  ];
+
+
   return (
     <div className="text-gray-800 max-w-sm mx-auto">
-      {/* NAVBAR */}
-      <div className="flex items-center gap-3 justify-between mb-5">
-        <div className="flex items-center gap-3">
-          <SidebarTrigger asChild>
-            <button className="p-2 rounded-xl bg-white shadow-md">
-                <Menu size={18} />
-            </button>
-          </SidebarTrigger>
-          <div className="text-base font-bold text-purple-700">Sutradhaar</div>
-        </div>
-        <div className="flex items-center gap-2">
-           <button className="p-2 rounded-xl bg-white shadow-md">
-            <Search size={16} />
-          </button>
-          <Notifications />
-           <Link href="/profile">
-             <button className="p-2 rounded-xl bg-white shadow-md">
-                <User size={16} />
-            </button>
-          </Link>
-        </div>
-      </div>
-
       {/* STAT CARDS - HORIZONTAL SCROLL */}
       <div className="mb-5">
         <ScrollArea className="w-full whitespace-nowrap">
@@ -181,18 +201,25 @@ export function Dashboard() {
       {/* WEEKLY SUMMARY WITH BARS */}
       <div className="mb-5">
         <h3 className="text-sm font-semibold mb-2 text-purple-700">Weekly Summary</h3>
-        <div className="flex items-end gap-2 h-28 px-1">
-          {weeklySummaryData.map((w) => (
-            <div key={w.day} className="flex flex-col items-center flex-1">
-              <motion.div 
-                className="w-6 bg-gradient-to-t from-purple-300 to-pink-300 rounded-md"
-                initial={{ height: 0 }}
-                animate={{ height: `${w.value * 10}px` }}
-                transition={{ duration: 0.5, delay: Math.random() * 0.5 }}
-              />
-              <div className="text-xs text-gray-500 mt-1">{w.day}</div>
-            </div>
-          ))}
+        <div className="h-28 px-1">
+          <ChartContainer config={chartConfig} className="h-full w-full">
+            <RechartsBarChart accessibilityLayer data={chartData}>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    tickMargin={10}
+                    axisLine={false}
+                    tickFormatter={(value) => value.slice(0, 3)}
+                />
+                <YAxis hide/>
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent indicator="dot" />}
+                />
+                <Bar dataKey="ops" fill="var(--color-ops)" radius={8} />
+            </RechartsBarChart>
+          </ChartContainer>
         </div>
       </div>
 
@@ -330,5 +357,3 @@ function InfoItem({ icon, title, subtitle, href }: { icon: React.ReactNode, titl
     }
     return <div>{content}</div>;
 }
-
-    
