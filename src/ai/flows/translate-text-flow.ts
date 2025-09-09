@@ -22,7 +22,7 @@ export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
 const TranslateTextOutputSchema = z.object({
   correctedSourceText: z.string().describe('The original text, corrected for any grammatical errors or typos.'),
   translatedText: z.string().describe('The main, most accurate, and formal translation of the text.'),
-  regionalTranslation: z.string().optional().describe('The translation in a specific regional accent, if applicable (e.g., UP/Bihar Hindi).'),
+  regionalTranslation: z.string().optional().describe('The translation in a specific regional accent, if applicable (e.g., Braj Bhasha).'),
   suggestions: z.array(z.string()).describe('A list of alternative translations or related phrases. If a regional dialect is requested, these suggestions should also be in that dialect.'),
   examples: z.array(z.object({
     original: z.string().describe('An example sentence in the source language using the original text.'),
@@ -51,8 +51,8 @@ Text to translate:
 
 IMPORTANT: If the target language is Hindi, you must provide TWO translations:
 1.  'translatedText': A standard, formal Hindi translation.
-2.  'regionalTranslation': A casual, conversational translation using an accent and phrasing common in the Uttar Pradesh and Bihar regions of India.
-3.  The 'suggestions' should also be in the UP/Bihar regional style.
+2.  'regionalTranslation': A casual, conversational translation using a Braj Bhasha (Vrajvasi) accent and phrasing.
+3.  The 'suggestions' should also be in the Braj Bhasha (Vrajvasi) regional style.
 
 Return ONLY the structured JSON output with no additional commentary.
 `,
@@ -76,5 +76,6 @@ export async function translateText(
 ): Promise<TranslateTextOutput> {
   return translateTextFlow(input);
 }
+
 
 
