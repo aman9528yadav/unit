@@ -121,7 +121,7 @@ const SidebarContent = React.forwardRef<
     onClick={(e) => e.stopPropagation()}
     className={cn(
       "fixed inset-y-0 left-0 z-50 p-5 w-72 max-w-full shadow-2xl rounded-r-3xl",
-      "bg-sidebar",
+      "bg-sidebar-background",
       className
     )}
     {...props}
@@ -169,7 +169,7 @@ const SidebarMenuButton = React.forwardRef<
         "flex flex-col items-center justify-center p-4 rounded-2xl shadow-md transition w-full text-sm font-medium tracking-wide backdrop-blur-sm hover:shadow-lg",
         isActive
           ? "bg-primary/20 text-primary"
-          : "bg-card text-card-foreground",
+          : "bg-card text-primary",
         className
       )}
       {...props}
