@@ -188,84 +188,88 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
       </head>
       <body className={cn("font-body antialiased", theme === 'sutradhaar' && 'sutradhaar-body')} suppressHydrationWarning>
           <MaintenanceRedirect>
-            <SidebarProvider>
-                <div className="flex min-h-screen items-start justify-center flex-col">
-                    <div className="w-full max-w-[412px] mx-auto flex flex-col flex-grow bg-background">
-                        <Header />
-                        <PageContent>{children}</PageContent>
+            {pathname === '/maintenance' ? (
+                <PageContent>{children}</PageContent>
+            ) : (
+                <SidebarProvider>
+                    <div className="flex min-h-screen items-start justify-center flex-col">
+                        <div className="w-full max-w-[412px] mx-auto flex flex-col flex-grow bg-background">
+                            <Header />
+                            <PageContent>{children}</PageContent>
+                        </div>
                     </div>
-                </div>
-                <Sidebar>
-                    <SidebarContent>
-                         <SidebarClose asChild>
-                            <Button
-                                variant="ghost"
-                                className="absolute top-4 right-4 text-2xl font-bold"
-                            >
-                                ✕
-                            </Button>
-                        </SidebarClose>
+                    <Sidebar>
+                        <SidebarContent>
+                            <SidebarClose asChild>
+                                <Button
+                                    variant="ghost"
+                                    className="absolute top-4 right-4 text-2xl font-bold"
+                                >
+                                    ✕
+                                </Button>
+                            </SidebarClose>
 
-                        <div className="flex items-center gap-4 mb-8 mt-10 p-3 bg-card/70 dark:bg-card/70 rounded-2xl shadow-md">
-                            <Avatar className="w-14 h-14 bg-gradient-to-r from-primary to-accent shadow-lg">
-                                <AvatarImage src={profile?.profileImage || ''} />
-                                <AvatarFallback className="text-white font-bold text-lg bg-transparent">{profile?.fullName?.[0] || 'G'}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="text-xs text-muted-foreground">Welcome back,</p>
-                                <p className="text-lg font-semibold text-foreground">{profile?.fullName || 'Guest'}</p>
-                                {isLoggedIn ? (
-                                    <button onClick={() => router.push('/profile')} className="text-xs text-primary hover:underline">View Profile</button>
-                                ): (
-                                    <button onClick={() => router.push('/welcome')} className="text-xs text-primary hover:underline">Login</button>
+                            <div className="flex items-center gap-4 mb-8 mt-10 p-3 bg-card/70 dark:bg-card/70 rounded-2xl shadow-md">
+                                <Avatar className="w-14 h-14 bg-gradient-to-r from-primary to-accent shadow-lg">
+                                    <AvatarImage src={profile?.profileImage || ''} />
+                                    <AvatarFallback className="text-white font-bold text-lg bg-transparent">{profile?.fullName?.[0] || 'G'}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="text-xs text-muted-foreground">Welcome back,</p>
+                                    <p className="text-lg font-semibold text-foreground">{profile?.fullName || 'Guest'}</p>
+                                    {isLoggedIn ? (
+                                        <button onClick={() => router.push('/profile')} className="text-xs text-primary hover:underline">View Profile</button>
+                                    ): (
+                                        <button onClick={() => router.push('/welcome')} className="text-xs text-primary hover:underline">Login</button>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-8 overflow-y-auto h-[65vh] pb-6 pr-2 custom-scrollbar">
+                            {navSections.map(section => {
+                                    const filteredLinks = section.links.filter(link => !link.requiresAuth || isLoggedIn);
+                                    if(filteredLinks.length === 0) return null;
+
+                                return (
+                                    <section key={section.title}>
+                                        <h2 className="text-sm font-bold text-muted-foreground mb-3">{section.title}</h2>
+                                        <SidebarMenu>
+                                            {filteredLinks.map((link) => (
+                                                <SidebarMenuItem key={link.href}>
+                                                    <Link 
+                                                    href={link.href} 
+                                                    passHref
+                                                    onClick={(e) => handleLinkClick(e, link.href, !!link.requiresAuth)}
+                                                    target={link.isExternal ? "_blank" : undefined}
+                                                    rel={link.isExternal ? "noopener noreferrer" : undefined}
+                                                    >
+                                                        <SidebarMenuButton isActive={pathname === link.href}>
+                                                            <link.icon size={20}/>
+                                                            <span>{link.label}</span>
+                                                        </SidebarMenuButton>
+                                                    </Link>
+                                                </SidebarMenuItem>
+                                            ))}
+                                        </SidebarMenu>
+                                    </section>
+                                )
+                            })}
+                            </div>
+                            
+                            <div className="mt-6 text-center text-xs text-muted-foreground border-t pt-4">
+                                Sutradhaar <br /> Made by Aman Yadav
+                                {isLoggedIn && (
+                                    <div className="flex justify-center mt-3">
+                                    <button onClick={handleLogout} className="flex items-center gap-1 text-red-500 text-sm hover:underline">
+                                        <LogOut size={16} /> Logout
+                                    </button>
+                                    </div>
                                 )}
                             </div>
-                        </div>
-
-                         <div className="space-y-8 overflow-y-auto h-[65vh] pb-6 pr-2 custom-scrollbar">
-                           {navSections.map(section => {
-                                const filteredLinks = section.links.filter(link => !link.requiresAuth || isLoggedIn);
-                                if(filteredLinks.length === 0) return null;
-
-                               return (
-                                <section key={section.title}>
-                                    <h2 className="text-sm font-bold text-muted-foreground mb-3">{section.title}</h2>
-                                    <SidebarMenu>
-                                         {filteredLinks.map((link) => (
-                                            <SidebarMenuItem key={link.href}>
-                                                <Link 
-                                                href={link.href} 
-                                                passHref
-                                                onClick={(e) => handleLinkClick(e, link.href, !!link.requiresAuth)}
-                                                target={link.isExternal ? "_blank" : undefined}
-                                                rel={link.isExternal ? "noopener noreferrer" : undefined}
-                                                >
-                                                    <SidebarMenuButton isActive={pathname === link.href}>
-                                                        <link.icon size={20}/>
-                                                        <span>{link.label}</span>
-                                                    </SidebarMenuButton>
-                                                </Link>
-                                            </SidebarMenuItem>
-                                        ))}
-                                    </SidebarMenu>
-                                </section>
-                               )
-                           })}
-                        </div>
-                        
-                         <div className="mt-6 text-center text-xs text-muted-foreground border-t pt-4">
-                            Sutradhaar <br /> Made by Aman Yadav
-                            {isLoggedIn && (
-                                <div className="flex justify-center mt-3">
-                                <button onClick={handleLogout} className="flex items-center gap-1 text-red-500 text-sm hover:underline">
-                                    <LogOut size={16} /> Logout
-                                </button>
-                                </div>
-                            )}
-                        </div>
-                    </SidebarContent>
-                </Sidebar>
-            </SidebarProvider>
+                        </SidebarContent>
+                    </Sidebar>
+                </SidebarProvider>
+            )}
           </MaintenanceRedirect>
           <Toaster />
           <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
