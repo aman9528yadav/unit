@@ -20,7 +20,7 @@ const defaultAppInfo: AppInfo = {
 
 const defaultOwnerInfo: OwnerInfo = {
     name: 'Aman Yadav',
-    imageUrl: '/aman.jpeg',
+    imageUrl: 'https://picsum.photos/seed/aman/120/120',
 };
 
 const defaultReleasePlan: ReleasePlanItem[] = [
