@@ -9,11 +9,14 @@ const withPWA = require('@ducanh2912/next-pwa').default({
   register: true,
   skipWaiting: true,
   runtimeCaching: [
-    // Cache pages and static assets with a Network First strategy.
-    // This ensures users get the latest content when online, but can still access it offline.
+    // Cache pages and static assets with a Stale While Revalidate strategy.
+    // This ensures users get cached content immediately while the app fetches updates in the background.
     {
-      urlPattern: /^https?.*/,
-      handler: 'NetworkFirst',
+      urlPattern: ({ request, url }: { request: Request; url: URL }) =>
+        // Exclude API routes and internal Next.js requests.
+        !url.pathname.startsWith('/api/') &&
+        !url.pathname.startsWith('/_next/static/webpack/'),
+      handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'pages-and-assets',
         expiration: {
