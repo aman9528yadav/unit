@@ -31,6 +31,8 @@ const prompt = ai.definePrompt({
   output: {schema: TranslateTextOutputSchema},
   prompt: `Translate the following text from {{sourceLanguage}} to {{targetLanguage}}.
 
+Return ONLY the translated text, with no additional commentary or explanations.
+
 Text to translate:
 "{{text}}"
 `,
