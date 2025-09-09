@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { ArrowRightLeft, Loader2, Languages, Copy, Lightbulb, BookOpen } from 'lucide-react';
+import { ArrowRightLeft, Loader2, Languages, Copy, Lightbulb, BookOpen, MessageSquareQuote, Check } from 'lucide-react';
 import { translateText, TranslateTextOutput } from '@/ai/flows/translate-text-flow';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from './ui/scroll-area';
@@ -170,6 +170,19 @@ export function Translator() {
 
                 {translationResult && (
                     <div className="space-y-4">
+                         {translationResult.correctedSourceText && translationResult.correctedSourceText.toLowerCase() !== inputText.toLowerCase() && (
+                             <div className="p-4 bg-secondary rounded-lg">
+                                <h3 className="font-semibold flex items-center gap-2 mb-2"><Check className="w-5 h-5 text-primary"/> Corrected Original</h3>
+                                <p className="text-sm text-muted-foreground italic">"{translationResult.correctedSourceText}"</p>
+                            </div>
+                        )}
+                        <Separator />
+                        {translationResult.regionalTranslation && (
+                             <div className="p-4 bg-secondary rounded-lg">
+                                <h3 className="font-semibold flex items-center gap-2 mb-2"><MessageSquareQuote className="w-5 h-5 text-primary"/> Regional Translation (UP/Bihar)</h3>
+                                <p className="text-sm font-semibold text-foreground">{translationResult.regionalTranslation}</p>
+                            </div>
+                        )}
                         {translationResult.suggestions && translationResult.suggestions.length > 0 && (
                             <div className="p-4 bg-secondary rounded-lg">
                                 <h3 className="font-semibold flex items-center gap-2 mb-2"><Lightbulb className="w-5 h-5 text-primary"/> Suggestions</h3>

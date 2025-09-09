@@ -20,8 +20,10 @@ const TranslateTextInputSchema = z.object({
 export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
 
 const TranslateTextOutputSchema = z.object({
-  translatedText: z.string().describe('The main, most accurate translation of the text.'),
-  suggestions: z.array(z.string()).describe('A list of alternative translations or related phrases.'),
+  correctedSourceText: z.string().describe('The original text, corrected for any grammatical errors or typos.'),
+  translatedText: z.string().describe('The main, most accurate, and formal translation of the text.'),
+  regionalTranslation: z.string().optional().describe('The translation in a specific regional accent, if applicable (e.g., UP/Bihar Hindi).'),
+  suggestions: z.array(z.string()).describe('A list of alternative translations or related phrases. If a regional dialect is requested, these suggestions should also be in that dialect.'),
   examples: z.array(z.object({
     original: z.string().describe('An example sentence in the source language using the original text.'),
     translated: z.string().describe('The translation of the example sentence in the target language.'),
@@ -37,16 +39,22 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert translator. Your task is to translate the given text from a source language to a target language.
 
 You must provide the following:
-1.  The primary, most accurate translation.
-2.  A list of 2-3 alternative translations or suggestions for the user.
-3.  Two example sentences showing the original text in a sentence and its corresponding translation.
+1.  First, correct any spelling or grammatical mistakes in the original source text.
+2.  Provide the primary, most accurate, and formal translation.
+3.  A list of 2-3 alternative translations or suggestions for the user.
+4.  Two example sentences showing the original text in a sentence and its corresponding translation.
 
 Translate the following text from {{sourceLanguage}} to {{targetLanguage}}.
 
-If the target language is Hindi, please ensure the translation uses a natural, conversational accent and phrasing common in the Uttar Pradesh and Bihar regions of India.
-
 Text to translate:
 "{{text}}"
+
+{{#if (eq targetLanguage "Hindi")}}
+IMPORTANT: You must provide TWO translations for Hindi:
+1.  'translatedText': A standard, formal Hindi translation.
+2.  'regionalTranslation': A casual, conversational translation using an accent and phrasing common in the Uttar Pradesh and Bihar regions of India.
+3.  The 'suggestions' should also be in the UP/Bihar regional style.
+{{/if}}
 
 Return ONLY the structured JSON output with no additional commentary.
 `,
@@ -70,3 +78,4 @@ export async function translateText(
 ): Promise<TranslateTextOutput> {
   return translateTextFlow(input);
 }
+
