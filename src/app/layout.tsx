@@ -289,7 +289,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
       <head>
           <title>Sutradhaar</title>
           <meta name="description" content="A straightforward unit converter app for various measurements." />
-          <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
+          <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236B46C1' /><text x='50%' y='50%' dominant-baseline='central' text-anchor='middle' font-size='70' fill='white' font-family='sans-serif'>S</text></svg>" />
           <meta name="manifest" content="/manifest.json" />
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
