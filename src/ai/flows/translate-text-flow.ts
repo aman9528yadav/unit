@@ -76,6 +76,3 @@ export async function translateText(
 ): Promise<TranslateTextOutput> {
   return translateTextFlow(input);
 }
-
-
-

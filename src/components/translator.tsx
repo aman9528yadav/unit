@@ -179,7 +179,7 @@ export function Translator() {
                         <Separator />
                         {translationResult.regionalTranslation && (
                              <div className="p-4 bg-secondary rounded-lg">
-                                <h3 className="font-semibold flex items-center gap-2 mb-2"><MessageSquareQuote className="w-5 h-5 text-primary"/> Regional Translation (UP/Bihar)</h3>
+                                <h3 className="font-semibold flex items-center gap-2 mb-2"><MessageSquareQuote className="w-5 h-5 text-primary"/> Regional Translation (Vrajvasi)</h3>
                                 <p className="text-sm font-semibold text-foreground">{translationResult.regionalTranslation}</p>
                             </div>
                         )}
