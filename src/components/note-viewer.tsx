@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -37,13 +38,21 @@ export function NoteViewer({ noteId }: { noteId: string }) {
             setProfile(JSON.parse(storedProfile));
         } else {
             router.push('/notes');
+            return;
         }
-    }, [router]);
 
-    useEffect(() => {
-        if (!profile) return;
+        const unlockedNoteJson = sessionStorage.getItem('unlockedNote');
+        if (unlockedNoteJson) {
+            const unlockedNote = JSON.parse(unlockedNoteJson);
+            if (unlockedNote.id === noteId) {
+                setNote(unlockedNote);
+                sessionStorage.removeItem('unlockedNote'); // Clean up after use
+                return; // Note is already loaded
+            }
+        }
         
-        const unsubscribe = listenToUserNotes(profile.email, (notesFromDb) => {
+        const email = JSON.parse(storedProfile).email;
+        const unsubscribe = listenToUserNotes(email, (notesFromDb) => {
             const noteToView = notesFromDb.find(n => n.id === noteId);
             if (noteToView) {
                 setNote(noteToView);
@@ -55,7 +64,8 @@ export function NoteViewer({ noteId }: { noteId: string }) {
         
         return () => unsubscribe();
 
-    }, [noteId, router, toast, profile, t]);
+    }, [noteId, router, toast, t]);
+
 
     const handleShareAsImage = async () => {
         if (!note || !noteContentRef.current) return;

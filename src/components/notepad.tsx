@@ -139,7 +139,8 @@ export function Notepad() {
     }
     
     const executeProtectedAction = (note: Note, action: 'view' | 'edit' | 'delete') => {
-         if (action === 'view') {
+        if (action === 'view') {
+            sessionStorage.setItem('unlockedNote', JSON.stringify(note));
             router.push(`/notes/view/${note.id}`);
         } else if (action === 'edit') {
             router.push(`/notes/edit/${note.id}`);
