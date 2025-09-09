@@ -101,7 +101,7 @@ const quickAccessItems = [
 ];
 
 const moreQuickAccessItems = [
-    { icon: <Calendar size={18} />, label: "Events" },
+    { icon: <Calendar size={18} />, label: "Date Calc", href: "/time?tab=date-diff" },
     { icon: <Star size={18} />, label: "Favorites", href: "/history?tab=favorites" },
     { icon: <Info size={18} />, label: "Help", href: "/how-to-use" },
 ];
@@ -397,9 +397,9 @@ function ComingCard({ title, subtitle, soon }: { title: string, subtitle: string
       <AlertDialog open={showComingSoonDialog} onOpenChange={setShowComingSoonDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Coming Soon!</AlertDialogTitle>
+            <AlertDialogTitle>{title}</AlertDialogTitle>
             <AlertDialogDescription>
-              This feature is under development. We'll notify you when it's ready!
+              This feature is under development in Sutradhaar. We'll notify you when it's ready!
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
