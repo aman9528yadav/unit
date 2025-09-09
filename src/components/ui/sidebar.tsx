@@ -121,7 +121,7 @@ const SidebarContent = React.forwardRef<
     onClick={(e) => e.stopPropagation()}
     className={cn(
       "fixed inset-y-0 left-0 z-50 p-5 w-72 max-w-full shadow-2xl rounded-r-3xl",
-      "bg-gradient-to-b from-white to-gray-100 dark:from-neutral-900 dark:to-neutral-950",
+      "bg-sidebar",
       className
     )}
     {...props}
