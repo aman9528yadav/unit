@@ -33,10 +33,10 @@ export function AboutCard() {
     }, []);
 
     return (
-        <Card className="bg-white shadow-sm rounded-2xl">
+        <Card className="bg-card shadow-sm border rounded-2xl">
             <CardHeader onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
                 <div className="flex justify-between items-center">
-                    <CardTitle>About</CardTitle>
+                    <CardTitle className="text-primary">About</CardTitle>
                     <motion.div animate={{ rotate: isOpen ? 180 : 0 }}>
                         <ChevronDown className="h-5 w-5 text-muted-foreground"/>
                     </motion.div>

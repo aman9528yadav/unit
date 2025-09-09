@@ -211,8 +211,8 @@ export function Dashboard() {
         <ScrollArea className="w-full whitespace-nowrap">
             <div className="flex gap-3 pb-2">
             {statsData.map((s) => (
-                <div key={s.key} className="min-w-[120px] flex-shrink-0 p-3 rounded-2xl bg-card shadow-sm">
-                <div className="flex items-center justify-between text-xs text-card-foreground">
+                <div key={s.key} className="min-w-[120px] flex-shrink-0 p-3 rounded-2xl bg-card shadow-sm border">
+                <div className="flex items-center justify-between text-xs text-foreground/80">
                     <div className="flex items-center gap-2">
                       {s.icon} {s.key}
                     </div>
@@ -222,7 +222,7 @@ export function Dashboard() {
                 <div className="text-xl font-bold mt-1 text-primary">{s.value}</div>
                 </div>
             ))}
-             <div className="min-w-[120px] flex-shrink-0 p-3 rounded-2xl bg-card shadow-sm flex flex-col items-center justify-center">
+             <div className="min-w-[120px] flex-shrink-0 p-3 rounded-2xl bg-card shadow-sm border flex flex-col items-center justify-center">
                  <Link href="/analytics" className="text-primary font-semibold text-sm hover:underline">View Analytics</Link>
              </div>
             </div>
@@ -333,8 +333,8 @@ export function Dashboard() {
 /* --- Helper components --- */
 function Shortcut({ icon, label, href }: { icon: React.ReactNode, label: string, href?: string }) {
     const content = (
-        <div className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-card shadow-sm text-xs text-primary">
-            <div className="p-2 rounded-lg bg-primary/10">{icon}</div>
+        <div className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-card shadow-sm border text-xs text-primary">
+            <div className="p-2 rounded-lg bg-secondary">{icon}</div>
             <div>{label}</div>
         </div>
     );
@@ -369,7 +369,7 @@ function ComingCard({ title, subtitle, soon }: { title: string, subtitle: string
 
   return (
     <>
-      <button onClick={handleClick} className="min-w-[180px] p-3 rounded-2xl bg-card shadow-sm text-left">
+      <button onClick={handleClick} className="min-w-[180px] p-3 rounded-2xl bg-card shadow-sm border text-left">
         <div className="flex items-center justify-between">
           <div className="text-sm font-medium text-primary">{title}</div>
           {soon && <div className="text-[10px] px-2 py-1 rounded-full bg-yellow-200 text-yellow-800">Soon</div>}
@@ -413,7 +413,7 @@ function ComingCard({ title, subtitle, soon }: { title: string, subtitle: string
 
 function NewsItem({ title, desc, href }: { title: string, desc: string, href?: string }) {
     const content = (
-        <div className="p-3 rounded-xl bg-card shadow-sm">
+        <div className="p-3 rounded-xl bg-card shadow-sm border">
             <div className="text-sm font-medium text-primary">{title}</div>
             <div className="text-xs text-muted-foreground mt-1">{desc}</div>
         </div>
@@ -426,8 +426,8 @@ function NewsItem({ title, desc, href }: { title: string, desc: string, href?: s
 
 function InfoItem({ icon, title, subtitle, href }: { icon: React.ReactNode, title: string, subtitle: string, href?: string }) {
     const content = (
-        <div className="p-3 rounded-2xl bg-card shadow-sm flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">{icon}</div>
+        <div className="p-3 rounded-2xl bg-card shadow-sm border flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-secondary">{icon}</div>
             <div>
                 <div className="text-sm font-medium text-primary">{title}</div>
                 <div className="text-xs text-muted-foreground">{subtitle}</div>

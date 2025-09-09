@@ -10,21 +10,21 @@ body {
 @layer base {
   :root, .light {
     --background: 240 10% 99%;
-    --foreground: 240 10% 3.9%;
+    --foreground: 240 5.1% 45.1%; /* #71717A */
 
     --card: 240 10% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 240 5.1% 45.1%;
 
     --popover: 240 10% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover-foreground: 240 5.1% 45.1%;
 
-    --primary: 262.1 83.3% 57.8%;
+    --primary: 262.1 83.3% 57.8%; /* #7C3AED */
     --primary-foreground: 210 20% 98%;
 
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: 265 82.4% 95.1%; /* #F1EBFD */
+    --secondary-foreground: 262.1 83.3% 57.8%;
 
-    --muted: 240 4.8% 95.9%;
+    --muted: 265 82.4% 95.1%; /* #F1EBFD */
     --muted-foreground: 240 3.8% 46.1%;
 
     --accent: 345 80% 65%;
@@ -216,27 +216,27 @@ body {
   }
 
   .sutradhaar {
-    --background: 265 60% 97%;
-    --foreground: 250 25% 30%;
-    --card: 270 50% 99%;
-    --card-foreground: 250 25% 30%;
-    --popover: 265 60% 97%;
-    --popover-foreground: 250 25% 30%;
-    --primary: 262.1 83.3% 57.8%;
+    --background: 240 10% 99%;
+    --foreground: 240 5.1% 45.1%; /* #71717A */
+    --card: 240 10% 100%;
+    --card-foreground: 240 5.1% 45.1%;
+    --popover: 240 10% 100%;
+    --popover-foreground: 240 5.1% 45.1%;
+    --primary: 262.1 83.3% 57.8%; /* #7C3AED */
     --primary-foreground: 210 20% 98%;
-    --secondary: 270 40% 95%;
-    --secondary-foreground: 250 25% 30%;
-    --muted: 270 40% 95%;
-    --muted-foreground: 250 20% 50%;
+    --secondary: 265 82.4% 95.1%; /* #F1EBFD */
+    --secondary-foreground: 262.1 83.3% 57.8%; /* #7C3AED */
+    --muted: 265 82.4% 95.1%; /* #F1EBFD */
+    --muted-foreground: 240 3.8% 46.1%;
     --accent: 345 80% 65%;
-    --accent-foreground: 250 25% 30%;
+    --accent-foreground: 240 5.9% 10%;
     --destructive: 0 70% 60%;
     --destructive-foreground: 210 20% 98%;
-    --border: 270 30% 90%;
-    --input: 270 40% 95%;
+    --border: 240 5.9% 90%;
+    --input: 240 40% 95%;
     --ring: 262.1 83.3% 57.8%;
     --radius: 0.7rem;
-    --sidebar-background: 265 60% 97%;
+    --sidebar-background: 240 10% 100%;
   }
 }
 
@@ -273,3 +273,4 @@ body {
 
 
     
+
