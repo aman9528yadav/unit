@@ -14,7 +14,7 @@ import {z} from 'genkit';
 
 const TranslateTextInputSchema = z.object({
   text: z.string().describe('The text to be translated.'),
-  sourceLanguage: z.string().describe('The language of the text to be translated (e.g., "English", "Spanish").'),
+  sourceLanguage: z.string().describe('The language of the text to be translated (e.g., "English", "Spanish"). This can also be "Hinglish" (a mix of Hindi and English).'),
   targetLanguage: z.string().describe('The language to translate the text into (e.g., "Spanish", "French", "Hindi").'),
 });
 export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
@@ -36,6 +36,7 @@ const prompt = ai.definePrompt({
   input: {schema: TranslateTextInputSchema},
   output: {schema: TranslateTextOutputSchema},
   prompt: `First, correct any spelling or grammar mistakes in the following text from {{sourceLanguage}}.
+If the source language is "Hinglish," you should interpret the mixed Hindi-English text.
 Provide the corrected text in the 'correctedText' field.
 
 Then, translate the corrected text into {{targetLanguage}}.
