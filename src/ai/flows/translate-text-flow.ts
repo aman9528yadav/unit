@@ -42,6 +42,8 @@ Text to translate:
 Provide the main translation in the 'translatedText' field.
 Also, provide up to 3 alternative translations or suggestions in the 'suggestions' field.
 Finally, provide 1-2 example sentences using the original text and their corresponding translations in the 'examples' field.
+
+If the target language is Hindi, please ensure the suggestions include some common, colloquial words used in different regions of India, particularly from areas like Uttar Pradesh and Bihar, to give a more authentic and regional flavor.
 `,
 });
 
