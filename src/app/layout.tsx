@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import './globals.css';
@@ -140,15 +139,28 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const showHeader = !noHeaderPages.includes(pathname);
   
   useEffect(() => {
-    const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
-    setIsLoggedIn(!!userEmail);
+    const handleAuthChange = (user: any) => {
+        const userEmail = user ? user.email : null;
+        setIsLoggedIn(!!userEmail);
 
-    if (userEmail) {
-        const unsub = listenToUserData(userEmail, (data) => {
-            setProfile(data);
-        });
-        return () => unsub();
-    }
+        if (userEmail) {
+            const unsub = listenToUserData(userEmail, (data) => {
+                setProfile(data);
+            });
+            return () => unsub();
+        } else {
+            setProfile(null);
+        }
+    };
+    
+    // Check initial state
+    const currentUser = auth.currentUser;
+    handleAuthChange(currentUser);
+
+    // Listen for future changes
+    const unsubscribe = auth.onAuthStateChanged(handleAuthChange);
+    
+    return () => unsubscribe();
   }, []);
 
 
@@ -167,6 +179,9 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
         router.push("/logout");
     });
   }
+  
+  const displayName = profile?.email === 'amanyadavyadav9458@gmail.com' ? 'Aman jii' : profile?.fullName || 'Guest';
+
 
   return (
     <html lang="en">
@@ -233,7 +248,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
                                 </Avatar>
                                 <div>
                                     <p className="text-xs text-muted-foreground">Welcome back,</p>
-                                    <p className="text-lg font-semibold text-foreground">{profile?.fullName || 'Guest'}</p>
+                                    <p className="text-lg font-semibold text-foreground">{displayName}</p>
                                     {isLoggedIn ? (
                                         <button onClick={() => router.push('/profile')} className="text-xs text-primary hover:underline">View Profile</button>
                                     ): (
@@ -348,3 +363,5 @@ export default function RootLayout({
     </ThemeProvider>
   );
 }
+
+    
