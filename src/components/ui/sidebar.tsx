@@ -83,41 +83,33 @@ SidebarClose.displayName = "SidebarClose"
 
 const Sidebar = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<typeof motion.div>
+  React.ComponentProps<"div">
 >(({ children, ...props }, ref) => {
   const { open, setOpen } = useSidebar()
 
   return (
-    <AnimatePresence>
+    <>
       {open && (
-        <motion.div
+        <div
           ref={ref}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
           className="fixed inset-0 z-50 bg-black/50"
           onClick={() => setOpen(false)}
           {...props}
         >
           {children}
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   )
 })
 Sidebar.displayName = "Sidebar"
 
 const SidebarContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<typeof motion.div>
+  React.ComponentProps<"div">
 >(({ className, ...props }, ref) => (
-  <motion.div
+  <div
     ref={ref}
-    initial={{ x: "-100%" }}
-    animate={{ x: 0 }}
-    exit={{ x: "-100%" }}
-    transition={{ type: "tween", ease: "easeInOut", duration: 0.4 }}
     onClick={(e) => e.stopPropagation()}
     className={cn(
       "fixed inset-y-0 left-0 z-50 p-5 w-72 max-w-full shadow-2xl rounded-r-3xl",
@@ -143,13 +135,12 @@ SidebarMenu.displayName = "SidebarMenu"
 
 const SidebarMenuItem = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<typeof motion.div>
+  React.ComponentProps<"div">
 >(({ className, ...props }, ref) => {
   const { setOpen } = useSidebar()
   return (
-    <motion.div
+    <div
       ref={ref}
-      whileTap={{ scale: 0.95 }}
       onClick={() => setOpen(false)}
       className={cn("relative", className)}
       {...props}
