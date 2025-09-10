@@ -392,34 +392,8 @@ export function Converter() {
         toast({ title: t('converter.toast.nothingToShare'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
         return;
     }
-    if (!navigator.share || !navigator.canShare) {
-        toast({ title: t('converter.toast.notSupported'), description: t('converter.toast.webShareApi'), variant: "destructive" });
-        return;
-    }
-
-    try {
-        const canvas = await html2canvas(imageExportRef.current, { backgroundColor: null, scale: 3 });
-        canvas.toBlob(async (blob) => {
-            if (!blob) {
-                throw new Error("Canvas to Blob conversion failed");
-            }
-            const file = new File([blob], `conversion.png`, { type: 'image/png' });
-            
-            if (navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    title: t('converter.share.title'),
-                    text: `${inputValue} ${fromUnit} → ${outputValue} ${toUnit}\n\nSutradhaar | Made by Aman Yadav`,
-                    files: [file],
-                });
-            } else {
-                 toast({ title: "Cannot share image", description: "Your browser does not support sharing files.", variant: "destructive" });
-            }
-        }, 'image/png');
-
-    } catch (error) {
-        console.error('Error sharing image:', error);
-        toast({ title: t('converter.toast.shareFailed'), description: t('converter.toast.couldNotShare'), variant: "destructive" });
-    }
+    
+    handleExportAsImage();
   };
   
    const handleShareClick = () => {
