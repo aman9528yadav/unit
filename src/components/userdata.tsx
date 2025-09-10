@@ -152,7 +152,7 @@ export function UserData() {
                                     <UserIcon />
                                 </AvatarFallback>
                             </Avatar>
-                            <Button asChild size="icon" className="absolute bottom-1 right-1 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button asChild size="icon" className="absolute bottom-1 right-1 h-8 w-8 rounded-full transition-opacity">
                                 <Link href="/profile/edit">
                                     <Edit className="h-4 w-4" />
                                 </Link>
@@ -257,4 +257,3 @@ export function UserData() {
         </div>
     );
 }
-
