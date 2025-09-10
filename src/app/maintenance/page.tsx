@@ -127,7 +127,7 @@ export default function MaintenancePage() {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="flex flex-col items-center gap-8 w-full max-w-lg"
       >
-        <div className="absolute top-4 left-4">
+        <div className="w-full flex justify-start">
              <Button variant="secondary" onClick={() => router.back()}>
                 <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
              </Button>
