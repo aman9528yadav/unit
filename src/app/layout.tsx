@@ -21,6 +21,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Header } from '@/components/header';
 import { auth } from '@/lib/firebase';
+import * as LucideIcons from 'lucide-react';
 
 
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
@@ -91,7 +92,7 @@ const navSections = [
     {
         title: "🌐 Online Tools",
         links: [
-            { href: "/translator", label: "AI Translator", icon: Languages },
+            { href: "/translator", label: "AI Translator", icon: Languages, comingSoon: true, description: "Translate text between multiple languages with AI-powered suggestions and corrections." },
             { href: "https://aman9528.wixstudio.com/my-site-3", label: "News", icon: Newspaper, isExternal: true },
         ]
     },
@@ -133,6 +134,9 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [showComingSoonDialog, setShowComingSoonDialog] = useState(false);
+  const [comingSoonFeature, setComingSoonFeature] = useState<{title: string, description: string, icon: React.ElementType} | null>(null);
+
 
   // Pages where the main header should be hidden
   const noHeaderPages = ['/welcome', '/signup', '/forgot-password', '/logout', '/getting-started', '/maintenance'];
@@ -164,10 +168,19 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
   }, []);
 
 
-  const handleLinkClick = (e: React.MouseEvent, href: string, requiresAuth: boolean) => {
-    if (requiresAuth && !isLoggedIn) {
+  const handleLinkClick = (e: React.MouseEvent, link: any) => {
+    if (link.requiresAuth && !isLoggedIn) {
       e.preventDefault();
       setShowLoginDialog(true);
+    }
+    if(link.comingSoon) {
+        e.preventDefault();
+        setComingSoonFeature({
+            title: link.label,
+            description: link.description || "This feature is under development. We'll notify you when it's ready!",
+            icon: link.icon
+        });
+        setShowComingSoonDialog(true);
     }
   };
   
@@ -271,13 +284,14 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
                                                     <Link 
                                                     href={link.href} 
                                                     passHref
-                                                    onClick={(e) => handleLinkClick(e, link.href, !!link.requiresAuth)}
+                                                    onClick={(e) => handleLinkClick(e, link)}
                                                     target={link.isExternal ? "_blank" : undefined}
                                                     rel={link.isExternal ? "noopener noreferrer" : undefined}
                                                     >
                                                         <SidebarMenuButton isActive={pathname === link.href}>
                                                             <link.icon size={20}/>
-                                                            <span>{link.label}</span>
+                                                            <span className="flex-1">{link.label}</span>
+                                                             {link.comingSoon && <span className="text-[10px] px-2 py-1 rounded-full bg-yellow-200 text-yellow-800 font-bold">Soon</span>}
                                                         </SidebarMenuButton>
                                                     </Link>
                                                 </SidebarMenuItem>
@@ -344,6 +358,24 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
                 </AlertDialogFooter>
             </AlertDialogContent>
            </AlertDialog>
+            <AlertDialog open={showComingSoonDialog} onOpenChange={setShowComingSoonDialog}>
+              <AlertDialogContent>
+                <AlertDialogHeader className="items-center text-center">
+                   {comingSoonFeature?.icon && (
+                        <div className="p-3 bg-primary/10 rounded-full mb-4">
+                            <comingSoonFeature.icon className="w-8 h-8 text-primary" />
+                        </div>
+                   )}
+                  <AlertDialogTitle>{comingSoonFeature?.title} is Coming Soon!</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {comingSoonFeature?.description}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogAction onClick={() => setShowComingSoonDialog(false)}>Got it!</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
       </body>
     </html>
   );
@@ -363,5 +395,3 @@ export default function RootLayout({
     </ThemeProvider>
   );
 }
-
-    
