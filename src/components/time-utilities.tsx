@@ -31,6 +31,7 @@ import { incrementDateCalculationCount } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from 'html2canvas';
+import { Skeleton } from "./ui/skeleton";
 
 
 // --- Web Worker Code ---
@@ -74,8 +75,7 @@ function PomodoroTimer() {
     const totalDuration = 
         mode === 'work' ? settings.pomodoroLength * 60 
       : mode === 'shortBreak' ? settings.shortBreakLength * 60
-      : mode === 'longBreak' ? settings.longBreakLength * 60
-      : 0;
+      : settings.longBreakLength * 60;
       
     const progress = totalDuration > 0 ? ((minutes * 60 + seconds) / totalDuration) * 100 : 0;
 
@@ -121,8 +121,7 @@ function PomodoroTimer() {
     React.useEffect(() => {
         const savedSettingsStr = localStorage.getItem('pomodoroSettings');
         const savedSettings = savedSettingsStr ? JSON.parse(savedSettingsStr) : settings;
-        setSettings(savedSettings);
-
+        
         const savedState = localStorage.getItem('pomodoroState');
         if (savedState) {
             const { endTime, remainingTime, mode: savedMode, pomodoros: savedPomodoros, isPaused } = JSON.parse(savedState);
@@ -146,6 +145,9 @@ function PomodoroTimer() {
                  switchMode(nextMode, true, savedSettings);
             }
         }
+        
+        setSettings(savedSettings);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -905,6 +907,19 @@ function DateCalculator() {
             <TabsContent value="countdown" className="mt-4"><Countdown /></TabsContent>
         </Tabs>
     )
+}
+
+export function TimeUtilitiesSkeleton() {
+    return (
+        <div className="space-y-4 animate-pulse">
+            <div className="flex gap-2">
+                <Skeleton className="h-10 w-1/3 rounded-lg" />
+                <Skeleton className="h-10 w-1/3 rounded-lg" />
+                <Skeleton className="h-10 w-1/3 rounded-lg" />
+            </div>
+            <Skeleton className="h-96 w-full rounded-2xl" />
+        </div>
+    );
 }
 
 

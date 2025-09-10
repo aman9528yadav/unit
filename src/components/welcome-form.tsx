@@ -127,18 +127,6 @@ export function WelcomeForm() {
 
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col justify-center min-h-screen bg-background text-foreground p-6">
-        <header className="flex justify-between items-center py-4 mb-8">
-             <h1 className="text-xl font-bold flex items-center gap-2">
-                <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                    <ArrowRight className="rotate-[-45deg]"/>
-                </div>
-                Sutradhaar
-            </h1>
-            <Button variant="outline" onClick={handleSkip}>
-                <Play className="mr-2 h-4 w-4 rotate-180"/> {t('welcome.skip')}
-            </Button>
-        </header>
-
         <div className="bg-card p-6 rounded-2xl border-2 border-primary/20 mt-4">
               <div className="grid grid-cols-2 bg-muted p-1 rounded-lg mb-6">
                 <Button variant="ghost" className="data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:shadow-sm" data-active="true">{t('welcome.tabs.login')}</Button>
@@ -205,6 +193,9 @@ export function WelcomeForm() {
                 By continuing, you agree to our <Link href="/privacy-policy" className="font-semibold text-primary hover:underline">Privacy Policy</Link>.
             </p>
         </div>
+         <Button variant="outline" onClick={handleSkip} className="mt-4">
+            <Play className="mr-2 h-4 w-4 rotate-180"/> {t('welcome.skip')}
+        </Button>
     </div>
   );
 }

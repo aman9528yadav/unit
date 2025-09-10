@@ -117,13 +117,28 @@ const navSections = [
 
 function PageContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setIsNavigating(false);
+  }, [pathname]);
 
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     // Navigate back if swiped right with enough velocity
     if (info.offset.x > 100 && info.velocity.x > 200) {
+      setIsNavigating(true);
       router.back();
     }
   };
+  
+  if (isNavigating) {
+      return (
+          <div className="w-full flex-grow p-4 sm:p-6">
+              <PageSkeleton/>
+          </div>
+      );
+  }
 
   return (
       <motion.div
@@ -138,6 +153,21 @@ function PageContent({ children }: { children: React.ReactNode }) {
   )
 }
 
+function PageSkeleton() {
+    return (
+        <div className="space-y-4">
+            <Skeleton className="h-10 w-full rounded-full" />
+            <div className="grid grid-cols-2 gap-4">
+                 <Skeleton className="h-24 w-full rounded-2xl" />
+                 <Skeleton className="h-24 w-full rounded-2xl" />
+            </div>
+            <Skeleton className="h-48 w-full rounded-2xl" />
+            <Skeleton className="h-32 w-full rounded-2xl" />
+        </div>
+    )
+}
+
+
 function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -146,6 +176,10 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Partial<UserData> | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+
+  // Pages where the main header should be hidden
+  const noHeaderPages = ['/welcome', '/signup', '/forgot-password', '/logout', '/getting-started', '/maintenance'];
+  const showHeader = !noHeaderPages.includes(pathname);
   
   useEffect(() => {
     const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
@@ -194,8 +228,10 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
                 <SidebarProvider>
                     <div className="flex min-h-screen items-start justify-center flex-col">
                         <div className="w-full max-w-[412px] mx-auto flex flex-col flex-grow bg-background">
-                            <Header />
-                            <PageContent>{children}</PageContent>
+                            {showHeader && <Header />}
+                            <React.Suspense fallback={<div className="w-full flex-grow p-4 sm:p-6"><PageSkeleton/></div>}>
+                                <PageContent>{children}</PageContent>
+                            </React.Suspense>
                         </div>
                     </div>
                     <Sidebar>
