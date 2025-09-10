@@ -132,7 +132,7 @@ export function Dashboard() {
           const savedOrder = userData.settings.quickAccessOrder;
           const orderedItems = savedOrder.map((id: string) => defaultQuickAccessItems.find(item => item.id === id)).filter(Boolean);
           const newItems = defaultQuickAccessItems.filter(item => !savedOrder.includes(item.id));
-          setQuickAccessItems([...orderedItems, ...newItems]);
+          setQuickAccessItems([...orderedItems, ...newItems] as typeof defaultQuickAccessItems);
         }
       }
     });
@@ -279,9 +279,9 @@ export function Dashboard() {
              </div>
           )}
         </div>
-        <Reorder.Group axis="y" values={quickAccessItems} onReorder={setQuickAccessItems} className="grid grid-cols-3 gap-3">
+        <Reorder.Group as="ul" values={quickAccessItems} onReorder={setQuickAccessItems} className="grid grid-cols-3 gap-3">
           {quickAccessItems.map((item, index) => (
-            <Reorder.Item key={item.id} value={item}>
+            <Reorder.Item key={item.id} value={item} as="li" className="relative">
                <Shortcut icon={item.icon} label={item.label} href={item.href} isCustomizeMode={isCustomizeMode} />
             </Reorder.Item>
           ))}
