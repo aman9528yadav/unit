@@ -283,7 +283,7 @@ export function Analytics() {
     }, []);
 
     return (
-        <div className="min-h-screen flex flex-col bg-background p-4 overflow-x-hidden">
+        <div className="min-h-screen flex flex-col bg-background p-4 sm:p-6 overflow-x-hidden">
             <div className="max-w-md mx-auto space-y-6 pb-10 w-full">
                 <div className="flex justify-between items-center sticky top-0 bg-background/70 backdrop-blur z-10 py-2">
                     <h1 className="text-2xl font-bold text-primary">Analytics</h1>
@@ -366,7 +366,7 @@ export function Analytics() {
                             <Button size="sm" variant={chartType === "area" ? "default" : "outline"} onClick={() => setChartType("area")}>Area</Button>
                         </div>
                     </CardHeader>
-                    <CardContent className="h-72 overflow-x-auto">
+                    <CardContent className="h-72 overflow-x-auto custom-scrollbar">
                         <div className="min-w-[600px] h-64">
                             <AnimatePresence mode="wait">
                                 <motion.div
@@ -467,4 +467,3 @@ export function Analytics() {
         </div>
     );
 }
-
