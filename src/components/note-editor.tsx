@@ -381,49 +381,50 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         }
     };
 
-    const handleShareAsImage = async () => {
+    const getNoteElementForExport = () => {
         const contentEl = editorRef.current;
-        if (!contentEl) return;
+        if (!contentEl) return null;
 
-        if (!navigator.share || !navigator.canShare) {
-            toast({ title: "Sharing Not Supported", variant: "destructive" });
-            return;
-        }
+        const exportContainer = document.createElement('div');
+        exportContainer.style.width = contentEl.clientWidth + 'px';
+        exportContainer.style.padding = '1rem';
+        exportContainer.style.backgroundColor = 'white';
+        exportContainer.innerHTML = contentEl.innerHTML;
+
+        const credit = document.createElement('p');
+        credit.innerText = "Sutradhaar | Made by Aman Yadav";
+        credit.style.textAlign = 'center';
+        credit.style.fontSize = '12px';
+        credit.style.color = '#888';
+        credit.style.marginTop = '20px';
+        exportContainer.appendChild(credit);
+
+        return exportContainer;
+    };
+    
+    const handleExportAsImage = async () => {
+        const exportContainer = getNoteElementForExport();
+        if (!exportContainer) return;
+        document.body.appendChild(exportContainer);
 
         try {
-            const clonedEl = contentEl.cloneNode(true) as HTMLDivElement;
-            const credit = document.createElement('p');
-            credit.innerText = "Sutradhaar | Made by Aman Yadav";
-            credit.className = "text-center text-sm text-muted-foreground mt-4";
-            clonedEl.appendChild(credit);
-            
-            // Temporarily append to body to get correct dimensions
-            document.body.appendChild(clonedEl);
-            const canvas = await html2canvas(clonedEl, { scale: 2 });
-            document.body.removeChild(clonedEl);
-            
-            canvas.toBlob(async (blob) => {
-                if (!blob) {
-                    toast({ title: "Sharing Failed", description: "Could not create image from note.", variant: "destructive" });
-                    return;
-                }
-                const file = new File([blob], `${title || 'note'}.png`, { type: 'image/png' });
-
-                if (navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        title: title || 'Shared Note',
-                        files: [file],
-                        text: `Sutradhaar | Made by Aman Yadav`
-                    });
-                } else {
-                    toast({ title: "Cannot Share Image", description: "Your browser does not support sharing images.", variant: "destructive" });
-                }
-            }, 'image/png');
+            const canvas = await html2canvas(exportContainer, { scale: 2 });
+            const image = canvas.toDataURL("image/png", 1.0);
+            const link = document.createElement('a');
+            link.href = image;
+            link.download = `${title || 'note'}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast({ title: "Exported as Image!" });
         } catch (error) {
-            console.error('Error sharing note:', error);
-            toast({ title: "Sharing Failed", variant: "destructive" });
+            console.error('Error exporting as image:', error);
+            toast({ title: "Could not export image", variant: "destructive" });
+        } finally {
+            document.body.removeChild(exportContainer);
         }
     };
+
 
     const handleExportAsTxt = () => {
         const contentEl = editorRef.current;
@@ -442,24 +443,26 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     };
 
     const handleExportAsPdf = async () => {
-        const contentEl = editorRef.current;
-        if (!contentEl) return;
+        const exportContainer = getNoteElementForExport();
+        if (!exportContainer) return;
+        document.body.appendChild(exportContainer);
         
-        const clonedEl = contentEl.cloneNode(true) as HTMLDivElement;
-        const credit = document.createElement('p');
-        credit.innerText = "Sutradhaar | Made by Aman Yadav";
-        credit.className = "text-center text-sm text-muted-foreground mt-4";
-        clonedEl.appendChild(credit);
-
-        // Temporarily append to body to get correct dimensions
-        document.body.appendChild(clonedEl);
-        html2canvas(clonedEl, { scale: 2 }).then(canvas => {
-            document.body.removeChild(clonedEl);
+        try {
+            const canvas = await html2canvas(exportContainer, { scale: 2 });
             const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'px', [canvas.width, canvas.height]);
+            const pdf = new jsPDF({
+                orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+                unit: 'px',
+                format: [canvas.width, canvas.height]
+            });
             pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
             pdf.save(`${title || 'note'}.pdf`);
-        });
+        } catch (error) {
+            console.error('Error exporting as PDF:', error);
+            toast({ title: "Could not export PDF", variant: "destructive" });
+        } finally {
+             document.body.removeChild(exportContainer);
+        }
     };
     
     const renderAttachment = () => {
@@ -515,9 +518,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                            <DropdownMenuItem onSelect={handleShareAsImage}>
+                            <DropdownMenuItem onSelect={handleExportAsImage}>
                                 <ImageIcon className="mr-2 h-4 w-4" />
-                                <span>Share as Image</span>
+                                <span>Export as Image</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem onSelect={handleExportAsTxt}>
                                 <FileText className="mr-2 h-4 w-4" />
