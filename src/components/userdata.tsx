@@ -237,18 +237,18 @@ export function UserData() {
                         </div>
 
                         <div className="grid grid-cols-3 gap-2 mt-8">
-                             <Button asChild variant="outline" className="flex gap-2">
+                            <Button asChild variant="outline" size="icon">
                                 <Link href="/profile/edit">
-                                    <Edit size={16} /> Edit Profile
+                                    <Edit size={16} />
                                 </Link>
                             </Button>
-                            <Button asChild variant="outline" className="flex gap-2">
+                            <Button asChild variant="outline" size="icon">
                                 <Link href="/settings">
-                                    <Settings size={16} /> Manage Settings
+                                    <Settings size={16} />
                                 </Link>
                             </Button>
-                            <Button variant="destructive" className="flex gap-2" onClick={handleLogout}>
-                                <LogOut size={16} /> Log out
+                            <Button variant="destructive" size="icon" onClick={handleLogout}>
+                                <LogOut size={16} />
                             </Button>
                         </div>
                         
