@@ -628,9 +628,27 @@ export function Converter() {
                             <Star className={cn("w-5 h-5", isFavorite && "text-yellow-400 fill-yellow-400")} />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={handleCopy} disabled={!outputValue}><Copy size={16}/></Button>
-                        <Button variant="ghost" size="icon" onClick={handleShareClick}>
-                            <Share2 size={16} />
-                        </Button>
+                         <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <Share2 size={16} />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onSelect={handleShareAsImage}>
+                                    <Share2 className="mr-2 h-4 w-4" />
+                                    <span>Share as Image</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={handleExportAsImage}>
+                                    <ImageIcon className="mr-2 h-4 w-4" />
+                                    <span>Export as PNG</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={handleExportAsTxt}>
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    <span>Export as TXT</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                      </div>
                 </div>
                 
