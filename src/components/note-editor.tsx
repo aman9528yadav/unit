@@ -132,7 +132,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             unsubUserData();
         };
 
-    }, [isNewNote, noteId, router, toast, profile, t]);
+    }, [isNewNote, noteId, router, toast, profile, t, allNotes]);
 
     useEffect(() => {
         if (editorRef.current && content && !contentSetRef.current) {
@@ -396,8 +396,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             credit.innerText = "Sutradhaar | Made by Aman Yadav";
             credit.className = "text-center text-sm text-muted-foreground mt-4";
             clonedEl.appendChild(credit);
+            
+            // Temporarily append to body to get correct dimensions
             document.body.appendChild(clonedEl);
-
             const canvas = await html2canvas(clonedEl, { scale: 2 });
             document.body.removeChild(clonedEl);
             
@@ -449,8 +450,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         credit.innerText = "Sutradhaar | Made by Aman Yadav";
         credit.className = "text-center text-sm text-muted-foreground mt-4";
         clonedEl.appendChild(credit);
-        document.body.appendChild(clonedEl);
 
+        // Temporarily append to body to get correct dimensions
+        document.body.appendChild(clonedEl);
         html2canvas(clonedEl, { scale: 2 }).then(canvas => {
             document.body.removeChild(clonedEl);
             const imgData = canvas.toDataURL('image/png');

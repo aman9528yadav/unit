@@ -77,7 +77,12 @@ export function NoteViewer({ noteId }: { noteId: string }) {
         }
 
         try {
-            const canvas = await html2canvas(noteContentRef.current, { scale: 2 });
+            const clonedEl = noteContentRef.current.cloneNode(true) as HTMLDivElement;
+            document.body.appendChild(clonedEl);
+
+            const canvas = await html2canvas(clonedEl, { scale: 2 });
+            document.body.removeChild(clonedEl);
+
             canvas.toBlob(async (blob) => {
                 if (!blob) {
                     toast({ title: "Sharing Failed", description: "Could not create image from note.", variant: "destructive" });
@@ -119,7 +124,10 @@ export function NoteViewer({ noteId }: { noteId: string }) {
 
     const handleExportAsPdf = () => {
         if (!note || !noteContentRef.current) return;
-        html2canvas(noteContentRef.current, { scale: 2 }).then(canvas => {
+        const clonedEl = noteContentRef.current.cloneNode(true) as HTMLDivElement;
+        document.body.appendChild(clonedEl);
+        html2canvas(clonedEl, { scale: 2 }).then(canvas => {
+            document.body.removeChild(clonedEl);
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'px', [canvas.width, canvas.height]);
             pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
