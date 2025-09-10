@@ -17,8 +17,7 @@ import Link from 'next/link';
 import { Home, Sigma, Calculator, NotebookPen, History, Timer, Settings, HelpCircle, X, User, Info, Newspaper, Rocket, Palette, Languages, Hourglass, Calendar, Mail, Crown, Sparkles, LogIn, LogOut } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { motion, PanInfo } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Header } from '@/components/header';
@@ -111,43 +110,6 @@ const navSections = [
     }
 ];
 
-function PageContent({ children, router }: { children: React.ReactNode; router: AppRouterInstance }) {
-  const [isNavigating, setIsNavigating] = useState(false);
-  const pathname = usePathname();
-
-  useEffect(() => {
-    setIsNavigating(false);
-  }, [pathname]);
-
-  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    // Navigate back if swiped right with enough velocity
-    if (info.offset.x > 100 && info.velocity.x > 200) {
-      setIsNavigating(true);
-      router.back();
-    }
-  };
-  
-  if (isNavigating) {
-      return (
-          <div className="w-full flex-grow p-4 sm:p-6">
-              <PageSkeleton/>
-          </div>
-      );
-  }
-
-  return (
-      <motion.div
-        drag="x"
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.1}
-        onDragEnd={handleDragEnd}
-        className={cn("w-full flex-grow flex flex-col", "relative bg-transparent")}
-      >
-          {children}
-      </motion.div>
-  )
-}
-
 function PageSkeleton() {
     return (
         <div className="space-y-4">
@@ -220,15 +182,36 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
       <body className={cn("font-body antialiased", theme === 'sutradhaar' && 'sutradhaar-body')} suppressHydrationWarning>
           <MaintenanceRedirect>
             {pathname === '/maintenance' ? (
-                <PageContent router={router}>{children}</PageContent>
+                 <AnimatePresence mode="wait">
+                    <motion.div
+                        key={pathname}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        {children}
+                    </motion.div>
+                </AnimatePresence>
             ) : (
                 <SidebarProvider>
                     <div className="flex min-h-screen items-start justify-center flex-col">
                         <div className="w-full max-w-[412px] mx-auto flex flex-col flex-grow bg-background">
                             {showHeader && <Header />}
-                            <React.Suspense fallback={<div className="w-full flex-grow p-4 sm:p-6"><PageSkeleton/></div>}>
-                                <PageContent router={router}>{children}</PageContent>
-                            </React.Suspense>
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={pathname}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="w-full flex-grow flex flex-col"
+                                >
+                                    <React.Suspense fallback={<div className="w-full flex-grow p-4 sm:p-6"><PageSkeleton/></div>}>
+                                        {children}
+                                    </React.Suspense>
+                                </motion.div>
+                            </AnimatePresence>
                         </div>
                     </div>
                     <Sidebar>

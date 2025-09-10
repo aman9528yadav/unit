@@ -22,7 +22,7 @@ const setGuestStats = (stats: any) => {
     window.dispatchEvent(new StorageEvent('storage', { key: getGuestKey('stats') }));
 };
 
-const incrementStat = async (field: 'totalConversions' | 'totalCalculations' | 'totalDateCalculations') => {
+const incrementStat = async (field: 'totalConversions' | 'totalCalculations' | 'totalDateCalculations' | 'notes') => {
     const userEmail = typeof window !== 'undefined' ? (localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null) : null;
     const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -131,8 +131,13 @@ export const processUserDataForStats = (userData: any, email: string | null): {
     const calculationHistory = userData.calculationHistory || [];
     const totalHistory = conversionHistory.length + calculationHistory.length;
 
-    const todaysOps = (todaysDailyStats.totalConversions || 0) + (todaysDailyStats.totalCalculations || 0) + (todaysDailyStats.totalDateCalculations || 0) + (todaysDailyStats.notes || 0);
-    const totalOps = totalConversions + totalCalculations + totalDateCalculations;
+    const todaysConversions = todaysDailyStats.totalConversions || 0;
+    const todaysCalculations = todaysDailyStats.totalCalculations || 0;
+    const todaysDateCalcs = todaysDailyStats.totalDateCalculations || 0;
+    const todaysNotes = todaysDailyStats.notes || 0;
+
+    const todaysOps = todaysConversions + todaysCalculations + todaysDateCalcs + todaysNotes;
+    const totalOps = totalConversions + totalCalculations + totalDateCalculations + (userData.notes?.length || 0);
 
     // Get note stats from user data
     const notes: Note[] = userData.notes || [];
