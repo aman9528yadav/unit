@@ -660,6 +660,7 @@ export interface UserData {
         calculatorMode?: 'basic' | 'scientific';
         calculatorTheme?: 'original' | 'physical';
         calculatorSound?: boolean;
+        quickAccessOrder?: string[];
     };
     [key: string]: any; // For other dynamic properties
 }

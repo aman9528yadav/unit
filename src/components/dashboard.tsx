@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Link from 'next/link';
-import { motion, useSpring, useInView } from "framer-motion";
+import { motion, useSpring, useInView, Reorder } from "framer-motion";
 import {
   Calculator,
   History,
@@ -53,7 +53,8 @@ import {
   Layers,
   Bell,
   Menu,
-  TrendingDown
+  TrendingDown,
+  GripVertical
 } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useRouter } from "next/navigation";
@@ -76,43 +77,28 @@ import { DailyActivity, processUserDataForStats, TopFeature } from "@/lib/stats"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart as RechartsBarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { format, intervalToDuration, isPast, parseISO } from "date-fns";
-import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData, listenToUpdatesFromRtdb, UpdateItem, listenToDashboardWelcomeMessage, setDashboardWelcomeMessage, BetaWelcomeMessage, listenToBetaWelcomeMessage, listenToComingSoonItems, ComingSoonItem, defaultComingSoonItems, HowToUseFeature, listenToHowToUseFeaturesFromRtdb } from '@/services/firestore';
+import { listenToNextUpdateInfo, NextUpdateInfo, listenToUserData, listenToUpdatesFromRtdb, UpdateItem, listenToDashboardWelcomeMessage, setDashboardWelcomeMessage, BetaWelcomeMessage, listenToBetaWelcomeMessage, listenToComingSoonItems, ComingSoonItem, defaultComingSoonItems, HowToUseFeature, listenToHowToUseFeaturesFromRtdb, updateUserData } from '@/services/firestore';
 import { getStreakData, recordVisit, StreakData } from "@/lib/streak";
 import { SidebarTrigger } from "./ui/sidebar";
+import { useToast } from "@/hooks/use-toast";
 
 
-const weeklySummaryData = [
-  { day: "Mon", value: 5 },
-  { day: "Tue", value: 7 },
-  { day: "Wed", value: 3 },
-  { day: "Thu", value: 6 },
-  { day: "Fri", value: 8 },
-  { day: "Sat", value: 2 },
-  { day: "Sun", value: 4 }
-];
-
-const quickAccessItems = [
-    { icon: <PieChart size={18} />, label: "Converter", href: "/converter" },
-    { icon: <Zap size={18} />, label: "Calculator", href: "/calculator" },
-    { icon: <BookOpen size={18} />, label: "Notes", href: "/notes" },
-    { icon: <Layers size={18} />, label: "Translator", href: "/translator" },
-    { icon: <Clock size={18} />, label: "History", href: "/history" },
-    { icon: <Newspaper size={18} />, label: "News", href: "/news" },
-];
-
-const moreQuickAccessItems = [
-    { icon: <Calendar size={18} />, label: "Date Calc", href: "/time?tab=date-diff" },
-    { icon: <Star size={18} />, label: "Favorites", href: "/history?tab=favorites" },
-    { icon: <Info size={18} />, label: "Help", href: "/how-to-use" },
+const defaultQuickAccessItems = [
+    { id: 'converter', icon: <PieChart size={18} />, label: "Converter", href: "/converter" },
+    { id: 'calculator', icon: <Zap size={18} />, label: "Calculator", href: "/calculator" },
+    { id: 'notes', icon: <BookOpen size={18} />, label: "Notes", href: "/notes" },
+    { id: 'translator', icon: <Layers size={18} />, label: "Translator", href: "/translator" },
+    { id: 'history', icon: <Clock size={18} />, label: "History", href: "/history" },
+    { id: 'news', icon: <Newspaper size={18} />, label: "News", href: "/news" },
+    { id: 'date-calc', icon: <Calendar size={18} />, label: "Date Calc", href: "/time?tab=date-diff" },
+    { id: 'favorites', icon: <Star size={18} />, label: "Favorites", href: "/history?tab=favorites" },
+    { id: 'help', icon: <Info size={18} />, label: "Help", href: "/how-to-use" },
 ];
 
 export function Dashboard() {
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [showAllShortcuts, setShowAllShortcuts] = useState(false);
+  const [isCustomizeMode, setIsCustomizeMode] = useState(false);
   
-  const allQuickAccess = [...quickAccessItems, ...moreQuickAccessItems];
-  const shortcutsToShow = showAllShortcuts ? allQuickAccess : quickAccessItems;
-
   const [stats, setStats] = useState({
     todaysOps: 0,
     totalOps: 0,
@@ -124,14 +110,17 @@ export function Dashboard() {
   const [comingSoonItems, setComingSoonItems] = useState<ComingSoonItem[]>(defaultComingSoonItems);
   const [whatsNewItems, setWhatsNewItems] = useState<UpdateItem[]>([]);
   const [discoverItems, setDiscoverItems] = useState<HowToUseFeature[]>([]);
-
+  const [quickAccessItems, setQuickAccessItems] = useState(defaultQuickAccessItems);
+  const [profile, setProfile] = useState<{email:string} | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const userEmail = localStorage.getItem("userProfile")
       ? JSON.parse(localStorage.getItem("userProfile")!).email
       : null;
-
+      
     if (userEmail) {
+      setProfile({ email: userEmail });
       recordVisit(userEmail);
     }
 
@@ -139,6 +128,12 @@ export function Dashboard() {
       if (userData) {
         const processedStats = processUserDataForStats(userData, userEmail);
         setStats(processedStats as any);
+        if (userData.settings?.quickAccessOrder) {
+          const savedOrder = userData.settings.quickAccessOrder;
+          const orderedItems = savedOrder.map((id: string) => defaultQuickAccessItems.find(item => item.id === id)).filter(Boolean);
+          const newItems = defaultQuickAccessItems.filter(item => !savedOrder.includes(item.id));
+          setQuickAccessItems([...orderedItems, ...newItems]);
+        }
       }
     });
 
@@ -164,6 +159,16 @@ export function Dashboard() {
         unsubDiscover();
     };
   }, []);
+
+  const handleSaveOrder = () => {
+    if (profile?.email) {
+      const order = quickAccessItems.map(item => item.id);
+      updateUserData(profile.email, { 'settings.quickAccessOrder': order });
+      toast({ title: "Layout Saved!", description: "Your quick access layout has been updated." });
+    }
+    setIsCustomizeMode(false);
+  };
+
 
   const chartData = stats.activity.map(day => ({
       date: format(new Date(day.date), 'EEE'),
@@ -264,18 +269,23 @@ export function Dashboard() {
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-primary">Quick Access</h3>
-          <button className="text-xs text-primary hover:underline">Customize</button>
+          {profile && !isCustomizeMode && (
+            <button onClick={() => setIsCustomizeMode(true)} className="text-xs text-primary hover:underline">Customize</button>
+          )}
+           {isCustomizeMode && (
+             <div className="flex items-center gap-2">
+              <Button size="sm" variant="ghost" onClick={() => setIsCustomizeMode(false)}>Cancel</Button>
+              <Button size="sm" onClick={handleSaveOrder}>Save</Button>
+             </div>
+          )}
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          {shortcutsToShow.map((item, index) => (
-            <Shortcut key={index} icon={item.icon} label={item.label} href={item.href} />
+        <Reorder.Group axis="y" values={quickAccessItems} onReorder={setQuickAccessItems} className="grid grid-cols-3 gap-3">
+          {quickAccessItems.map((item, index) => (
+            <Reorder.Item key={item.id} value={item}>
+               <Shortcut icon={item.icon} label={item.label} href={item.href} isCustomizeMode={isCustomizeMode} />
+            </Reorder.Item>
           ))}
-        </div>
-        <div className="flex justify-center mt-3">
-          <button onClick={() => setShowAllShortcuts(!showAllShortcuts)} className="px-3 py-1 text-xs rounded-lg bg-primary/10 text-primary">
-            {showAllShortcuts ? "Show Less" : "Show More"}
-          </button>
-        </div>
+        </Reorder.Group>
       </div>
 
       {/* COMING SOON - HORIZONTAL */}
@@ -334,18 +344,23 @@ export function Dashboard() {
 }
 
 /* --- Helper components --- */
-function Shortcut({ icon, label, href }: { icon: React.ReactNode, label: string, href?: string }) {
+function Shortcut({ icon, label, href, isCustomizeMode }: { icon: React.ReactNode, label: string, href?: string, isCustomizeMode?: boolean }) {
     const content = (
-        <div className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-card shadow-sm border text-xs text-primary">
+        <div className={cn("relative flex flex-col items-center gap-2 p-3 rounded-2xl bg-card shadow-sm border text-xs text-primary", isCustomizeMode && "cursor-grab")}>
             <div className="p-2 rounded-lg bg-secondary">{icon}</div>
             <div>{label}</div>
+            {isCustomizeMode && (
+              <div className="absolute top-1 right-1 text-muted-foreground">
+                <GripVertical size={16}/>
+              </div>
+            )}
         </div>
     );
 
-    if (href) {
+    if (href && !isCustomizeMode) {
         return <Link href={href}>{content}</Link>
     }
-    return <button>{content}</button>;
+    return <div>{content}</div>;
 }
 
 
