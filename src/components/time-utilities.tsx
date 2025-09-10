@@ -74,7 +74,7 @@ function PomodoroTimer() {
     const totalDuration = 
         mode === 'work' ? settings.pomodoroLength * 60 
       : mode === 'shortBreak' ? settings.shortBreakLength * 60
-      : settings.longBreakLength * 60;
+      : mode === 'longBreak' ? settings.longBreakLength * 60;
       
     const progress = totalDuration > 0 ? ((minutes * 60 + seconds) / totalDuration) * 100 : 0;
 
@@ -551,11 +551,15 @@ function DateDifference() {
             canvas.toBlob(async (blob) => {
                 if (blob) {
                     const file = new File([blob], 'date-difference.png', { type: 'image/png' });
-                    await navigator.share({
-                        title: 'Date Calculation Result',
-                        text: `Result from ${format(startDate!, 'PPP')} to ${format(endDate!, 'PPP')}`,
-                        files: [file],
-                    });
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            title: 'Date Calculation Result',
+                            text: `Result from ${format(startDate!, 'PPP')} to ${format(endDate!, 'PPP')}`,
+                            files: [file],
+                        });
+                    } else {
+                        toast({ title: "Sharing files not supported", variant: "destructive" });
+                    }
                 }
             }, 'image/png');
         } catch (error) {
@@ -924,3 +928,5 @@ export function TimeUtilities() {
     </div>
   );
 }
+
+    
