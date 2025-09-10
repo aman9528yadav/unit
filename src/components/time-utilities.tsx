@@ -159,37 +159,27 @@ function PomodoroTimer() {
         }
 
         const worker = workerRef.current;
-
-        const handleTick = () => {
-             setTime(prevTime => {
-                 if (prevTime <= 0) {
-                     const newPomodoroCount = mode === 'work' ? pomodoros + 1 : pomodoros;
-                     if(mode === 'work') {
-                        setPomodoros(newPomodoroCount);
-                     }
-                     
-                     const newMode = mode === 'work'
-                        ? (newPomodoroCount % settings.pomodorosUntilLongBreak === 0 ? 'longBreak' : 'shortBreak')
-                        : 'work';
-                     
-                     switchMode(newMode, false);
-                     return 0; // Return 0 to prevent further negative countdown
-                 }
-                 return prevTime - 1;
-             });
-        }
         
-        const setTime = (updater: (prevTime: number) => number) => {
-            setMinutes(m => {
-                setSeconds(s => {
-                    const totalSeconds = m * 60 + s;
-                    const newTotalSeconds = updater(totalSeconds);
-                    setMinutes(Math.floor(newTotalSeconds / 60));
-                    setSeconds(newTotalSeconds % 60);
-                    return newTotalSeconds % 60;
-                });
-                return m;
-            });
+        const handleTick = () => {
+            if (!isActive) return;
+
+            if (minutes === 0 && seconds === 0) {
+                const newPomodoroCount = mode === 'work' ? pomodoros + 1 : pomodoros;
+                 if(mode === 'work') {
+                    setPomodoros(newPomodoroCount);
+                 }
+                 
+                 const newMode = mode === 'work'
+                    ? (newPomodoroCount % settings.pomodorosUntilLongBreak === 0 ? 'longBreak' : 'shortBreak')
+                    : 'work';
+                 
+                 switchMode(newMode, false);
+            } else if (seconds === 0) {
+                setMinutes(m => m - 1);
+                setSeconds(59);
+            } else {
+                setSeconds(s => s - 1);
+            }
         };
 
         if (isActive) {
@@ -202,7 +192,7 @@ function PomodoroTimer() {
         return () => {
              worker.postMessage({ type: 'stop' });
         };
-    }, [isActive, mode, pomodoros, settings, switchMode]);
+    }, [isActive, minutes, seconds, mode, pomodoros, settings, switchMode]);
 
     // Cleanup worker on component unmount
      React.useEffect(() => {
