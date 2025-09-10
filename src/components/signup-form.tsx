@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -102,7 +101,7 @@ export function SignupForm() {
                 title: t('signup.toast.verified.title'),
                 description: t('signup.toast.verified.description'),
             });
-            router.push('/profile/success');
+            router.push('/signup-success');
         }
     }, 3000);
 

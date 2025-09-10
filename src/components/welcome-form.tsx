@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -96,7 +95,7 @@ export function WelcomeForm() {
       }
       
       await handleSuccessfulLogin(user);
-      router.push("/");
+      router.push("/login-success");
 
     } catch (error: any) {
        toast({ title: t('welcome.toast.loginFailed.title'), description: t('welcome.toast.loginFailed.invalidCredentials'), variant: "destructive" });
@@ -111,7 +110,7 @@ export function WelcomeForm() {
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(auth, provider);
         await handleSuccessfulLogin(result.user);
-        router.push('/');
+        router.push('/login-success');
     } catch (error) {
          console.error("Google Sign-in Error:", error);
          toast({ title: "Google Sign-in Failed", description: "Could not sign in with Google. Please try again.", variant: "destructive" });
