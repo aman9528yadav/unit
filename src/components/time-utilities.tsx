@@ -535,16 +535,6 @@ function DateDifference() {
         }
     }
     
-    const handleCopy = () => {
-        if (!duration.years && !duration.months && !duration.days) {
-            toast({ title: "Nothing to copy", description: "Please calculate a duration first.", variant: "destructive" });
-            return;
-        }
-        const durationString = `${duration.years || 0} years, ${duration.months || 0} months, ${duration.weeks || 0} weeks, ${duration.days || 0} days. Total days: ${startDate && endDate ? differenceInDays(endDate, startDate) : 0}`;
-        navigator.clipboard.writeText(durationString);
-        toast({ title: "Copied to clipboard!" });
-    };
-
     const getResultString = () => {
         if (!startDate || !endDate || !duration.years && !duration.months && !duration.days) return "No calculation performed.";
         return `Result from ${format(startDate, 'PPP')} to ${format(endDate, 'PPP')}:\n` +
@@ -552,49 +542,6 @@ function DateDifference() {
                `Total days: ${differenceInDays(endDate, startDate)}\n\n` + 
                `Sutradhaar | Made by Aman Yadav`;
     }
-
-    const handleExport = async (type: 'png' | 'pdf' | 'txt') => {
-        if (!resultRef.current || (!duration.years && !duration.months && !duration.days)) {
-            toast({ title: "Nothing to export", description: "Please calculate a duration first.", variant: "destructive" });
-            return;
-        }
-
-        if (type === 'txt') {
-            const text = getResultString();
-            const blob = new Blob([text], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'date-calculation.txt';
-            a.click();
-            URL.revokeObjectURL(url);
-            return;
-        }
-        
-        const clonedEl = resultRef.current.cloneNode(true) as HTMLDivElement;
-        const credit = document.createElement('p');
-        credit.innerText = "Sutradhaar | Made by Aman Yadav";
-        credit.className = "text-center text-xs text-muted-foreground mt-4";
-        clonedEl.appendChild(credit);
-        document.body.appendChild(clonedEl);
-
-        const canvas = await html2canvas(clonedEl, { backgroundColor: null, scale: 2 });
-        document.body.removeChild(clonedEl);
-
-        const imgData = canvas.toDataURL('image/png');
-
-        if (type === 'png') {
-            const a = document.createElement('a');
-            a.href = imgData;
-            a.download = 'date-calculation.png';
-            a.click();
-        } else if (type === 'pdf') {
-            const pdf = new jsPDF('p', 'px', [canvas.width, canvas.height]);
-            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-            pdf.save('date-calculation.pdf');
-        }
-    };
-
 
     return (
         <Card className="w-full">
@@ -636,36 +583,26 @@ function DateDifference() {
                 
                 <Button onClick={calculate} className="mt-2">{t('timePage.dateCalc.calculate')}</Button>
                 
-                <div ref={resultRef} className="bg-secondary p-4 rounded-xl mt-2">
-                    <h3 className="font-semibold mb-3 text-center">{t('timePage.dateCalc.result')}</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                        <StatCard value={duration.years} label={t('timePage.dateCalc.years')} />
-                        <StatCard value={duration.months} label={t('timePage.dateCalc.months')} />
-                        <StatCard value={duration.weeks} label={t('timePage.dateCalc.weeks')} />
-                        <StatCard value={duration.days} label={t('timePage.dateCalc.days')} />
+                <div className="bg-secondary p-4 rounded-xl mt-2">
+                    <div className="flex justify-between items-center mb-3">
+                        <h3 className="font-semibold">{t('timePage.dateCalc.result')}</h3>
+                        <ExportControls
+                            resultRef={resultRef}
+                            hasResult={!!(duration.years || duration.months || duration.days)}
+                            getResultString={getResultString}
+                        />
                     </div>
-                     <div className="text-center text-sm text-muted-foreground mt-4">
-                        {t('timePage.dateCalc.totalDays', { count: startDate && endDate ? differenceInDays(endDate, startDate) : 0 })}
+                    <div ref={resultRef} className="bg-background p-4 rounded-lg">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                            <StatCard value={duration.years} label={t('timePage.dateCalc.years')} />
+                            <StatCard value={duration.months} label={t('timePage.dateCalc.months')} />
+                            <StatCard value={duration.weeks} label={t('timePage.dateCalc.weeks')} />
+                            <StatCard value={duration.days} label={t('timePage.dateCalc.days')} />
+                        </div>
+                        <div className="text-center text-sm text-muted-foreground mt-4">
+                            {t('timePage.dateCalc.totalDays', { count: startDate && endDate ? differenceInDays(endDate, startDate) : 0 })}
+                        </div>
                     </div>
-                </div>
-                 <div className="flex justify-end gap-2">
-                    <Button variant="outline" size="icon" onClick={handleCopy}><Copy className="h-4 w-4"/></Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                             <Button variant="outline" size="icon"><Share2 className="h-4 w-4"/></Button>
-                        </DropdownMenuTrigger>
-                         <DropdownMenuContent>
-                            <DropdownMenuItem onSelect={() => handleExport('png')}>
-                                <ImageIcon className="mr-2 h-4 w-4" /> Export as PNG
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => handleExport('txt')}>
-                                <FileText className="mr-2 h-4 w-4" /> Export as TXT
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => handleExport('pdf')}>
-                                <Download className="mr-2 h-4 w-4" /> Export as PDF
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 </div>
             </CardContent>
         </Card>
@@ -679,6 +616,7 @@ function AddSubtractTime() {
     const [unit, setUnit] = React.useState<'days' | 'weeks' | 'months' | 'years'>('days');
     const [operation, setOperation] = React.useState<'add' | 'subtract'>('add');
     const [resultDate, setResultDate] = React.useState<Date | null>(null);
+    const resultRef = React.useRef<HTMLDivElement>(null);
     
     const calculate = () => {
         if (!date) return;
@@ -692,6 +630,13 @@ function AddSubtractTime() {
         localStorage.setItem('lastDateCalc', lastDateCalcString);
         window.dispatchEvent(new StorageEvent('storage', { key: 'lastDateCalc', newValue: lastDateCalcString }));
     }
+
+    const getResultString = () => {
+        if (!resultDate) return "No calculation performed.";
+        return `Result of ${operation === 'add' ? 'adding' : 'subtracting'} ${amount} ${unit} ${operation === 'add' ? 'to' : 'from'} ${format(date!, 'PPP')}:\n` +
+               `${format(resultDate, "PPP")}\n\n` + 
+               `Sutradhaar | Made by Aman Yadav`;
+    };
 
     return (
         <Card>
@@ -748,9 +693,18 @@ function AddSubtractTime() {
                 </div>
                 <Button onClick={calculate}>{t('timePage.dateCalc.calculate')}</Button>
                  {resultDate && (
-                    <div className="bg-secondary p-4 rounded-xl mt-4 text-center">
-                        <h3 className="font-semibold mb-2">{t('timePage.dateCalc.resultingDate')}</h3>
-                        <p className="text-2xl font-bold">{format(resultDate, "PPP")}</p>
+                    <div className="bg-secondary p-4 rounded-xl mt-4">
+                        <div className="flex justify-between items-center mb-2">
+                           <h3 className="font-semibold">{t('timePage.dateCalc.resultingDate')}</h3>
+                            <ExportControls
+                                resultRef={resultRef}
+                                hasResult={!!resultDate}
+                                getResultString={getResultString}
+                            />
+                        </div>
+                        <div ref={resultRef} className="bg-background p-4 rounded-lg text-center">
+                            <p className="text-2xl font-bold">{format(resultDate, "PPP")}</p>
+                        </div>
                     </div>
                  )}
             </CardContent>
@@ -762,6 +716,7 @@ function AgeCalculator() {
     const { t } = useLanguage();
     const [birthDate, setBirthDate] = React.useState<Date | undefined>();
     const [age, setAge] = React.useState<Duration | null>(null);
+    const resultRef = React.useRef<HTMLDivElement>(null);
 
     const calculate = () => {
          if (birthDate) {
@@ -772,6 +727,14 @@ function AgeCalculator() {
             window.dispatchEvent(new StorageEvent('storage', { key: 'lastDateCalc', newValue: lastDateCalcString }));
         }
     }
+    
+    const getResultString = () => {
+        if (!age) return "No calculation performed.";
+        return `Your age is:\n` +
+               `${age.years || 0} years, ${age.months || 0} months, ${age.days || 0} days.\n\n` + 
+               `Sutradhaar | Made by Aman Yadav`;
+    };
+
 
     return (
         <Card>
@@ -791,11 +754,20 @@ function AgeCalculator() {
                  <Button onClick={calculate} className="w-full">{t('timePage.dateCalc.calculate')}</Button>
                  {age && (
                     <div className="bg-secondary p-4 rounded-xl mt-4 w-full">
-                        <h3 className="font-semibold mb-2 text-center">{t('timePage.dateCalc.yourAge')}</h3>
-                        <div className="grid grid-cols-3 gap-4 text-center">
-                            <StatCard value={age.years} label={t('timePage.dateCalc.years')} />
-                            <StatCard value={age.months} label={t('timePage.dateCalc.months')} />
-                            <StatCard value={age.days} label={t('timePage.dateCalc.days')} />
+                        <div className="flex justify-between items-center mb-2">
+                           <h3 className="font-semibold">{t('timePage.dateCalc.yourAge')}</h3>
+                            <ExportControls
+                                resultRef={resultRef}
+                                hasResult={!!age}
+                                getResultString={getResultString}
+                            />
+                        </div>
+                        <div ref={resultRef} className="bg-background p-4 rounded-lg">
+                            <div className="grid grid-cols-3 gap-4 text-center">
+                                <StatCard value={age.years} label={t('timePage.dateCalc.years')} />
+                                <StatCard value={age.months} label={t('timePage.dateCalc.months')} />
+                                <StatCard value={age.days} label={t('timePage.dateCalc.days')} />
+                            </div>
                         </div>
                     </div>
                 )}
@@ -809,7 +781,8 @@ function WorkingDaysCalculator() {
     const [startDate, setStartDate] = React.useState<Date | undefined>(new Date());
     const [endDate, setEndDate] = React.useState<Date | undefined>(addDays(new Date(), 10));
     const [holidays, setHolidays] = React.useState<string>("");
-    const [workingDays, setWorkingDays] = React.useState<number>(0);
+    const [workingDays, setWorkingDays] = React.useState<number | null>(null);
+    const resultRef = React.useRef<HTMLDivElement>(null);
     
     const calculate = () => {
         if (!startDate || !endDate) return;
@@ -823,6 +796,13 @@ function WorkingDaysCalculator() {
         window.dispatchEvent(new StorageEvent('storage', { key: 'lastDateCalc', newValue: lastDateCalcString }));
     }
     
+    const getResultString = () => {
+        if (workingDays === null) return "No calculation performed.";
+        return `Total working days from ${format(startDate!, 'PPP')} to ${format(endDate!, 'PPP')}:\n` +
+               `${workingDays} working days\n\n` + 
+               `Sutradhaar | Made by Aman Yadav`;
+    };
+
     return (
         <Card>
             <CardHeader><CardTitle className="text-center">{t('timePage.dateCalc.workDaysTitle')}</CardTitle></CardHeader>
@@ -846,10 +826,21 @@ function WorkingDaysCalculator() {
                     <Textarea placeholder={t('timePage.dateCalc.holidaysPlaceholder')} value={holidays} onChange={(e) => setHolidays(e.target.value)} />
                 </div>
                 <Button onClick={calculate}>{t('timePage.dateCalc.calculateWorkDays')}</Button>
-                <div className="bg-secondary p-4 rounded-xl mt-4 text-center">
-                    <h3 className="font-semibold mb-2">{t('timePage.dateCalc.totalWorkDays')}</h3>
-                    <p className="text-4xl font-bold">{workingDays}</p>
-                </div>
+                {workingDays !== null && (
+                    <div className="bg-secondary p-4 rounded-xl mt-4">
+                         <div className="flex justify-between items-center mb-2">
+                           <h3 className="font-semibold">{t('timePage.dateCalc.totalWorkDays')}</h3>
+                            <ExportControls
+                                resultRef={resultRef}
+                                hasResult={workingDays !== null}
+                                getResultString={getResultString}
+                            />
+                        </div>
+                        <div ref={resultRef} className="bg-background p-4 rounded-lg text-center">
+                            <p className="text-4xl font-bold">{workingDays}</p>
+                        </div>
+                    </div>
+                )}
             </CardContent>
         </Card>
     )
@@ -859,6 +850,7 @@ function Countdown() {
     const { t } = useLanguage();
     const [targetDate, setTargetDate] = React.useState<Date | undefined>();
     const [timeLeft, setTimeLeft] = React.useState<Duration | null>(null);
+    const resultRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
         if (!targetDate) return;
@@ -875,6 +867,13 @@ function Countdown() {
 
         return () => clearInterval(timer);
     }, [targetDate]);
+
+    const getResultString = () => {
+        if (!timeLeft || !targetDate) return "No countdown set.";
+        return `Time remaining until ${format(targetDate, 'PPP')}:\n` +
+               `${timeLeft.days || 0} days, ${timeLeft.hours || 0} hours, ${timeLeft.minutes || 0} minutes, ${timeLeft.seconds || 0} seconds.\n\n` + 
+               `Sutradhaar | Made by Aman Yadav`;
+    };
 
     return (
         <Card>
@@ -893,12 +892,21 @@ function Countdown() {
                 </Popover>
                 {timeLeft ? (
                      <div className="bg-secondary p-4 rounded-xl mt-4 w-full">
-                        <h3 className="font-semibold mb-3 text-center">{t('timePage.dateCalc.timeRemaining')}</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                            <StatCard value={timeLeft.days} label={t('timePage.dateCalc.days')} />
-                            <StatCard value={timeLeft.hours} label={t('timePage.dateCalc.hours')} />
-                            <StatCard value={timeLeft.minutes} label={t('timePage.dateCalc.minutes')} />
-                            <StatCard value={timeLeft.seconds} label={t('timePage.dateCalc.seconds')} />
+                         <div className="flex justify-between items-center mb-3">
+                            <h3 className="font-semibold">{t('timePage.dateCalc.timeRemaining')}</h3>
+                            <ExportControls
+                                resultRef={resultRef}
+                                hasResult={!!timeLeft}
+                                getResultString={getResultString}
+                            />
+                        </div>
+                        <div ref={resultRef} className="bg-background p-4 rounded-lg">
+                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                                <StatCard value={timeLeft.days} label={t('timePage.dateCalc.days')} />
+                                <StatCard value={timeLeft.hours} label={t('timePage.dateCalc.hours')} />
+                                <StatCard value={timeLeft.minutes} label={t('timePage.dateCalc.minutes')} />
+                                <StatCard value={timeLeft.seconds} label={t('timePage.dateCalc.seconds')} />
+                            </div>
                         </div>
                     </div>
                 ) : (
@@ -917,6 +925,93 @@ function StatCard({ value, label }: { value: number | undefined, label: string }
         </div>
     )
 }
+
+interface ExportControlsProps {
+    resultRef: React.RefObject<HTMLDivElement>;
+    hasResult: boolean;
+    getResultString: () => string;
+}
+
+function ExportControls({ resultRef, hasResult, getResultString }: ExportControlsProps) {
+    const { toast } = useToast();
+
+    const handleCopy = () => {
+        if (!hasResult) {
+            toast({ title: "Nothing to copy", description: "Please calculate a result first.", variant: "destructive" });
+            return;
+        }
+        navigator.clipboard.writeText(getResultString());
+        toast({ title: "Copied to clipboard!" });
+    };
+
+    const handleExport = async (type: 'png' | 'pdf' | 'txt') => {
+        if (!resultRef.current || !hasResult) {
+            toast({ title: "Nothing to export", description: "Please calculate a result first.", variant: "destructive" });
+            return;
+        }
+
+        if (type === 'txt') {
+            const text = getResultString();
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'date-calculation.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+            return;
+        }
+        
+        const clonedEl = resultRef.current.cloneNode(true) as HTMLDivElement;
+        const credit = document.createElement('p');
+        credit.innerText = "Sutradhaar | Made by Aman Yadav";
+        credit.className = "text-center text-xs text-muted-foreground mt-4 pt-2";
+        clonedEl.appendChild(credit);
+        document.body.appendChild(clonedEl);
+        
+        clonedEl.style.backgroundColor = 'var(--background)'; // Ensure background color
+        clonedEl.style.padding = '1rem'; // Add some padding
+
+        const canvas = await html2canvas(clonedEl, { scale: 2 });
+        document.body.removeChild(clonedEl);
+
+        const imgData = canvas.toDataURL('image/png');
+
+        if (type === 'png') {
+            const a = document.createElement('a');
+            a.href = imgData;
+            a.download = 'date-calculation.png';
+            a.click();
+        } else if (type === 'pdf') {
+            const pdf = new jsPDF('p', 'px', [canvas.width, canvas.height]);
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            pdf.save('date-calculation.pdf');
+        }
+    };
+    
+     return (
+        <div className="flex justify-end gap-2">
+            <Button variant="outline" size="icon" onClick={handleCopy}><Copy className="h-4 w-4"/></Button>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon"><Share2 className="h-4 w-4"/></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem onSelect={() => handleExport('png')}>
+                        <ImageIcon className="mr-2 h-4 w-4" /> Export as PNG
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => handleExport('txt')}>
+                        <FileText className="mr-2 h-4 w-4" /> Export as TXT
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => handleExport('pdf')}>
+                        <Download className="mr-2 h-4 w-4" /> Export as PDF
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+    );
+}
+
 
 function DateCalculator() {
     const { t } = useLanguage();
