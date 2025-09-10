@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { User, Menu, Search, X, Sparkles, LogIn } from "lucide-react";
+import { User, Menu, Search, X, Sparkles, LogIn, Bell } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { listenToUserData } from "@/services/firestore";
 import { GlobalSearch } from "./global-search";
@@ -74,6 +74,12 @@ export function Header() {
             setShowLoginDialog(true);
         }
     };
+    
+    const handleNotificationClick = () => {
+        if (!isLoggedIn) {
+            setShowLoginDialog(true);
+        }
+    }
 
     return (
         <header className="sticky top-0 z-40 w-full px-4 py-2">
@@ -120,7 +126,13 @@ export function Header() {
 
 
                 <div className="flex items-center gap-1">
-                     <Notifications />
+                     {isLoggedIn ? (
+                        <Notifications />
+                    ) : (
+                        <Button variant="ghost" size="icon" className="relative" onClick={handleNotificationClick}>
+                            <Bell />
+                        </Button>
+                    )}
                      <Button variant="ghost" size="icon" className="rounded-full h-9 w-9" onClick={handleProfileClick}>
                         {profile ? (
                             <Avatar className="h-8 w-8 border border-border bg-card text-foreground">
