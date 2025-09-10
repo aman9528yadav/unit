@@ -20,7 +20,8 @@ import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
 
-const getUserKey = (key: string, email: string | null) => `${email || 'guest'}_${key}`;
+const NOTIFICATIONS_STORAGE_KEY = 'appNotifications';
+
 
 const iconMap: { [key in AppNotification['icon']]: React.ReactNode } = {
     info: <Info className="text-blue-500" />,
@@ -29,7 +30,7 @@ const iconMap: { [key in AppNotification['icon']]: React.ReactNode } = {
 }
 
 export function Notifications() {
-  const [broadcast, setBroadcast] = useState<AppNotification | null>(null);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [areNotificationsEnabled, setAreNotificationsEnabled] = useState(true);
   const [profile, setProfile] = useState<{ email: string } | null>(null);
   const [isClient, setIsClient] = useState(false);
@@ -46,63 +47,43 @@ export function Notifications() {
   
   const checkNotificationSetting = () => {
     const userKey = profile?.email || 'guest';
-    const enabled = localStorage.getItem(getUserKey('notificationsEnabled', userKey));
+    const enabled = localStorage.getItem(userKey + '_notificationsEnabled');
     setAreNotificationsEnabled(enabled === null ? true : JSON.parse(enabled));
   }
-  
-  const getReadBroadcastId = (): string | null => {
-    return localStorage.getItem('readBroadcastId');
+
+  const loadNotifications = () => {
+    const stored = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+    setNotifications(stored ? JSON.parse(stored) : []);
   };
-  
-  const markBroadcastAsRead = (id: string) => {
-     localStorage.setItem('readBroadcastId', id);
-  }
 
   useEffect(() => {
     if (isClient) {
         checkNotificationSetting();
+        loadNotifications();
         
-        const unsubscribe = listenToBroadcastNotification((info) => {
-            if(info && info.title && info.description && info.createdAt) {
-                const readId = getReadBroadcastId();
-                setBroadcast({
-                    id: 'global_broadcast',
-                    ...info,
-                    read: readId === info.createdAt,
-                });
-            } else {
-                setBroadcast(null);
-            }
-        });
-
         const handleStorageChange = (event: StorageEvent) => {
-            if (event.key === 'readBroadcastId') {
-                 if (broadcast) {
-                    const readId = getReadBroadcastId();
-                    setBroadcast(b => b ? {...b, read: readId === b.createdAt} : null);
-                 }
-            }
-            if (event.key === getUserKey('notificationsEnabled', profile?.email || 'guest')) {
+             if (event.key === (profile?.email || 'guest') + '_notificationsEnabled') {
                checkNotificationSetting();
            }
+            if (event.key === NOTIFICATIONS_STORAGE_KEY) {
+                loadNotifications();
+            }
         };
 
         window.addEventListener('storage', handleStorageChange);
         return () => {
-            unsubscribe();
             window.removeEventListener('storage', handleStorageChange);
         };
     }
-  }, [isClient, profile, broadcast]);
+  }, [isClient, profile]);
   
 
-  const handleMarkAsRead = () => {
-    if(!broadcast) return;
-    markBroadcastAsRead(broadcast.createdAt);
-    setBroadcast(b => b ? { ...b, read: true } : null);
+  const handleMarkAsRead = (id: string) => {
+    markAsRead(id);
+    loadNotifications(); // re-render
   };
   
-  const unreadCount = broadcast && !broadcast.read ? 1 : 0;
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   if (!isClient) {
       return (
@@ -114,7 +95,7 @@ export function Notifications() {
 
 
   return (
-    <DropdownMenu onOpenChange={(open) => { if (!open && broadcast && !broadcast.read) { handleMarkAsRead() }}}>
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell />
@@ -128,6 +109,7 @@ export function Notifications() {
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex justify-between items-center p-2">
             <DropdownMenuLabel className="p-0">{t('notifications.title')}</DropdownMenuLabel>
+             <Button variant="ghost" size="sm" onClick={() => removeAllNotifications()}>{t('notifications.clearAll')}</Button>
         </div>
         <DropdownMenuSeparator />
         {!areNotificationsEnabled ? (
@@ -141,19 +123,21 @@ export function Notifications() {
                     </Link>
                 </Button>
             </div>
-        ) : broadcast && !broadcast.read ? (
-          <DropdownMenuItem 
-              key={broadcast.id} 
-              className={`flex items-start gap-3 p-2 cursor-pointer group relative`}
-              onSelect={(e) => { e.preventDefault(); handleMarkAsRead(); }}
-          >
-              <div className="flex-shrink-0 mt-1">{iconMap[broadcast.icon]}</div>
-              <div className="flex-1">
-              <p className="font-semibold">{broadcast.title}</p>
-              <p className="text-sm text-muted-foreground">{broadcast.description}</p>
-              <p className="text-xs text-muted-foreground/80 mt-1">{formatDistanceToNow(new Date(broadcast.createdAt))} ago</p>
-              </div>
-          </DropdownMenuItem>
+        ) : notifications.length > 0 ? (
+            notifications.map(notification => (
+                <DropdownMenuItem 
+                    key={notification.id} 
+                    className={`flex items-start gap-3 p-2 cursor-pointer group relative ${!notification.read && 'bg-secondary'}`}
+                    onSelect={(e) => { e.preventDefault(); handleMarkAsRead(notification.id); }}
+                >
+                    <div className="flex-shrink-0 mt-1">{iconMap[notification.icon]}</div>
+                    <div className="flex-1">
+                        <p className="font-semibold">{notification.title}</p>
+                        <p className="text-sm text-muted-foreground">{notification.description}</p>
+                        <p className="text-xs text-muted-foreground/80 mt-1">{formatDistanceToNow(new Date(notification.createdAt))} ago</p>
+                    </div>
+                </DropdownMenuItem>
+            ))
         ) : (
              <DropdownMenuItem className="text-center text-muted-foreground" disabled>
                 {t('notifications.noNotifications')}
@@ -163,3 +147,5 @@ export function Notifications() {
     </DropdownMenu>
   );
 }
+
+    

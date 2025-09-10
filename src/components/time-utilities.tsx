@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import html2canvas from 'html2canvas';
 import { Skeleton } from "./ui/skeleton";
 import { motion, AnimatePresence } from 'framer-motion';
+import { addNotification } from "@/lib/notifications";
 
 
 // --- Web Worker Code ---
@@ -70,25 +71,8 @@ function PomodoroTimer() {
         longBreakLength: 15,
         pomodorosUntilLongBreak: 4,
     });
-    
-    const workerRef = React.useRef<Worker | null>(null);
 
-    // Setup worker
-    React.useEffect(() => {
-        const workerBlob = new Blob([workerCode], { type: 'application/javascript' });
-        const workerUrl = URL.createObjectURL(workerBlob);
-        const worker = new Worker(workerUrl);
-        workerRef.current = worker;
-
-        worker.onmessage = () => {
-             setTimeLeft(prev => prev - 1);
-        };
-
-        return () => {
-            worker.terminate();
-            URL.revokeObjectURL(workerUrl);
-        }
-    }, []);
+    const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
     // Load initial settings and state from localStorage
     React.useEffect(() => {
@@ -98,66 +82,91 @@ function PomodoroTimer() {
         }
         const savedState = localStorage.getItem('pomodoroState');
         if (savedState) {
-            const { timeLeft: savedTimeLeft, mode: savedMode, pomodoros: savedPomodoros } = JSON.parse(savedState);
-            setTimeLeft(savedTimeLeft);
+            const { endTime, mode: savedMode, pomodoros: savedPomodoros, isActive: wasActive } = JSON.parse(savedState);
+            const now = Date.now();
+            const remaining = Math.round((endTime - now) / 1000);
+            
             setMode(savedMode);
             setPomodoros(savedPomodoros);
+
+            if (wasActive && remaining > 0) {
+                 setTimeLeft(remaining);
+                 setIsActive(true);
+            } else {
+                 switchMode(savedMode, false, JSON.parse(savedSettings || '{}'));
+            }
         }
     }, []);
-    
+
     // Timer logic
     React.useEffect(() => {
-        if (isActive && timeLeft === 0) {
-            const newPomodoros = mode === 'work' ? pomodoros + 1 : pomodoros;
-            if(mode === 'work') setPomodoros(newPomodoros);
+        let timer: NodeJS.Timeout | null = null;
+        if (isActive) {
+            timer = setInterval(() => {
+                const savedState = JSON.parse(localStorage.getItem('pomodoroState') || '{}');
+                if (savedState.endTime) {
+                    const remaining = Math.round((savedState.endTime - Date.now()) / 1000);
+                    setTimeLeft(remaining > 0 ? remaining : 0);
 
-            const nextMode = mode === 'work'
-                ? (newPomodoros % settings.pomodorosUntilLongBreak === 0 ? 'longBreak' : 'shortBreak')
-                : 'work';
-            
-            toast({
-                title: `Time's up!`,
-                description: `Your ${mode} session has finished. Time for a ${nextMode === 'work' ? 'new session' : 'break'}.`,
-            });
-            
-            switchMode(nextMode, true, settings, newPomodoros);
+                    if (remaining <= 0) {
+                        handleTimerEnd();
+                    }
+                }
+            }, 1000);
+        }
+        return () => {
+            if (timer) clearInterval(timer);
+        };
+    }, [isActive]);
+
+    const handleTimerEnd = React.useCallback(() => {
+        if (audioRef.current) {
+            audioRef.current.play();
         }
         
-        if (isActive) {
-            localStorage.setItem('pomodoroState', JSON.stringify({ timeLeft, mode, pomodoros }));
-        }
+        const newPomodoros = mode === 'work' ? pomodoros + 1 : pomodoros;
+        const nextMode = mode === 'work'
+            ? (newPomodoros % settings.pomodorosUntilLongBreak === 0 ? 'longBreak' : 'shortBreak')
+            : 'work';
+        
+        addNotification({
+            title: "Timer Finished!",
+            description: `Your ${mode} session is over. Time for a ${nextMode === 'work' ? 'new session' : 'break'}.`,
+            icon: "success"
+        });
 
-    }, [isActive, timeLeft, mode, pomodoros, settings, toast, t]);
+        switchMode(nextMode, true, settings, newPomodoros);
+    }, [mode, pomodoros, settings]);
 
 
     const switchMode = (newMode: typeof mode, autoStart = false, currentSettings = settings, currentPomodoros = pomodoros) => {
-        setIsActive(autoStart);
-        setMode(newMode);
-        setPomodoros(currentPomodoros);
-
         let newTime;
         switch (newMode) {
             case 'work': newTime = currentSettings.pomodoroLength * 60; break;
             case 'shortBreak': newTime = currentSettings.shortBreakLength * 60; break;
             case 'longBreak': newTime = currentSettings.longBreakLength * 60; break;
         }
+
+        setMode(newMode);
         setTimeLeft(newTime);
-        localStorage.setItem('pomodoroState', JSON.stringify({ timeLeft: newTime, mode: newMode, pomodoros: currentPomodoros }));
+        setPomodoros(currentPomodoros);
+        setIsActive(autoStart);
         
-        if (autoStart) {
-             workerRef.current?.postMessage({ type: 'start', payload: { interval: 1000 } });
-        } else {
-             workerRef.current?.postMessage({ type: 'stop' });
-        }
+        const endTime = Date.now() + newTime * 1000;
+        localStorage.setItem('pomodoroState', JSON.stringify({ endTime: autoStart ? endTime : 0, mode: newMode, pomodoros: currentPomodoros, isActive: autoStart }));
     };
 
     const toggle = () => {
-         if (!isActive) {
-            workerRef.current?.postMessage({ type: 'start', payload: { interval: 1000 } });
+        const nowActive = !isActive;
+        setIsActive(nowActive);
+
+        if (nowActive) {
+            const endTime = Date.now() + timeLeft * 1000;
+            localStorage.setItem('pomodoroState', JSON.stringify({ endTime, mode, pomodoros, isActive: true }));
         } else {
-            workerRef.current?.postMessage({ type: 'stop' });
+             const savedState = JSON.parse(localStorage.getItem('pomodoroState') || '{}');
+             localStorage.setItem('pomodoroState', JSON.stringify({ ...savedState, endTime: 0, isActive: false }));
         }
-        setIsActive(!isActive);
     };
 
     const reset = React.useCallback((newSettings = settings) => {
@@ -176,7 +185,7 @@ function PomodoroTimer() {
       : mode === 'shortBreak' ? settings.shortBreakLength * 60
       : settings.longBreakLength * 60;
 
-    const progress = totalDuration > 0 ? (timeLeft / totalDuration) * 100 : 0;
+    const progress = totalDuration > 0 ? ((totalDuration - timeLeft) / totalDuration) * 100 : 0;
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
 
@@ -234,6 +243,7 @@ function PomodoroTimer() {
                         onSave={handleSettingsSave}
                     />
                 </div>
+                <audio ref={audioRef} src="/notification-sound.mp3" />
             </CardContent>
         </Card>
     );
@@ -303,8 +313,7 @@ function Stopwatch() {
     const [time, setTime] = React.useState(0);
     const [isRunning, setIsRunning] = React.useState(false);
     const [laps, setLaps] = React.useState<number[]>([]);
-    const timerRef = React.useRef<number | null>(null);
-
+    
     const loadState = React.useCallback(() => {
         const savedState = localStorage.getItem('stopwatchState');
         if (savedState) {
@@ -323,13 +332,17 @@ function Stopwatch() {
 
     React.useEffect(() => {
         loadState();
-        window.addEventListener('storage', loadState);
-        return () => {
-            window.removeEventListener('storage', loadState);
-        }
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'stopwatchState') {
+                loadState();
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
     }, [loadState]);
 
     React.useEffect(() => {
+        let timerRef: number;
         if (isRunning) {
             const tick = () => {
                  const savedState = JSON.parse(localStorage.getItem('stopwatchState') || '{}');
@@ -337,20 +350,11 @@ function Stopwatch() {
                      const elapsed = Date.now() - savedState.startTime;
                      setTime(savedState.time + elapsed);
                  }
-                 timerRef.current = requestAnimationFrame(tick);
+                 timerRef = requestAnimationFrame(tick);
             };
-            timerRef.current = requestAnimationFrame(tick);
-        } else {
-            if (timerRef.current) {
-                cancelAnimationFrame(timerRef.current);
-            }
+            timerRef = requestAnimationFrame(tick);
         }
-
-        return () => {
-            if (timerRef.current) {
-                cancelAnimationFrame(timerRef.current);
-            }
-        };
+        return () => cancelAnimationFrame(timerRef);
     }, [isRunning]);
 
     const startStop = () => {
@@ -358,26 +362,24 @@ function Stopwatch() {
         setIsRunning(currentlyRunning);
         const lastStopwatchString = `Stopwatch ${currentlyRunning ? 'started' : 'paused'}|${new Date().toISOString()}`;
         localStorage.setItem('lastStopwatch', lastStopwatchString);
-        window.dispatchEvent(new StorageEvent('storage', { key: 'lastStopwatch', newValue: lastStopwatchString }));
 
         if (currentlyRunning) {
-            // Starting or resuming
-            const savedState = JSON.parse(localStorage.getItem('stopwatchState') || '{}');
             localStorage.setItem('stopwatchState', JSON.stringify({
-                time: time,
+                time,
                 startTime: Date.now(),
                 isRunning: true,
-                laps: savedState.laps || []
+                laps
             }));
         } else {
-            // Pausing
              localStorage.setItem('stopwatchState', JSON.stringify({
-                time: time,
+                time,
                 startTime: 0, 
                 isRunning: false,
-                laps: laps
+                laps
             }));
         }
+        // Force sync across tabs
+        window.dispatchEvent(new StorageEvent('storage', { key: 'stopwatchState' }));
     };
 
     const reset = () => {
@@ -387,7 +389,7 @@ function Stopwatch() {
         localStorage.removeItem('stopwatchState');
         const lastStopwatchString = `Stopwatch reset|${new Date().toISOString()}`;
         localStorage.setItem('lastStopwatch', lastStopwatchString);
-        window.dispatchEvent(new StorageEvent('storage', { key: 'lastStopwatch', newValue: lastStopwatchString }));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'stopwatchState' }));
     };
 
     const lap = () => {
@@ -396,12 +398,14 @@ function Stopwatch() {
         setLaps(newLaps);
         const state = JSON.parse(localStorage.getItem('stopwatchState') || '{}');
         localStorage.setItem('stopwatchState', JSON.stringify({...state, laps: newLaps}));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'stopwatchState' }));
     };
 
     const clearLaps = () => {
         setLaps([]);
          const state = JSON.parse(localStorage.getItem('stopwatchState') || '{}');
         localStorage.setItem('stopwatchState', JSON.stringify({...state, laps: []}));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'stopwatchState' }));
     };
 
     const formatTime = (ms: number) => {
@@ -897,3 +901,5 @@ export function TimeUtilities() {
     </div>
   );
 }
+
+    

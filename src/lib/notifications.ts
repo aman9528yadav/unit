@@ -4,7 +4,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-const READ_NOTIFICATIONS_STORAGE_KEY = 'readAppNotifications';
+const NOTIFICATIONS_STORAGE_KEY = 'appNotifications';
 
 export interface AppNotification {
     id: string;
@@ -16,58 +16,70 @@ export interface AppNotification {
 }
 
 /**
- * Retrieves the set of read notification IDs from localStorage.
+ * Retrieves all notifications from localStorage.
  */
-function getReadNotificationIds(): Set<string> {
-    if (typeof window === 'undefined') return new Set();
-    const stored = localStorage.getItem(READ_NOTIFICATIONS_STORAGE_KEY);
-    return stored ? new Set(JSON.parse(stored)) : new Set();
+function getNotifications(): AppNotification[] {
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
 }
 
 /**
- * Marks a specific notification as read by adding its ID to localStorage.
+ * Saves all notifications to localStorage.
+ * @param notifications - The array of notifications to save.
+ */
+function saveNotifications(notifications: AppNotification[]) {
+     if (typeof window === 'undefined') return;
+     localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
+     // Dispatch a storage event so other tabs can update in real-time
+     window.dispatchEvent(new StorageEvent('storage', {
+        key: NOTIFICATIONS_STORAGE_KEY,
+        newValue: JSON.stringify(notifications),
+    }));
+}
+
+/**
+ * Adds a new notification to the list.
+ * @param notification - The notification object to add (id, createdAt, read will be handled).
+ */
+export function addNotification(notification: Omit<AppNotification, 'id' | 'createdAt' | 'read'>) {
+    const newNotification: AppNotification = {
+        ...notification,
+        id: uuidv4(),
+        createdAt: new Date().toISOString(),
+        read: false,
+    };
+    const notifications = getNotifications();
+    const updatedNotifications = [newNotification, ...notifications].slice(0, 20); // Keep max 20
+    saveNotifications(updatedNotifications);
+}
+
+
+/**
+ * Marks a specific notification as read by its ID.
  * @param id - The ID of the notification to mark as read.
  */
 export function markAsRead(id: string) {
-    if (typeof window === 'undefined') return;
-
-    const readIds = getReadNotificationIds();
-    readIds.add(id);
-    localStorage.setItem(READ_NOTIFICATIONS_STORAGE_KEY, JSON.stringify(Array.from(readIds)));
-
-    // Dispatch a storage event so other tabs can update in real-time
-    window.dispatchEvent(new StorageEvent('storage', {
-        key: READ_NOTIFICATIONS_STORAGE_KEY,
-        newValue: JSON.stringify(Array.from(readIds)),
-    }));
+    const notifications = getNotifications();
+    const updatedNotifications = notifications.map(n => n.id === id ? { ...n, read: true } : n);
+    saveNotifications(updatedNotifications);
 }
 
 /**
- * Combines global notifications with local read statuses.
- * @param globalNotifications - Array of notifications from the backend (Firestore).
+ * Marks all notifications as read.
  */
-export function getNotificationsWithReadStatus(globalNotifications: Omit<AppNotification, 'read'>[]): AppNotification[] {
-    const readIds = getReadNotificationIds();
-    return globalNotifications
-        .map(n => ({
-            ...n,
-            read: readIds.has(n.id),
-        }))
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+export function markAllAsRead() {
+    const notifications = getNotifications();
+    const updatedNotifications = notifications.map(n => ({...n, read: true}));
+    saveNotifications(updatedNotifications);
 }
 
+
 /**
- * Removes all read notification IDs from localStorage.
- * This is effectively the "Clear All" or "Remove All" function.
- * Note: This does not delete notifications from the backend, only from the user's view.
+ * Removes all notifications from localStorage.
  */
 export function removeAllNotifications() {
-    if (typeof window === 'undefined') return;
-
-    localStorage.removeItem(READ_NOTIFICATIONS_STORAGE_KEY);
-    
-    window.dispatchEvent(new StorageEvent('storage', {
-        key: READ_NOTIFICATIONS_STORAGE_KEY,
-        newValue: '[]',
-    }));
+    saveNotifications([]);
 }
+
+    
