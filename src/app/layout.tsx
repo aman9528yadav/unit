@@ -204,6 +204,8 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const handleLogout = () => {
     auth.signOut().then(() => {
         localStorage.removeItem("userProfile");
+        setIsLoggedIn(false);
+        setProfile(null);
         router.push("/logout");
     });
   }
