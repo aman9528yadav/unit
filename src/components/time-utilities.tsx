@@ -26,7 +26,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { incrementDateCalculationCount } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -37,6 +37,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { addNotification } from "@/lib/notifications";
 import { Slider } from "@/components/ui/slider";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 
 
 // --- Web Worker Code ---
@@ -1048,7 +1049,7 @@ function ExportControls({ hasResult, getResultString, componentData }: ExportCon
 
 
     React.useEffect(() => {
-        const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")).email : null;
+        const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")!).email : null;
         if (userEmail) {
             // In a real app, you would check premium status
             // For now, we assume only the developer is premium
