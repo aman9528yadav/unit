@@ -65,6 +65,7 @@ type UserRole = 'Member' | 'Premium Member' | 'Owner';
 
 const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 'Middle East'];
 const PREMIUM_REGIONS: Region[] = ['Japan', 'Korea', 'China', 'Middle East'];
+const PREMIUM_CATEGORIES: string[] = ['Pressure', 'Energy', 'Currency', 'Fuel Economy'];
 
 
 interface UserProfile {
@@ -634,11 +635,11 @@ export function Converter() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                                 <DropdownMenuItem onSelect={handleShareAsImage}>
-                                    <Share2 className="mr-2 h-4 w-4" />
+                                    <ImageIcon className="mr-2 h-4 w-4" />
                                     <span>Share as Image</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={handleExportAsImage}>
-                                    <ImageIcon className="mr-2 h-4 w-4" />
+                                    <Download className="mr-2 h-4 w-4" />
                                     <span>Export as PNG</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={handleExportAsTxt}>
