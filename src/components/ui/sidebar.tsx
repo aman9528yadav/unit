@@ -135,7 +135,7 @@ const SidebarMenu = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("grid grid-cols-2 gap-4 sm:grid-cols-3", className)}
+    className={cn("flex flex-col gap-2", className)}
     {...props}
   />
 ))
@@ -166,10 +166,10 @@ const SidebarMenuButton = React.forwardRef<
     <button
       ref={ref}
       className={cn(
-        "flex flex-col items-center justify-center p-4 rounded-2xl shadow-md transition w-full text-sm font-medium tracking-wide backdrop-blur-sm hover:shadow-lg",
+        "flex items-center justify-start p-3 rounded-xl shadow-sm transition w-full text-sm font-medium tracking-wide backdrop-blur-sm hover:shadow-md gap-3",
         isActive
           ? "bg-primary/20 text-primary"
-          : "bg-white text-primary",
+          : "bg-secondary text-secondary-foreground",
         className
       )}
       {...props}
