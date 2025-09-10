@@ -161,12 +161,11 @@ function PomodoroTimer() {
 
 
     const switchMode = (newMode: typeof mode, autoStart = false, currentSettings = settings, currentPomodoros = pomodoros) => {
-        let newTime;
         let timeInSeconds;
         switch (newMode) {
-            case 'work': timeInSeconds = (currentSettings.pomodoroLength.hours * 3600) + (currentSettings.pomodoroLength.minutes * 60) + currentSettings.pomodoroLength.seconds; break;
-            case 'shortBreak': timeInSeconds = (currentSettings.shortBreakLength.hours * 3600) + (currentSettings.shortBreakLength.minutes * 60) + currentSettings.shortBreakLength.seconds; break;
-            case 'longBreak': timeInSeconds = (currentSettings.longBreakLength.hours * 3600) + (currentSettings.longBreakLength.minutes * 60) + currentSettings.longBreakLength.seconds; break;
+            case 'work': timeInSeconds = (Number(currentSettings.pomodoroLength.hours) || 0) * 3600 + (Number(currentSettings.pomodoroLength.minutes) || 0) * 60 + (Number(currentSettings.pomodoroLength.seconds) || 0); break;
+            case 'shortBreak': timeInSeconds = (Number(currentSettings.shortBreakLength.hours) || 0) * 3600 + (Number(currentSettings.shortBreakLength.minutes) || 0) * 60 + (Number(currentSettings.shortBreakLength.seconds) || 0); break;
+            case 'longBreak': timeInSeconds = (Number(currentSettings.longBreakLength.hours) || 0) * 3600 + (Number(currentSettings.longBreakLength.minutes) || 0) * 60 + (Number(currentSettings.longBreakLength.seconds) || 0); break;
         }
 
         setMode(newMode);
@@ -203,9 +202,9 @@ function PomodoroTimer() {
     }
     
     const totalDuration = 
-        mode === 'work' ? (settings.pomodoroLength.hours * 3600) + (settings.pomodoroLength.minutes * 60) + settings.pomodoroLength.seconds 
-      : mode === 'shortBreak' ? (settings.shortBreakLength.hours * 3600) + (settings.shortBreakLength.minutes * 60) + settings.shortBreakLength.seconds
-      : (settings.longBreakLength.hours * 3600) + (settings.longBreakLength.minutes * 60) + settings.longBreakLength.seconds;
+        mode === 'work' ? (Number(settings.pomodoroLength.hours) || 0) * 3600 + (Number(settings.pomodoroLength.minutes) || 0) * 60 + (Number(settings.pomodoroLength.seconds) || 0)
+      : mode === 'shortBreak' ? (Number(settings.shortBreakLength.hours) || 0) * 3600 + (Number(settings.shortBreakLength.minutes) || 0) * 60 + (Number(settings.shortBreakLength.seconds) || 0)
+      : (Number(settings.longBreakLength.hours) || 0) * 3600 + (Number(settings.longBreakLength.minutes) || 0) * 60 + (Number(settings.longBreakLength.seconds) || 0);
 
     const progress = totalDuration > 0 ? ((totalDuration - timeLeft) / totalDuration) * 100 : 0;
     const hours = Math.floor(timeLeft / 3600);
