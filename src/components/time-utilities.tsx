@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -72,7 +73,7 @@ function PomodoroTimer() {
         pomodorosUntilLongBreak: 4,
     });
 
-    const audioRef = React.useRef<HTMLAudioElement | null>(null);
+    const workerRef = React.useRef<Worker | null>(null);
 
     // Load initial settings and state from localStorage
     React.useEffect(() => {
@@ -100,30 +101,46 @@ function PomodoroTimer() {
 
     // Timer logic
     React.useEffect(() => {
-        let timer: NodeJS.Timeout | null = null;
-        if (isActive) {
-            timer = setInterval(() => {
-                const savedState = JSON.parse(localStorage.getItem('pomodoroState') || '{}');
-                if (savedState.endTime) {
-                    const remaining = Math.round((savedState.endTime - Date.now()) / 1000);
-                    setTimeLeft(remaining > 0 ? remaining : 0);
-
-                    if (remaining <= 0) {
-                        handleTimerEnd();
-                    }
-                }
-            }, 1000);
+        if (typeof window !== "undefined") {
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            const workerUrl = URL.createObjectURL(blob);
+            workerRef.current = new Worker(workerUrl);
         }
-        return () => {
-            if (timer) clearInterval(timer);
+
+        const handleTick = () => {
+             const savedState = JSON.parse(localStorage.getItem('pomodoroState') || '{}');
+             if (savedState.endTime && savedState.isActive) {
+                 const remaining = Math.round((savedState.endTime - Date.now()) / 1000);
+                 if (remaining > 0) {
+                    setTimeLeft(remaining);
+                 } else {
+                    setTimeLeft(0);
+                    handleTimerEnd();
+                 }
+             }
         };
+
+        if (workerRef.current) {
+            workerRef.current.onmessage = (e) => {
+                if (e.data.type === 'tick') {
+                    handleTick();
+                }
+            };
+        }
+
+        if (isActive && workerRef.current) {
+            workerRef.current.postMessage({ type: 'start', payload: { interval: 1000 }});
+        } else if (!isActive && workerRef.current) {
+            workerRef.current.postMessage({ type: 'stop' });
+        }
+
+        return () => {
+            workerRef.current?.terminate();
+        };
+
     }, [isActive]);
 
     const handleTimerEnd = React.useCallback(() => {
-        if (audioRef.current) {
-            audioRef.current.play();
-        }
-        
         const newPomodoros = mode === 'work' ? pomodoros + 1 : pomodoros;
         const nextMode = mode === 'work'
             ? (newPomodoros % settings.pomodorosUntilLongBreak === 0 ? 'longBreak' : 'shortBreak')
@@ -243,7 +260,6 @@ function PomodoroTimer() {
                         onSave={handleSettingsSave}
                     />
                 </div>
-                <audio ref={audioRef} src="/notification-sound.mp3" />
             </CardContent>
         </Card>
     );
@@ -313,6 +329,7 @@ function Stopwatch() {
     const [time, setTime] = React.useState(0);
     const [isRunning, setIsRunning] = React.useState(false);
     const [laps, setLaps] = React.useState<number[]>([]);
+    const timerRef = React.useRef<number | null>(null);
     
     const loadState = React.useCallback(() => {
         const savedState = localStorage.getItem('stopwatchState');
@@ -342,7 +359,6 @@ function Stopwatch() {
     }, [loadState]);
 
     React.useEffect(() => {
-        let timerRef: number;
         if (isRunning) {
             const tick = () => {
                  const savedState = JSON.parse(localStorage.getItem('stopwatchState') || '{}');
@@ -350,11 +366,17 @@ function Stopwatch() {
                      const elapsed = Date.now() - savedState.startTime;
                      setTime(savedState.time + elapsed);
                  }
-                 timerRef = requestAnimationFrame(tick);
+                 timerRef.current = requestAnimationFrame(tick);
             };
-            timerRef = requestAnimationFrame(tick);
+            timerRef.current = requestAnimationFrame(tick);
+        } else {
+            if (timerRef.current) {
+                cancelAnimationFrame(timerRef.current);
+            }
         }
-        return () => cancelAnimationFrame(timerRef);
+        return () => {
+            if (timerRef.current) cancelAnimationFrame(timerRef.current);
+        };
     }, [isRunning]);
 
     const startStop = () => {
