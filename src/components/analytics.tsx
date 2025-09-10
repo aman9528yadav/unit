@@ -187,7 +187,9 @@ export function Analytics() {
     
     const chartData = filterActivityData(stats.activity, dateFilter).map(day => ({
         ...day,
-        day: format(parseISO(day.date), dateFilter === 'weekly' ? 'EEE' : 'MMM d')
+        day: dateFilter === 'weekly' ? format(parseISO(day.date), 'EEE') 
+           : dateFilter === 'monthly' ? format(parseISO(day.date), 'd')
+           : format(parseISO(day.date), 'MMM')
     }));
 
     const renderChart = () => {
@@ -325,7 +327,7 @@ export function Analytics() {
                         </div>
                     </CardHeader>
                     <CardContent className="h-72 overflow-x-auto">
-                        <div className="min-w-[600px] sm:min-w-full h-64">
+                        <div className="min-w-[600px] h-64">
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={chartType + dateFilter}
