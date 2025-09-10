@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
@@ -72,7 +73,8 @@ export function Analytics() {
         favoriteConversions: 0,
         activity: [] as DailyActivity[],
         todaysOps: 0,
-        totalOps: 0
+        totalOps: 0,
+        topFeature: 'Converter' as TopFeature
     });
     const [streakData, setStreakData] = useState<StreakData>({
         currentStreak: 0,
@@ -185,23 +187,57 @@ export function Analytics() {
         { title: "Favorite Conversions", value: stats.favoriteConversions, sub: "Your top conversions" },
     ];
     
-    const chartData = filterActivityData(stats.activity, dateFilter).map(day => ({
-        ...day,
-        day: dateFilter === 'weekly' ? format(parseISO(day.date), 'EEE') 
-           : dateFilter === 'monthly' ? format(parseISO(day.date), 'd')
-           : format(parseISO(day.date), 'MMM')
-    }));
+    const chartData = React.useMemo(() => {
+        const filteredActivity = filterActivityData(stats.activity, dateFilter);
+
+        if (dateFilter === 'yearly') {
+            const monthlyData: { [month: string]: DailyActivity } = {};
+            filteredActivity.forEach(day => {
+                const month = format(parseISO(day.date), 'MMM');
+                if (!monthlyData[month]) {
+                    monthlyData[month] = { date: month, conversions: 0, calculations: 0, dateCalculations: 0, notes: 0, total: 0 };
+                }
+                monthlyData[month].conversions += day.conversions;
+                monthlyData[month].calculations += day.calculations;
+                monthlyData[month].dateCalculations += day.dateCalculations;
+                monthlyData[month].notes += day.notes;
+                monthlyData[month].total += day.total;
+            });
+
+            // Ensure we have all months in the last year
+            const allMonths = Array.from({ length: 12 }).map((_, i) => {
+                return format(subDays(new Date(), i * 30), 'MMM');
+            }).reverse();
+
+            return [...new Set(allMonths)].map(month => {
+                return {
+                    ...(monthlyData[month] || { date: month, conversions: 0, calculations: 0, dateCalculations: 0, notes: 0, total: 0 }),
+                    day: month
+                };
+            });
+        }
+        
+        return filteredActivity.map(day => ({
+            ...day,
+            day: dateFilter === 'weekly' ? format(parseISO(day.date), 'EEE')
+               : format(parseISO(day.date), 'd')
+        }));
+    }, [stats.activity, dateFilter]);
 
     const renderChart = () => {
+        const dataKey = dateFilter === 'yearly' ? 'total' : 'conversions';
+
         switch (chartType) {
             case "line": return (
                 <LineChart data={chartData}>
                     <XAxis dataKey="day" fontSize={12} />
                     <YAxis fontSize={12} />
                     <Tooltip />
-                    <Line type="monotone" dataKey="conversions" stroke="hsl(var(--primary))" strokeWidth={2} />
-                    <Line type="monotone" dataKey="notes" stroke="hsl(var(--accent))" strokeWidth={2} />
-                    <Line type="monotone" dataKey="dateCalculations" stroke="hsl(var(--secondary))" strokeWidth={2} />
+                    <Line type="monotone" dataKey={dataKey} name={dateFilter === 'yearly' ? 'Total Ops' : 'Conversions'} stroke="hsl(var(--primary))" strokeWidth={2} />
+                    {dateFilter !== 'yearly' && <>
+                        <Line type="monotone" dataKey="notes" stroke="hsl(var(--accent))" strokeWidth={2} />
+                        <Line type="monotone" dataKey="dateCalculations" stroke="hsl(var(--secondary))" strokeWidth={2} />
+                    </>}
                 </LineChart>
             );
             case "area": return (
@@ -209,9 +245,11 @@ export function Analytics() {
                     <XAxis dataKey="day" fontSize={12} />
                     <YAxis fontSize={12} />
                     <Tooltip />
-                    <Area type="monotone" dataKey="conversions" stackId="1" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.2)" />
-                    <Area type="monotone" dataKey="notes" stackId="1" stroke="hsl(var(--accent))" fill="hsl(var(--accent) / 0.2)" />
-                    <Area type="monotone" dataKey="dateCalculations" stackId="1" stroke="hsl(var(--secondary))" fill="hsl(var(--secondary) / 0.2)" />
+                    <Area type="monotone" dataKey={dataKey} name={dateFilter === 'yearly' ? 'Total Ops' : 'Conversions'} stackId="1" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.2)" />
+                     {dateFilter !== 'yearly' && <>
+                        <Area type="monotone" dataKey="notes" stackId="1" stroke="hsl(var(--accent))" fill="hsl(var(--accent) / 0.2)" />
+                        <Area type="monotone" dataKey="dateCalculations" stackId="1" stroke="hsl(var(--secondary))" fill="hsl(var(--secondary) / 0.2)" />
+                    </>}
                 </AreaChart>
             );
             case "bar": default: return (
@@ -220,10 +258,12 @@ export function Analytics() {
                     <YAxis fontSize={12} />
                     <Tooltip />
                     <Legend />
-                    <RechartsBar dataKey="conversions" fill="hsl(var(--primary))" barSize={30} />
-                    <RechartsBar dataKey="notes" fill="hsl(var(--accent))" barSize={30} />
-                    <RechartsBar dataKey="dateCalculations" fill="hsl(var(--secondary))" barSize={30} />
-                    <Line type="monotone" dataKey="conversions" stroke="hsl(var(--destructive))" strokeWidth={3} dot={false} />
+                    <RechartsBar dataKey={dataKey} name={dateFilter === 'yearly' ? 'Total Ops' : 'Conversions'} fill="hsl(var(--primary))" barSize={30} />
+                     {dateFilter !== 'yearly' && <>
+                        <RechartsBar dataKey="notes" fill="hsl(var(--accent))" barSize={30} />
+                        <RechartsBar dataKey="dateCalculations" fill="hsl(var(--secondary))" barSize={30} />
+                        <Line type="monotone" dataKey="conversions" stroke="hsl(var(--destructive))" strokeWidth={3} dot={false} />
+                    </>}
                 </ComposedChart>
             );
         }
@@ -260,9 +300,9 @@ export function Analytics() {
                     className="grid grid-cols-1 sm:grid-cols-2 gap-4"
                 >
                     {(showAllStats ? statCards : statCards.slice(0, 4)).map((item, i) => (
-                        <Card key={i} className="bg-white shadow-sm border-0 rounded-2xl">
+                        <Card key={i} className="bg-card shadow-sm border rounded-2xl">
                             <CardHeader>
-                                <CardTitle className="text-base font-semibold text-gray-700 flex justify-between items-center">
+                                <CardTitle className="text-base font-semibold text-foreground/80 flex justify-between items-center">
                                     {item.title}
                                     {item.type === 'decrease' ? (
                                         <TrendingDown className="h-4 w-4 text-red-500" />
@@ -274,8 +314,8 @@ export function Analytics() {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-xl font-bold text-gray-900">{item.value}</p>
-                                <p className="text-xs text-gray-500">{item.sub}</p>
+                                <p className="text-xl font-bold text-foreground">{item.value}</p>
+                                <p className="text-xs text-muted-foreground">{item.sub}</p>
                             </CardContent>
                         </Card>
                     ))}
@@ -287,7 +327,7 @@ export function Analytics() {
                             variant="outline"
                             size="sm"
                             onClick={() => setShowAllStats(true)}
-                            className="rounded-full text-purple-600 border-purple-300"
+                            className="rounded-full text-primary border-primary/30"
                         >
                             Show More
                         </Button>
@@ -300,14 +340,14 @@ export function Analytics() {
                             variant="outline"
                             size="sm"
                             onClick={() => setShowAllStats(false)}
-                            className="rounded-full text-purple-600 border-purple-300"
+                            className="rounded-full text-primary border-primary/30"
                         >
                             Show Less
                         </Button>
                     </div>
                 )}
 
-                <Card className="bg-white shadow-sm border-0 rounded-2xl">
+                <Card className="bg-card shadow-sm border rounded-2xl">
                     <CardHeader>
                         <CardTitle className="text-lg">Usage Trend</CardTitle>
                         <div className="flex gap-2 flex-wrap pt-2">
@@ -346,7 +386,7 @@ export function Analytics() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-white shadow-sm border-0 rounded-2xl">
+                <Card className="bg-card shadow-sm border rounded-2xl">
                     <CardHeader>
                         <CardTitle className="text-lg">Activity Breakdown</CardTitle>
                     </CardHeader>
@@ -379,9 +419,9 @@ export function Analytics() {
                     </CardContent>
                 </Card>
                 
-                <Card className="bg-white shadow-sm border-0 rounded-2xl">
+                <Card className="bg-card shadow-sm border rounded-2xl">
                     <CardHeader>
-                        <CardTitle className="text-lg">Week-over-Week Comparison</CardTitle>
+                        <CardTitle className="text-lg">Day-over-Day Comparison</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -405,7 +445,7 @@ export function Analytics() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-white shadow-sm border-0 rounded-2xl">
+                <Card className="bg-card shadow-sm border rounded-2xl">
                     <CardHeader>
                         <CardTitle className="text-lg">Last Activity</CardTitle>
                     </CardHeader>
@@ -413,9 +453,9 @@ export function Analytics() {
                          {lastActivities.length > 0 ? lastActivities.map((activity, index) => {
                             if (!isValid(parseISO(activity.timestamp))) return null;
                             return (
-                                <div key={index} className="p-3 bg-gradient-to-r from-purple-50 via-pink-50 to-white rounded-lg shadow-sm">
-                                    <p className="font-medium text-gray-800 text-sm">{activity.name}</p>
-                                    <p className="text-xs text-gray-500">{formatDistanceToNow(parseISO(activity.timestamp), { addSuffix: true })}</p>
+                                <div key={index} className="p-3 bg-secondary rounded-lg shadow-sm">
+                                    <p className="font-medium text-foreground text-sm">{activity.name}</p>
+                                    <p className="text-xs text-muted-foreground">{formatDistanceToNow(parseISO(activity.timestamp), { addSuffix: true })}</p>
                                 </div>
                             )
                         }) : (
@@ -427,3 +467,4 @@ export function Analytics() {
         </div>
     );
 }
+
