@@ -241,8 +241,8 @@ export function Analytics() {
     }, []);
 
     return (
-        <div className="min-h-screen flex flex-col bg-background p-4 overflow-y-auto">
-            <div className="max-w-md mx-auto space-y-6 pb-10">
+        <div className="min-h-screen flex flex-col bg-background p-4 overflow-x-hidden">
+            <div className="max-w-md mx-auto space-y-6 pb-10 w-full">
                 <div className="flex justify-between items-center sticky top-0 bg-background/70 backdrop-blur z-10 py-2">
                     <h1 className="text-2xl font-bold text-primary">Analytics</h1>
                     <Button variant="secondary" className="rounded-xl shadow-md" onClick={() => router.push('/')}>
