@@ -2,12 +2,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Settings } from "@/components/settings";
 import { Skeleton } from "@/components/ui/skeleton";
 import MaintenancePage from "@/app/maintenance/page";
 import { listenToUpdateInfo } from '@/services/firestore';
-import { usePathname } from 'next/navigation';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -15,14 +14,16 @@ export default function SettingsPage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isMaintenance, setIsMaintenance] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const unsub = listenToUpdateInfo((info) => {
-      const isPageInMaintenance = info.maintenancePages?.some(p => pathname.startsWith(p)) || false;
+      const fullPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
+      const isPageInMaintenance = info.maintenancePages?.some(p => fullPath.startsWith(p)) || false;
       setIsMaintenance(isPageInMaintenance);
     });
     return () => unsub();
-  }, [pathname]);
+  }, [pathname, searchParams]);
   
   useEffect(() => {
     setIsClient(true);

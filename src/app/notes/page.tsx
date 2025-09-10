@@ -5,19 +5,21 @@ import { useState, useEffect } from 'react';
 import { Notepad } from "@/components/notepad";
 import MaintenancePage from "@/app/maintenance/page";
 import { listenToUpdateInfo } from '@/services/firestore';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 export default function NotesPage() {
   const [isMaintenance, setIsMaintenance] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const unsub = listenToUpdateInfo((info) => {
-      const isPageInMaintenance = info.maintenancePages?.some(p => pathname.startsWith(p)) || false;
+      const fullPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
+      const isPageInMaintenance = info.maintenancePages?.some(p => fullPath.startsWith(p)) || false;
       setIsMaintenance(isPageInMaintenance);
     });
     return () => unsub();
-  }, [pathname]);
+  }, [pathname, searchParams]);
 
   if (isMaintenance) {
     return <MaintenancePage />;

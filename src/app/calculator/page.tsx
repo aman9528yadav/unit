@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { listenToUserData, listenToUpdateInfo } from "@/services/firestore";
 import { PhysicalCalculator } from "@/components/physical-calculator";
 import MaintenancePage from "@/app/maintenance/page";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 export default function CalculatorPage() {
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -15,6 +15,7 @@ export default function CalculatorPage() {
   const [isClient, setIsClient] = useState(false);
   const [isMaintenance, setIsMaintenance] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     setIsClient(true);
@@ -26,7 +27,8 @@ export default function CalculatorPage() {
     });
 
     const unsubMaintenance = listenToUpdateInfo((info) => {
-      const isPageInMaintenance = info.maintenancePages?.some(p => pathname.startsWith(p)) || false;
+      const fullPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
+      const isPageInMaintenance = info.maintenancePages?.some(p => fullPath.startsWith(p)) || false;
       setIsMaintenance(isPageInMaintenance);
     });
 
@@ -34,7 +36,7 @@ export default function CalculatorPage() {
       unsub();
       unsubMaintenance();
     }
-  }, [pathname]);
+  }, [pathname, searchParams]);
   
   useEffect(() => {
     if (isFullScreen) {
