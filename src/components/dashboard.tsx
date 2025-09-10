@@ -345,7 +345,7 @@ export function Dashboard() {
       </div>
 
       <Dialog open={isCustomizeDialogOpen} onOpenChange={setIsCustomizeDialogOpen}>
-            <DialogContent>
+            <DialogContent className="max-w-[412px]">
                 <DialogHeader>
                     <DialogTitle>Customize Quick Access</DialogTitle>
                     <DialogDescription>Drag and drop to reorder your shortcuts.</DialogDescription>
