@@ -9,15 +9,8 @@ import {
   Calculator,
   History,
   NotebookPen,
-  Wand2,
   LayoutGrid,
   Search,
-  ArrowRight,
-  PlayCircle,
-  BarChart3,
-  TrendingUp,
-  CheckCircle2,
-  User,
   Settings,
   Languages,
   Sigma,
@@ -25,7 +18,6 @@ import {
   Flame,
   Sparkles,
   LogIn,
-  Gift,
   Zap,
   Palette,
   Calendar,
@@ -38,43 +30,25 @@ import {
   Lightbulb,
   Beaker,
   BookOpen,
-  Globe2,
-  Bug,
-  Shield,
-  AlertTriangle,
-  FileClock,
-  BookCopy,
-  Receipt,
-  GraduationCap,
-  Bookmark,
   Clock,
   PieChart,
-  Clipboard,
-  Layers,
-  Bell,
   Menu,
+  TrendingUp,
   TrendingDown,
   GripVertical,
   ChevronUp
 } from "lucide-react";
 import * as LucideIcons from 'lucide-react';
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Notifications } from "./notifications";
 import { useLanguage } from "@/context/language-context";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { AboutCard } from "./about-card";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
-import { Label } from "./ui/label";
-import { Checkbox } from "./ui/checkbox";
 import { DailyActivity, processUserDataForStats, TopFeature } from "@/lib/stats";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart as RechartsBarChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -227,7 +201,7 @@ export function Dashboard() {
   const statsData = [
     { key: "Today", value: stats.todaysOps, icon: <Clock size={16} className="text-primary" />, changeType: todaysOpsStats.changeType },
     { key: "Streak", value: streakData.currentStreak, icon: <Flame size={16} className="text-primary" /> },
-    { key: "Saved", value: stats.savedNotes, icon: <Bookmark size={16} className="text-primary" /> },
+    { key: "Saved", value: stats.savedNotes, icon: <NotebookPen size={16} className="text-primary" /> },
     { key: "All time", value: stats.totalOps, icon: <Star size={16} className="text-primary" /> },
     { key: "Top Feature", value: stats.topFeature, icon: topFeatureIcon[stats.topFeature] }
   ];
@@ -453,22 +427,22 @@ function ComingCard({ title, description, soon, icon, isQuickAccess = false }: C
             <button onClick={handleClick} className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-card shadow-sm border text-xs text-primary">
                 {content}
             </button>
-             <AlertDialog open={showComingSoonDialog} onOpenChange={setShowComingSoonDialog}>
-              <AlertDialogContent>
-                <AlertDialogHeader className="items-center text-center">
+             <Dialog open={showComingSoonDialog} onOpenChange={setShowComingSoonDialog}>
+              <DialogContent>
+                <DialogHeader className="items-center text-center">
                    <div className="p-3 bg-primary/10 rounded-full mb-4">
                       <Icon className="w-8 h-8 text-primary" />
                   </div>
-                  <AlertDialogTitle>{title}</AlertDialogTitle>
-                  <AlertDialogDescription>
+                  <DialogTitle>{title}</DialogTitle>
+                  <DialogDescription>
                     {description} We'll notify you via Sutradhaar's notification system when it's ready!
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogAction>Got it!</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button onClick={() => setShowComingSoonDialog(false)}>Got it!</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
         </>
     );
   }
@@ -486,39 +460,39 @@ function ComingCard({ title, description, soon, icon, isQuickAccess = false }: C
         <div className="text-xs text-muted-foreground mt-2">{description}</div>
       </button>
 
-      <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Login Required</AlertDialogTitle>
-            <AlertDialogDescription>
+      <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Login Required</DialogTitle>
+            <DialogDescription>
               Please log in to be notified about this feature.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => router.push('/welcome')}>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowLoginDialog(false)}>Cancel</Button>
+            <Button onClick={() => router.push('/welcome')}>
               Login
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
-      <AlertDialog open={showComingSoonDialog} onOpenChange={setShowComingSoonDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader className="items-center text-center">
+      <Dialog open={showComingSoonDialog} onOpenChange={setShowComingSoonDialog}>
+        <DialogContent>
+          <DialogHeader className="items-center text-center">
              <div className="p-3 bg-primary/10 rounded-full mb-4">
                 <Icon className="w-8 h-8 text-primary" />
             </div>
-            <AlertDialogTitle>{title}</AlertDialogTitle>
-            <AlertDialogDescription>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>
               {description} We'll notify you via Sutradhaar's notification system when it's ready!
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction>Got it!</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowComingSoonDialog(false)}>Got it!</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

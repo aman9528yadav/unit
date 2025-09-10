@@ -16,9 +16,6 @@ import { setGlobalMaintenanceMode, listenToGlobalMaintenanceMode, setUpdateInfo,
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { intervalToDuration } from 'date-fns';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
-import { v4 as uuidv4 } from 'uuid';
-import { conversionCategories as baseConversionCategories } from '@/lib/conversions';
-
 
 const DEVELOPER_EMAIL = "amanyadavyadav9458@gmail.com";
 let DEFAULT_DEV_PASSWORD = "121312";
@@ -65,9 +62,6 @@ export function DevPanel() {
     const [currentDevPassword, setCurrentDevPassword] = useState('');
     const [newDevPassword, setNewDevPassword] = useState('');
     
-    // State for Feature Flags Tab
-    const [featureLocks, setFeatureLocks] = useState<FeatureLocks>({});
-
     const router = useRouter();
     const { toast } = useToast();
 
