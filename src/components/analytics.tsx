@@ -297,7 +297,7 @@ export function Analytics() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                    className="grid grid-cols-2 gap-4"
                 >
                     {(showAllStats ? statCards : statCards.slice(0, 4)).map((item, i) => (
                         <Card key={i} className="bg-card shadow-sm border rounded-2xl">
