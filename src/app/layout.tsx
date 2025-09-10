@@ -257,7 +257,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
                                 </div>
                             </div>
 
-                            <div className="space-y-8 overflow-y-auto h-[calc(100vh-280px)] pb-6 pr-2 custom-scrollbar">
+                            <div className="space-y-8 overflow-y-auto h-[calc(100vh-280px)] pb-6 pr-2 sidebar-scrollbar">
                             {navSections.map(section => {
                                     const filteredLinks = section.links.filter(link => !link.requiresAuth || isLoggedIn);
                                     if(filteredLinks.length === 0) return null;
