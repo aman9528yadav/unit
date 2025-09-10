@@ -1,35 +1,20 @@
 
 "use client";
 
-import { Translator } from "@/components/translator";
-import { Suspense, useState, useEffect } from "react";
-import MaintenancePage from "@/app/maintenance/page";
-import { listenToUpdateInfo } from '@/services/firestore';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function TranslatorPage() {
-  const [isMaintenance, setIsMaintenance] = useState(false);
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const router = useRouter();
 
   useEffect(() => {
-    const unsub = listenToUpdateInfo((info) => {
-      const fullPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
-      const isPageInMaintenance = info.maintenancePages?.some(p => fullPath.startsWith(p)) || false;
-      setIsMaintenance(isPageInMaintenance);
-    });
-    return () => unsub();
-  }, [pathname, searchParams]);
-
-  if (isMaintenance) {
-    return <MaintenancePage />;
-  }
+    // Redirect to home page or show a message, as this feature is coming soon.
+    router.push('/');
+  }, [router]);
 
   return (
-    <main className="w-full flex-grow p-4 sm:p-6">
-      <Suspense>
-        <Translator />
-      </Suspense>
+    <main className="w-full flex-grow p-4 sm:p-6 text-center">
+      <p>This feature is coming soon and is currently unavailable.</p>
     </main>
   );
 }
