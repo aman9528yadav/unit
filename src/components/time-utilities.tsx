@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format, differenceInDays, differenceInWeeks, differenceInMonths, addDays, subDays, addWeeks, subWeeks, addMonths, subYears, intervalToDuration, differenceInBusinessDays, parseISO, addYears } from 'date-fns';
-import { Home, Play, Pause, RotateCcw, Flag, CalendarIcon, ArrowRight, Hourglass, Trash2, Settings, Minus, Plus, ArrowDown } from "lucide-react";
+import { Home, Play, Pause, RotateCcw, Flag, CalendarIcon, ArrowRight, Hourglass, Trash2, Settings, Minus, Plus, ArrowDown, Copy, Share2 } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
@@ -29,6 +29,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useSearchParams } from "next/navigation";
 import { incrementDateCalculationCount } from "@/lib/stats";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import html2canvas from 'html2canvas';
+
 
 // --- Web Worker Code ---
 // This code will be run in a separate thread to ensure timers work in the background.
@@ -504,9 +507,11 @@ function Stopwatch() {
 
 function DateDifference() {
     const { t } = useLanguage();
+    const { toast } = useToast();
     const [startDate, setStartDate] = React.useState<Date | undefined>(new Date());
     const [endDate, setEndDate] = React.useState<Date | undefined>(new Date());
     const [duration, setDuration] = React.useState<Duration>({});
+    const resultRef = React.useRef<HTMLDivElement>(null);
     
     const calculate = () => {
         if (startDate && endDate) {
@@ -519,9 +524,45 @@ function DateDifference() {
             const lastDateCalcString = `${format(startDate, 'P')} to ${format(endDate, 'P')}|${new Date().toISOString()}`;
             localStorage.setItem('lastDateCalc', lastDateCalcString);
             window.dispatchEvent(new StorageEvent('storage', { key: 'lastDateCalc', newValue: lastDateCalcString }));
-
         }
     }
+    
+    const handleCopy = () => {
+        if (!duration.years && !duration.months && !duration.days) {
+            toast({ title: "Nothing to copy", description: "Please calculate a duration first.", variant: "destructive" });
+            return;
+        }
+        const durationString = `${duration.years || 0} years, ${duration.months || 0} months, ${duration.weeks || 0} weeks, ${duration.days || 0} days. Total days: ${startDate && endDate ? differenceInDays(endDate, startDate) : 0}`;
+        navigator.clipboard.writeText(durationString);
+        toast({ title: "Copied to clipboard!" });
+    };
+
+    const handleShare = async () => {
+        if (!resultRef.current) {
+             toast({ title: "Nothing to share", description: "Please calculate a duration first.", variant: "destructive" });
+            return;
+        }
+        if (!navigator.share) {
+             toast({ title: "Sharing not supported", variant: "destructive" });
+             return;
+        }
+        try {
+            const canvas = await html2canvas(resultRef.current, { backgroundColor: null });
+            canvas.toBlob(async (blob) => {
+                if (blob) {
+                    const file = new File([blob], 'date-difference.png', { type: 'image/png' });
+                    await navigator.share({
+                        title: 'Date Calculation Result',
+                        text: `Result from ${format(startDate!, 'PPP')} to ${format(endDate!, 'PPP')}`,
+                        files: [file],
+                    });
+                }
+            }, 'image/png');
+        } catch (error) {
+            console.error(error);
+            toast({ title: "Sharing failed", variant: "destructive" });
+        }
+    };
 
     return (
         <Card className="w-full">
@@ -562,8 +603,8 @@ function DateDifference() {
                 </div>
                 
                 <Button onClick={calculate} className="mt-2">{t('timePage.dateCalc.calculate')}</Button>
-
-                <div className="bg-secondary p-4 rounded-xl mt-2">
+                
+                <div ref={resultRef} className="bg-secondary p-4 rounded-xl mt-2">
                     <h3 className="font-semibold mb-3 text-center">{t('timePage.dateCalc.result')}</h3>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                         <StatCard value={duration.years} label={t('timePage.dateCalc.years')} />
@@ -574,6 +615,10 @@ function DateDifference() {
                      <div className="text-center text-sm text-muted-foreground mt-4">
                         {t('timePage.dateCalc.totalDays', { count: startDate && endDate ? differenceInDays(endDate, startDate) : 0 })}
                     </div>
+                </div>
+                 <div className="flex justify-end gap-2">
+                    <Button variant="outline" size="icon" onClick={handleCopy}><Copy className="h-4 w-4"/></Button>
+                    <Button variant="outline" size="icon" onClick={handleShare}><Share2 className="h-4 w-4"/></Button>
                 </div>
             </CardContent>
         </Card>
