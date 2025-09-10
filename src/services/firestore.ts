@@ -692,7 +692,9 @@ export async function updateUserData(email: string | null, data: Partial<UserDat
     if (!email) return;
     try {
         const userRef = ref(rtdb, `users/${sanitizeEmail(email)}`);
-        await update(userRef, data);
+        const existingData = (await get(userRef)).val() || {};
+        const mergedData = merge(existingData, data);
+        await setRealtimeDb(userRef, mergedData);
     } catch (error) {
         console.error("Error updating user data in RTDB:", error);
     }

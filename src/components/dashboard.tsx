@@ -163,7 +163,7 @@ export function Dashboard() {
   const handleSaveOrder = () => {
     if (profile?.email) {
       const order = quickAccessItems.map(item => item.id);
-      updateUserData(profile.email, { 'settings.quickAccessOrder': order });
+      updateUserData(profile.email, { settings: { quickAccessOrder: order } });
       toast({ title: "Layout Saved!", description: "Your quick access layout has been updated." });
     }
     setIsCustomizeMode(false);
