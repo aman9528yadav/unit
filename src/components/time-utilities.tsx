@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from 'html2canvas';
 import { Skeleton } from "./ui/skeleton";
+import { motion, AnimatePresence } from 'framer-motion';
 
 
 // --- Web Worker Code ---
@@ -57,13 +58,12 @@ const workerCode = `
 
 function PomodoroTimer() {
     const { t } = useLanguage();
-    const [minutes, setMinutes] = React.useState(25);
-    const [seconds, setSeconds] = React.useState(0);
+    const { toast } = useToast();
+    const [timeLeft, setTimeLeft] = React.useState(25 * 60);
     const [isActive, setIsActive] = React.useState(false);
     const [mode, setMode] = React.useState<'work' | 'shortBreak' | 'longBreak'>('work');
     const [pomodoros, setPomodoros] = React.useState(0);
     const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
-    const workerRef = React.useRef<Worker | null>(null);
 
     const [settings, setSettings] = React.useState({
         pomodoroLength: 25,
@@ -71,208 +71,139 @@ function PomodoroTimer() {
         longBreakLength: 15,
         pomodorosUntilLongBreak: 4,
     });
+
+    // Load initial settings and state from localStorage
+    React.useEffect(() => {
+        const savedSettings = localStorage.getItem('pomodoroSettings');
+        if (savedSettings) {
+            setSettings(JSON.parse(savedSettings));
+        }
+        const savedState = localStorage.getItem('pomodoroState');
+        if (savedState) {
+            const { timeLeft: savedTimeLeft, mode: savedMode, pomodoros: savedPomodoros } = JSON.parse(savedState);
+            setTimeLeft(savedTimeLeft);
+            setMode(savedMode);
+            setPomodoros(savedPomodoros);
+        }
+    }, []);
+    
+    // Timer logic
+    React.useEffect(() => {
+        let interval: NodeJS.Timeout | null = null;
+        if (isActive && timeLeft > 0) {
+            interval = setInterval(() => {
+                setTimeLeft(time => time - 1);
+            }, 1000);
+        } else if (isActive && timeLeft === 0) {
+            // Timer finished
+            const newPomodoros = mode === 'work' ? pomodoros + 1 : pomodoros;
+            if(mode === 'work') setPomodoros(newPomodoros);
+
+            const nextMode = mode === 'work'
+                ? (newPomodoros % settings.pomodorosUntilLongBreak === 0 ? 'longBreak' : 'shortBreak')
+                : 'work';
+            
+            toast({
+                title: `Time's up!`,
+                description: `Your ${mode} session has finished. Time for a ${nextMode === 'work' ? 'new session' : 'break'}.`,
+            });
+            
+            switchMode(nextMode, true, settings, newPomodoros);
+        }
+        
+        if (isActive) {
+            localStorage.setItem('pomodoroState', JSON.stringify({ timeLeft, mode, pomodoros }));
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isActive, timeLeft, mode, pomodoros, settings, toast, t]);
+
+
+    const switchMode = (newMode: typeof mode, autoStart = false, currentSettings = settings, currentPomodoros = pomodoros) => {
+        setIsActive(autoStart);
+        setMode(newMode);
+        setPomodoros(currentPomodoros);
+
+        let newTime;
+        switch (newMode) {
+            case 'work': newTime = currentSettings.pomodoroLength * 60; break;
+            case 'shortBreak': newTime = currentSettings.shortBreakLength * 60; break;
+            case 'longBreak': newTime = currentSettings.longBreakLength * 60; break;
+        }
+        setTimeLeft(newTime);
+        localStorage.setItem('pomodoroState', JSON.stringify({ timeLeft: newTime, mode: newMode, pomodoros: currentPomodoros }));
+    };
+
+    const toggle = () => setIsActive(!isActive);
+
+    const reset = React.useCallback((newSettings = settings) => {
+        switchMode(mode, false, newSettings);
+    }, [mode, settings]);
+
+    const handleSettingsSave = (newSettings: typeof settings) => {
+        setSettings(newSettings);
+        localStorage.setItem('pomodoroSettings', JSON.stringify(newSettings));
+        setIsSettingsOpen(false);
+        reset(newSettings);
+    }
     
     const totalDuration = 
         mode === 'work' ? settings.pomodoroLength * 60 
       : mode === 'shortBreak' ? settings.shortBreakLength * 60
       : settings.longBreakLength * 60;
-      
-    const progress = totalDuration > 0 ? ((minutes * 60 + seconds) / totalDuration) * 100 : 0;
 
+    const progress = totalDuration > 0 ? (timeLeft / totalDuration) * 100 : 0;
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
 
-    const switchMode = React.useCallback((newMode: typeof mode, userInitiated = false, currentSettings = settings) => {
-        setIsActive(!userInitiated);
-        let newMinutes: number;
-        switch (newMode) {
-            case 'work': newMinutes = currentSettings.pomodoroLength; break;
-            case 'shortBreak': newMinutes = currentSettings.shortBreakLength; break;
-            case 'longBreak': newMinutes = currentSettings.longBreakLength; break;
-            default: newMinutes = 25;
-        }
-
-        const newPomodoros = (newMode === 'work' && userInitiated) ? 0 : pomodoros;
-        setPomodoros(newPomodoros);
-        
-        setMode(newMode);
-        setMinutes(newMinutes);
-        setSeconds(0);
-
-        if (!userInitiated) { // Auto-switch
-             const endTime = new Date().getTime() + newMinutes * 60 * 1000;
-             localStorage.setItem('pomodoroState', JSON.stringify({
-                 endTime: endTime,
-                 mode: newMode,
-                 pomodoros: newPomodoros,
-                 isPaused: false,
-             }));
-        } else { // Manual switch by user
-             localStorage.setItem('pomodoroState', JSON.stringify({
-                remainingTime: newMinutes * 60 * 1000,
-                mode: newMode,
-                pomodoros: newPomodoros,
-                isPaused: true,
-            }));
-        }
-
-    }, [pomodoros]);
-
-
-    // Initialize from localStorage
-    React.useEffect(() => {
-        const savedSettingsStr = localStorage.getItem('pomodoroSettings');
-        const savedSettings = savedSettingsStr ? JSON.parse(savedSettingsStr) : settings;
-        
-        const savedState = localStorage.getItem('pomodoroState');
-        if (savedState) {
-            const { endTime, remainingTime, mode: savedMode, pomodoros: savedPomodoros, isPaused } = JSON.parse(savedState);
-            const now = new Date().getTime();
-
-            setMode(savedMode);
-            setPomodoros(savedPomodoros || 0);
-
-            if (isPaused) {
-                const remaining = Math.ceil(remainingTime / 1000);
-                setMinutes(Math.floor(remaining / 60));
-                setSeconds(remaining % 60);
-                setIsActive(false);
-            } else if (endTime && now < endTime) {
-                const remaining = Math.ceil((endTime - now) / 1000);
-                setMinutes(Math.floor(remaining / 60));
-                setSeconds(remaining % 60);
-                setIsActive(true);
-            } else {
-                 const nextMode = savedMode === 'work' ? 'shortBreak' : 'work';
-                 switchMode(nextMode, true, savedSettings);
-            }
-        }
-        
-        setSettings(savedSettings);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    // Timer logic effect
-    React.useEffect(() => {
-        if (!workerRef.current) {
-            const blob = new Blob([workerCode], { type: 'application/javascript' });
-            workerRef.current = new Worker(URL.createObjectURL(blob));
-        }
-
-        const worker = workerRef.current;
-        
-        const handleTick = () => {
-            if (!isActive) return;
-
-            if (minutes === 0 && seconds === 0) {
-                const newPomodoroCount = mode === 'work' ? pomodoros + 1 : pomodoros;
-                 if(mode === 'work') {
-                    setPomodoros(newPomodoroCount);
-                 }
-                 
-                 const newMode = mode === 'work'
-                    ? (newPomodoroCount % settings.pomodorosUntilLongBreak === 0 ? 'longBreak' : 'shortBreak')
-                    : 'work';
-                 
-                 switchMode(newMode, false);
-            } else if (seconds === 0) {
-                setMinutes(m => m - 1);
-                setSeconds(59);
-            } else {
-                setSeconds(s => s - 1);
-            }
-        };
-
-        if (isActive) {
-            worker.onmessage = handleTick;
-            worker.postMessage({ type: 'start', payload: { interval: 1000 } });
-        } else {
-            worker.postMessage({ type: 'stop' });
-        }
-
-        return () => {
-             worker.postMessage({ type: 'stop' });
-        };
-    }, [isActive, minutes, seconds, mode, pomodoros, settings, switchMode]);
-
-    // Cleanup worker on component unmount
-     React.useEffect(() => {
-        return () => {
-            workerRef.current?.terminate();
-        }
-     }, []);
-
-
-    const toggle = () => {
-        const newState = !isActive;
-        setIsActive(newState);
-        
-        const savedState = JSON.parse(localStorage.getItem('pomodoroState') || '{}');
-        const lastTimerString = `Timer ${newState ? 'started' : 'paused'}|${new Date().toISOString()}`;
-        localStorage.setItem('lastTimer', lastTimerString);
-        window.dispatchEvent(new StorageEvent('storage', { key: 'lastTimer', newValue: lastTimerString }));
-
-
-        if (newState) { // Starting or resuming
-            const remainingMs = savedState.isPaused 
-                ? savedState.remainingTime
-                : (minutes * 60 + seconds) * 1000;
-            const newEndTime = new Date().getTime() + remainingMs;
-            localStorage.setItem('pomodoroState', JSON.stringify({ ...savedState, endTime: newEndTime, isPaused: false }));
-        } else { // Pausing
-            const remaining = (minutes * 60 + seconds) * 1000;
-            localStorage.setItem('pomodoroState', JSON.stringify({ ...savedState, remainingTime: remaining, isPaused: true }));
-        }
-    };
-
-    const reset = React.useCallback((newSettings = settings) => {
-        switchMode(mode, true, newSettings);
-        const lastTimerString = `Timer reset|${new Date().toISOString()}`;
-        localStorage.setItem('lastTimer', lastTimerString);
-        window.dispatchEvent(new StorageEvent('storage', { key: 'lastTimer', newValue: lastTimerString }));
-
-    }, [mode, settings, switchMode]);
-    
-    const handleSettingsSave = (newSettings: typeof settings) => {
-        setSettings(newSettings);
-        localStorage.setItem('pomodoroSettings', JSON.stringify(newSettings));
-        setIsSettingsOpen(false);
-        reset(newSettings); 
-    }
+    const circumference = 2 * Math.PI * 90;
+    const strokeDashoffset = circumference - (progress / 100) * circumference;
 
     return (
         <Card className="w-full text-center">
-            <CardHeader>
+             <CardHeader>
                  <div className="flex justify-center gap-2 mb-4">
-                    <Button variant={mode === 'work' ? 'secondary' : 'ghost'} onClick={() => switchMode('work', true)}>{t('timePage.pomodoro.pomodoro')}</Button>
-                    <Button variant={mode === 'shortBreak' ? 'secondary' : 'ghost'} onClick={() => switchMode('shortBreak', true)}>{t('timePage.pomodoro.shortBreak')}</Button>
-                    <Button variant={mode === 'longBreak' ? 'secondary' : 'ghost'} onClick={() => switchMode('longBreak', true)}>{t('timePage.pomodoro.longBreak')}</Button>
+                    <Button variant={mode === 'work' ? 'secondary' : 'ghost'} onClick={() => switchMode('work')}>{t('timePage.pomodoro.pomodoro')}</Button>
+                    <Button variant={mode === 'shortBreak' ? 'secondary' : 'ghost'} onClick={() => switchMode('shortBreak')}>{t('timePage.pomodoro.shortBreak')}</Button>
+                    <Button variant={mode === 'longBreak' ? 'secondary' : 'ghost'} onClick={() => switchMode('longBreak')}>{t('timePage.pomodoro.longBreak')}</Button>
                 </div>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-6">
-                <div className="relative w-64 h-64 rounded-full flex items-center justify-center bg-muted shadow-inner">
-                    <div className="absolute inset-0 rounded-full overflow-hidden">
-                         <div 
-                            className={cn(
-                                "absolute bottom-0 left-0 w-full transition-all duration-500 ease-linear",
-                                 mode === 'work' && 'bg-primary/20',
-                                 mode === 'shortBreak' && 'bg-green-500/20',
-                                 mode === 'longBreak' && 'bg-blue-500/20'
-                            )}
-                            style={{ height: `${100 - progress}%` }}
-                         />
-                    </div>
-                    <div className="relative z-10 text-6xl font-bold tracking-tighter text-foreground">
-                        {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                <div className="relative w-64 h-64">
+                    <svg className="w-full h-full" viewBox="0 0 200 200">
+                        <circle cx="100" cy="100" r="90" className="stroke-muted" strokeWidth="10" fill="transparent" />
+                        <motion.circle
+                            cx="100"
+                            cy="100"
+                            r="90"
+                            className="stroke-primary"
+                            strokeWidth="10"
+                            fill="transparent"
+                            strokeLinecap="round"
+                            transform="rotate(-90 100 100)"
+                            style={{ strokeDasharray: circumference, strokeDashoffset }}
+                            initial={{ strokeDashoffset: circumference }}
+                            animate={{ strokeDashoffset }}
+                            transition={{ duration: 1, ease: "linear" }}
+                        />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <div className="text-6xl font-bold tracking-tighter text-foreground">
+                            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                        </div>
+                        <p className="text-muted-foreground mt-2">{t('timePage.pomodoro.cyclesCompleted', { count: pomodoros })}</p>
                     </div>
                 </div>
-                <p className="text-muted-foreground">{t('timePage.pomodoro.cyclesCompleted', { count: pomodoros })}</p>
+
                  <div className="flex items-center gap-4">
-                    <Button onClick={toggle} className="w-24 h-12 text-lg">
+                    <Button onClick={toggle} className="w-32 h-12 text-lg rounded-full shadow-lg">
                         {isActive ? <Pause/> : <Play/>}
-                        {isActive ? t('timePage.pomodoro.pause') : t('timePage.pomodoro.start')}
+                        <span className="ml-2">{isActive ? t('timePage.pomodoro.pause') : t('timePage.pomodoro.start')}</span>
                     </Button>
-                    <Button onClick={() => reset()} variant="outline" className="w-24 h-12 text-lg">
-                        <RotateCcw/> {t('timePage.pomodoro.reset')}
+                    <Button onClick={() => reset()} variant="outline" className="w-16 h-12 rounded-full shadow-lg">
+                        <RotateCcw/>
                     </Button>
                     <PomodoroSettingsDialog
                         isOpen={isSettingsOpen}
@@ -310,7 +241,7 @@ function PomodoroSettingsDialog({ isOpen, setIsOpen, currentSettings, onSave }: 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="rounded-full">
                     <Settings />
                 </Button>
             </DialogTrigger>
