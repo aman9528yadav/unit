@@ -89,7 +89,6 @@ const defaultQuickAccessItems = [
     { id: 'converter', icon: <PieChart size={18} />, label: "Converter", href: "/converter" },
     { id: 'calculator', icon: <Zap size={18} />, label: "Calculator", href: "/calculator" },
     { id: 'notes', icon: <BookOpen size={18} />, label: "Notes", href: "/notes" },
-    { id: 'translator', icon: <Layers size={18} />, label: "Translator", href: "/translator" },
     { id: 'history', icon: <Clock size={18} />, label: "History", href: "/history" },
     { id: 'news', icon: <Newspaper size={18} />, label: "News", href: "/news" },
     { id: 'date-calc', icon: <Calendar size={18} />, label: "Date Calc", href: "/time?tab=date-diff" },
@@ -300,11 +299,19 @@ export function Dashboard() {
             <button onClick={handleOpenCustomizeDialog} className="text-xs text-primary hover:underline">Manage</button>
         </div>
         <div className="grid grid-cols-3 gap-3">
-          {(showAllQuickAccess ? quickAccessItems : quickAccessItems.slice(0, 6)).map((item, index) => (
+          {(showAllQuickAccess ? quickAccessItems : quickAccessItems.slice(0, 5)).map((item, index) => (
              <Shortcut key={item.id} icon={item.icon} label={item.label} href={item.href} />
           ))}
+           <ComingCard 
+              id="translator" 
+              title="Translator" 
+              description="AI-powered translations" 
+              icon="Languages" 
+              soon={true} 
+              isQuickAccess={true}
+            />
         </div>
-        {quickAccessItems.length > 6 && (
+        {quickAccessItems.length > 5 && (
             <div className="text-center mt-3">
               <Button variant="ghost" size="sm" onClick={() => setShowAllQuickAccess(!showAllQuickAccess)} className="text-primary">
                   {showAllQuickAccess ? <ChevronUp className="mr-2 h-4 w-4"/> : <ChevronDown className="mr-2 h-4 w-4"/>}
@@ -414,7 +421,7 @@ function Shortcut({ icon, label, href, isCustomizeMode }: { icon: React.ReactNod
 }
 
 
-function ComingCard({ title, description, soon, icon }: ComingSoonItem) {
+function ComingCard({ title, description, soon, icon, isQuickAccess = false }: ComingSoonItem & { isQuickAccess?: boolean }) {
   const router = useRouter();
   const [profile, setProfile] = useState<{email: string} | null>(null);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
@@ -435,6 +442,39 @@ function ComingCard({ title, description, soon, icon }: ComingSoonItem) {
       setShowComingSoonDialog(true);
     }
   };
+
+  const content = (
+      <>
+          <div className="p-2 rounded-lg bg-secondary"><Icon size={18} /></div>
+          <div>{title}</div>
+      </>
+  );
+
+  if (isQuickAccess) {
+    return (
+        <>
+            <button onClick={handleClick} className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-card shadow-sm border text-xs text-primary">
+                {content}
+            </button>
+             <AlertDialog open={showComingSoonDialog} onOpenChange={setShowComingSoonDialog}>
+              <AlertDialogContent>
+                <AlertDialogHeader className="items-center text-center">
+                   <div className="p-3 bg-primary/10 rounded-full mb-4">
+                      <Icon className="w-8 h-8 text-primary" />
+                  </div>
+                  <AlertDialogTitle>{title}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {description} We'll notify you via Sutradhaar's notification system when it's ready!
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogAction>Got it!</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+        </>
+    );
+  }
 
   return (
     <>
