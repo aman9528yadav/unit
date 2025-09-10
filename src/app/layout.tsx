@@ -225,7 +225,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
                                 </div>
                             </div>
 
-                            <div className="space-y-8 overflow-y-auto h-[65vh] pb-6 pr-2 custom-scrollbar">
+                            <div className="space-y-8 overflow-y-auto h-[calc(100vh-280px)] pb-6 pr-2 custom-scrollbar">
                             {navSections.map(section => {
                                     const filteredLinks = section.links.filter(link => !link.requiresAuth || isLoggedIn);
                                     if(filteredLinks.length === 0) return null;
@@ -256,15 +256,19 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
                             })}
                             </div>
                             
-                            <div className="mt-6 text-center text-xs text-muted-foreground border-t pt-4">
+                            <div className="mt-auto text-center text-xs text-muted-foreground border-t pt-4">
                                 Sutradhaar <br /> Made by Aman Yadav
-                                {isLoggedIn && (
-                                    <div className="flex justify-center mt-3">
+                                <div className="flex justify-center mt-3">
+                                {isLoggedIn ? (
                                     <button onClick={handleLogout} className="flex items-center gap-1 text-red-500 text-sm hover:underline">
                                         <LogOut size={16} /> Logout
                                     </button>
-                                    </div>
+                                ) : (
+                                     <button onClick={() => router.push('/welcome')} className="flex items-center gap-1 text-primary text-sm hover:underline">
+                                        <LogIn size={16} /> Login
+                                    </button>
                                 )}
+                                </div>
                             </div>
                         </SidebarContent>
                     </Sidebar>
