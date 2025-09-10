@@ -266,7 +266,7 @@ function PomodoroTimer() {
                                  mode === 'shortBreak' && 'bg-green-500/20',
                                  mode === 'longBreak' && 'bg-blue-500/20'
                             )}
-                            style={{ height: `${100 - progress}%` }}
+                            style={{ height: `${'${100 - progress}%'}` }}
                          />
                     </div>
                     <div className="relative z-10 text-6xl font-bold tracking-tighter text-foreground">
@@ -408,7 +408,7 @@ function Stopwatch() {
     const startStop = () => {
         const currentlyRunning = !isRunning;
         setIsRunning(currentlyRunning);
-        const lastStopwatchString = `Stopwatch ${currentlyRunning ? 'started' : 'paused'}|${new Date().toISOString()}`;
+        const lastStopwatchString = `Stopwatch ${'${currentlyRunning ? 'started' : 'paused'}'}|${'${new Date().toISOString()}'}`;
         localStorage.setItem('lastStopwatch', lastStopwatchString);
         window.dispatchEvent(new StorageEvent('storage', { key: 'lastStopwatch', newValue: lastStopwatchString }));
 
@@ -436,7 +436,7 @@ function Stopwatch() {
         setTime(0);
         setLaps([]);
         localStorage.removeItem('stopwatchState');
-        const lastStopwatchString = `Stopwatch reset|${new Date().toISOString()}`;
+        const lastStopwatchString = `Stopwatch reset|${'${new Date().toISOString()}'}`;
         localStorage.setItem('lastStopwatch', lastStopwatchString);
         window.dispatchEvent(new StorageEvent('storage', { key: 'lastStopwatch', newValue: lastStopwatchString }));
     };
@@ -523,7 +523,7 @@ function DateDifference() {
             }
             setDuration(intervalToDuration({ start: startDate, end: endDate }));
             incrementDateCalculationCount();
-            const lastDateCalcString = `${format(startDate, 'P')} to ${format(endDate, 'P')}|${new Date().toISOString()}`;
+            const lastDateCalcString = `${format(startDate, 'P')} to ${format(endDate, 'P')}|${'${new Date().toISOString()}'}`;
             localStorage.setItem('lastDateCalc', lastDateCalcString);
             window.dispatchEvent(new StorageEvent('storage', { key: 'lastDateCalc', newValue: lastDateCalcString }));
         }
@@ -652,7 +652,7 @@ function AddSubtractTime() {
         const newResultDate = fn(date, amount);
         setResultDate(newResultDate);
         incrementDateCalculationCount();
-        const lastDateCalcString = `${operation === 'add' ? '+' : '-'} ${amount} ${unit} from ${format(date, 'P')}|${new Date().toISOString()}`;
+        const lastDateCalcString = `${operation === 'add' ? '+' : '-'} ${amount} ${unit} from ${format(date, 'P')}|${'${new Date().toISOString()}'}`;
         localStorage.setItem('lastDateCalc', lastDateCalcString);
         window.dispatchEvent(new StorageEvent('storage', { key: 'lastDateCalc', newValue: lastDateCalcString }));
     }
@@ -731,7 +731,7 @@ function AgeCalculator() {
          if (birthDate) {
             setAge(intervalToDuration({ start: birthDate, end: new Date() }));
             incrementDateCalculationCount();
-             const lastDateCalcString = `Age for ${format(birthDate, 'P')}|${new Date().toISOString()}`;
+             const lastDateCalcString = `Age for ${format(birthDate, 'P')}|${'${new Date().toISOString()}'}`;
             localStorage.setItem('lastDateCalc', lastDateCalcString);
             window.dispatchEvent(new StorageEvent('storage', { key: 'lastDateCalc', newValue: lastDateCalcString }));
         }
@@ -782,7 +782,7 @@ function WorkingDaysCalculator() {
         const holidayCount = holidayDates.filter(h => h >= startDate && h <= endDate && h.getDay() !== 0 && h.getDay() !== 6).length;
         setWorkingDays(businessDays - holidayCount);
         incrementDateCalculationCount();
-        const lastDateCalcString = `Working days between ${format(startDate, 'P')} and ${format(endDate, 'P')}|${new Date().toISOString()}`;
+        const lastDateCalcString = `Working days between ${format(startDate, 'P')} and ${format(endDate, 'P')}|${'${new Date().toISOString()}'}`;
         localStorage.setItem('lastDateCalc', lastDateCalcString);
         window.dispatchEvent(new StorageEvent('storage', { key: 'lastDateCalc', newValue: lastDateCalcString }));
     }
@@ -935,6 +935,3 @@ export function TimeUtilities() {
     </div>
   );
 }
-
-    
-    
