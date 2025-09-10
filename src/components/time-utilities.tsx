@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format, differenceInDays, differenceInWeeks, differenceInMonths, addDays, subDays, addWeeks, subWeeks, addMonths, subYears, intervalToDuration, differenceInBusinessDays, parseISO, addYears } from 'date-fns';
-import { Home, Play, Pause, RotateCcw, Flag, CalendarIcon, ArrowRight, Hourglass, Trash2, Settings, Minus, Plus, ArrowDown, Copy, Share2 } from "lucide-react";
+import { Home, Play, Pause, RotateCcw, Flag, CalendarIcon, ArrowRight, Hourglass, Trash2, Settings, Minus, Plus, ArrowDown, Copy, Share2, FileText, Download, Image as ImageIcon } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
@@ -31,10 +31,12 @@ import { incrementDateCalculationCount } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { Skeleton } from "./ui/skeleton";
 import { motion, AnimatePresence } from 'framer-motion';
 import { addNotification } from "@/lib/notifications";
 import { Slider } from "@/components/ui/slider";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 
 // --- Web Worker Code ---
@@ -543,41 +545,46 @@ function DateDifference() {
         toast({ title: "Copied to clipboard!" });
     };
 
-    const handleShare = async () => {
+    const getResultString = () => {
+        if (!startDate || !endDate || !duration.years && !duration.months && !duration.days) return "No calculation performed.";
+        return `Result from ${format(startDate, 'PPP')} to ${format(endDate, 'PPP')}:\n` +
+               `${duration.years || 0} years, ${duration.months || 0} months, ${duration.weeks || 0} weeks, ${duration.days || 0} days.\n` +
+               `Total days: ${differenceInDays(endDate, startDate)}`;
+    }
+
+    const handleExport = async (type: 'png' | 'pdf' | 'txt') => {
         if (!resultRef.current || (!duration.years && !duration.months && !duration.days)) {
-            toast({ title: "Nothing to share", description: "Please calculate a duration first.", variant: "destructive" });
+            toast({ title: "Nothing to export", description: "Please calculate a duration first.", variant: "destructive" });
             return;
         }
 
-        if (!navigator.share) {
-            toast({ title: "Sharing not supported", description: "Your browser does not support the Web Share API.", variant: "destructive" });
+        if (type === 'txt') {
+            const text = getResultString();
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'date-calculation.txt';
+            a.click();
+            URL.revokeObjectURL(url);
             return;
         }
 
-        try {
-            const canvas = await html2canvas(resultRef.current, { backgroundColor: null, scale: 2 });
-            canvas.toBlob(async (blob) => {
-                if (!blob) {
-                    toast({ title: "Sharing Failed", description: "Could not create image from result.", variant: "destructive" });
-                    return;
-                }
-                const file = new File([blob], 'date-difference.png', { type: 'image/png' });
+        const canvas = await html2canvas(resultRef.current, { backgroundColor: null, scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
 
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        title: 'Date Calculation Result',
-                        text: `Result from ${startDate ? format(startDate, 'PPP') : ''} to ${endDate ? format(endDate, 'PPP') : ''}`,
-                        files: [file],
-                    });
-                } else {
-                   toast({ title: "Cannot share image", description: "Your browser does not support sharing files.", variant: "destructive" });
-                }
-            }, 'image/png');
-        } catch (error) {
-            console.error('Error sharing calculation:', error);
-            toast({ title: "Sharing Failed", description: "An unexpected error occurred.", variant: "destructive" });
+        if (type === 'png') {
+            const a = document.createElement('a');
+            a.href = imgData;
+            a.download = 'date-calculation.png';
+            a.click();
+        } else if (type === 'pdf') {
+            const pdf = new jsPDF('p', 'px', [canvas.width, canvas.height]);
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            pdf.save('date-calculation.pdf');
         }
     };
+
 
     return (
         <Card className="w-full">
@@ -633,7 +640,22 @@ function DateDifference() {
                 </div>
                  <div className="flex justify-end gap-2">
                     <Button variant="outline" size="icon" onClick={handleCopy}><Copy className="h-4 w-4"/></Button>
-                    <Button variant="outline" size="icon" onClick={handleShare}><Share2 className="h-4 w-4"/></Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                             <Button variant="outline" size="icon"><Share2 className="h-4 w-4"/></Button>
+                        </DropdownMenuTrigger>
+                         <DropdownMenuContent>
+                            <DropdownMenuItem onSelect={() => handleExport('png')}>
+                                <ImageIcon className="mr-2 h-4 w-4" /> Export as PNG
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => handleExport('txt')}>
+                                <FileText className="mr-2 h-4 w-4" /> Export as TXT
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => handleExport('pdf')}>
+                                <Download className="mr-2 h-4 w-4" /> Export as PDF
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </CardContent>
         </Card>

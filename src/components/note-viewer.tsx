@@ -5,7 +5,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Edit, File as FileIcon, Share2, ImageIcon } from 'lucide-react';
+import { ArrowLeft, Edit, File as FileIcon, Share2, ImageIcon, FileText, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Note } from './notepad';
@@ -15,6 +15,7 @@ import { listenToUserNotes } from '@/services/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 interface UserProfile {
@@ -101,33 +102,29 @@ export function NoteViewer({ noteId }: { noteId: string }) {
         }
     };
     
-    const handleExportAsTxt = async () => {
+    const handleExportAsTxt = () => {
         if (!note || !noteContentRef.current) return;
-
-        if (!navigator.share || !navigator.canShare) {
-            toast({ title: "Sharing Not Supported", variant: "destructive" });
-            return;
-        }
-
         const textContent = noteContentRef.current.innerText || '';
         const noteString = `Title: ${note.title}\nCategory: ${note.category || 'N/A'}\n\n${textContent}`;
-        
         const blob = new Blob([noteString], { type: 'text/plain' });
-        const file = new File([blob], `${note.title || 'note'}.txt`, { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${note.title || 'note'}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
 
-        try {
-             if (navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    title: note.title || 'note.txt',
-                    files: [file],
-                });
-            } else {
-                toast({ title: "Cannot share text file", description: "Your browser does not support sharing files.", variant: "destructive" });
-            }
-        } catch (error) {
-            console.error('Error sharing text file:', error);
-            toast({ title: "Sharing Failed", description: "Could not share the note as a text file.", variant: "destructive" });
-        }
+    const handleExportAsPdf = () => {
+        if (!note || !noteContentRef.current) return;
+        html2canvas(noteContentRef.current, { scale: 2 }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'px', [canvas.width, canvas.height]);
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            pdf.save(`${note.title || 'note'}.pdf`);
+        });
     };
 
     const renderAttachment = () => {
@@ -182,8 +179,12 @@ export function NoteViewer({ noteId }: { noteId: string }) {
                                 <span>Share as Image</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem onSelect={handleExportAsTxt}>
-                                <FileIcon className="mr-2 h-4 w-4" />
+                                <FileText className="mr-2 h-4 w-4" />
                                 <span>Export as TXT</span>
+                            </DropdownMenuItem>
+                             <DropdownMenuItem onSelect={handleExportAsPdf}>
+                                <Download className="mr-2 h-4 w-4" />
+                                <span>Export as PDF</span>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>

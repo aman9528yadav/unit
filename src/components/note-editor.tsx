@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon, ArrowRightLeft, CheckSquare, Baseline, Highlighter, File, Lock, Unlock, KeyRound, Share2 } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon, ArrowRightLeft, CheckSquare, Baseline, Highlighter, File, Lock, Unlock, KeyRound, Share2, FileText, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +25,7 @@ import { listenToUserNotes, updateUserNotes, listenToUserData, UserData, getGues
 import { cn } from '@/lib/utils';
 import { Label } from './ui/label';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 
 const FONT_COLORS = [
@@ -413,33 +414,32 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         }
     };
 
-    const handleExportAsTxt = async () => {
+    const handleExportAsTxt = () => {
         const contentEl = editorRef.current;
         if (!contentEl) return;
-
-        if (!navigator.share || !navigator.canShare) {
-            toast({ title: "Sharing Not Supported", variant: "destructive" });
-            return;
-        }
-
         const textContent = contentEl.innerText || '';
         const noteString = `Title: ${title}\nCategory: ${category}\n\n${textContent}`;
         const blob = new Blob([noteString], { type: 'text/plain' });
-        const file = new File([blob], `${title || 'note'}.txt`, { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${title || 'note'}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
 
-        try {
-            if (navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    title: title || 'note.txt',
-                    files: [file],
-                });
-            } else {
-                toast({ title: "Cannot share text file", description: "Your browser does not support sharing files.", variant: "destructive" });
-            }
-        } catch (error) {
-            console.error('Error sharing text file:', error);
-            toast({ title: "Sharing Failed", description: "Could not share the note as a text file.", variant: "destructive" });
-        }
+    const handleExportAsPdf = () => {
+        const contentEl = editorRef.current;
+        if (!contentEl) return;
+        
+        html2canvas(contentEl, { scale: 2 }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'px', [canvas.width, canvas.height]);
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            pdf.save(`${title || 'note'}.pdf`);
+        });
     };
     
     const renderAttachment = () => {
@@ -500,8 +500,12 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                                 <span>Share as Image</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem onSelect={handleExportAsTxt}>
-                                <File className="mr-2 h-4 w-4" />
+                                <FileText className="mr-2 h-4 w-4" />
                                 <span>Export as TXT</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={handleExportAsPdf}>
+                                <Download className="mr-2 h-4 w-4" />
+                                <span>Export as PDF</span>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
