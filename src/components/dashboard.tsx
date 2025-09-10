@@ -46,7 +46,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLanguage } from "@/context/language-context";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { AboutCard } from "./about-card";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 import { DailyActivity, processUserDataForStats, TopFeature } from "@/lib/stats";
@@ -348,7 +348,7 @@ export function Dashboard() {
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Customize Quick Access</DialogTitle>
-                    <CardDescription>Drag and drop to reorder your shortcuts.</CardDescription>
+                    <DialogDescription>Drag and drop to reorder your shortcuts.</DialogDescription>
                 </DialogHeader>
                 <div className="max-h-[60vh] overflow-y-auto p-1">
                     <Reorder.Group as="ul" values={tempQuickAccessItems} onReorder={setTempQuickAccessItems} className="space-y-2">
