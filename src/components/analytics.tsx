@@ -1,8 +1,7 @@
 
-
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -87,6 +86,8 @@ export function Analytics() {
     const [showAllStats, setShowAllStats] = useState(false);
     const [chartType, setChartType] = useState<ChartType>('bar');
     const [activeIndex, setActiveIndex] = useState(0);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [chartData, setChartData] = useState<any[]>([]);
 
     const loadLastActivities = useCallback((userData: UserData) => {
         const conversionHistory = userData.conversionHistory || [];
@@ -160,6 +161,57 @@ export function Analytics() {
         }
     }, [loadLastActivities]);
     
+    useEffect(() => {
+        const filteredActivity = filterActivityData(stats.activity, dateFilter);
+
+        let newChartData;
+
+        if (dateFilter === 'yearly') {
+            const monthlyData: { [month: string]: DailyActivity } = {};
+            filteredActivity.forEach(day => {
+                const month = format(parseISO(day.date), 'MMM');
+                if (!monthlyData[month]) {
+                    monthlyData[month] = { date: month, conversions: 0, calculations: 0, dateCalculations: 0, notes: 0, total: 0 };
+                }
+                monthlyData[month].conversions += day.conversions;
+                monthlyData[month].calculations += day.calculations;
+                monthlyData[month].dateCalculations += day.dateCalculations;
+                monthlyData[month].notes += day.notes;
+                monthlyData[month].total += day.total;
+            });
+
+            // Ensure we have all months in the last year
+            const allMonths = Array.from({ length: 12 }).map((_, i) => {
+                return format(subDays(new Date(), i * 30), 'MMM');
+            }).reverse();
+
+            newChartData = [...new Set(allMonths)].map(month => {
+                return {
+                    ...(monthlyData[month] || { date: month, conversions: 0, calculations: 0, dateCalculations: 0, notes: 0, total: 0 }),
+                    day: month
+                };
+            });
+        } else {
+            newChartData = filteredActivity.map(day => ({
+                ...day,
+                day: dateFilter === 'weekly' ? format(parseISO(day.date), 'EEE')
+                   : format(parseISO(day.date), 'd')
+            }));
+        }
+
+        setChartData(newChartData);
+
+        if (scrollContainerRef.current && newChartData.length > 0) {
+            const todayIndex = newChartData.findIndex(d => d.date === format(new Date(), 'yyyy-MM-dd'));
+            if (todayIndex !== -1) {
+                const itemWidth = scrollContainerRef.current.scrollWidth / newChartData.length;
+                const containerWidth = scrollContainerRef.current.clientWidth;
+                const scrollPosition = (todayIndex * itemWidth) - (containerWidth / 2) + (itemWidth / 2);
+                scrollContainerRef.current.scrollTo({ left: scrollPosition, behavior: 'smooth' });
+            }
+        }
+    }, [stats.activity, dateFilter]);
+    
     const calculateChange = (key: 'conversions' | 'calculations' | 'dateCalculations' | 'notes' | 'total') => {
         if (stats.activity.length < 2) {
             return { today: 0, yesterday: 0, change: 0, percent: 0, changeType: 'neutral' as const };
@@ -187,43 +239,6 @@ export function Analytics() {
         { title: "Favorite Conversions", value: stats.favoriteConversions, sub: "Your top conversions" },
     ];
     
-    const chartData = React.useMemo(() => {
-        const filteredActivity = filterActivityData(stats.activity, dateFilter);
-
-        if (dateFilter === 'yearly') {
-            const monthlyData: { [month: string]: DailyActivity } = {};
-            filteredActivity.forEach(day => {
-                const month = format(parseISO(day.date), 'MMM');
-                if (!monthlyData[month]) {
-                    monthlyData[month] = { date: month, conversions: 0, calculations: 0, dateCalculations: 0, notes: 0, total: 0 };
-                }
-                monthlyData[month].conversions += day.conversions;
-                monthlyData[month].calculations += day.calculations;
-                monthlyData[month].dateCalculations += day.dateCalculations;
-                monthlyData[month].notes += day.notes;
-                monthlyData[month].total += day.total;
-            });
-
-            // Ensure we have all months in the last year
-            const allMonths = Array.from({ length: 12 }).map((_, i) => {
-                return format(subDays(new Date(), i * 30), 'MMM');
-            }).reverse();
-
-            return [...new Set(allMonths)].map(month => {
-                return {
-                    ...(monthlyData[month] || { date: month, conversions: 0, calculations: 0, dateCalculations: 0, notes: 0, total: 0 }),
-                    day: month
-                };
-            });
-        }
-        
-        return filteredActivity.map(day => ({
-            ...day,
-            day: dateFilter === 'weekly' ? format(parseISO(day.date), 'EEE')
-               : format(parseISO(day.date), 'd')
-        }));
-    }, [stats.activity, dateFilter]);
-
     const renderChart = () => {
         const dataKey = dateFilter === 'yearly' ? 'total' : 'conversions';
 
@@ -237,6 +252,7 @@ export function Analytics() {
                     {dateFilter !== 'yearly' && <>
                         <Line type="monotone" dataKey="notes" stroke="hsl(var(--accent))" strokeWidth={2} />
                         <Line type="monotone" dataKey="dateCalculations" stroke="hsl(var(--secondary))" strokeWidth={2} />
+                        <Line type="monotone" dataKey="calculations" stroke="#a5b4fc" strokeWidth={2} />
                     </>}
                 </LineChart>
             );
@@ -249,6 +265,7 @@ export function Analytics() {
                      {dateFilter !== 'yearly' && <>
                         <Area type="monotone" dataKey="notes" stackId="1" stroke="hsl(var(--accent))" fill="hsl(var(--accent) / 0.2)" />
                         <Area type="monotone" dataKey="dateCalculations" stackId="1" stroke="hsl(var(--secondary))" fill="hsl(var(--secondary) / 0.2)" />
+                        <Area type="monotone" dataKey="calculations" stackId="1" stroke="#a5b4fc" fill="rgba(165, 180, 252, 0.2)" />
                     </>}
                 </AreaChart>
             );
@@ -262,6 +279,7 @@ export function Analytics() {
                      {dateFilter !== 'yearly' && <>
                         <RechartsBar dataKey="notes" fill="hsl(var(--accent))" barSize={30} />
                         <RechartsBar dataKey="dateCalculations" fill="hsl(var(--secondary))" barSize={30} />
+                        <RechartsBar dataKey="calculations" fill="#a5b4fc" barSize={30} />
                         <Line type="monotone" dataKey="conversions" stroke="hsl(var(--destructive))" strokeWidth={3} dot={false} />
                     </>}
                 </ComposedChart>
@@ -366,22 +384,24 @@ export function Analytics() {
                             <Button size="sm" variant={chartType === "area" ? "default" : "outline"} onClick={() => setChartType("area")}>Area</Button>
                         </div>
                     </CardHeader>
-                    <CardContent className="h-72 overflow-x-auto custom-scrollbar">
-                        <div className="min-w-[600px] h-64">
-                            <AnimatePresence mode="wait">
-                                <motion.div
-                                    key={chartType + dateFilter}
-                                    initial={{ opacity: 0, x: 30 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -30 }}
-                                    transition={{ duration: 0.4 }}
-                                    className="w-full h-full"
-                                >
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        {renderChart()}
-                                    </ResponsiveContainer>
-                                </motion.div>
-                            </AnimatePresence>
+                    <CardContent className="h-72">
+                        <div ref={scrollContainerRef} className="overflow-x-auto custom-scrollbar h-full w-full">
+                            <div className="min-w-[600px] h-64">
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={chartType + dateFilter}
+                                        initial={{ opacity: 0, x: 30 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -30 }}
+                                        transition={{ duration: 0.4 }}
+                                        className="w-full h-full"
+                                    >
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            {renderChart()}
+                                        </ResponsiveContainer>
+                                    </motion.div>
+                                </AnimatePresence>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
