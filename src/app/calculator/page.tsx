@@ -4,13 +4,17 @@
 import { Calculator } from "@/components/calculator";
 import { Suspense, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { listenToUserData } from "@/services/firestore";
+import { listenToUserData, listenToUpdateInfo } from "@/services/firestore";
 import { PhysicalCalculator } from "@/components/physical-calculator";
+import MaintenancePage from "@/app/maintenance/page";
+import { usePathname } from "next/navigation";
 
 export default function CalculatorPage() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [calculatorTheme, setCalculatorTheme] = useState('original');
   const [isClient, setIsClient] = useState(false);
+  const [isMaintenance, setIsMaintenance] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     setIsClient(true);
@@ -20,8 +24,17 @@ export default function CalculatorPage() {
             setCalculatorTheme(data.settings.calculatorTheme);
         }
     });
-    return () => unsub();
-  }, []);
+
+    const unsubMaintenance = listenToUpdateInfo((info) => {
+      const isPageInMaintenance = info.maintenancePages?.some(p => pathname.startsWith(p)) || false;
+      setIsMaintenance(isPageInMaintenance);
+    });
+
+    return () => {
+      unsub();
+      unsubMaintenance();
+    }
+  }, [pathname]);
   
   useEffect(() => {
     if (isFullScreen) {
@@ -37,6 +50,10 @@ export default function CalculatorPage() {
   if (!isClient) {
     // You can return a skeleton loader here if needed
     return null;
+  }
+  
+  if (isMaintenance) {
+    return <MaintenancePage />;
   }
 
   const CalculatorComponent = calculatorTheme === 'physical' ? PhysicalCalculator : Calculator;

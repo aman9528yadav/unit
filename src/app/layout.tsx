@@ -27,35 +27,25 @@ import { auth } from '@/lib/firebase';
 
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean | null>(null);
-    const [maintenancePages, setMaintenancePages] = useState<string[]>([]);
     const pathname = usePathname();
     const router = useRouter();
 
     useEffect(() => {
         const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenanceMode);
-        const unsubscribePages = listenToUpdateInfo((info) => {
-            setMaintenancePages(info?.maintenancePages || []);
-        });
-
-        return () => {
-            unsubscribe();
-            unsubscribePages();
-        };
+        return () => unsubscribe();
     }, []);
 
     useEffect(() => {
         if (isMaintenanceMode === null) return;
         
-        const isCurrentPageUnderMaintenance = maintenancePages.some(p => pathname.startsWith(p));
-
-        if ((isMaintenanceMode || isCurrentPageUnderMaintenance) && !pathname.startsWith('/dev') && pathname !== '/maintenance') {
+        if (isMaintenanceMode && !pathname.startsWith('/dev') && pathname !== '/maintenance') {
             router.replace('/maintenance');
         }
 
-        if (!isMaintenanceMode && !isCurrentPageUnderMaintenance && pathname === '/maintenance') {
+        if (!isMaintenanceMode && pathname === '/maintenance') {
             router.replace('/');
         }
-    }, [isMaintenanceMode, maintenancePages, pathname, router]);
+    }, [isMaintenanceMode, pathname, router]);
 
 
     if (isMaintenanceMode === null) {
@@ -73,7 +63,7 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     }
     
     // If in maintenance, and not on the maintenance page yet, we are redirecting, so render nothing.
-    if ((isMaintenanceMode || maintenancePages.some(p => pathname.startsWith(p))) && pathname !== '/maintenance') {
+    if (isMaintenanceMode && pathname !== '/maintenance') {
         return null;
     }
 
