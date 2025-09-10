@@ -236,14 +236,14 @@ function PomodoroTimer() {
                             fill="transparent"
                             strokeLinecap="round"
                             transform="rotate(-90 100 100)"
-                            style={{ strokeDasharray: circumference, strokeDashoffset }}
+                            style={{ strokeDasharray: circumference }}
                             initial={{ strokeDashoffset: circumference }}
                             animate={{ strokeDashoffset }}
                             transition={{ duration: 1, ease: "linear" }}
                         />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <div className="text-6xl font-bold tracking-tighter text-foreground">
+                        <div className="text-5xl font-bold tracking-tighter text-foreground">
                             {String(hours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
                         </div>
                         <p className="text-muted-foreground mt-2">{t('timePage.pomodoro.cyclesCompleted', { count: pomodoros })}</p>
