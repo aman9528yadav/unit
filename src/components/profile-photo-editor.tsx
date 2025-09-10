@@ -21,8 +21,6 @@ const defaultAvatars = [
     { src: "https://picsum.photos/seed/avatar1/200", hint: "man portrait" },
     { src: "https://picsum.photos/seed/avatar2/200", hint: "woman portrait" },
     { src: "https://picsum.photos/seed/avatar3/200", hint: "man smiling" },
-    { src: "https://picsum.photos/seed/avatar4/200", hint: "woman smiling" },
-    { src: "https://picsum.photos/seed/avatar5/200", hint: "abstract design" },
 ];
 
 
@@ -286,5 +284,3 @@ export function ProfilePhotoEditor({ currentImage, onSave, onClose }: ProfilePho
         </div>
     );
 }
-
-    
