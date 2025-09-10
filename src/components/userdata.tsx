@@ -19,6 +19,7 @@ import { getStreakData } from "@/lib/streak";
 import { format } from "date-fns";
 import { Progress } from "./ui/progress";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 
 type UserRole = 'Member' | 'Premium Member' | 'Owner';
@@ -144,12 +145,18 @@ export function UserData() {
                 
                 <Card className="p-6 text-center shadow-xl rounded-2xl relative pt-20">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                        <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white flex items-center justify-center">
-                            <img
-                                src={profileImage || 'https://i.pravatar.cc/150?u=amanyadav9458'}
-                                alt="Profile"
-                                className="w-full h-full object-contain"
-                            />
+                        <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white flex items-center justify-center group relative">
+                             <Avatar className="w-full h-full">
+                                <AvatarImage src={profileImage || ''} alt={fullName || 'Profile'} />
+                                <AvatarFallback className="text-6xl">
+                                    <UserIcon />
+                                </AvatarFallback>
+                            </Avatar>
+                            <Button asChild size="icon" className="absolute bottom-1 right-1 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Link href="/profile/edit">
+                                    <Edit className="h-4 w-4" />
+                                </Link>
+                            </Button>
                         </div>
                     </div>
                     <CardContent className="p-0">
@@ -250,3 +257,4 @@ export function UserData() {
         </div>
     );
 }
+
