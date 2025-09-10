@@ -117,7 +117,7 @@ const SidebarContent = React.forwardRef<
     initial={{ x: "-100%" }}
     animate={{ x: 0 }}
     exit={{ x: "-100%" }}
-    transition={{ type: "spring", stiffness: 260, damping: 30 }}
+    transition={{ type: "tween", ease: "easeInOut", duration: 0.4 }}
     onClick={(e) => e.stopPropagation()}
     className={cn(
       "fixed inset-y-0 left-0 z-50 p-5 w-72 max-w-full shadow-2xl rounded-r-3xl",
