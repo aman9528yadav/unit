@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Wrench, Clock, Settings, Zap, Hourglass, Bug, Rocket, Shield, Info, CheckCircle, XCircle } from "lucide-react";
+import { Wrench, Clock, Settings, Zap, Hourglass, Bug, Rocket, Shield, Info, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from '@/components/ui/button';
@@ -127,6 +127,12 @@ export default function MaintenancePage() {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="flex flex-col items-center gap-8 w-full max-w-lg"
       >
+        <div className="absolute top-4 left-4">
+             <Button variant="secondary" onClick={() => router.back()}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+             </Button>
+        </div>
+
         <motion.div
             className="p-4 bg-primary/10 rounded-full cursor-pointer"
             onClick={handleIconClick}
@@ -198,6 +204,7 @@ export default function MaintenancePage() {
         </div>
 
         <div className="text-center mt-8">
+            <p className="text-muted-foreground">Or, go to the <Link href="/" className="text-primary hover:underline">homepage</Link>.</p>
             <p className="text-muted-foreground">Need immediate assistance? Contact Aman at:</p>
             <a href="mailto:amanyadavyadav9458@gmail.com" className="text-primary hover:underline">
                 amanyadavyadav9458@gmail.com
