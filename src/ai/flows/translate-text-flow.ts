@@ -31,12 +31,15 @@ const TranslateTextOutputSchema = z.object({
 });
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
 
-
-const prompt = ai.definePrompt({
-  name: 'translateTextPrompt',
-  input: {schema: TranslateTextInputSchema},
-  output: {schema: TranslateTextOutputSchema},
-  prompt: `You are an expert translator. Your task is to translate the given text from a source language to a target language.
+const translateTextFlow = ai.defineFlow(
+  {
+    name: 'translateTextFlow',
+    inputSchema: TranslateTextInputSchema,
+    outputSchema: TranslateTextOutputSchema,
+  },
+  async input => {
+    const {output} = await ai.generate({
+        prompt: `You are an expert translator. Your task is to translate the given text from a source language to a target language.
 
 You must provide the following:
 1.  First, correct any spelling or grammatical mistakes in the original source text.
@@ -44,10 +47,10 @@ You must provide the following:
 3.  A list of 2-3 alternative translations or suggestions for the user.
 4.  Two example sentences showing the original text in a sentence and its corresponding translation.
 
-Translate the following text from {{sourceLanguage}} to {{targetLanguage}}.
+Translate the following text from ${input.sourceLanguage} to ${input.targetLanguage}.
 
 Text to translate:
-"{{text}}"
+"${input.text}"
 
 IMPORTANT: If the target language is Hindi, you must provide TWO translations:
 1.  'translatedText': A standard, formal Hindi translation.
@@ -56,16 +59,8 @@ IMPORTANT: If the target language is Hindi, you must provide TWO translations:
 
 Return ONLY the structured JSON output with no additional commentary.
 `,
-});
-
-const translateTextFlow = ai.defineFlow(
-  {
-    name: 'translateTextFlow',
-    inputSchema: TranslateTextInputSchema,
-    outputSchema: TranslateTextOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
+        output: { schema: TranslateTextOutputSchema },
+    });
     return output!;
   }
 );
