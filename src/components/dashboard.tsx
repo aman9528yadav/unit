@@ -135,15 +135,10 @@ export function Dashboard() {
       
     if (userEmail) {
       setProfile({ email: userEmail });
-      recordVisit(userEmail);
-    } else {
-      // Guest user logic
-      const savedOrderStr = localStorage.getItem(getQuickAccessOrderKey(null));
-      if (savedOrderStr) {
-          const savedOrder = JSON.parse(savedOrderStr);
-          setQuickAccessItems(reorderItems(savedOrder, defaultQuickAccessItems));
-      }
     }
+    
+    recordVisit(userEmail);
+    getStreakData(userEmail).then(setStreakData);
 
     const unsubUserData = listenToUserData(userEmail, (userData) => {
       if (userData) {
@@ -151,13 +146,15 @@ export function Dashboard() {
         setStats(processedStats as any);
         if (userData.settings?.quickAccessOrder) {
           setQuickAccessItems(reorderItems(userData.settings.quickAccessOrder, defaultQuickAccessItems));
+        } else if (!userEmail) {
+          const savedOrderStr = localStorage.getItem(getQuickAccessOrderKey(null));
+          if (savedOrderStr) {
+              const savedOrder = JSON.parse(savedOrderStr);
+              setQuickAccessItems(reorderItems(savedOrder, defaultQuickAccessItems));
+          }
         }
       }
     });
-
-    if (userEmail) {
-        getStreakData(userEmail).then(setStreakData);
-    }
     
     const unsubComingSoon = listenToComingSoonItems(setComingSoonItems);
     
