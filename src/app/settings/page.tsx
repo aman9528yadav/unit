@@ -5,12 +5,25 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Settings } from "@/components/settings";
 import { Skeleton } from "@/components/ui/skeleton";
+import MaintenancePage from "@/app/maintenance/page";
+import { listenToUpdateInfo } from '@/services/firestore';
+import { usePathname } from 'next/navigation';
 
 export default function SettingsPage() {
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isMaintenance, setIsMaintenance] = useState(false);
+  const pathname = usePathname();
 
+  useEffect(() => {
+    const unsub = listenToUpdateInfo((info) => {
+      const isPageInMaintenance = info.maintenancePages?.some(p => pathname.startsWith(p)) || false;
+      setIsMaintenance(isPageInMaintenance);
+    });
+    return () => unsub();
+  }, [pathname]);
+  
   useEffect(() => {
     setIsClient(true);
     const storedProfile = localStorage.getItem("userProfile");
@@ -20,6 +33,10 @@ export default function SettingsPage() {
       router.replace('/welcome');
     }
   }, [router]);
+
+  if (isMaintenance) {
+    return <MaintenancePage />;
+  }
 
   if (!isClient || !isAuthorized) {
     return (
