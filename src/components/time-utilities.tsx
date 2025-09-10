@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -306,7 +305,7 @@ function Stopwatch() {
     const [laps, setLaps] = React.useState<number[]>([]);
     const timerRef = React.useRef<number | null>(null);
 
-    const loadState = () => {
+    const loadState = React.useCallback(() => {
         const savedState = localStorage.getItem('stopwatchState');
         if (savedState) {
             const { time: savedTime, isRunning: wasRunning, startTime: savedStartTime, laps: savedLaps } = JSON.parse(savedState);
@@ -316,28 +315,31 @@ function Stopwatch() {
                 setTime(savedTime + elapsed);
                 setIsRunning(true);
             } else {
-                setTime(savedTime);
+                setTime(savedTime || 0);
                 setIsRunning(false);
             }
         }
-    };
-
-    React.useEffect(() => {
-        loadState();
     }, []);
 
     React.useEffect(() => {
-        if (isRunning) {
-            const savedState = JSON.parse(localStorage.getItem('stopwatchState') || '{}');
-            const startTime = savedState.startTime || Date.now();
-            
-            const tick = () => {
-                const elapsed = Date.now() - startTime;
-                setTime(savedState.time + elapsed);
-                timerRef.current = requestAnimationFrame(tick);
-            };
+        loadState();
+        window.addEventListener('storage', loadState);
+        return () => {
+            window.removeEventListener('storage', loadState);
+        }
+    }, [loadState]);
 
-            tick();
+    React.useEffect(() => {
+        if (isRunning) {
+            const tick = () => {
+                 const savedState = JSON.parse(localStorage.getItem('stopwatchState') || '{}');
+                 if (savedState.isRunning) {
+                     const elapsed = Date.now() - savedState.startTime;
+                     setTime(savedState.time + elapsed);
+                 }
+                 timerRef.current = requestAnimationFrame(tick);
+            };
+            timerRef.current = requestAnimationFrame(tick);
         } else {
             if (timerRef.current) {
                 cancelAnimationFrame(timerRef.current);
@@ -360,15 +362,16 @@ function Stopwatch() {
 
         if (currentlyRunning) {
             // Starting or resuming
+            const savedState = JSON.parse(localStorage.getItem('stopwatchState') || '{}');
             localStorage.setItem('stopwatchState', JSON.stringify({
                 time: time,
                 startTime: Date.now(),
                 isRunning: true,
-                laps: laps
+                laps: savedState.laps || []
             }));
         } else {
             // Pausing
-            localStorage.setItem('stopwatchState', JSON.stringify({
+             localStorage.setItem('stopwatchState', JSON.stringify({
                 time: time,
                 startTime: 0, 
                 isRunning: false,
