@@ -133,6 +133,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Partial<UserData> | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Pages where the main header should be hidden
   const noHeaderPages = ['/welcome', '/signup', '/forgot-password', '/logout', '/getting-started', '/maintenance'];
@@ -276,7 +277,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
                                 Sutradhaar <br /> Made by Aman Yadav
                                 <div className="flex justify-center mt-3">
                                 {isLoggedIn ? (
-                                    <button onClick={handleLogout} className="flex items-center gap-1 text-red-500 text-sm hover:underline">
+                                    <button onClick={() => setShowLogoutDialog(true)} className="flex items-center gap-1 text-red-500 text-sm hover:underline">
                                         <LogOut size={16} /> Logout
                                     </button>
                                 ) : (
@@ -312,6 +313,22 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        You will be returned to the login screen.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleLogout} className="bg-destructive hover:bg-destructive/90">
+                        Log Out
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+           </AlertDialog>
       </body>
     </html>
   );
