@@ -23,7 +23,10 @@ import {
     setBetaWelcomeMessage,
     listenToBetaWelcomeMessage,
     BetaWelcomeMessage,
-    WelcomeContent
+    WelcomeContent,
+    listenToAboutStatsFromRtdb,
+    setAboutStatsInRtdb,
+    AboutStats,
 } from '@/services/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ProfilePhotoEditor } from '../profile-photo-editor';
@@ -37,6 +40,7 @@ export function AboutEditor() {
     const [ownerInfo, setOwnerInfo] = useState<OwnerInfo>({ name: 'Aman Yadav', imageUrl: '' });
     const [welcomeContent, setWelcomeContentState] = useState<WelcomeContent>({ title: '', description: ''});
     const [betaWelcome, setBetaWelcome] = useState<BetaWelcomeMessage>({ title: '', description: '' });
+    const [aboutStats, setAboutStats] = useState<AboutStats>({ happyUsers: '0', calculationsDone: '0' });
 
     const [isClient, setIsClient] = useState(false);
     const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
@@ -63,11 +67,17 @@ export function AboutEditor() {
         const unsubBetaWelcome = listenToBetaWelcomeMessage((content) => {
             if(content) setBetaWelcome(content);
         });
+        
+        const unsubAboutStats = listenToAboutStatsFromRtdb((stats) => {
+            if(stats) setAboutStats(stats);
+        });
+        
         return () => {
             unsubscribeAbout();
             unsubscribeOwner();
             unsubWelcomeContent();
             unsubBetaWelcome();
+            unsubAboutStats();
         };
     }, []);
 
@@ -77,6 +87,10 @@ export function AboutEditor() {
     
     const handleOwnerInfoChange = (field: keyof OwnerInfo, value: string) => {
         setOwnerInfo(prev => ({...prev, [field]: value}));
+    }
+    
+    const handleAboutStatsChange = (field: keyof AboutStats, value: string) => {
+        setAboutStats(prev => ({...prev, [field]: value}));
     }
 
     const handleReleasePlanChange = (id: string, field: keyof Omit<ReleasePlanItem, 'id'>, value: string) => {
@@ -97,6 +111,7 @@ export function AboutEditor() {
             await setOwnerInfoInRtdb(ownerInfo);
             await setWelcomeContent(welcomeContent);
             await setBetaWelcomeMessage(betaWelcome);
+            await setAboutStatsInRtdb(aboutStats);
             toast({ title: 'Success!', description: 'All content has been saved.' });
         } catch (error) {
             console.error("Failed to save content:", error);
@@ -163,6 +178,22 @@ export function AboutEditor() {
                      <div className="space-y-1">
                         <Label htmlFor="betaWelcomeDescription">Beta Welcome Description</Label>
                         <Textarea id="betaWelcomeDescription" value={betaWelcome.description} onChange={(e) => setBetaWelcome(p => ({...p, description: e.target.value}))} />
+                    </div>
+                </CardContent>
+            </Card>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle>About Page Statistics</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-1">
+                        <Label htmlFor="happyUsers">Happy Users</Label>
+                        <Input id="happyUsers" value={aboutStats.happyUsers} onChange={(e) => handleAboutStatsChange('happyUsers', e.target.value)} placeholder="e.g. 10,000+"/>
+                    </div>
+                     <div className="space-y-1">
+                        <Label htmlFor="calculationsDone">Calculations Done</Label>
+                        <Input id="calculationsDone" value={aboutStats.calculationsDone} onChange={(e) => handleAboutStatsChange('calculationsDone', e.target.value)} placeholder="e.g. 1M+"/>
                     </div>
                 </CardContent>
             </Card>

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link";
@@ -6,9 +7,9 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BookOpen, ShieldCheck, LifeBuoy, Mail, AlertTriangle, Globe, User, ChevronDown, ChevronUp, Sparkles, Star, Rocket } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { listenToAboutInfoFromRtdb, AppInfo, ReleasePlanItem, listenToOwnerInfoFromRtdb, OwnerInfo } from "@/services/firestore";
+import { motion, useInView, useSpring } from "framer-motion";
+import { useEffect, useState, useRef } from "react";
+import { listenToAboutInfoFromRtdb, AppInfo, ReleasePlanItem, listenToOwnerInfoFromRtdb, OwnerInfo, AboutStats, listenToAboutStatsFromRtdb } from "@/services/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 const defaultAppInfo: AppInfo = {
@@ -23,6 +24,11 @@ const defaultOwnerInfo: OwnerInfo = {
     imageUrl: 'https://picsum.photos/seed/aman/120/120',
 };
 
+const defaultAboutStats: AboutStats = {
+    happyUsers: '10,000+',
+    calculationsDone: '1M+',
+};
+
 const defaultReleasePlan: ReleasePlanItem[] = [
     { id: '1', title: 'Beta 1', date: '15/07/2025', description: 'Core release with unit conversion, notes, and history features.' },
     { id: '2', title: 'Next Steps', date: 'Upcoming', description: 'Smarter, faster conversions with notes & history\nModern UI in Figma\nResponsive React components\nContinuous feature updates\nSutradhaar web app\nTesting & optimizations\nCross-platform official release' },
@@ -35,12 +41,46 @@ const DetailRow = ({ label, value }: { label: string, value: string }) => (
     </div>
 );
 
+const AnimatedStat = ({ value }: { value: string }) => {
+    const ref = useRef<HTMLParagraphElement>(null);
+    const isInView = useInView(ref, { once: true });
+    
+    // Check if the value is a number with a suffix like 'k' or 'M'
+    const numericMatch = value.match(/^([\d.,]+)/);
+    const suffix = numericMatch ? value.substring(numericMatch[0].length) : '';
+    const numericValue = numericMatch ? parseFloat(numericMatch[0].replace(/,/g, '')) : 0;
+    
+    const spring = useSpring(0, {
+        mass: 0.8,
+        stiffness: 75,
+        damping: 15,
+    });
+
+    useEffect(() => {
+        if (isInView) {
+            spring.set(numericValue);
+        }
+    }, [isInView, spring, numericValue]);
+    
+    useEffect(() => {
+        const unsubscribe = spring.on("change", (latest) => {
+            if (ref.current) {
+                ref.current.textContent = Math.round(latest).toLocaleString() + suffix;
+            }
+        });
+        return unsubscribe;
+    }, [spring, suffix]);
+
+    return <p ref={ref} className="text-3xl sm:text-4xl font-bold text-foreground">{value}</p>;
+};
+
 
 export function About() {
   const router = useRouter();
   const [appInfo, setAppInfo] = useState<AppInfo>(defaultAppInfo);
   const [releasePlan, setReleasePlan] = useState<ReleasePlanItem[]>(defaultReleasePlan);
   const [ownerInfo, setOwnerInfo] = useState<OwnerInfo>(defaultOwnerInfo);
+  const [aboutStats, setAboutStats] = useState<AboutStats>(defaultAboutStats);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [showConfetti, setShowConfetti] = useState(false);
   
@@ -57,10 +97,15 @@ export function About() {
     const unsubscribeOwner = listenToOwnerInfoFromRtdb((data) => {
         setOwnerInfo(data || defaultOwnerInfo);
     });
+    
+    const unsubscribeStats = listenToAboutStatsFromRtdb((stats) => {
+        setAboutStats(stats || defaultAboutStats);
+    });
 
     return () => {
         unsubscribeAbout();
         unsubscribeOwner();
+        unsubscribeStats();
     }
   }, []);
 
@@ -127,11 +172,11 @@ export function About() {
         </p>
         <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4 sm:gap-16">
           <motion.div whileHover={{ scale: 1.1 }} className="text-center bg-card rounded-2xl shadow-xl p-6 border-t-4 border-primary">
-            <p className="text-3xl sm:text-4xl font-bold text-foreground">10,000+</p>
+            <AnimatedStat value={aboutStats.happyUsers} />
             <p className="text-card-foreground/80">Happy Users</p>
           </motion.div>
           <motion.div whileHover={{ scale: 1.1 }} className="text-center bg-card rounded-2xl shadow-xl p-6 border-t-4 border-accent">
-            <p className="text-3xl sm:text-4xl font-bold text-foreground">1M+</p>
+            <AnimatedStat value={aboutStats.calculationsDone} />
             <p className="text-card-foreground/80">Calculations Done</p>
           </motion.div>
         </div>

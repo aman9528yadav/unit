@@ -280,6 +280,43 @@ export interface OwnerInfo {
     imageUrl: string;
 }
 
+export interface AboutStats {
+    happyUsers: string;
+    calculationsDone: string;
+}
+
+const defaultAboutStats: AboutStats = {
+    happyUsers: '10,000+',
+    calculationsDone: '1M+'
+};
+
+export async function setAboutStatsInRtdb(stats: AboutStats) {
+    try {
+        const statsRef = ref(rtdb, 'app-content/aboutStats');
+        await setRealtimeDb(statsRef, stats);
+    } catch (error) {
+        console.error("Error saving About Stats to RTDB:", error);
+        throw error;
+    }
+}
+
+export function listenToAboutStatsFromRtdb(callback: (stats: AboutStats | null) => void) {
+    const statsRef = ref(rtdb, 'app-content/aboutStats');
+    return onValue(statsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            callback(data);
+        } else {
+            setAboutStatsInRtdb(defaultAboutStats);
+            callback(defaultAboutStats);
+        }
+    }, (error) => {
+        console.error("Error listening to About Stats from RTDB:", error);
+        callback(defaultAboutStats);
+    });
+}
+
+
 // --- COMING SOON ---
 export interface ComingSoonItem {
     id: string;
