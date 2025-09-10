@@ -34,6 +34,7 @@ import html2canvas from 'html2canvas';
 import { Skeleton } from "./ui/skeleton";
 import { motion, AnimatePresence } from 'framer-motion';
 import { addNotification } from "@/lib/notifications";
+import { Slider } from "@/components/ui/slider";
 
 
 // --- Web Worker Code ---
@@ -111,8 +112,11 @@ function PomodoroTimer() {
              const savedState = JSON.parse(localStorage.getItem('pomodoroState') || '{}');
              if (savedState.endTime && savedState.isActive) {
                  const remaining = Math.round((savedState.endTime - Date.now()) / 1000);
-                 if (remaining > 0) {
+                 if (remaining >= 0) {
                     setTimeLeft(remaining);
+                    if(remaining === 0) {
+                        handleTimerEnd();
+                    }
                  } else {
                     setTimeLeft(0);
                     handleTimerEnd();
@@ -275,11 +279,8 @@ function PomodoroSettingsDialog({ isOpen, setIsOpen, currentSettings, onSave }: 
         }
     }, [isOpen, currentSettings]);
 
-    const handleChange = (key: keyof typeof localSettings, value: string) => {
-        const numValue = parseInt(value, 10);
-        if (!isNaN(numValue) && numValue > 0) {
-            setLocalSettings({ ...localSettings, [key]: numValue });
-        }
+    const handleChange = (key: keyof typeof localSettings, value: number) => {
+        setLocalSettings((prev: any) => ({ ...prev, [key]: value }));
     }
 
     const handleSave = () => {
@@ -297,22 +298,50 @@ function PomodoroSettingsDialog({ isOpen, setIsOpen, currentSettings, onSave }: 
                 <DialogHeader>
                     <DialogTitle>{t('timePage.pomodoro.settings.title')}</DialogTitle>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="pomodoroLength" className="text-right">{t('timePage.pomodoro.settings.work')}</Label>
-                        <Input id="pomodoroLength" type="number" value={localSettings.pomodoroLength} onChange={e => handleChange('pomodoroLength', e.target.value)} className="col-span-3" />
+                <div className="grid gap-6 py-4">
+                    <div className="space-y-3">
+                        <Label htmlFor="pomodoroLength">{t('timePage.pomodoro.settings.work')} ({localSettings.pomodoroLength} min)</Label>
+                        <Slider
+                            id="pomodoroLength"
+                            min={1}
+                            max={60}
+                            step={1}
+                            value={[localSettings.pomodoroLength]}
+                            onValueChange={(value) => handleChange('pomodoroLength', value[0])}
+                        />
                     </div>
-                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="shortBreakLength" className="text-right">{t('timePage.pomodoro.settings.shortBreak')}</Label>
-                        <Input id="shortBreakLength" type="number" value={localSettings.shortBreakLength} onChange={e => handleChange('shortBreakLength', e.target.value)} className="col-span-3" />
+                     <div className="space-y-3">
+                        <Label htmlFor="shortBreakLength">{t('timePage.pomodoro.settings.shortBreak')} ({localSettings.shortBreakLength} min)</Label>
+                        <Slider
+                            id="shortBreakLength"
+                            min={1}
+                            max={30}
+                            step={1}
+                            value={[localSettings.shortBreakLength]}
+                            onValueChange={(value) => handleChange('shortBreakLength', value[0])}
+                        />
                     </div>
-                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="longBreakLength" className="text-right">{t('timePage.pomodoro.settings.longBreak')}</Label>
-                        <Input id="longBreakLength" type="number" value={localSettings.longBreakLength} onChange={e => handleChange('longBreakLength', e.target.value)} className="col-span-3" />
+                     <div className="space-y-3">
+                        <Label htmlFor="longBreakLength">{t('timePage.pomodoro.settings.longBreak')} ({localSettings.longBreakLength} min)</Label>
+                        <Slider
+                            id="longBreakLength"
+                            min={1}
+                            max={45}
+                            step={1}
+                            value={[localSettings.longBreakLength]}
+                            onValueChange={(value) => handleChange('longBreakLength', value[0])}
+                        />
                     </div>
-                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="pomodorosUntilLongBreak" className="text-right">{t('timePage.pomodoro.settings.cycles')}</Label>
-                        <Input id="pomodorosUntilLongBreak" type="number" value={localSettings.pomodorosUntilLongBreak} onChange={e => handleChange('pomodorosUntilLongBreak', e.target.value)} className="col-span-3" />
+                     <div className="space-y-3">
+                        <Label htmlFor="pomodorosUntilLongBreak">{t('timePage.pomodoro.settings.cycles')} ({localSettings.pomodorosUntilLongBreak} cycles)</Label>
+                         <Slider
+                            id="pomodorosUntilLongBreak"
+                            min={2}
+                            max={8}
+                            step={1}
+                            value={[localSettings.pomodorosUntilLongBreak]}
+                            onValueChange={(value) => handleChange('pomodorosUntilLongBreak', value[0])}
+                        />
                     </div>
                 </div>
                 <DialogFooter>
@@ -329,7 +358,6 @@ function Stopwatch() {
     const [time, setTime] = React.useState(0);
     const [isRunning, setIsRunning] = React.useState(false);
     const [laps, setLaps] = React.useState<number[]>([]);
-    const timerRef = React.useRef<number | null>(null);
     
     const loadState = React.useCallback(() => {
         const savedState = localStorage.getItem('stopwatchState');
@@ -359,6 +387,8 @@ function Stopwatch() {
     }, [loadState]);
 
     React.useEffect(() => {
+        let animationFrameId: number;
+
         if (isRunning) {
             const tick = () => {
                  const savedState = JSON.parse(localStorage.getItem('stopwatchState') || '{}');
@@ -366,16 +396,12 @@ function Stopwatch() {
                      const elapsed = Date.now() - savedState.startTime;
                      setTime(savedState.time + elapsed);
                  }
-                 timerRef.current = requestAnimationFrame(tick);
+                 animationFrameId = requestAnimationFrame(tick);
             };
-            timerRef.current = requestAnimationFrame(tick);
-        } else {
-            if (timerRef.current) {
-                cancelAnimationFrame(timerRef.current);
-            }
+            animationFrameId = requestAnimationFrame(tick);
         }
         return () => {
-            if (timerRef.current) cancelAnimationFrame(timerRef.current);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
         };
     }, [isRunning]);
 
