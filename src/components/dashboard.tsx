@@ -199,10 +199,10 @@ export function Dashboard() {
 
 
   const statsData = [
+    { key: "All time", value: stats.totalOps, icon: <Star size={16} className="text-primary" /> },
     { key: "Today", value: stats.todaysOps, icon: <Clock size={16} className="text-primary" />, changeType: todaysOpsStats.changeType },
     { key: "Streak", value: streakData.currentStreak, icon: <Flame size={16} className="text-primary" /> },
     { key: "Saved", value: stats.savedNotes, icon: <NotebookPen size={16} className="text-primary" /> },
-    { key: "All time", value: stats.totalOps, icon: <Star size={16} className="text-primary" /> },
     { key: "Top Feature", value: stats.topFeature, icon: topFeatureIcon[stats.topFeature] }
   ];
 
