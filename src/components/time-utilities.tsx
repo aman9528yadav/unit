@@ -71,6 +71,25 @@ function PomodoroTimer() {
         longBreakLength: 15,
         pomodorosUntilLongBreak: 4,
     });
+    
+    const workerRef = React.useRef<Worker | null>(null);
+
+    // Setup worker
+    React.useEffect(() => {
+        const workerBlob = new Blob([workerCode], { type: 'application/javascript' });
+        const workerUrl = URL.createObjectURL(workerBlob);
+        const worker = new Worker(workerUrl);
+        workerRef.current = worker;
+
+        worker.onmessage = () => {
+             setTimeLeft(prev => prev - 1);
+        };
+
+        return () => {
+            worker.terminate();
+            URL.revokeObjectURL(workerUrl);
+        }
+    }, []);
 
     // Load initial settings and state from localStorage
     React.useEffect(() => {
@@ -89,13 +108,7 @@ function PomodoroTimer() {
     
     // Timer logic
     React.useEffect(() => {
-        let interval: NodeJS.Timeout | null = null;
-        if (isActive && timeLeft > 0) {
-            interval = setInterval(() => {
-                setTimeLeft(time => time - 1);
-            }, 1000);
-        } else if (isActive && timeLeft === 0) {
-            // Timer finished
+        if (isActive && timeLeft === 0) {
             const newPomodoros = mode === 'work' ? pomodoros + 1 : pomodoros;
             if(mode === 'work') setPomodoros(newPomodoros);
 
@@ -115,9 +128,6 @@ function PomodoroTimer() {
             localStorage.setItem('pomodoroState', JSON.stringify({ timeLeft, mode, pomodoros }));
         }
 
-        return () => {
-            if (interval) clearInterval(interval);
-        };
     }, [isActive, timeLeft, mode, pomodoros, settings, toast, t]);
 
 
@@ -134,9 +144,22 @@ function PomodoroTimer() {
         }
         setTimeLeft(newTime);
         localStorage.setItem('pomodoroState', JSON.stringify({ timeLeft: newTime, mode: newMode, pomodoros: currentPomodoros }));
+        
+        if (autoStart) {
+             workerRef.current?.postMessage({ type: 'start', payload: { interval: 1000 } });
+        } else {
+             workerRef.current?.postMessage({ type: 'stop' });
+        }
     };
 
-    const toggle = () => setIsActive(!isActive);
+    const toggle = () => {
+         if (!isActive) {
+            workerRef.current?.postMessage({ type: 'start', payload: { interval: 1000 } });
+        } else {
+            workerRef.current?.postMessage({ type: 'stop' });
+        }
+        setIsActive(!isActive);
+    };
 
     const reset = React.useCallback((newSettings = settings) => {
         switchMode(mode, false, newSettings);
