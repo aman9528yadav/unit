@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -513,6 +512,8 @@ function DateDifference() {
     const [endDate, setEndDate] = React.useState<Date | undefined>(new Date());
     const [duration, setDuration] = React.useState<Duration>({});
     const resultRef = React.useRef<HTMLDivElement>(null);
+    const [isStartOpen, setIsStartOpen] = React.useState(false);
+    const [isEndOpen, setIsEndOpen] = React.useState(false);
     
     const calculate = () => {
         if (startDate && endDate) {
@@ -539,11 +540,10 @@ function DateDifference() {
     };
 
     const handleShare = async () => {
-        if (!duration || (!duration.years && !duration.months && !duration.days && !duration.weeks)) {
+        if (!resultRef.current || (!duration.years && !duration.months && !duration.days)) {
             toast({ title: "Nothing to share", description: "Please calculate a duration first.", variant: "destructive" });
             return;
         }
-        if (!resultRef.current) return;
     
         if (!navigator.share) {
             toast({ title: "Sharing not supported", description: "Your browser does not support the Web Share API.", variant: "destructive" });
@@ -566,16 +566,12 @@ function DateDifference() {
                         files: [file],
                     });
                 } else {
-                    // Fallback for browsers that support share but not files
-                    await navigator.share({
-                        title: 'Date Calculation Result',
-                        text: `Result from ${format(startDate!, 'PPP')} to ${format(endDate!, 'PPP')}: ${duration.years || 0}y, ${duration.months || 0}m, ${duration.days || 0}d`
-                    });
+                   toast({ title: "Cannot share image", description: "Your browser does not support sharing files.", variant: "destructive" });
                 }
             }, 'image/png');
         } catch (error) {
             console.error('Error sharing calculation:', error);
-            toast({ title: "Sharing Failed", description: "Could not share the calculation as an image.", variant: "destructive" });
+            toast({ title: "Sharing Failed", description: "An unexpected error occurred.", variant: "destructive" });
         }
     };
 
@@ -588,7 +584,7 @@ function DateDifference() {
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-full flex flex-col gap-1.5">
                         <Label>{t('timePage.dateCalc.startDate')}</Label>
-                         <Popover>
+                         <Popover open={isStartOpen} onOpenChange={setIsStartOpen}>
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start text-left font-normal">
                                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -596,14 +592,14 @@ function DateDifference() {
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
-                                <Calendar mode="single" selected={startDate} onSelect={setStartDate} captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear() + 5} initialFocus />
+                                <Calendar mode="single" selected={startDate} onSelect={(date) => { setStartDate(date); setIsStartOpen(false); }} captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear() + 5} initialFocus />
                             </PopoverContent>
                         </Popover>
                     </div>
                     <ArrowDown className="text-muted-foreground" />
                     <div className="w-full flex flex-col gap-1.5">
                         <Label>{t('timePage.dateCalc.endDate')}</Label>
-                         <Popover>
+                         <Popover open={isEndOpen} onOpenChange={setIsEndOpen}>
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start text-left font-normal">
                                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -611,7 +607,7 @@ function DateDifference() {
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
-                                <Calendar mode="single" selected={endDate} onSelect={setEndDate} captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear() + 5} initialFocus />
+                                <Calendar mode="single" selected={endDate} onSelect={(date) => { setEndDate(date); setIsEndOpen(false); }} captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear() + 5} initialFocus />
                             </PopoverContent>
                         </Popover>
                     </div>
@@ -940,4 +936,5 @@ export function TimeUtilities() {
   );
 }
 
+    
     
