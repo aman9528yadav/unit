@@ -68,9 +68,9 @@ function PomodoroTimer() {
     const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
     const [settings, setSettings] = React.useState({
-        pomodoroLength: 25,
-        shortBreakLength: 5,
-        longBreakLength: 15,
+        pomodoroLength: { hours: 0, minutes: 25, seconds: 0 },
+        shortBreakLength: { hours: 0, minutes: 5, seconds: 0 },
+        longBreakLength: { hours: 0, minutes: 15, seconds: 0 },
         pomodorosUntilLongBreak: 4,
     });
 
@@ -162,18 +162,19 @@ function PomodoroTimer() {
 
     const switchMode = (newMode: typeof mode, autoStart = false, currentSettings = settings, currentPomodoros = pomodoros) => {
         let newTime;
+        let timeInSeconds;
         switch (newMode) {
-            case 'work': newTime = currentSettings.pomodoroLength * 60; break;
-            case 'shortBreak': newTime = currentSettings.shortBreakLength * 60; break;
-            case 'longBreak': newTime = currentSettings.longBreakLength * 60; break;
+            case 'work': timeInSeconds = (currentSettings.pomodoroLength.hours * 3600) + (currentSettings.pomodoroLength.minutes * 60) + currentSettings.pomodoroLength.seconds; break;
+            case 'shortBreak': timeInSeconds = (currentSettings.shortBreakLength.hours * 3600) + (currentSettings.shortBreakLength.minutes * 60) + currentSettings.shortBreakLength.seconds; break;
+            case 'longBreak': timeInSeconds = (currentSettings.longBreakLength.hours * 3600) + (currentSettings.longBreakLength.minutes * 60) + currentSettings.longBreakLength.seconds; break;
         }
 
         setMode(newMode);
-        setTimeLeft(newTime);
+        setTimeLeft(timeInSeconds);
         setPomodoros(currentPomodoros);
         setIsActive(autoStart);
         
-        const endTime = Date.now() + newTime * 1000;
+        const endTime = Date.now() + timeInSeconds * 1000;
         localStorage.setItem('pomodoroState', JSON.stringify({ endTime: autoStart ? endTime : 0, mode: newMode, pomodoros: currentPomodoros, isActive: autoStart }));
     };
 
@@ -202,12 +203,13 @@ function PomodoroTimer() {
     }
     
     const totalDuration = 
-        mode === 'work' ? settings.pomodoroLength * 60 
-      : mode === 'shortBreak' ? settings.shortBreakLength * 60
-      : settings.longBreakLength * 60;
+        mode === 'work' ? (settings.pomodoroLength.hours * 3600) + (settings.pomodoroLength.minutes * 60) + settings.pomodoroLength.seconds 
+      : mode === 'shortBreak' ? (settings.shortBreakLength.hours * 3600) + (settings.shortBreakLength.minutes * 60) + settings.shortBreakLength.seconds
+      : (settings.longBreakLength.hours * 3600) + (settings.longBreakLength.minutes * 60) + settings.longBreakLength.seconds;
 
     const progress = totalDuration > 0 ? ((totalDuration - timeLeft) / totalDuration) * 100 : 0;
-    const minutes = Math.floor(timeLeft / 60);
+    const hours = Math.floor(timeLeft / 3600);
+    const minutes = Math.floor((timeLeft % 3600) / 60);
     const seconds = timeLeft % 60;
 
     const circumference = 2 * Math.PI * 90;
@@ -243,7 +245,7 @@ function PomodoroTimer() {
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <div className="text-6xl font-bold tracking-tighter text-foreground">
-                            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                            {String(hours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
                         </div>
                         <p className="text-muted-foreground mt-2">{t('timePage.pomodoro.cyclesCompleted', { count: pomodoros })}</p>
                     </div>
@@ -279,13 +281,44 @@ function PomodoroSettingsDialog({ isOpen, setIsOpen, currentSettings, onSave }: 
         }
     }, [isOpen, currentSettings]);
 
-    const handleChange = (key: keyof typeof localSettings, value: number) => {
-        setLocalSettings((prev: any) => ({ ...prev, [key]: value }));
+    const handleChange = (type: 'pomodoroLength' | 'shortBreakLength' | 'longBreakLength', unit: 'hours' | 'minutes' | 'seconds', value: number) => {
+        setLocalSettings((prev: any) => ({
+            ...prev,
+            [type]: {
+                ...prev[type],
+                [unit]: value
+            }
+        }));
+    };
+    
+     const handleCycleChange = (value: number) => {
+        setLocalSettings((prev: any) => ({ ...prev, pomodorosUntilLongBreak: value }));
     }
 
     const handleSave = () => {
         onSave(localSettings);
     }
+    
+    const DurationInput = ({ type, label }: {type: 'pomodoroLength' | 'shortBreakLength' | 'longBreakLength', label: string}) => (
+         <div className="space-y-3">
+            <Label>{label}</Label>
+            <div className="grid grid-cols-3 gap-2">
+                <div>
+                    <Label htmlFor={`${type}-hours`} className="text-xs">Hours</Label>
+                    <Input id={`${type}-hours`} type="number" min="0" value={localSettings[type].hours} onChange={(e) => handleChange(type, 'hours', parseInt(e.target.value) || 0)} />
+                </div>
+                 <div>
+                    <Label htmlFor={`${type}-minutes`} className="text-xs">Mins</Label>
+                    <Input id={`${type}-minutes`} type="number" min="0" max="59" value={localSettings[type].minutes} onChange={(e) => handleChange(type, 'minutes', parseInt(e.target.value) || 0)} />
+                </div>
+                 <div>
+                    <Label htmlFor={`${type}-seconds`} className="text-xs">Secs</Label>
+                    <Input id={`${type}-seconds`} type="number" min="0" max="59" value={localSettings[type].seconds} onChange={(e) => handleChange(type, 'seconds', parseInt(e.target.value) || 0)} />
+                </div>
+            </div>
+        </div>
+    )
+
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -299,39 +332,10 @@ function PomodoroSettingsDialog({ isOpen, setIsOpen, currentSettings, onSave }: 
                     <DialogTitle>{t('timePage.pomodoro.settings.title')}</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-6 py-4">
-                    <div className="space-y-3">
-                        <Label htmlFor="pomodoroLength">{t('timePage.pomodoro.settings.work')} ({localSettings.pomodoroLength} min)</Label>
-                        <Slider
-                            id="pomodoroLength"
-                            min={1}
-                            max={60}
-                            step={1}
-                            value={[localSettings.pomodoroLength]}
-                            onValueChange={(value) => handleChange('pomodoroLength', value[0])}
-                        />
-                    </div>
-                     <div className="space-y-3">
-                        <Label htmlFor="shortBreakLength">{t('timePage.pomodoro.settings.shortBreak')} ({localSettings.shortBreakLength} min)</Label>
-                        <Slider
-                            id="shortBreakLength"
-                            min={1}
-                            max={30}
-                            step={1}
-                            value={[localSettings.shortBreakLength]}
-                            onValueChange={(value) => handleChange('shortBreakLength', value[0])}
-                        />
-                    </div>
-                     <div className="space-y-3">
-                        <Label htmlFor="longBreakLength">{t('timePage.pomodoro.settings.longBreak')} ({localSettings.longBreakLength} min)</Label>
-                        <Slider
-                            id="longBreakLength"
-                            min={1}
-                            max={45}
-                            step={1}
-                            value={[localSettings.longBreakLength]}
-                            onValueChange={(value) => handleChange('longBreakLength', value[0])}
-                        />
-                    </div>
+                    <DurationInput type="pomodoroLength" label={t('timePage.pomodoro.settings.work')} />
+                    <DurationInput type="shortBreakLength" label={t('timePage.pomodoro.settings.shortBreak')} />
+                    <DurationInput type="longBreakLength" label={t('timePage.pomodoro.settings.longBreak')} />
+                    
                      <div className="space-y-3">
                         <Label htmlFor="pomodorosUntilLongBreak">{t('timePage.pomodoro.settings.cycles')} ({localSettings.pomodorosUntilLongBreak} cycles)</Label>
                          <Slider
@@ -340,7 +344,7 @@ function PomodoroSettingsDialog({ isOpen, setIsOpen, currentSettings, onSave }: 
                             max={8}
                             step={1}
                             value={[localSettings.pomodorosUntilLongBreak]}
-                            onValueChange={(value) => handleChange('pomodorosUntilLongBreak', value[0])}
+                            onValueChange={(value) => handleCycleChange(value[0])}
                         />
                     </div>
                 </div>
