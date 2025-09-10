@@ -517,7 +517,6 @@ function DateDifference() {
     const [startDate, setStartDate] = React.useState<Date | undefined>(new Date());
     const [endDate, setEndDate] = React.useState<Date | undefined>(new Date());
     const [duration, setDuration] = React.useState<Duration>({});
-    const resultRef = React.useRef<HTMLDivElement>(null);
     const [isStartOpen, setIsStartOpen] = React.useState(false);
     const [isEndOpen, setIsEndOpen] = React.useState(false);
     
@@ -587,12 +586,23 @@ function DateDifference() {
                     <div className="flex justify-between items-center mb-3">
                         <h3 className="font-semibold">{t('timePage.dateCalc.result')}</h3>
                         <ExportControls
-                            resultRef={resultRef}
                             hasResult={!!(duration.years || duration.months || duration.days)}
                             getResultString={getResultString}
+                            componentData={{
+                                type: 'DateDifference',
+                                startDate,
+                                endDate,
+                                result: {
+                                    years: duration.years || 0,
+                                    months: duration.months || 0,
+                                    weeks: duration.weeks || 0,
+                                    days: duration.days || 0,
+                                    totalDays: (startDate && endDate) ? differenceInDays(endDate, startDate) : 0
+                                }
+                            }}
                         />
                     </div>
-                    <div ref={resultRef} className="bg-background p-4 rounded-lg">
+                     <div className="bg-background p-4 rounded-lg">
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                             <StatCard value={duration.years} label={t('timePage.dateCalc.years')} />
                             <StatCard value={duration.months} label={t('timePage.dateCalc.months')} />
@@ -616,7 +626,6 @@ function AddSubtractTime() {
     const [unit, setUnit] = React.useState<'days' | 'weeks' | 'months' | 'years'>('days');
     const [operation, setOperation] = React.useState<'add' | 'subtract'>('add');
     const [resultDate, setResultDate] = React.useState<Date | null>(null);
-    const resultRef = React.useRef<HTMLDivElement>(null);
     
     const calculate = () => {
         if (!date) return;
@@ -697,12 +706,19 @@ function AddSubtractTime() {
                         <div className="flex justify-between items-center mb-2">
                            <h3 className="font-semibold">{t('timePage.dateCalc.resultingDate')}</h3>
                             <ExportControls
-                                resultRef={resultRef}
                                 hasResult={!!resultDate}
                                 getResultString={getResultString}
+                                componentData={{
+                                    type: 'AddSubtractTime',
+                                    startDate: date,
+                                    operation,
+                                    amount,
+                                    unit,
+                                    resultDate
+                                }}
                             />
                         </div>
-                        <div ref={resultRef} className="bg-background p-4 rounded-lg text-center">
+                        <div className="bg-background p-4 rounded-lg text-center">
                             <p className="text-2xl font-bold">{format(resultDate, "PPP")}</p>
                         </div>
                     </div>
@@ -716,7 +732,6 @@ function AgeCalculator() {
     const { t } = useLanguage();
     const [birthDate, setBirthDate] = React.useState<Date | undefined>();
     const [age, setAge] = React.useState<Duration | null>(null);
-    const resultRef = React.useRef<HTMLDivElement>(null);
 
     const calculate = () => {
          if (birthDate) {
@@ -757,12 +772,16 @@ function AgeCalculator() {
                         <div className="flex justify-between items-center mb-2">
                            <h3 className="font-semibold">{t('timePage.dateCalc.yourAge')}</h3>
                             <ExportControls
-                                resultRef={resultRef}
                                 hasResult={!!age}
                                 getResultString={getResultString}
+                                componentData={{
+                                    type: 'AgeCalculator',
+                                    birthDate,
+                                    result: age
+                                }}
                             />
                         </div>
-                        <div ref={resultRef} className="bg-background p-4 rounded-lg">
+                        <div className="bg-background p-4 rounded-lg">
                             <div className="grid grid-cols-3 gap-4 text-center">
                                 <StatCard value={age.years} label={t('timePage.dateCalc.years')} />
                                 <StatCard value={age.months} label={t('timePage.dateCalc.months')} />
@@ -782,7 +801,6 @@ function WorkingDaysCalculator() {
     const [endDate, setEndDate] = React.useState<Date | undefined>(addDays(new Date(), 10));
     const [holidays, setHolidays] = React.useState<string>("");
     const [workingDays, setWorkingDays] = React.useState<number | null>(null);
-    const resultRef = React.useRef<HTMLDivElement>(null);
     
     const calculate = () => {
         if (!startDate || !endDate) return;
@@ -831,12 +849,18 @@ function WorkingDaysCalculator() {
                          <div className="flex justify-between items-center mb-2">
                            <h3 className="font-semibold">{t('timePage.dateCalc.totalWorkDays')}</h3>
                             <ExportControls
-                                resultRef={resultRef}
                                 hasResult={workingDays !== null}
                                 getResultString={getResultString}
+                                componentData={{
+                                    type: 'WorkingDaysCalculator',
+                                    startDate,
+                                    endDate,
+                                    holidays,
+                                    result: workingDays
+                                }}
                             />
                         </div>
-                        <div ref={resultRef} className="bg-background p-4 rounded-lg text-center">
+                        <div className="bg-background p-4 rounded-lg text-center">
                             <p className="text-4xl font-bold">{workingDays}</p>
                         </div>
                     </div>
@@ -850,7 +874,6 @@ function Countdown() {
     const { t } = useLanguage();
     const [targetDate, setTargetDate] = React.useState<Date | undefined>();
     const [timeLeft, setTimeLeft] = React.useState<Duration | null>(null);
-    const resultRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
         if (!targetDate) return;
@@ -895,12 +918,16 @@ function Countdown() {
                          <div className="flex justify-between items-center mb-3">
                             <h3 className="font-semibold">{t('timePage.dateCalc.timeRemaining')}</h3>
                             <ExportControls
-                                resultRef={resultRef}
                                 hasResult={!!timeLeft}
                                 getResultString={getResultString}
+                                componentData={{
+                                    type: 'Countdown',
+                                    targetDate,
+                                    result: timeLeft
+                                }}
                             />
                         </div>
-                        <div ref={resultRef} className="bg-background p-4 rounded-lg">
+                        <div className="bg-background p-4 rounded-lg">
                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                                 <StatCard value={timeLeft.days} label={t('timePage.dateCalc.days')} />
                                 <StatCard value={timeLeft.hours} label={t('timePage.dateCalc.hours')} />
@@ -927,13 +954,94 @@ function StatCard({ value, label }: { value: number | undefined, label: string }
 }
 
 interface ExportControlsProps {
-    resultRef: React.RefObject<HTMLDivElement>;
     hasResult: boolean;
     getResultString: () => string;
+    componentData: any;
 }
 
-function ExportControls({ resultRef, hasResult, getResultString }: ExportControlsProps) {
+const ResultImage = React.forwardRef<HTMLDivElement, { data: any, t: any }>(({ data, t }, ref) => {
+    let content;
+
+    switch (data.type) {
+        case 'DateDifference':
+            content = (
+                <>
+                    <p className="text-sm text-center text-muted-foreground">
+                        From {format(data.startDate, 'PPP')} to {format(data.endDate, 'PPP')}
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center my-4">
+                        <StatCard value={data.result.years} label={t('timePage.dateCalc.years')} />
+                        <StatCard value={data.result.months} label={t('timePage.dateCalc.months')} />
+                        <StatCard value={data.result.weeks} label={t('timePage.dateCalc.weeks')} />
+                        <StatCard value={data.result.days} label={t('timePage.dateCalc.days')} />
+                    </div>
+                    <p className="text-center text-sm text-muted-foreground mt-2">
+                        {t('timePage.dateCalc.totalDays', { count: data.result.totalDays })}
+                    </p>
+                </>
+            );
+            break;
+        case 'AddSubtractTime':
+            content = (
+                 <>
+                    <p className="text-sm text-center text-muted-foreground">
+                       {data.operation === 'add' ? 'Adding' : 'Subtracting'} {data.amount} {data.unit} {data.operation === 'add' ? 'to' : 'from'} {format(data.startDate, 'PPP')}
+                    </p>
+                    <p className="text-center text-4xl font-bold my-4">{format(data.resultDate, "PPP")}</p>
+                </>
+            );
+            break;
+        case 'AgeCalculator':
+             content = (
+                <>
+                    <p className="text-sm text-center text-muted-foreground">Age for birthdate: {format(data.birthDate, 'PPP')}</p>
+                    <div className="grid grid-cols-3 gap-4 text-center my-4">
+                        <StatCard value={data.result.years} label={t('timePage.dateCalc.years')} />
+                        <StatCard value={data.result.months} label={t('timePage.dateCalc.months')} />
+                        <StatCard value={data.result.days} label={t('timePage.dateCalc.days')} />
+                    </div>
+                </>
+            );
+            break;
+        case 'WorkingDaysCalculator':
+             content = (
+                <>
+                    <p className="text-sm text-center text-muted-foreground">Working days from {format(data.startDate, 'PPP')} to {format(data.endDate, 'PPP')}</p>
+                    <p className="text-center text-4xl font-bold my-4">{data.result}</p>
+                </>
+            );
+            break;
+        case 'Countdown':
+            content = (
+                 <>
+                    <p className="text-sm text-center text-muted-foreground">Time until {format(data.targetDate, 'PPP')}</p>
+                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center my-4">
+                        <StatCard value={data.result.days} label={t('timePage.dateCalc.days')} />
+                        <StatCard value={data.result.hours} label={t('timePage.dateCalc.hours')} />
+                        <StatCard value={data.result.minutes} label={t('timePage.dateCalc.minutes')} />
+                        <StatCard value={data.result.seconds} label={t('timePage.dateCalc.seconds')} />
+                    </div>
+                </>
+            );
+            break;
+        default:
+            content = <p>No data to display.</p>;
+    }
+    
+    return (
+        <div ref={ref} className="w-[400px] bg-background text-foreground p-6 rounded-lg">
+            <h2 className="text-lg font-bold text-center text-primary mb-4">Date Calculation</h2>
+            {content}
+            <p className="text-center text-xs text-muted-foreground mt-6">Sutradhaar | Made by Aman Yadav</p>
+        </div>
+    );
+});
+ResultImage.displayName = "ResultImage";
+
+function ExportControls({ hasResult, getResultString, componentData }: ExportControlsProps) {
     const { toast } = useToast();
+    const { t } = useLanguage();
+    const imageRef = React.useRef<HTMLDivElement>(null);
 
     const handleCopy = () => {
         if (!hasResult) {
@@ -945,7 +1053,7 @@ function ExportControls({ resultRef, hasResult, getResultString }: ExportControl
     };
 
     const handleExport = async (type: 'png' | 'pdf' | 'txt') => {
-        if (!resultRef.current || !hasResult) {
+        if (!imageRef.current || !hasResult) {
             toast({ title: "Nothing to export", description: "Please calculate a result first.", variant: "destructive" });
             return;
         }
@@ -962,53 +1070,54 @@ function ExportControls({ resultRef, hasResult, getResultString }: ExportControl
             return;
         }
         
-        const clonedEl = resultRef.current.cloneNode(true) as HTMLDivElement;
-        const credit = document.createElement('p');
-        credit.innerText = "Sutradhaar | Made by Aman Yadav";
-        credit.className = "text-center text-xs text-muted-foreground mt-4 pt-2";
-        clonedEl.appendChild(credit);
-        document.body.appendChild(clonedEl);
-        
-        clonedEl.style.backgroundColor = 'var(--background)'; // Ensure background color
-        clonedEl.style.padding = '1rem'; // Add some padding
-
-        const canvas = await html2canvas(clonedEl, { scale: 2 });
-        document.body.removeChild(clonedEl);
-
-        const imgData = canvas.toDataURL('image/png');
+        const canvas = await html2canvas(imageRef.current, { 
+            scale: 2, 
+            backgroundColor: null,
+            useCORS: true 
+        });
 
         if (type === 'png') {
+            const imgData = canvas.toDataURL('image/png');
             const a = document.createElement('a');
             a.href = imgData;
             a.download = 'date-calculation.png';
             a.click();
         } else if (type === 'pdf') {
-            const pdf = new jsPDF('p', 'px', [canvas.width, canvas.height]);
-            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            const pdf = new jsPDF({
+                orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+                unit: 'px',
+                format: [canvas.width, canvas.height]
+            });
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height);
             pdf.save('date-calculation.pdf');
         }
     };
     
      return (
-        <div className="flex justify-end gap-2">
-            <Button variant="outline" size="icon" onClick={handleCopy}><Copy className="h-4 w-4"/></Button>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon"><Share2 className="h-4 w-4"/></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                    <DropdownMenuItem onSelect={() => handleExport('png')}>
-                        <ImageIcon className="mr-2 h-4 w-4" /> Export as PNG
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => handleExport('txt')}>
-                        <FileText className="mr-2 h-4 w-4" /> Export as TXT
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => handleExport('pdf')}>
-                        <Download className="mr-2 h-4 w-4" /> Export as PDF
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-        </div>
+        <>
+            <div className="absolute -left-[9999px] -top-[9999px]">
+                {hasResult && <ResultImage ref={imageRef} data={componentData} t={t} />}
+            </div>
+            <div className="flex justify-end gap-2">
+                <Button variant="outline" size="icon" onClick={handleCopy}><Copy className="h-4 w-4"/></Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon"><Share2 className="h-4 w-4"/></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem onSelect={() => handleExport('png')}>
+                            <ImageIcon className="mr-2 h-4 w-4" /> Export as PNG
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleExport('txt')}>
+                            <FileText className="mr-2 h-4 w-4" /> Export as TXT
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleExport('pdf')}>
+                            <Download className="mr-2 h-4 w-4" /> Export as PDF
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+        </>
     );
 }
 
