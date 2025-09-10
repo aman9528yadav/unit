@@ -87,6 +87,7 @@ function PomodoroTimer() {
             case 'work': newMinutes = settings.pomodoroLength; break;
             case 'shortBreak': newMinutes = settings.shortBreakLength; break;
             case 'longBreak': newMinutes = settings.longBreakLength; break;
+            default: newMinutes = 25;
         }
 
         const newPomodoros = (newMode === 'work' && userInitiated) ? 0 : pomodoros;
@@ -148,7 +149,7 @@ function PomodoroTimer() {
                  switchMode(nextMode, true);
             }
         }
-    }, [switchMode]);
+    }, []);
 
     // Timer logic effect
     React.useEffect(() => {
@@ -545,12 +546,12 @@ function DateDifference() {
             toast({ title: "Nothing to share", description: "Please calculate a duration first.", variant: "destructive" });
             return;
         }
-    
+
         if (!navigator.share) {
             toast({ title: "Sharing not supported", description: "Your browser does not support the Web Share API.", variant: "destructive" });
             return;
         }
-    
+
         try {
             const canvas = await html2canvas(resultRef.current, { backgroundColor: null, scale: 2 });
             canvas.toBlob(async (blob) => {
@@ -559,11 +560,11 @@ function DateDifference() {
                     return;
                 }
                 const file = new File([blob], 'date-difference.png', { type: 'image/png' });
-    
+
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({
                         title: 'Date Calculation Result',
-                        text: `Result from ${format(startDate!, 'PPP')} to ${format(endDate!, 'PPP')}`,
+                        text: `Result from ${startDate ? format(startDate, 'PPP') : ''} to ${endDate ? format(endDate, 'PPP') : ''}`,
                         files: [file],
                     });
                 } else {
