@@ -80,13 +80,13 @@ function PomodoroTimer() {
     const progress = totalDuration > 0 ? ((minutes * 60 + seconds) / totalDuration) * 100 : 0;
 
 
-    const switchMode = React.useCallback((newMode: typeof mode, userInitiated = false) => {
+    const switchMode = React.useCallback((newMode: typeof mode, userInitiated = false, currentSettings = settings) => {
         setIsActive(!userInitiated);
         let newMinutes: number;
         switch (newMode) {
-            case 'work': newMinutes = settings.pomodoroLength; break;
-            case 'shortBreak': newMinutes = settings.shortBreakLength; break;
-            case 'longBreak': newMinutes = settings.longBreakLength; break;
+            case 'work': newMinutes = currentSettings.pomodoroLength; break;
+            case 'shortBreak': newMinutes = currentSettings.shortBreakLength; break;
+            case 'longBreak': newMinutes = currentSettings.longBreakLength; break;
             default: newMinutes = 25;
         }
 
@@ -114,15 +114,14 @@ function PomodoroTimer() {
             }));
         }
 
-    }, [pomodoros, settings]);
+    }, [pomodoros]);
 
 
     // Initialize from localStorage
     React.useEffect(() => {
-        const savedSettings = localStorage.getItem('pomodoroSettings');
-        if (savedSettings) {
-            setSettings(JSON.parse(savedSettings));
-        }
+        const savedSettingsStr = localStorage.getItem('pomodoroSettings');
+        const savedSettings = savedSettingsStr ? JSON.parse(savedSettingsStr) : settings;
+        setSettings(savedSettings);
 
         const savedState = localStorage.getItem('pomodoroState');
         if (savedState) {
@@ -130,7 +129,7 @@ function PomodoroTimer() {
             const now = new Date().getTime();
 
             setMode(savedMode);
-            setPomodoros(savedPomodoros);
+            setPomodoros(savedPomodoros || 0);
 
             if (isPaused) {
                 const remaining = Math.ceil(remainingTime / 1000);
@@ -143,12 +142,11 @@ function PomodoroTimer() {
                 setSeconds(remaining % 60);
                 setIsActive(true);
             } else {
-                 // Timer expired while away
-                 // We can't know for sure how many cycles passed, so we just switch to the next mode.
                  const nextMode = savedMode === 'work' ? 'shortBreak' : 'work';
-                 switchMode(nextMode, true);
+                 switchMode(nextMode, true, savedSettings);
             }
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Timer logic effect
@@ -234,19 +232,19 @@ function PomodoroTimer() {
         }
     };
 
-    const reset = () => {
-        switchMode(mode, true);
+    const reset = React.useCallback((newSettings = settings) => {
+        switchMode(mode, true, newSettings);
         const lastTimerString = `Timer reset|${new Date().toISOString()}`;
         localStorage.setItem('lastTimer', lastTimerString);
         window.dispatchEvent(new StorageEvent('storage', { key: 'lastTimer', newValue: lastTimerString }));
 
-    };
+    }, [mode, settings, switchMode]);
     
     const handleSettingsSave = (newSettings: typeof settings) => {
         setSettings(newSettings);
         localStorage.setItem('pomodoroSettings', JSON.stringify(newSettings));
         setIsSettingsOpen(false);
-        reset(); 
+        reset(newSettings); 
     }
 
     return (
@@ -268,7 +266,7 @@ function PomodoroTimer() {
                                  mode === 'shortBreak' && 'bg-green-500/20',
                                  mode === 'longBreak' && 'bg-blue-500/20'
                             )}
-                            style={{ height: `${'${100 - progress}%'}` }}
+                            style={{ height: `${100 - progress}%` }}
                          />
                     </div>
                     <div className="relative z-10 text-6xl font-bold tracking-tighter text-foreground">
@@ -281,7 +279,7 @@ function PomodoroTimer() {
                         {isActive ? <Pause/> : <Play/>}
                         {isActive ? t('timePage.pomodoro.pause') : t('timePage.pomodoro.start')}
                     </Button>
-                    <Button onClick={reset} variant="outline" className="w-24 h-12 text-lg">
+                    <Button onClick={() => reset()} variant="outline" className="w-24 h-12 text-lg">
                         <RotateCcw/> {t('timePage.pomodoro.reset')}
                     </Button>
                     <PomodoroSettingsDialog
