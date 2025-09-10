@@ -14,8 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getNotificationsWithReadStatus, markAsRead, removeAllNotifications, type AppNotification } from "@/lib/notifications";
-import { listenToBroadcastNotification, BroadcastNotification } from "@/services/firestore";
+import { addNotification, type AppNotification } from "@/lib/notifications";
+import { listenToBroadcastNotification } from "@/services/firestore";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
@@ -34,7 +34,6 @@ export function Notifications() {
   const [areNotificationsEnabled, setAreNotificationsEnabled] = useState(true);
   const [profile, setProfile] = useState<{ email: string } | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const { toast } = useToast();
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -46,12 +45,14 @@ export function Notifications() {
   }, []);
   
   const checkNotificationSetting = () => {
+    if (typeof window === 'undefined') return;
     const userKey = profile?.email || 'guest';
     const enabled = localStorage.getItem(userKey + '_notificationsEnabled');
     setAreNotificationsEnabled(enabled === null ? true : JSON.parse(enabled));
   }
 
   const loadNotifications = () => {
+    if (typeof window === 'undefined') return;
     const stored = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
     setNotifications(stored ? JSON.parse(stored) : []);
   };
@@ -62,7 +63,7 @@ export function Notifications() {
         loadNotifications();
         
         const handleStorageChange = (event: StorageEvent) => {
-             if (event.key === (profile?.email || 'guest') + '_notificationsEnabled') {
+             if (event.key === ((profile?.email || 'guest') + '_notificationsEnabled')) {
                checkNotificationSetting();
            }
             if (event.key === NOTIFICATIONS_STORAGE_KEY) {
@@ -71,17 +72,38 @@ export function Notifications() {
         };
 
         window.addEventListener('storage', handleStorageChange);
+        
+        // Listen for broadcast notifications
+        let lastBroadcastTimestamp: string | null = null;
+        const unsubBroadcast = listenToBroadcastNotification((broadcast) => {
+            if (broadcast && broadcast.createdAt !== lastBroadcastTimestamp) {
+                lastBroadcastTimestamp = broadcast.createdAt;
+                addNotification({
+                    title: broadcast.title,
+                    description: broadcast.description,
+                    icon: broadcast.icon || 'info'
+                });
+            }
+        });
+
         return () => {
             window.removeEventListener('storage', handleStorageChange);
+            unsubBroadcast();
         };
     }
   }, [isClient, profile]);
   
 
   const handleMarkAsRead = (id: string) => {
-    markAsRead(id);
-    loadNotifications(); // re-render
+    const updated = notifications.map(n => n.id === id ? {...n, read: true} : n);
+    localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(updated));
+    loadNotifications();
   };
+
+  const removeAllNotifications = () => {
+      localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify([]));
+      loadNotifications();
+  }
   
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -147,5 +169,3 @@ export function Notifications() {
     </DropdownMenu>
   );
 }
-
-    
