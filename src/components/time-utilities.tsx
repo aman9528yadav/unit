@@ -546,29 +546,33 @@ function DateDifference() {
         if (!resultRef.current) return;
 
         if (!navigator.share) {
-             toast({ title: "Sharing not supported", variant: "destructive" });
+            toast({ title: "Sharing not supported", variant: "destructive" });
+            return;
+        }
+
+        // Check for file sharing support upfront
+        const dummyFile = new File([""], "dummy.png", { type: "image/png" });
+        if (navigator.canShare && !navigator.canShare({ files: [dummyFile] })) {
+             toast({ title: "Image Sharing Not Supported", description: "Your browser does not support sharing images directly.", variant: "destructive" });
              return;
         }
+
         try {
             const canvas = await html2canvas(resultRef.current, { backgroundColor: null });
             canvas.toBlob(async (blob) => {
-                 if (blob) {
+                if (blob) {
                     const file = new File([blob], 'date-difference.png', { type: 'image/png' });
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        try {
-                            await navigator.share({
-                                title: 'Date Calculation Result',
-                                text: `Result from ${format(startDate!, 'PPP')} to ${format(endDate!, 'PPP')}`,
-                                files: [file],
-                            });
-                        } catch (error: any) {
-                            if (error.name !== 'AbortError') {
-                                console.error(error);
-                                toast({ title: "Sharing failed", variant: "destructive" });
-                            }
+                    try {
+                        await navigator.share({
+                            title: 'Date Calculation Result',
+                            text: `Result from ${format(startDate!, 'PPP')} to ${format(endDate!, 'PPP')}`,
+                            files: [file],
+                        });
+                    } catch (error: any) {
+                        if (error.name !== 'AbortError') {
+                            console.error(error);
+                            toast({ title: "Sharing failed", variant: "destructive" });
                         }
-                    } else {
-                        toast({ title: "Sharing files not supported", variant: "destructive" });
                     }
                 }
             }, 'image/png');
