@@ -62,6 +62,8 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const [showSetPasswordDialog, setShowSetPasswordDialog] = useState(false);
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    const [isExportLocked, setIsExportLocked] = useState(true);
+    const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
 
 
     const router = useRouter();
@@ -83,6 +85,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         if (!userEmail) { // Guest user
             const localNotes = localStorage.getItem(getGuestKey('notes'));
             setAllNotes(localNotes ? JSON.parse(localNotes) : []);
+            setIsExportLocked(true);
         }
 
     }, []);
@@ -125,7 +128,11 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             }
         });
 
-        const unsubUserData = listenToUserData(userEmail, setUserData);
+        const unsubUserData = listenToUserData(userEmail, (data) => {
+            setUserData(data);
+            const isPremium = data?.settings?.isPremium || false; // Assume a premium flag
+            setIsExportLocked(!isPremium && data?.email !== "amanyadavyadav9458@gmail.com");
+        });
         
         return () => {
             unsubNotes();
@@ -380,17 +387,41 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             router.back();
         }
     };
+    
+    const handleExport = async (type: 'png' | 'pdf' | 'txt') => {
+        if (isExportLocked) {
+            setShowPremiumLockDialog(true);
+            return;
+        }
 
-    const getNoteElementForExport = () => {
         const contentEl = editorRef.current;
-        if (!contentEl) return null;
+        if (!contentEl) return;
+        
+        if (type === 'txt') {
+            const textContent = contentEl.innerText || '';
+            const noteString = `Title: ${title}\nCategory: ${category}\n\n${textContent}\n\nSutradhaar | Made by Aman Yadav`;
+            const blob = new Blob([noteString], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${title || 'note'}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            toast({ title: "Exported as TXT!" });
+            return;
+        }
 
         const exportContainer = document.createElement('div');
-        exportContainer.style.width = contentEl.clientWidth + 'px';
+        const tempContent = contentEl.cloneNode(true) as HTMLElement;
+        exportContainer.style.width = contentEl.scrollWidth + 'px';
+        exportContainer.style.height = contentEl.scrollHeight + 'px';
         exportContainer.style.padding = '1rem';
         exportContainer.style.backgroundColor = 'white';
-        exportContainer.innerHTML = contentEl.innerHTML;
-
+        exportContainer.style.color = 'black';
+        exportContainer.appendChild(tempContent);
+        
         const credit = document.createElement('p');
         credit.innerText = "Sutradhaar | Made by Aman Yadav";
         credit.style.textAlign = 'center';
@@ -399,69 +430,39 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         credit.style.marginTop = '20px';
         exportContainer.appendChild(credit);
 
-        return exportContainer;
-    };
-    
-    const handleExportAsImage = async () => {
-        const exportContainer = getNoteElementForExport();
-        if (!exportContainer) return;
         document.body.appendChild(exportContainer);
 
         try {
-            const canvas = await html2canvas(exportContainer, { scale: 2 });
-            const image = canvas.toDataURL("image/png", 1.0);
-            const link = document.createElement('a');
-            link.href = image;
-            link.download = `${title || 'note'}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            toast({ title: "Exported as Image!" });
+            const canvas = await html2canvas(exportContainer, {
+                scale: 2,
+                useCORS: true,
+                width: exportContainer.scrollWidth,
+                height: exportContainer.scrollHeight
+            });
+
+            if (type === 'png') {
+                const image = canvas.toDataURL("image/png", 1.0);
+                const link = document.createElement('a');
+                link.href = image;
+                link.download = `${title || 'note'}.png`;
+                link.click();
+                toast({ title: "Exported as Image!" });
+            } else if (type === 'pdf') {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({
+                    orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+                    unit: 'px',
+                    format: [canvas.width, canvas.height]
+                });
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.save(`${title || 'note'}.pdf`);
+                toast({ title: "Exported as PDF!" });
+            }
         } catch (error) {
-            console.error('Error exporting as image:', error);
-            toast({ title: "Could not export image", variant: "destructive" });
+            console.error('Export error:', error);
+            toast({ title: "Could not export", variant: "destructive" });
         } finally {
             document.body.removeChild(exportContainer);
-        }
-    };
-
-
-    const handleExportAsTxt = () => {
-        const contentEl = editorRef.current;
-        if (!contentEl) return;
-        const textContent = contentEl.innerText || '';
-        const noteString = `Title: ${title}\nCategory: ${category}\n\n${textContent}\n\nSutradhaar | Made by Aman Yadav`;
-        const blob = new Blob([noteString], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${title || 'note'}.txt`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    };
-
-    const handleExportAsPdf = async () => {
-        const exportContainer = getNoteElementForExport();
-        if (!exportContainer) return;
-        document.body.appendChild(exportContainer);
-        
-        try {
-            const canvas = await html2canvas(exportContainer, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({
-                orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-                unit: 'px',
-                format: [canvas.width, canvas.height]
-            });
-            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-            pdf.save(`${title || 'note'}.pdf`);
-        } catch (error) {
-            console.error('Error exporting as PDF:', error);
-            toast({ title: "Could not export PDF", variant: "destructive" });
-        } finally {
-             document.body.removeChild(exportContainer);
         }
     };
     
@@ -518,15 +519,15 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                            <DropdownMenuItem onSelect={handleExportAsImage}>
+                            <DropdownMenuItem onSelect={() => handleExport('png')}>
                                 <ImageIcon className="mr-2 h-4 w-4" />
                                 <span>Export as Image</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={handleExportAsTxt}>
+                            <DropdownMenuItem onSelect={() => handleExport('txt')}>
                                 <FileText className="mr-2 h-4 w-4" />
                                 <span>Export as TXT</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={handleExportAsPdf}>
+                            <DropdownMenuItem onSelect={() => handleExport('pdf')}>
                                 <Download className="mr-2 h-4 w-4" />
                                 <span>Export as PDF</span>
                             </DropdownMenuItem>
@@ -680,6 +681,22 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => setShowSetPasswordDialog(false)}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleSetInitialPassword}>Set Password & Lock</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+             <AlertDialog open={showPremiumLockDialog} onOpenChange={setShowPremiumLockDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Premium Feature Locked</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This is a premium feature. Please upgrade to use it.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => router.push('/premium')}>
+                            Go Premium
+                        </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

@@ -1042,6 +1042,19 @@ function ExportControls({ hasResult, getResultString, componentData }: ExportCon
     const { toast } = useToast();
     const { t } = useLanguage();
     const imageRef = React.useRef<HTMLDivElement>(null);
+    const [isExportLocked, setIsExportLocked] = React.useState(true);
+    const [showPremiumLockDialog, setShowPremiumLockDialog] = React.useState(false);
+    const router = useRouter();
+
+
+    React.useEffect(() => {
+        const userEmail = localStorage.getItem("userProfile") ? JSON.parse(localStorage.getItem("userProfile")).email : null;
+        if (userEmail) {
+            // In a real app, you would check premium status
+            // For now, we assume only the developer is premium
+            setIsExportLocked(userEmail !== "amanyadavyadav9458@gmail.com");
+        }
+    }, []);
 
     const handleCopy = () => {
         if (!hasResult) {
@@ -1053,11 +1066,16 @@ function ExportControls({ hasResult, getResultString, componentData }: ExportCon
     };
 
     const handleExport = async (type: 'png' | 'pdf' | 'txt') => {
-        if (!imageRef.current || !hasResult) {
-            toast({ title: "Nothing to export", description: "Please calculate a result first.", variant: "destructive" });
+        if (isExportLocked) {
+            setShowPremiumLockDialog(true);
             return;
         }
 
+        if (!hasResult) {
+            toast({ title: "Nothing to export", description: "Please calculate a result first.", variant: "destructive" });
+            return;
+        }
+        
         if (type === 'txt') {
             const text = getResultString();
             const blob = new Blob([text], { type: 'text/plain' });
@@ -1067,29 +1085,33 @@ function ExportControls({ hasResult, getResultString, componentData }: ExportCon
             a.download = 'date-calculation.txt';
             a.click();
             URL.revokeObjectURL(url);
+            toast({ title: "Exported as TXT!" });
             return;
         }
         
-        const canvas = await html2canvas(imageRef.current, { 
-            scale: 2, 
-            backgroundColor: null,
-            useCORS: true 
-        });
+        if (!imageRef.current) return;
 
-        if (type === 'png') {
-            const imgData = canvas.toDataURL('image/png');
-            const a = document.createElement('a');
-            a.href = imgData;
-            a.download = 'date-calculation.png';
-            a.click();
-        } else if (type === 'pdf') {
-            const pdf = new jsPDF({
-                orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-                unit: 'px',
-                format: [canvas.width, canvas.height]
-            });
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height);
-            pdf.save('date-calculation.pdf');
+        try {
+            const canvas = await html2canvas(imageRef.current, { scale: 2, backgroundColor: null, useCORS: true });
+            if (type === 'png') {
+                const imgData = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = imgData;
+                a.download = 'date-calculation.png';
+                a.click();
+            } else if (type === 'pdf') {
+                const pdf = new jsPDF({
+                    orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+                    unit: 'px',
+                    format: [canvas.width, canvas.height]
+                });
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.save('date-calculation.pdf');
+            }
+             toast({ title: `Exported as ${type.toUpperCase()}!` });
+        } catch (error) {
+            console.error(`Error exporting as ${type}:`, error);
+            toast({ title: `Could not export as ${type.toUpperCase()}`, variant: "destructive" });
         }
     };
     
@@ -1117,6 +1139,20 @@ function ExportControls({ hasResult, getResultString, componentData }: ExportCon
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
+            <AlertDialog open={showPremiumLockDialog} onOpenChange={setShowPremiumLockDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Premium Feature Locked</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Exporting calculations is a premium feature. Please upgrade to unlock.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => router.push('/premium')}>Go Premium</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 }
@@ -1188,5 +1224,3 @@ export function TimeUtilities() {
     </div>
   );
 }
-
-    

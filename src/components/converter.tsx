@@ -6,6 +6,7 @@ import * as React from "react";
 import { useState, useEffect, useMemo, useTransition, useRef, useCallback } from "react";
 import Link from 'next/link';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import {
   Card,
   CardContent,
@@ -312,6 +313,8 @@ export function Converter() {
     if (isLockedByFlag === false) return false;
     return isPremiumByDefault && userRole === 'Member';
   };
+  
+  const isExportLocked = isFeatureLocked('Export', true);
 
   const handleCategoryChange = (categoryName: string) => {
     const isPremiumCategory = PREMIUM_CATEGORIES.includes(categoryName);
@@ -388,23 +391,18 @@ export function Converter() {
   }
 
   const handleShareAsImage = async () => {
-    if (!outputValue || !imageExportRef.current) {
-        toast({ title: t('converter.toast.nothingToShare'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
+    if (isExportLocked) {
+        setShowPremiumLockDialog(true);
         return;
     }
-    
-    handleExportAsImage();
+    await handleExportAsImage();
   };
   
-   const handleShareClick = () => {
-    if (isFeatureLocked('Share', true)) { // Assuming share is a premium feature
-      setShowPremiumLockDialog(true);
-    } else {
-      handleShareAsImage();
-    }
-  };
-
   const handleExportAsTxt = () => {
+     if (isExportLocked) {
+        setShowPremiumLockDialog(true);
+        return;
+    }
     if (!outputValue) {
       toast({ title: t('converter.toast.nothingToExport'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
       return;
@@ -424,6 +422,10 @@ export function Converter() {
   };
   
   const handleExportAsImage = async () => {
+     if (isExportLocked) {
+        setShowPremiumLockDialog(true);
+        return;
+    }
      if (!outputValue || !imageExportRef.current) {
         toast({ title: t('converter.toast.nothingToExport'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
         return;
@@ -444,6 +446,32 @@ export function Converter() {
         toast({ title: t('converter.toast.couldNotExportImage'), description: t('converter.toast.couldNotExportImage'), variant: "destructive" });
     }
   };
+  
+    const handleExportAsPdf = async () => {
+        if (isExportLocked) {
+            setShowPremiumLockDialog(true);
+            return;
+        }
+        if (!imageExportRef.current || !outputValue) {
+            toast({ title: t('converter.toast.nothingToExport'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
+            return;
+        }
+
+        try {
+            const canvas = await html2canvas(imageExportRef.current, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({
+                orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+                unit: 'px',
+                format: [canvas.width, canvas.height]
+            });
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            pdf.save(`conversion-${inputValue}${fromUnit}-to-${toUnit}.pdf`);
+        } catch (error) {
+            console.error('Error exporting as PDF:', error);
+            toast({ title: "Could not export PDF", variant: "destructive" });
+        }
+    };
   
   const handleProfileClick = () => {
     if (profile) {
@@ -612,13 +640,13 @@ export function Converter() {
                                     <ImageIcon className="mr-2 h-4 w-4" />
                                     <span>Share as Image</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={handleExportAsImage}>
-                                    <Download className="mr-2 h-4 w-4" />
-                                    <span>Export as PNG</span>
-                                </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={handleExportAsTxt}>
                                     <FileText className="mr-2 h-4 w-4" />
                                     <span>Export as TXT</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={handleExportAsPdf}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    <span>Export as PDF</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
