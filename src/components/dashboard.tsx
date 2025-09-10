@@ -67,7 +67,7 @@ const defaultQuickAccessItems = [
     { id: 'news', icon: <Newspaper size={18} />, label: "News", href: "/news" },
     { id: 'date-calc', icon: <Calendar size={18} />, label: "Date Calc", href: "/time?tab=date-diff" },
     { id: 'timer', icon: <Timer size={18} />, label: "Timer", href: "/time?tab=timer" },
-    { id: 'stopwatch', icon: <Hourglass size={18} />, label: "Stopwatch", href: "/time?tab=stopwatch" },
+    { id: 'stopwatch-item', icon: <Hourglass size={18} />, label: "Stopwatch", href: "/time?tab=stopwatch" },
     { id: 'favorites', icon: <Star size={18} />, label: "Favorites", href: "/history?tab=favorites" },
     { id: 'settings', icon: <Settings size={18} />, label: "Settings", href: "/settings" },
     { id: 'help', icon: <Info size={18} />, label: "Help", href: "/how-to-use" },
