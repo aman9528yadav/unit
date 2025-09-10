@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,18 +12,20 @@ import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile, U
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { ArrowLeft, Eye, EyeOff, Play, ArrowRight, User as UserIcon } from "lucide-react";
-import { logUserEvent, mergeLocalDataWithFirebase } from "@/services/firestore";
+import { logUserEvent, mergeLocalDataWithFirebase, checkUsernameExists, setUsername as setUsernameInDb } from "@/services/firestore";
 import { useLanguage } from "@/context/language-context";
 import { cn } from "@/lib/utils";
 
 
-const handleSuccessfulSignup = async (user: User) => {
+const handleSuccessfulSignup = async (user: User, username: string) => {
     // This function will handle both setting local storage and logging the event
     await mergeLocalDataWithFirebase(user.email!);
+    await setUsernameInDb(username, user.email!);
     
     const profile = {
         fullName: user.displayName,
         email: user.email,
+        username: username,
         dob: '', // DOB is not available on signup
     };
     localStorage.setItem("userProfile", JSON.stringify(profile));
@@ -96,7 +99,7 @@ export function SignupForm() {
         await auth.currentUser?.reload();
         if (auth.currentUser?.emailVerified) {
             clearInterval(verificationInterval);
-            await handleSuccessfulSignup(auth.currentUser);
+            await handleSuccessfulSignup(auth.currentUser, username);
             toast({
                 title: t('signup.toast.verified.title'),
                 description: t('signup.toast.verified.description'),
@@ -106,7 +109,7 @@ export function SignupForm() {
     }, 3000);
 
     return () => clearInterval(verificationInterval);
-  }, [emailSent, router, toast, t]);
+  }, [emailSent, router, toast, t, username]);
 
 
   const startResendTimer = () => {
@@ -134,7 +137,7 @@ export function SignupForm() {
   };
 
   const handleEmailSignup = async () => {
-    if (!email || !password || !fullName || !confirmPassword) {
+    if (!email || !password || !fullName || !confirmPassword || !username) {
       toast({ title: t('signup.toast.requiredFields'), variant: "destructive" });
       return;
     }
@@ -146,7 +149,20 @@ export function SignupForm() {
       toast({ title: t('signup.toast.passwordTooShort.title', {min: 6}), description: t('signup.toast.passwordTooShort.description', {min: 6}), variant: "destructive" });
       return;
     }
+    if (!/^[a-zA-Z0-9_]{3,15}$/.test(username)) {
+        toast({ title: "Invalid Username", description: "Username must be 3-15 characters and contain only letters, numbers, and underscores.", variant: "destructive" });
+        return;
+    }
+
     setIsSubmitting(true);
+
+    const usernameExists = await checkUsernameExists(username);
+    if (usernameExists) {
+        toast({ title: "Username Taken", description: "This username is already in use. Please choose another one.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+    }
+
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       // It's better to update the profile before sending the verification email

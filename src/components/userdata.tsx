@@ -114,6 +114,7 @@ export function UserData() {
     const {
         profileImage,
         fullName,
+        username,
         email,
         phone,
         address,
@@ -163,6 +164,7 @@ export function UserData() {
                         <h2 className="text-xl font-semibold flex items-center justify-center gap-2">
                             {fullName}
                         </h2>
+                        {username && <p className="text-sm text-gray-400 mt-1">@{username}</p>}
                          <div className={cn("inline-flex items-center gap-1 mt-2 px-2 py-1 rounded-full text-xs font-semibold", roleConfig[userRole].color, "bg-secondary")}>
                             <RoleIcon size={14} /> {userRole}
                          </div>

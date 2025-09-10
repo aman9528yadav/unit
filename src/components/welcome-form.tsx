@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,7 +12,7 @@ import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword, User, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { Eye, EyeOff, Info, ArrowRight, Play } from "lucide-react";
-import { logUserEvent, listenToWelcomeContent, updateUserData, mergeLocalDataWithFirebase } from "@/services/firestore";
+import { logUserEvent, listenToWelcomeContent, updateUserData, mergeLocalDataWithFirebase, getEmailForUsername } from "@/services/firestore";
 import { useLanguage } from "@/context/language-context";
 
 
@@ -56,7 +57,7 @@ const handleSuccessfulLogin = async (user: User) => {
 
 
 export function WelcomeForm() {
-  const [email, setEmail] = useState('');
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,13 +76,28 @@ export function WelcomeForm() {
   }, []);
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!emailOrUsername || !password) {
         toast({ title: t('welcome.toast.loginFailed.title'), description: t('welcome.toast.loginFailed.missingFields'), variant: "destructive" });
         return;
     }
     setIsSubmitting(true);
+
+    let loginEmail = emailOrUsername;
+    // Check if it's an email or username
+    if (!emailOrUsername.includes('@')) {
+        const emailFromDb = await getEmailForUsername(emailOrUsername);
+        if (emailFromDb) {
+            loginEmail = emailFromDb;
+        } else {
+            toast({ title: t('welcome.toast.loginFailed.title'), description: "Username not found.", variant: "destructive" });
+            setIsSubmitting(false);
+            return;
+        }
+    }
+
+
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, loginEmail, password);
       const user = userCredential.user;
 
       if (!user.emailVerified) {
@@ -141,7 +157,7 @@ export function WelcomeForm() {
             <div className="space-y-4">
                 <div>
                     <Label htmlFor="email">{t('welcome.emailLabel')}</Label>
-                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-background mt-1" placeholder={t('welcome.emailPlaceholder')} />
+                    <Input id="email" type="text" value={emailOrUsername} onChange={(e) => setEmailOrUsername(e.target.value)} className="bg-background mt-1" placeholder={t('welcome.emailPlaceholder')} />
                 </div>
                 <div className="relative">
                     <Label htmlFor="password">{t('welcome.passwordLabel')}</Label>

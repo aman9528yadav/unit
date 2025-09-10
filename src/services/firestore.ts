@@ -638,6 +638,7 @@ const getGuestData = (): UserData => {
 
 export interface UserData {
     fullName: string;
+    username: string;
     email: string;
     profileImage?: string;
     dob?: string;
@@ -913,4 +914,36 @@ export const mergeLocalDataWithFirebase = async (email: string) => {
         'guest_stats', 'guest_userVisitHistory'
     ];
     guestKeys.forEach(key => localStorage.removeItem(key));
+}
+
+// --- USERNAME MANAGEMENT ---
+/**
+ * Checks if a username already exists in the 'usernames' collection.
+ */
+export async function checkUsernameExists(username: string): Promise<boolean> {
+    const usernameRef = ref(rtdb, `usernames/${username.toLowerCase()}`);
+    const snapshot = await get(usernameRef);
+    return snapshot.exists();
+}
+
+/**
+ * Associates a username with an email in the 'usernames' collection.
+ */
+export async function setUsername(username: string, email: string) {
+    const usernameRef = ref(rtdb, `usernames/${username.toLowerCase()}`);
+    await setRealtimeDb(usernameRef, { email });
+    const userRef = ref(rtdb, `users/${sanitizeEmail(email)}`);
+    await update(userRef, { username });
+}
+
+/**
+ * Retrieves the email associated with a given username.
+ */
+export async function getEmailForUsername(username: string): Promise<string | null> {
+    const usernameRef = ref(rtdb, `usernames/${username.toLowerCase()}`);
+    const snapshot = await get(usernameRef);
+    if (snapshot.exists()) {
+        return snapshot.val().email;
+    }
+    return null;
 }
