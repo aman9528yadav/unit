@@ -79,7 +79,7 @@ import { DailyActivity, processUserDataForStats, TopFeature } from "@/lib/stats"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart as RechartsBarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { format, intervalToDuration, isPast, parseISO } from "date-fns";
-import { listenToNextUpdateInfo, NextUpdateInfo, listenToUpdatesFromRtdb, UpdateItem, listenToDashboardWelcomeMessage, setDashboardWelcomeMessage, BetaWelcomeMessage, listenToBetaWelcomeMessage, listenToComingSoonItems, ComingSoonItem, defaultComingSoonItems, HowToUseFeature, listenToHowToUseFeaturesFromRtdb, updateUserData, UserData } from '@/services/firestore';
+import { listenToNextUpdateInfo, NextUpdateInfo, listenToUpdatesFromRtdb, UpdateItem, listenToDashboardWelcomeMessage, setDashboardWelcomeMessage, BetaWelcomeMessage, listenToBetaWelcomeMessage, listenToComingSoonItems, ComingSoonItem, defaultComingSoonItems, HowToUseFeature, listenToHowToUseFeaturesFromRtdb, updateUserData, UserData, listenToUserData } from '@/services/firestore';
 import { getStreakData, recordVisit, StreakData } from "@/lib/streak";
 import { SidebarTrigger } from "./ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
