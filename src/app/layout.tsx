@@ -7,10 +7,9 @@ import { Toaster } from "@/components/ui/toaster"
 import { LanguageProvider, useLanguage } from '@/context/language-context';
 import { ThemeProvider, useTheme } from '@/context/theme-context';
 import React, { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { listenToGlobalMaintenanceMode, UserData, listenToUserData, listenToAboutInfoFromRtdb, AppInfo, updateUserData } from '@/services/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useRouter } from 'next/navigation';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { cn } from '@/lib/utils';
 import { SidebarProvider, Sidebar, SidebarClose, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from '@/components/ui/sidebar';
@@ -115,8 +114,7 @@ const navSections = [
     }
 ];
 
-function PageContent({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
+function PageContent({ children, router }: { children: React.ReactNode; router: AppRouterInstance }) {
   const [isNavigating, setIsNavigating] = useState(false);
   const pathname = usePathname();
 
@@ -225,14 +223,14 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
       <body className={cn("font-body antialiased", theme === 'sutradhaar' && 'sutradhaar-body')} suppressHydrationWarning>
           <MaintenanceRedirect>
             {pathname === '/maintenance' ? (
-                <PageContent>{children}</PageContent>
+                <PageContent router={router}>{children}</PageContent>
             ) : (
                 <SidebarProvider>
                     <div className="flex min-h-screen items-start justify-center flex-col">
                         <div className="w-full max-w-[412px] mx-auto flex flex-col flex-grow bg-background">
                             {showHeader && <Header />}
                             <React.Suspense fallback={<div className="w-full flex-grow p-4 sm:p-6"><PageSkeleton/></div>}>
-                                <PageContent>{children}</PageContent>
+                                <PageContent router={router}>{children}</PageContent>
                             </React.Suspense>
                         </div>
                     </div>
