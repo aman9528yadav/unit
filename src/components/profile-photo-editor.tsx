@@ -18,9 +18,9 @@ import { cn } from "@/lib/utils";
 
 
 const defaultAvatars = [
-    { src: "https://picsum.photos/seed/avatar1/200", hint: "man portrait" },
-    { src: "https://picsum.photos/seed/avatar2/200", hint: "woman portrait" },
-    { src: "https://picsum.photos/seed/avatar3/200", hint: "man smiling" },
+    { src: "https://picsum.photos/seed/person1/200", hint: "man portrait" },
+    { src: "https://picsum.photos/seed/person2/200", hint: "woman portrait" },
+    { src: "https://picsum.photos/seed/person3/200", hint: "man smiling" },
 ];
 
 
