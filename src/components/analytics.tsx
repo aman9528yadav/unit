@@ -477,9 +477,9 @@ export function Analytics() {
                                 </Pie>
                             </PieChart>
                         </ResponsiveContainer>
-                        <div className="flex flex-wrap justify-center gap-3 mt-2">
+                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-2">
                             {activityPieData.map((entry, index) => (
-                                <div key={index} className="flex items-center gap-1 text-xs text-gray-600">
+                                <div key={index} className="flex items-center gap-1 text-xs text-muted-foreground">
                                     <span className="w-3 h-3 rounded-full" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}></span>
                                     {entry.name} ({((entry.value / activityPieData.reduce((a, b) => a + b.value, 0)) * 100).toFixed(0)}%)
                                 </div>
