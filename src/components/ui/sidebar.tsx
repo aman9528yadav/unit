@@ -169,7 +169,7 @@ const SidebarMenuButton = React.forwardRef<
         "flex flex-col items-center justify-center p-4 rounded-2xl shadow-md transition w-full text-sm font-medium tracking-wide backdrop-blur-sm hover:shadow-lg",
         isActive
           ? "bg-primary/20 text-primary"
-          : "bg-card text-primary",
+          : "bg-white text-primary",
         className
       )}
       {...props}
