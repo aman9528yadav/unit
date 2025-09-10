@@ -539,10 +539,12 @@ function DateDifference() {
     };
 
     const handleShare = async () => {
-        if (!resultRef.current) {
-             toast({ title: "Nothing to share", description: "Please calculate a duration first.", variant: "destructive" });
+        if (!duration.years && !duration.months && !duration.days) {
+            toast({ title: "Nothing to share", description: "Please calculate a duration first.", variant: "destructive" });
             return;
         }
+        if (!resultRef.current) return;
+
         if (!navigator.share) {
              toast({ title: "Sharing not supported", variant: "destructive" });
              return;
@@ -550,7 +552,7 @@ function DateDifference() {
         try {
             const canvas = await html2canvas(resultRef.current, { backgroundColor: null });
             canvas.toBlob(async (blob) => {
-                if (blob) {
+                 if (blob) {
                     const file = new File([blob], 'date-difference.png', { type: 'image/png' });
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         try {
