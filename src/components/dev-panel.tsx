@@ -45,6 +45,7 @@ export function DevPanel() {
     const [updateStatus, setUpdateStatus] = useState<'inprogress' | 'success' | 'failed'>('inprogress');
     const [successMessage, setSuccessMessage] = useState('');
     const [failureMessage, setFailureMessage] = useState('');
+    const [maintenancePages, setMaintenancePages] = useState('');
 
     // State for Updates Tab
     const [updateDuration, setUpdateDuration] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -100,6 +101,7 @@ export function DevPanel() {
             setUpdateStatus(info.updateStatus || 'inprogress');
             setSuccessMessage(info.successMessage || '');
             setFailureMessage(info.failureMessage || '');
+            setMaintenancePages((info.maintenancePages || []).join(', '));
             if (info.targetDate) {
                 const target = new Date(info.targetDate);
                 const now = new Date();
@@ -205,7 +207,8 @@ export function DevPanel() {
                 customMaintenanceTitle: maintenanceType === 'Custom' ? customMaintenanceTitle : '',
                 updateStatus,
                 successMessage,
-                failureMessage
+                failureMessage,
+                maintenancePages: maintenancePages.split(',').map(p => p.trim()).filter(Boolean)
             });
              toast({ title: 'Maintenance Info Saved' });
         } catch(e) {
@@ -241,6 +244,7 @@ export function DevPanel() {
         setUpdateStatus('inprogress');
         setSuccessMessage('');
         setFailureMessage('');
+        setMaintenancePages('');
         await setUpdateInfo({ 
             targetDate: null, 
             updateText: '', 
@@ -248,7 +252,8 @@ export function DevPanel() {
             customMaintenanceTitle: '',
             updateStatus: 'inprogress',
             successMessage: 'The update was successful! We will be back online shortly.',
-            failureMessage: 'The update failed. Please try again later.'
+            failureMessage: 'The update failed. Please try again later.',
+            maintenancePages: []
         });
         toast({ title: 'Maintenance Info Cleared' });
     }
@@ -441,7 +446,7 @@ export function DevPanel() {
                         <div className="space-y-4">
                              <div className="flex justify-between items-center bg-secondary p-3 rounded-lg">
                                 <div>
-                                    <Label htmlFor="maintenance-mode">Enable Maintenance Mode</Label>
+                                    <Label htmlFor="maintenance-mode">Enable Global Maintenance</Label>
                                     <p className='text-xs text-muted-foreground'>Redirects all users to the maintenance site.</p>
                                 </div>
                                 <Switch
@@ -449,6 +454,17 @@ export function DevPanel() {
                                     checked={isMaintenanceMode}
                                     onCheckedChange={handleMaintenanceModeToggle}
                                 />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="maintenancePages">Individual Pages in Maintenance</Label>
+                                <Textarea 
+                                    id="maintenancePages"
+                                    value={maintenancePages}
+                                    onChange={(e) => setMaintenancePages(e.target.value)}
+                                    placeholder="e.g., /notes, /calculator"
+                                    rows={2}
+                                />
+                                <p className="text-xs text-muted-foreground">Enter page paths separated by commas. These pages will be in maintenance even if global mode is off.</p>
                             </div>
                             <div>
                                 <Label>Set Countdown Duration</Label>

@@ -390,6 +390,7 @@ export interface UpdateInfo {
   updateStatus: 'inprogress' | 'success' | 'failed';
   successMessage?: string;
   failureMessage?: string;
+  maintenancePages?: string[];
 }
 
 export interface NextUpdateInfo {
@@ -548,7 +549,8 @@ export function listenToUpdateInfo(callback: (info: UpdateInfo) => void) {
             customMaintenanceTitle: '',
             updateStatus: 'inprogress',
             successMessage: 'The update was successful!',
-            failureMessage: 'The update failed. Please try again later.'
+            failureMessage: 'The update failed. Please try again later.',
+            maintenancePages: []
         });
     });
 }

@@ -7,10 +7,9 @@ import { Toaster } from "@/components/ui/toaster"
 import { LanguageProvider, useLanguage } from '@/context/language-context';
 import { ThemeProvider, useTheme } from '@/context/theme-context';
 import React, { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { listenToGlobalMaintenanceMode, UserData, listenToUserData, listenToAboutInfoFromRtdb, AppInfo, updateUserData } from '@/services/firestore';
+import { usePathname, useRouter, AppRouterInstance } from 'next/navigation';
+import { listenToGlobalMaintenanceMode, UserData, listenToUserData, listenToAboutInfoFromRtdb, AppInfo, updateUserData, listenToUpdateInfo } from '@/services/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { cn } from '@/lib/utils';
 import { SidebarProvider, Sidebar, SidebarClose, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
@@ -28,27 +27,35 @@ import { auth } from '@/lib/firebase';
 
 function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean | null>(null);
+    const [maintenancePages, setMaintenancePages] = useState<string[]>([]);
     const pathname = usePathname();
     const router = useRouter();
 
     useEffect(() => {
         const unsubscribe = listenToGlobalMaintenanceMode(setIsMaintenanceMode);
+        const unsubscribePages = listenToUpdateInfo((info) => {
+            setMaintenancePages(info?.maintenancePages || []);
+        });
+
         return () => {
             unsubscribe();
+            unsubscribePages();
         };
     }, []);
 
     useEffect(() => {
         if (isMaintenanceMode === null) return;
+        
+        const isCurrentPageUnderMaintenance = maintenancePages.some(p => pathname.startsWith(p));
 
-        if (isMaintenanceMode && !pathname.startsWith('/dev') && pathname !== '/maintenance') {
+        if ((isMaintenanceMode || isCurrentPageUnderMaintenance) && !pathname.startsWith('/dev') && pathname !== '/maintenance') {
             router.replace('/maintenance');
         }
 
-        if (!isMaintenanceMode && pathname === '/maintenance') {
+        if (!isMaintenanceMode && !isCurrentPageUnderMaintenance && pathname === '/maintenance') {
             router.replace('/');
         }
-    }, [isMaintenanceMode, pathname, router]);
+    }, [isMaintenanceMode, maintenancePages, pathname, router]);
 
 
     if (isMaintenanceMode === null) {
@@ -66,8 +73,8 @@ function MaintenanceRedirect({ children }: { children: React.ReactNode }) {
     }
     
     // If in maintenance, and not on the maintenance page yet, we are redirecting, so render nothing.
-    if (isMaintenanceMode && pathname !== '/maintenance') {
-        return null; 
+    if ((isMaintenanceMode || maintenancePages.some(p => pathname.startsWith(p))) && pathname !== '/maintenance') {
+        return null;
     }
 
     return <>{children}</>;
