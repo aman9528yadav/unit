@@ -539,46 +539,43 @@ function DateDifference() {
     };
 
     const handleShare = async () => {
-        if (!duration.years && !duration.months && !duration.days) {
+        if (!duration || (!duration.years && !duration.months && !duration.days && !duration.weeks)) {
             toast({ title: "Nothing to share", description: "Please calculate a duration first.", variant: "destructive" });
             return;
         }
         if (!resultRef.current) return;
-
+    
         if (!navigator.share) {
-            toast({ title: "Sharing not supported", variant: "destructive" });
+            toast({ title: "Sharing not supported", description: "Your browser does not support the Web Share API.", variant: "destructive" });
             return;
         }
-
-        // Check for file sharing support upfront
-        const dummyFile = new File([""], "dummy.png", { type: "image/png" });
-        if (navigator.canShare && !navigator.canShare({ files: [dummyFile] })) {
-             toast({ title: "Image Sharing Not Supported", description: "Your browser does not support sharing images directly.", variant: "destructive" });
-             return;
-        }
-
+    
         try {
-            const canvas = await html2canvas(resultRef.current, { backgroundColor: null });
+            const canvas = await html2canvas(resultRef.current, { backgroundColor: null, scale: 2 });
             canvas.toBlob(async (blob) => {
-                if (blob) {
-                    const file = new File([blob], 'date-difference.png', { type: 'image/png' });
-                    try {
-                        await navigator.share({
-                            title: 'Date Calculation Result',
-                            text: `Result from ${format(startDate!, 'PPP')} to ${format(endDate!, 'PPP')}`,
-                            files: [file],
-                        });
-                    } catch (error: any) {
-                        if (error.name !== 'AbortError') {
-                            console.error(error);
-                            toast({ title: "Sharing failed", variant: "destructive" });
-                        }
-                    }
+                if (!blob) {
+                    toast({ title: "Sharing Failed", description: "Could not create image from result.", variant: "destructive" });
+                    return;
+                }
+                const file = new File([blob], 'date-calculation.png', { type: 'image/png' });
+    
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: 'Date Calculation Result',
+                        text: `Result from ${format(startDate!, 'PPP')} to ${format(endDate!, 'PPP')}`,
+                        files: [file],
+                    });
+                } else {
+                    // Fallback for browsers that support share but not files
+                    await navigator.share({
+                        title: 'Date Calculation Result',
+                        text: `Result from ${format(startDate!, 'PPP')} to ${format(endDate!, 'PPP')}: ${duration.years || 0}y, ${duration.months || 0}m, ${duration.days || 0}d`
+                    });
                 }
             }, 'image/png');
         } catch (error) {
-            console.error(error);
-            toast({ title: "Sharing failed", variant: "destructive" });
+            console.error('Error sharing calculation:', error);
+            toast({ title: "Sharing Failed", description: "Could not share the calculation as an image.", variant: "destructive" });
         }
     };
 
