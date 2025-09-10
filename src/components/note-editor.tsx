@@ -391,7 +391,16 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         }
 
         try {
-            const canvas = await html2canvas(contentEl, { scale: 2 });
+            const clonedEl = contentEl.cloneNode(true) as HTMLDivElement;
+            const credit = document.createElement('p');
+            credit.innerText = "Sutradhaar | Made by Aman Yadav";
+            credit.className = "text-center text-sm text-muted-foreground mt-4";
+            clonedEl.appendChild(credit);
+            document.body.appendChild(clonedEl);
+
+            const canvas = await html2canvas(clonedEl, { scale: 2 });
+            document.body.removeChild(clonedEl);
+            
             canvas.toBlob(async (blob) => {
                 if (!blob) {
                     toast({ title: "Sharing Failed", description: "Could not create image from note.", variant: "destructive" });
@@ -403,6 +412,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     await navigator.share({
                         title: title || 'Shared Note',
                         files: [file],
+                        text: `Sutradhaar | Made by Aman Yadav`
                     });
                 } else {
                     toast({ title: "Cannot Share Image", description: "Your browser does not support sharing images.", variant: "destructive" });
@@ -418,7 +428,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         const contentEl = editorRef.current;
         if (!contentEl) return;
         const textContent = contentEl.innerText || '';
-        const noteString = `Title: ${title}\nCategory: ${category}\n\n${textContent}`;
+        const noteString = `Title: ${title}\nCategory: ${category}\n\n${textContent}\n\nSutradhaar | Made by Aman Yadav`;
         const blob = new Blob([noteString], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -430,11 +440,19 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         URL.revokeObjectURL(url);
     };
 
-    const handleExportAsPdf = () => {
+    const handleExportAsPdf = async () => {
         const contentEl = editorRef.current;
         if (!contentEl) return;
         
-        html2canvas(contentEl, { scale: 2 }).then(canvas => {
+        const clonedEl = contentEl.cloneNode(true) as HTMLDivElement;
+        const credit = document.createElement('p');
+        credit.innerText = "Sutradhaar | Made by Aman Yadav";
+        credit.className = "text-center text-sm text-muted-foreground mt-4";
+        clonedEl.appendChild(credit);
+        document.body.appendChild(clonedEl);
+
+        html2canvas(clonedEl, { scale: 2 }).then(canvas => {
+            document.body.removeChild(clonedEl);
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'px', [canvas.width, canvas.height]);
             pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);

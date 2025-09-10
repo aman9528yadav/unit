@@ -67,8 +67,6 @@ const regions: Region[] = ['International', 'India', 'Japan', 'Korea', 'China', 
 const PREMIUM_REGIONS: Region[] = ['Japan', 'Korea', 'China', 'Middle East'];
 
 
-const PREMIUM_CATEGORIES = ['Pressure', 'Energy', 'Currency', 'Fuel Economy'];
-
 interface UserProfile {
     fullName: string;
     email: string;
@@ -409,7 +407,7 @@ export function Converter() {
             if (navigator.canShare({ files: [file] })) {
                 await navigator.share({
                     title: t('converter.share.title'),
-                    text: `${inputValue} ${fromUnit} → ${outputValue} ${toUnit}`,
+                    text: `${inputValue} ${fromUnit} → ${outputValue} ${toUnit}\n\nSutradhaar | Made by Aman Yadav`,
                     files: [file],
                 });
             } else {
@@ -436,7 +434,7 @@ export function Converter() {
       toast({ title: t('converter.toast.nothingToExport'), description: t('converter.toast.performConversionFirst'), variant: "destructive" });
       return;
     }
-    const conversionString = `${inputValue} ${fromUnit} → ${outputValue} ${toUnit}`;
+    const conversionString = `${inputValue} ${fromUnit} → ${outputValue} ${toUnit}\n\nSutradhaar | Made by Aman Yadav`;
     
     const blob = new Blob([conversionString], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -869,7 +867,7 @@ const ConversionImage = React.forwardRef<HTMLDivElement, ConversionImageProps>(
             <p className="text-lg text-muted-foreground">{toUnitInfo?.symbol}</p>
         </div>
         <p className="text-center text-sm text-muted-foreground mt-4">
-            {t('converter.image.generatedBy')} Sutradhaar
+            Sutradhaar | Made by Aman Yadav
         </p>
       </div>
     );

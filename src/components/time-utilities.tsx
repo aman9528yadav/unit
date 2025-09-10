@@ -549,7 +549,8 @@ function DateDifference() {
         if (!startDate || !endDate || !duration.years && !duration.months && !duration.days) return "No calculation performed.";
         return `Result from ${format(startDate, 'PPP')} to ${format(endDate, 'PPP')}:\n` +
                `${duration.years || 0} years, ${duration.months || 0} months, ${duration.weeks || 0} weeks, ${duration.days || 0} days.\n` +
-               `Total days: ${differenceInDays(endDate, startDate)}`;
+               `Total days: ${differenceInDays(endDate, startDate)}\n\n` + 
+               `Sutradhaar | Made by Aman Yadav`;
     }
 
     const handleExport = async (type: 'png' | 'pdf' | 'txt') => {
@@ -569,8 +570,17 @@ function DateDifference() {
             URL.revokeObjectURL(url);
             return;
         }
+        
+        const clonedEl = resultRef.current.cloneNode(true) as HTMLDivElement;
+        const credit = document.createElement('p');
+        credit.innerText = "Sutradhaar | Made by Aman Yadav";
+        credit.className = "text-center text-xs text-muted-foreground mt-4";
+        clonedEl.appendChild(credit);
+        document.body.appendChild(clonedEl);
 
-        const canvas = await html2canvas(resultRef.current, { backgroundColor: null, scale: 2 });
+        const canvas = await html2canvas(clonedEl, { backgroundColor: null, scale: 2 });
+        document.body.removeChild(clonedEl);
+
         const imgData = canvas.toDataURL('image/png');
 
         if (type === 'png') {
@@ -767,7 +777,7 @@ function AgeCalculator() {
         <Card>
             <CardHeader><CardTitle className="text-center">{t('timePage.dateCalc.ageTitle')}</CardTitle></CardHeader>
             <CardContent className="flex flex-col gap-4 items-center">
-                <Popover>
+                 <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-start text-left font-normal">
                             <CalendarIcon className="mr-2 h-4 w-4" />

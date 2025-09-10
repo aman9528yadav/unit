@@ -88,7 +88,7 @@ export function NoteViewer({ noteId }: { noteId: string }) {
                 if (navigator.canShare({ files: [file] })) {
                     await navigator.share({
                         title: note.title || 'Shared Note',
-                        text: `Here's a note from Sutradhaar: ${note.title}`,
+                        text: `Here's a note from Sutradhaar: ${note.title}\n\nSutradhaar | Made by Aman Yadav`,
                         files: [file],
                     });
                 } else {
@@ -105,7 +105,7 @@ export function NoteViewer({ noteId }: { noteId: string }) {
     const handleExportAsTxt = () => {
         if (!note || !noteContentRef.current) return;
         const textContent = noteContentRef.current.innerText || '';
-        const noteString = `Title: ${note.title}\nCategory: ${note.category || 'N/A'}\n\n${textContent}`;
+        const noteString = `Title: ${note.title}\nCategory: ${note.category || 'N/A'}\n\n${textContent}\n\nSutradhaar | Made by Aman Yadav`;
         const blob = new Blob([noteString], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -213,6 +213,7 @@ export function NoteViewer({ noteId }: { noteId: string }) {
                             className="prose dark:prose-invert max-w-none"
                             dangerouslySetInnerHTML={{ __html: note.content }}
                         />
+                         <p className="text-center text-sm text-muted-foreground mt-8">Sutradhaar | Made by Aman Yadav</p>
                     </CardContent>
                 </Card>
             </div>
