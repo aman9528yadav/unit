@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import { Label } from './ui/label';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import RichTextEditor from './ui/rich-text-editor';
 
 
 const FONT_COLORS = [
@@ -68,10 +69,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
     const router = useRouter();
     const { toast } = useToast();
-    const editorRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const colorInputRef = useRef<HTMLInputElement>(null);
-    const highlightInputRef = useRef<HTMLInputElement>(null);
     const isNewNote = noteId === 'new';
     
     const contentSetRef = useRef(false);
@@ -141,12 +139,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
 
     }, [isNewNote, noteId, router, toast, profile, t, allNotes]);
 
-    useEffect(() => {
-        if (editorRef.current && content && !contentSetRef.current) {
-            editorRef.current.innerHTML = content;
-            contentSetRef.current = true; // Mark that initial content has been set
-        }
-    }, [content]);
 
      useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -194,56 +186,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     };
 
 
-    const applyStyle = (style: string, value: string) => {
-        editorRef.current?.focus();
-        const selection = window.getSelection();
-        if (!selection || selection.rangeCount === 0) return;
-
-        const range = selection.getRangeAt(0);
-        if (range.collapsed) {
-            const span = document.createElement('span');
-            span.style[style as any] = value;
-            span.innerHTML = '&#8203;';
-            range.insertNode(span);
-            range.selectNodeContents(span);
-            range.collapse(false);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        } else {
-             document.execCommand('styleWithCSS', false, 'true');
-             if (style === 'color') {
-                 document.execCommand('foreColor', false, value);
-             } else if (style === 'fontSize') {
-                 const span = document.createElement('span');
-                 span.style.fontSize = value;
-                 span.innerHTML = range.toString();
-                 range.deleteContents();
-                 range.insertNode(span);
-             }
-              document.execCommand('styleWithCSS', false, 'false');
-        }
-        setIsDirty(true);
-    };
-
-
-    const handleFormat = (command: string, value?: string) => {
-        editorRef.current?.focus();
-        document.execCommand(command, false, value);
-        setIsDirty(true);
-    };
-    
-    const handleFormatBlock = (tag: string) => {
-      handleFormat('formatBlock', `<${tag}>`);
-    };
-
-    const handleColorChange = (color: string) => {
-      handleFormat('foreColor', color);
-    };
-    
-    const handleHighlightChange = (color: string) => {
-      handleFormat('hiliteColor', color);
-    };
-
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
@@ -258,12 +200,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             reader.readAsDataURL(file);
         }
     };
-    
-    const handleInsertEmoji = (emoji: string) => {
-        editorRef.current?.focus();
-        document.execCommand('insertText', false, emoji);
-        setIsDirty(true);
-    };
 
     const handleRemoveImage = () => {
         setAttachment(null);
@@ -275,41 +211,9 @@ export function NoteEditor({ noteId }: { noteId: string }) {
         toast({ title: t('noteEditor.toast.comingSoon.title'), description: t('noteEditor.toast.comingSoon.description')});
     }
     
-    const handleApplyCustomFontSize = () => {
-        const size = parseInt(customFontSize, 10);
-        if(!isNaN(size) && size > 0){
-            applyStyle('fontSize', `${size}px`);
-        } else {
-            toast({ title: t('noteEditor.toast.invalidFontSize'), variant: "destructive"});
-        }
-    }
-
-    const handleInsertCalculation = () => {
-        const lastCalc = localStorage.getItem('lastCalculation');
-        if (lastCalc && editorRef.current) {
-            editorRef.current.focus();
-            document.execCommand('insertText', false, lastCalc.split('|')[0]);
-            setIsDirty(true);
-        } else {
-            toast({ title: t('noteEditor.toast.noCalculation.title'), description: t('noteEditor.toast.noCalculation.description')});
-        }
-    };
-
-    const handleInsertConversion = () => {
-        const lastConv = localStorage.getItem('lastConversion');
-        if (lastConv && editorRef.current) {
-            editorRef.current.focus();
-            document.execCommand('insertText', false, lastConv.split('|')[0]);
-            setIsDirty(true);
-        } else {
-            toast({ title: t('noteEditor.toast.noConversion.title'), description: t('noteEditor.toast.noConversion.description')});
-        }
-    };
-
 
     const handleSave = () => {
-         const currentContent = editorRef.current?.innerHTML || '';
-        if (!title.trim() && !currentContent.trim()) {
+         if (!title.trim() && !content.trim()) {
             toast({
                 title: t('noteEditor.toast.emptyNote.title'),
                 description: t('noteEditor.toast.emptyNote.description'),
@@ -325,7 +229,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             const newNote: Note = {
                 id: uuidv4(),
                 title,
-                content: currentContent,
+                content: content,
                 isFavorite: isFavorite || false,
                 category: category || '',
                 attachment: attachment || null,
@@ -341,7 +245,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 notes[noteIndex] = {
                     ...notes[noteIndex],
                     title,
-                    content: currentContent,
+                    content: content,
                     isFavorite: isFavorite || false,
                     category: category || '',
                     attachment: attachment || null,
@@ -394,11 +298,11 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             return;
         }
 
-        const contentEl = editorRef.current;
+        const contentEl = document.querySelector('.ProseMirror');
         if (!contentEl) return;
         
         if (type === 'txt') {
-            const textContent = contentEl.innerText || '';
+            const textContent = (contentEl as HTMLElement).innerText || '';
             const noteString = `Title: ${title}\nCategory: ${category}\n\n${textContent}\n\nSutradhaar | Made by Aman Yadav`;
             const blob = new Blob([noteString], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
@@ -556,82 +460,22 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 />
             </div>
             <div className="bg-card p-4 rounded-t-xl flex-grow flex flex-col gap-4 mt-4">
-                <div className="flex items-center gap-1 border-b border-border pb-2 flex-wrap">
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('undo')}><Undo /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('redo')}><Redo /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('bold')}><Bold /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('italic')}><Italic /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('underline')}><Underline /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('strikeThrough')}><Strikethrough /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={showComingSoonToast}><Link2 /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('insertUnorderedList')}><List /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('insertOrderedList')}><ListOrdered /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('insertHTML', '<div><input type="checkbox" disabled/>&nbsp;</div>')}><CheckSquare /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={showComingSoonToast}><Code2 /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => colorInputRef.current?.click()}><Baseline/></Button>
-                    <input type="color" ref={colorInputRef} onChange={(e) => handleColorChange(e.target.value)} className="w-0 h-0 opacity-0 absolute" />
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => highlightInputRef.current?.click()}><Highlighter/></Button>
-                     <input type="color" ref={highlightInputRef} onChange={(e) => handleHighlightChange(e.target.value)} className="w-0 h-0 opacity-0 absolute" />
-
-                    
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon"><CaseSensitive /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuItem onSelect={() => handleFormatBlock('h1')}>
-                                <Heading1 className="mr-2 h-4 w-4" /> {t('noteEditor.formatting.heading1')}
-                            </DropdownMenuItem>
-                             <DropdownMenuItem onSelect={() => handleFormatBlock('h2')}>
-                                <Heading2 className="mr-2 h-4 w-4" /> {t('noteEditor.formatting.heading2')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => handleFormatBlock('p')}>
-                                <Pilcrow className="mr-2 h-4 w-4" /> {t('noteEditor.formatting.paragraph')}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                <div className="flex items-center gap-2">
-                                     <Text className="mr-2 h-4 w-4" />
-                                     <Input 
-                                        type="number" 
-                                        value={customFontSize} 
-                                        onChange={(e) => setCustomFontSize(e.target.value)}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="w-16 h-8"
-                                        placeholder="16"
-                                     />
-                                     <span>px</span>
-                                     <Button size="sm" onClick={handleApplyCustomFontSize}>{t('noteEditor.formatting.apply')}</Button>
-                                </div>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => fileInputRef.current?.click()}><ImageIcon /></Button>
-                    <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="*" className="hidden" />
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={handleInsertCalculation}><CalculatorIcon /></Button>
-                    <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={handleInsertConversion}><ArrowRightLeft /></Button>
-                </div>
                 
                 {renderAttachment()}
 
-                 <div
-                    ref={editorRef}
-                    contentEditable
-                    onInput={() => {
+                 <RichTextEditor
+                    value={content}
+                    onChange={(newContent) => {
+                        setContent(newContent);
                         setIsDirty(true);
-                        setContent(editorRef.current?.innerHTML || '');
                     }}
-                    data-placeholder={t('noteEditor.placeholders.content')}
-                    className="w-full h-full flex-grow bg-transparent border-none resize-none focus-visible:outline-none text-base p-0 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
-                    style={{ direction: 'ltr' }}
                 />
                 <div className="flex items-center gap-2 pt-2 border-t border-border">
                     <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); fileInputRef.current?.click(); }}>
                         <Paperclip />
                     </Button>
                     <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" />
-                    <Button variant="ghost" size="icon" onClick={() => handleInsertEmoji('😀')}><Smile /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => showComingSoonToast()}><Smile /></Button>
                     <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={handleSoftDelete}><Trash2 /></Button>
                 </div>
             </div>
