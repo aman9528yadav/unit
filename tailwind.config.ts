@@ -98,10 +98,25 @@ export default {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            'ul, ol': false,
+            li: false,
+            table: false,
+            thead: false,
+            tbody: false,
+            tr: false,
+            th: false,
+            td: false,
+          },
+        },
+      },
     },
   },
   plugins: [
     require('tailwindcss-animate'),
+    require('@tailwindcss/typography'),
     function ({ addUtilities }: { addUtilities: any }) {
       addUtilities({
         '.clip-q': {
@@ -111,5 +126,3 @@ export default {
     },
   ],
 } satisfies Config;
-
-    

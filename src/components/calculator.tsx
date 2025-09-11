@@ -46,8 +46,14 @@ export function Calculator({ isFullScreen, onFullScreenToggle }: { isFullScreen:
     const [recentCalculations, setRecentCalculations] = useState<string[]>([]);
     const [soundEnabled, setSoundEnabled] = useState(true);
     const router = useRouter();
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
+        if (typeof window !== 'undefined') {
+            audioRef.current = new Audio('/single-key-press-393908.mp3');
+            audioRef.current.volume = 1.0;
+        }
+
         const storedProfile = localStorage.getItem("userProfile");
         const userEmail = storedProfile ? JSON.parse(storedProfile).email : null;
         if (storedProfile) {
@@ -67,7 +73,10 @@ export function Calculator({ isFullScreen, onFullScreenToggle }: { isFullScreen:
     
 
     const playSound = () => {
-        // Audio playback removed to fix error
+        if (soundEnabled && audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch(error => console.error("Error playing sound:", error));
+        }
     };
 
 

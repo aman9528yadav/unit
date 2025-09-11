@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Bell, Check, Info, Rocket, Trash2, X, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ export function Notifications() {
   const [profile, setProfile] = useState<{ email: string } | null>(null);
   const [isClient, setIsClient] = useState(false);
   const { t } = useLanguage();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -42,8 +43,19 @@ export function Notifications() {
     if (storedProfile) {
         setProfile(JSON.parse(storedProfile));
     }
+    if (typeof window !== 'undefined') {
+        audioRef.current = new Audio('/new-notification-09-352705.mp3');
+        audioRef.current.volume = 1.0;
+    }
   }, []);
   
+  const playSound = () => {
+    if (areNotificationsEnabled && audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(err => console.error("Audio play failed:", err));
+    }
+  }
+
   const checkNotificationSetting = () => {
     if (typeof window === 'undefined') return;
     const userKey = profile?.email || 'guest';
@@ -54,7 +66,13 @@ export function Notifications() {
   const loadNotifications = () => {
     if (typeof window === 'undefined') return;
     const stored = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
-    setNotifications(stored ? JSON.parse(stored) : []);
+    const currentNotifications = stored ? JSON.parse(stored) : [];
+    
+    if (notifications.length > 0 && currentNotifications.length > notifications.length) {
+        playSound();
+    }
+
+    setNotifications(currentNotifications);
   };
 
   useEffect(() => {
@@ -83,6 +101,7 @@ export function Notifications() {
                     description: broadcast.description,
                     icon: broadcast.icon || 'info'
                 });
+                playSound();
             }
         });
 

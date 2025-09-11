@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { useLanguage } from '@/context/language-context';
-import { listenToUserNotes, updateUserNotes, listenToUserData, UserData, getGuestKey } from '@/services/firestore';
+import { listenToUserNotes, updateUserNotes, listenToUserData, UserData, getGuestKey, updateUserData } from '@/services/firestore';
 import { cn } from '@/lib/utils';
 import { Label } from './ui/label';
 import html2canvas from 'html2canvas';
@@ -137,7 +137,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
             unsubUserData();
         };
 
-    }, [isNewNote, noteId, router, toast, profile, t, allNotes]);
+    }, [isNewNote, noteId, router, toast, profile, t]);
 
 
      useEffect(() => {

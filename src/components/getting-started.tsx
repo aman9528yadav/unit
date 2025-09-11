@@ -48,12 +48,11 @@ export function GettingStarted() {
                     transition={{ duration: 0.8, ease: "easeOut" }}
                 >
                     <Image 
-                        src="https://picsum.photos/seed/productivity/600/400" 
-                        alt="Productivity illustration" 
+                        src="/get start.png" 
+                        alt="Get Started" 
                         width={300} 
                         height={200}
                         className="mb-12 rounded-lg"
-                        data-ai-hint="illustration man documents"
                     />
                 </motion.div>
                 <motion.div
