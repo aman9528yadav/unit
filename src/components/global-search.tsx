@@ -11,8 +11,43 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { useLanguage } from '@/context/language-context';
 import { listenToUserData, UserData } from '@/services/firestore';
 import { AnimatePresence, motion } from 'framer-motion';
-import { searchIndex, isAlgoliaConfigured } from '@/lib/algolia';
 import { conversionCategories as baseConversionCategories, Unit, ConversionCategory } from '@/lib/conversions';
+
+export interface ParseConversionQueryOutput {
+  value: number;
+  fromUnit: string;
+  toUnit: string;
+  category: string;
+}
+
+export const offlineParseConversionQuery = (query: string, allUnits: Unit[], conversionCategories: ConversionCategory[]): ParseConversionQueryOutput | null => {
+  const conversionQueryRegex = /^(\d*\.?\d+)\s*([a-zA-Z]+)\s*(to|in)\s*([a-zA-Z]+)$/i;
+  const match = query.match(conversionQueryRegex);
+
+  if (!match) return null;
+
+  const [, valueStr, fromUnitSymbol, , toUnitSymbol] = match;
+  const value = parseFloat(valueStr);
+
+  const fromUnit = allUnits.find(u => u.symbol.toLowerCase() === fromUnitSymbol.toLowerCase() || u.name.toLowerCase() === fromUnitSymbol.toLowerCase());
+  const toUnit = allUnits.find(u => u.symbol.toLowerCase() === toUnitSymbol.toLowerCase() || u.name.toLowerCase() === toUnitSymbol.toLowerCase());
+
+  if (!fromUnit || !toUnit) return null;
+
+  const category = conversionCategories.find(c =>
+    c.units.some(u => u.symbol === fromUnit.symbol) &&
+    c.units.some(u => u.symbol === toUnit.symbol)
+  );
+
+  if (!category) return null;
+
+  return {
+    value,
+    fromUnit: fromUnit.symbol,
+    toUnit: toUnit.symbol,
+    category: category.name
+  };
+};
 
 interface SearchResult {
   objectID: string;
@@ -56,23 +91,99 @@ export function GlobalSearch({ isSearchActive, onSearchToggle }: { isSearchActiv
     };
   }, [onSearchToggle]);
 
-  const search = useCallback(async () => {
-    if (!debouncedQuery || !searchIndex) {
-      setResults([]);
-      return;
+  const search = useCallback(() => {
+    if (!debouncedQuery) {
+        setResults([]);
+        return;
     }
 
-    const { hits } = await searchIndex.search<SearchResult>(debouncedQuery, {
-      hitsPerPage: 10,
-      facetFilters: [['user:' + (userData?.email || 'guest')]]
+    let allResults: SearchResult[] = [];
+
+    // Search in notes
+    if (userData?.notes) {
+        const noteResults = userData.notes
+            .filter(note => !note.deletedAt && (note.title.toLowerCase().includes(debouncedQuery.toLowerCase()) || note.content.toLowerCase().includes(debouncedQuery.toLowerCase())))
+            .map(note => ({
+                objectID: note.id,
+                type: 'Note' as const,
+                title: note.title,
+                description: note.content.replace(/<[^>]*>?/gm, '').substring(0, 100),
+                href: `/notes/edit/${note.id}`
+            }));
+        allResults = allResults.concat(noteResults);
+    }
+
+    // Search in history
+    if (userData?.conversionHistory) {
+        const historyResults = userData.conversionHistory
+            .filter(h => h.toLowerCase().includes(debouncedQuery.toLowerCase()))
+            .map((h, i) => ({
+                objectID: `${userData.email}_history_${i}`,
+                type: 'History' as const,
+                title: h.split('|')[0],
+                href: '/converter'
+            }));
+        allResults = allResults.concat(historyResults);
+    }
+
+    // Search in settings
+    const settingsPages = [
+        { title: 'General Settings', href: '/settings' },
+        { title: 'Custom Units', href: '/settings/custom-units' },
+        { title: 'Theme', href: '/settings/theme' },
+        { title: 'Developer', href: '/dev' },
+    ];
+
+    const settingsResults = settingsPages
+        .filter(p => p.title.toLowerCase().includes(debouncedQuery.toLowerCase()))
+        .map(p => ({
+            objectID: p.href,
+            type: 'Setting' as const,
+            title: p.title,
+            href: p.href,
+        }));
+    allResults = allResults.concat(settingsResults);
+
+    // Search conversion categories and units
+    const conversionResults: SearchResult[] = [];
+    baseConversionCategories.forEach(category => {
+        if (category.name.toLowerCase().includes(debouncedQuery.toLowerCase())) {
+            conversionResults.push({
+                objectID: category.name,
+                type: 'Category', 
+                title: `Category: ${category.name}`,
+                description: `Go to the ${category.name} converter`,
+                href: '/converter',
+            });
+        }
+        category.units.forEach(unit => {
+            if (unit.name.toLowerCase().includes(debouncedQuery.toLowerCase()) || unit.symbol.toLowerCase().includes(debouncedQuery.toLowerCase())) {
+                conversionResults.push({
+                    objectID: unit.symbol,
+                    type: 'Unit',
+                    title: `${unit.name} (${unit.symbol})`,
+                    href: '/converter'
+                });
+            }
+        });
     });
-    setResults(hits);
-  }, [debouncedQuery, userData]);
+    allResults = allResults.concat(conversionResults);
+
+    const allUnits = baseConversionCategories.flatMap(c => c.units);
+    if (offlineParseConversionQuery(debouncedQuery, allUnits, baseConversionCategories)) {
+        allResults.push({
+            objectID: debouncedQuery,
+            type: 'Conversion',
+            title: `Convert: ${debouncedQuery}`,
+            href: '/converter'
+        });
+    }
+
+    setResults(allResults.slice(0, 10)); // Limit to 10 results
+}, [debouncedQuery, userData]);
 
   useEffect(() => {
-    if (isAlgoliaConfigured) {
-      search();
-    }
+    search();
   }, [search]);
   
   const handleSelectResult = (result: SearchResult) => {
@@ -127,13 +238,12 @@ export function GlobalSearch({ isSearchActive, onSearchToggle }: { isSearchActiv
         <div className="flex items-center gap-2">
             <Search className="size-5 text-muted-foreground" />
             <Input 
-                placeholder={isAlgoliaConfigured ? t('globalSearch.placeholder') : "Algolia not configured"}
+                placeholder={t('globalSearch.placeholder')}
                 className="border-none focus-visible:ring-0 h-auto p-0 bg-transparent" 
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && results.length > 0 && handleSelectResult(results[0])}
                 autoFocus
-                disabled={!isAlgoliaConfigured}
             />
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => onSearchToggle(false)}><X className="w-4 h-4"/></Button>
         </div>
@@ -145,9 +255,7 @@ export function GlobalSearch({ isSearchActive, onSearchToggle }: { isSearchActiv
                     exit={{ opacity: 0, y: -10 }}
                     className="absolute top-full mt-2 w-full bg-card rounded-lg border shadow-lg max-h-96 overflow-y-auto p-2"
                 >
-                    {!isAlgoliaConfigured ? (
-                        <p className="text-center text-muted-foreground py-4">Search is disabled. Please configure Algolia in your environment variables.</p>
-                    ) : results.length > 0 ? (
+                    {results.length > 0 ? (
                         <ul className="space-y-1">
                             {results.map((result) => (
                                 <li 
