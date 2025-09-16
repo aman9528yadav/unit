@@ -97,8 +97,10 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 const noteToEdit = allNotes.find(note => note.id === noteId);
                 if (noteToEdit) {
                     setTitle(noteToEdit.title);
-                    setContent(noteToEdit.content);
-                    contentSetRef.current = false;
+                    if (!contentSetRef.current) {
+                        setContent(noteToEdit.content);
+                        contentSetRef.current = true;
+                    }
                     setIsFavorite(noteToEdit.isFavorite || false);
                     setCategory(noteToEdit.category || '');
                     setAttachment(noteToEdit.attachment || null);
@@ -115,8 +117,10 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 const noteToEdit = notesFromDb.find(note => note.id === noteId);
                 if (noteToEdit) {
                     setTitle(noteToEdit.title);
-                    setContent(noteToEdit.content);
-                    contentSetRef.current = false;
+                    if (!contentSetRef.current) {
+                        setContent(noteToEdit.content);
+                        contentSetRef.current = true;
+                    }
                     setIsFavorite(noteToEdit.isFavorite || false);
                     setCategory(noteToEdit.category || '');
                     setAttachment(noteToEdit.attachment || null);
@@ -357,7 +361,6 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 link.click();
                 toast({ title: "Exported as Image!" });
             } else if (type === 'pdf') {
-                const imgData = canvas.toDataURL('image/png');
                 const pdf = new jsPDF({
                     orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
                     unit: 'px',

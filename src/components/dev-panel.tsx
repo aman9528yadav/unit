@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -26,10 +25,9 @@ interface UserProfile {
 }
 
 export function DevPanel() {
-    const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [isAuthorized, setIsAuthorized] = useState(false);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isClient, setIsClient] = useState(false);
     const [showAuthPassword, setShowAuthPassword] = useState(false);
 
@@ -67,15 +65,6 @@ export function DevPanel() {
 
     useEffect(() => {
         setIsClient(true);
-        const storedProfile = localStorage.getItem('userProfile');
-        
-        if (storedProfile) {
-            const parsedProfile = JSON.parse(storedProfile);
-            setProfile(parsedProfile);
-            if (parsedProfile.email === DEVELOPER_EMAIL) {
-                setIsAuthorized(true);
-            }
-        }
         const savedDevPassword = localStorage.getItem('developerPassword');
         if (savedDevPassword) {
             DEFAULT_DEV_PASSWORD = savedDevPassword;
@@ -84,7 +73,7 @@ export function DevPanel() {
     }, []);
     
      useEffect(() => {
-        if (!isAuthorized || !isAuthenticated) return;
+        if (!isAuthenticated) return;
         
         const unsubMaintenanceMode = listenToGlobalMaintenanceMode(setIsMaintenanceMode);
 
@@ -158,9 +147,13 @@ export function DevPanel() {
             unsubBroadcast();
             unsubPremiumInfo();
         };
-    }, [isAuthorized, isAuthenticated]);
+    }, [isAuthenticated]);
     
     const handlePasswordSubmit = () => {
+        if (email.toLowerCase() !== DEVELOPER_EMAIL) {
+            toast({ title: "Access Denied", description: "This email is not authorized for developer access.", variant: "destructive" });
+            return;
+        }
         if (password === DEFAULT_DEV_PASSWORD) {
             setIsAuthenticated(true);
             toast({ title: "Access Granted", description: "Welcome to the Developer Panel." });
@@ -364,25 +357,25 @@ export function DevPanel() {
     if (!isClient) {
         return null;
     }
-
-    if (!isAuthorized) {
-        return (
-            <div className="w-full max-w-md mx-auto flex flex-col items-center justify-center text-center gap-4 h-screen">
-                <ShieldAlert className="w-16 h-16 text-destructive" />
-                <h1 className="text-2xl font-bold">Access Denied</h1>
-                <p className="text-muted-foreground">You are not authorized to view this page. Please log in with a developer account.</p>
-                <Button onClick={() => router.push('/welcome')}>Go to Login</Button>
-            </div>
-        );
-    }
     
     if (!isAuthenticated) {
          return (
             <div className="w-full max-w-sm mx-auto flex flex-col items-center justify-center text-center gap-4 h-screen">
                 <KeyRound className="w-16 h-16 text-primary" />
                 <h1 className="text-2xl font-bold">Developer Access</h1>
-                <p className="text-muted-foreground">This page is restricted. Please enter the password to continue.</p>
+                <p className="text-muted-foreground">This page is restricted. Please enter the owner's credentials to continue.</p>
                 <div className="w-full space-y-4 text-left">
+                     <div className="relative">
+                        <Label htmlFor="email">Owner Email</Label>
+                        <Input 
+                            id="email" 
+                            type="email" 
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Enter owner email" 
+                            className="pr-10"
+                        />
+                    </div>
                      <div className="relative">
                         <Label htmlFor="password">Password</Label>
                         <Input 
@@ -810,3 +803,5 @@ export function DevPanel() {
         </div>
     );
 }
+
+    
