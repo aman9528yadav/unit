@@ -66,8 +66,8 @@ const defaultQuickAccessItems = [
     { id: 'history', icon: <Clock size={18} />, label: "History", href: "/history" },
     { id: 'news', icon: <Newspaper size={18} />, label: "News", href: "/news" },
     { id: 'date-calc', icon: <Calendar size={18} />, label: "Date Calc", href: "/time?tab=date-diff" },
-    { id: 'timer-item', icon: <Timer size={18} />, label: "Timer", href: "/time?tab=timer" },
-    { id: 'stopwatch-item', icon: <Hourglass size={18} />, label: "Stopwatch", href: "/time?tab=stopwatch" },
+    { id: 'timer', icon: <Timer size={18} />, label: "Timer", href: "/time?tab=timer" },
+    { id: 'stopwatch', icon: <Hourglass size={18} />, label: "Stopwatch", href: "/time?tab=stopwatch" },
     { id: 'favorites', icon: <Star size={18} />, label: "Favorites", href: "/history?tab=favorites" },
     { id: 'settings', icon: <Settings size={18} />, label: "Settings", href: "/settings" },
     { id: 'help', icon: <Info size={18} />, label: "Help", href: "/how-to-use" },
@@ -274,7 +274,7 @@ export function Dashboard() {
              <Shortcut key={item.id} icon={item.icon} label={item.label} href={item.href} />
           ))}
            <ComingCard 
-              id="translator" 
+              id="translator-card" 
               title="Translator" 
               description="AI-powered translations" 
               icon="Languages" 
@@ -345,7 +345,7 @@ export function Dashboard() {
       </div>
 
       <Dialog open={isCustomizeDialogOpen} onOpenChange={setIsCustomizeDialogOpen}>
-            <DialogContent className="max-w-xs">
+            <DialogContent className="max-w-[412px]">
                 <DialogHeader>
                     <DialogTitle>Customize Quick Access</DialogTitle>
                     <DialogDescription>Drag and drop to reorder your shortcuts.</DialogDescription>
@@ -392,7 +392,7 @@ function Shortcut({ icon, label, href, isCustomizeMode }: { icon: React.ReactNod
 }
 
 
-function ComingCard({ title, description, soon, icon, isQuickAccess = false }: ComingSoonItem & { isQuickAccess?: boolean }) {
+function ComingCard({ id, title, description, soon, icon, isQuickAccess = false }: ComingSoonItem & { isQuickAccess?: boolean }) {
   const router = useRouter();
   const [profile, setProfile] = useState<{email: string} | null>(null);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
