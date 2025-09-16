@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Wrench, Clock, Settings, Zap, Hourglass, Bug, Rocket, Shield, Info, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
+import { Wrench, Clock, Settings, Zap, Hourglass, Bug, Rocket, Shield, Info, CheckCircle, XCircle, ArrowLeft, KeyRound, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,10 @@ import { listenToUpdateInfo, UpdateInfo } from '@/services/firestore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
 
 const CountdownBox = ({ value, label }: { value: number; label: string }) => (
     <div className="bg-primary/10 p-3 rounded-lg text-primary text-center">
@@ -49,6 +53,10 @@ export default function MaintenancePage() {
   const [timeLeft, setTimeLeft] = useState<Duration & { totalDays?: number } | null>(null);
   const [timerFinished, setTimerFinished] = useState(false);
   const [clickCount, setClickCount] = useState(0);
+  const [showDevLogin, setShowDevLogin] = useState(false);
+  const [devPassword, setDevPassword] = useState('');
+  const [showDevPassword, setShowDevPassword] = useState(false);
+
   const router = useRouter();
   const { toast } = useToast();
 
@@ -105,15 +113,27 @@ export default function MaintenancePage() {
       if (userEmail === "amanyadavyadav9458@gmail.com") {
         router.push('/dev');
       } else {
-        toast({
-          title: "Access Denied",
-          description: "You are not authorized to access developer mode.",
-          variant: "destructive"
-        })
+        setShowDevLogin(true);
       }
       setClickCount(0); // Reset count after check
     }
   };
+
+  const handleDevLogin = () => {
+    const savedDevPassword = localStorage.getItem('developerPassword') || '121312';
+    if (devPassword === savedDevPassword) {
+        setShowDevLogin(false);
+        setDevPassword('');
+        router.push('/dev');
+    } else {
+        toast({
+            title: "Access Denied",
+            description: "Incorrect developer password.",
+            variant: "destructive"
+        });
+        setDevPassword('');
+    }
+  }
   
   const maintenanceType = updateInfo?.maintenanceType || "Performance";
   const typeDetails = maintenanceTypeMap[maintenanceType as keyof typeof maintenanceTypeMap] || maintenanceTypeMap['Performance'];
@@ -212,6 +232,39 @@ export default function MaintenancePage() {
         </div>
 
       </motion.div>
+      <AlertDialog open={showDevLogin} onOpenChange={setShowDevLogin}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2"><KeyRound/> Developer Access</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Enter the developer password to access the developer panel.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+             <div className="relative">
+                <Label htmlFor="dev-password">Password</Label>
+                <Input 
+                    id="dev-password" 
+                    type={showDevPassword ? "text" : "password"} 
+                    value={devPassword}
+                    onChange={(e) => setDevPassword(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleDevLogin()}
+                    placeholder="Enter developer password" 
+                    className="pr-10"
+                />
+                    <button
+                    type="button"
+                    onClick={() => setShowDevPassword(!showDevPassword)}
+                    className="absolute right-3 top-8 text-muted-foreground"
+                >
+                    {showDevPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+            </div>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDevLogin}>Login</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
