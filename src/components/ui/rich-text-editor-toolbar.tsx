@@ -2,7 +2,7 @@ import { Editor } from "@tiptap/react";
 import {
   Bold, Strikethrough, Italic, Undo, Redo, Underline, Heading1, Heading2, Heading3, List, ListOrdered, Code2, CheckSquare,
   Highlighter, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link2, Quote, Minus, Table as TableIcon,
-  Columns2, Rows2, Trash2, ArrowUpFromLine, ArrowDownFromLine, ArrowLeftFromLine, ArrowRightFromLine
+  Columns2, Rows2, Trash2, ArrowUpFromLine, ArrowDownFromLine, ArrowLeftFromLine, ArrowRightFromLine, Palette
 } from "lucide-react";
 import { Button } from "./button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -48,10 +48,7 @@ const RichTextEditorToolbar = ({ editor }: { editor: Editor | null }) => {
       <Button size="icon" variant={editor.isActive("strike") ? "secondary" : "ghost"} onClick={() => editor.chain().focus().toggleStrike().run()}>
         <Strikethrough className="w-4 h-4" />
       </Button>
-      <Button size="icon" variant={editor.isActive('highlight') ? "secondary" : "ghost"} onClick={() => editor.chain().focus().toggleHighlight().run()}>
-        <Highlighter className="w-4 h-4" />
-      </Button>
-
+      
       <div className="h-6 border-l border-input mx-1" />
 
       {/* Headings */}
@@ -146,13 +143,6 @@ const RichTextEditorToolbar = ({ editor }: { editor: Editor | null }) => {
           <DropdownMenuItem onClick={() => editor.chain().focus().deleteTable().run()}><Trash2 className="w-4 h-4 mr-2" /> Delete Table</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <div className="h-6 border-l border-input mx-1" />
-
-      {/* Code */}
-      <Button size="icon" variant={editor.isActive("codeBlock") ? "secondary" : "ghost"} onClick={() => editor.chain().focus().toggleCodeBlock({ language: 'javascript' }).run()}>
-        <Code2 className="w-4 h-4" />
-      </Button>
 
       <div className="h-6 border-l border-input mx-1" />
 

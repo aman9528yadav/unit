@@ -429,3 +429,20 @@ body {
 .always-visible-scrollbar::-webkit-scrollbar-thumb:hover {
     background-color: hsl(var(--primary));
 }
+
+.note-bg-lines {
+  background-image: linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px);
+  background-size: 100% 1.5rem; /* Adjust line height */
+}
+
+.note-bg-dots {
+  background-image: radial-gradient(circle at 1px 1px, hsl(var(--border)) 1px, transparent 0);
+  background-size: 20px 20px;
+}
+
+.note-bg-grid {
+  background-image:
+    linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px);
+  background-size: 20px 20px;
+}

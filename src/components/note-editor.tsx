@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon, ArrowRightLeft, CheckSquare, Baseline, Highlighter, File, Lock, Unlock, KeyRound, Share2, FileText, Download } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Bold, Italic, List, Underline, Strikethrough, Link2, ListOrdered, Code2, Paperclip, Smile, Image as ImageIcon, X, Undo, Redo, Palette, CaseSensitive, Pilcrow, Heading1, Heading2, Text, Circle, CalculatorIcon, ArrowRightLeft, CheckSquare, Baseline, Highlighter, File, Lock, Unlock, KeyRound, Share2, FileText, Download, Notebook } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -65,6 +65,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [isExportLocked, setIsExportLocked] = useState(true);
     const [showPremiumLockDialog, setShowPremiumLockDialog] = useState(false);
+    const [backgroundStyle, setBackgroundStyle] = useState<'none' | 'lines' | 'dots' | 'grid'>('none');
 
 
     const router = useRouter();
@@ -102,6 +103,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     setCategory(noteToEdit.category || '');
                     setAttachment(noteToEdit.attachment || null);
                     setIsLocked(noteToEdit.isLocked || false);
+                    setBackgroundStyle(noteToEdit.backgroundStyle || 'none');
                 }
             }
             return;
@@ -119,6 +121,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     setCategory(noteToEdit.category || '');
                     setAttachment(noteToEdit.attachment || null);
                     setIsLocked(noteToEdit.isLocked || false);
+                    setBackgroundStyle(noteToEdit.backgroundStyle || 'none');
                 } else {
                     toast({ title: t('noteEditor.toast.notFound'), variant: "destructive" });
                     router.push('/notes');
@@ -237,6 +240,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 updatedAt: now,
                 deletedAt: null,
                 isLocked,
+                backgroundStyle,
             };
             notes.push(newNote);
         } else {
@@ -251,6 +255,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     attachment: attachment || null,
                     updatedAt: now,
                     isLocked,
+                    backgroundStyle,
                 };
             }
         }
@@ -418,6 +423,19 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                 <div className="flex items-center gap-2">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
+                             <Button variant="ghost" size="icon">
+                                <Notebook />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                             <DropdownMenuItem onSelect={() => {setBackgroundStyle('none'); setIsDirty(true);}}>None</DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => {setBackgroundStyle('lines'); setIsDirty(true);}}>Lines</DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => {setBackgroundStyle('dots'); setIsDirty(true);}}>Dots</DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => {setBackgroundStyle('grid'); setIsDirty(true);}}>Grid</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
                                 <Share2 />
                             </Button>
@@ -459,7 +477,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                     className="w-full bg-card border-border h-12 text-base focus-visible:ring-1 focus-visible:ring-ring"
                 />
             </div>
-            <div className="bg-card p-4 rounded-t-xl flex-grow flex flex-col gap-4 mt-4">
+            <div className={cn("bg-card p-4 rounded-t-xl flex-grow flex flex-col gap-4 mt-4", backgroundStyle && `note-bg-${backgroundStyle}`)}>
                 
                 {renderAttachment()}
 
@@ -469,6 +487,7 @@ export function NoteEditor({ noteId }: { noteId: string }) {
                         setContent(newContent);
                         setIsDirty(true);
                     }}
+                    className={cn(backgroundStyle && `note-bg-${backgroundStyle}`)}
                 />
                 <div className="flex items-center gap-2 pt-2 border-t border-border">
                     <Button variant="ghost" size="icon" onMouseDown={(e) => { e.preventDefault(); fileInputRef.current?.click(); }}>

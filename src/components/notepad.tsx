@@ -39,6 +39,7 @@ import { listenToUserData, listenToUserNotes, updateUserNotes, UserData, updateU
 import { Label } from './ui/label';
 import { reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { cn } from '@/lib/utils';
 
 
 export interface Note {
@@ -52,6 +53,7 @@ export interface Note {
     category: string;
     attachment: string | null;
     isLocked: boolean;
+    backgroundStyle?: 'none' | 'lines' | 'dots' | 'grid';
 }
 
 interface UserProfile {
@@ -454,7 +456,7 @@ export function Notepad() {
                     {sortedNotes.length > 0 ? (
                         <ul className={layout === 'list' ? "space-y-2" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
                             {sortedNotes.map(note => (
-                                <li key={note.id} className="bg-card p-4 rounded-lg flex flex-col justify-between" onClick={() => handleNoteClick(note)}>
+                                <li key={note.id} className={cn("bg-card p-4 rounded-lg flex flex-col justify-between", note.backgroundStyle && `note-bg-${note.backgroundStyle}`)} onClick={() => handleNoteClick(note)}>
                                     <div className="cursor-pointer group">
                                         <div className="flex items-center justify-between">
                                             <h2 className="font-semibold truncate group-hover:text-primary">{note.title || t('notepad.untitled')}</h2>
