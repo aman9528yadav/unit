@@ -411,3 +411,21 @@ body {
   margin-right: 0.5rem;
   cursor: pointer;
 }
+
+.always-visible-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.always-visible-scrollbar::-webkit-scrollbar-track {
+    background-color: hsl(var(--border) / 0.2);
+}
+
+.always-visible-scrollbar::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--primary) / 0.5);
+    border-radius: 6px;
+}
+
+.always-visible-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--primary));
+}
