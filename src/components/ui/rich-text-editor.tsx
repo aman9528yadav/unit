@@ -76,7 +76,7 @@ const RichTextEditor = ({
     editorProps: {
       attributes: {
         class:
-          'm-5 focus:outline-none',
+          'prose dark:prose-invert prose-sm sm:prose-base m-5 focus:outline-none',
       },
     },
     immediatelyRender: false,

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -48,7 +47,7 @@ export function GettingStarted() {
                     transition={{ duration: 0.8, ease: "easeOut" }}
                 >
                     <Image 
-                        src="/get start.png" 
+                        src="/get welcome.webp" 
                         alt="Get Started" 
                         width={300} 
                         height={200}
