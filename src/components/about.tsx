@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { motion, useInView, useSpring } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import { listenToAboutInfoFromRtdb, AppInfo, ReleasePlanItem, listenToOwnerInfoFromRtdb, OwnerInfo, AboutStats, listenToAboutStatsFromRtdb } from "@/services/firestore";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { suggestFeatures, type SuggestFeaturesOutput } from "@/ai/flows/suggest-features-flow";
 import * as LucideIcons from "lucide-react";
 
