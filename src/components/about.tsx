@@ -5,12 +5,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BookOpen, ShieldCheck, LifeBuoy, Mail, AlertTriangle, Globe, User, ChevronDown, ChevronUp, Sparkles, Star, Rocket } from "lucide-react";
+import { ArrowLeft, BookOpen, ShieldCheck, LifeBuoy, Mail, AlertTriangle, Globe, User, ChevronDown, ChevronUp, Sparkles, Star, Rocket, Lightbulb, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, useInView, useSpring } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import { listenToAboutInfoFromRtdb, AppInfo, ReleasePlanItem, listenToOwnerInfoFromRtdb, OwnerInfo, AboutStats, listenToAboutStatsFromRtdb } from "@/services/firestore";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { suggestFeatures, type SuggestFeaturesOutput } from "@/ai/flows/suggest-features-flow";
+import * as LucideIcons from "lucide-react";
 
 const defaultAppInfo: AppInfo = {
     version: 'Beta 1.2',
@@ -33,6 +35,20 @@ const defaultReleasePlan: ReleasePlanItem[] = [
     { id: '1', title: 'Beta 1', date: '15/07/2025', description: 'Core release with unit conversion, notes, and history features.' },
     { id: '2', title: 'Next Steps', date: 'Upcoming', description: 'Smarter, faster conversions with notes & history\nModern UI in Figma\nResponsive React components\nContinuous feature updates\nSutradhaar web app\nTesting & optimizations\nCross-platform official release' },
 ];
+
+const currentFeaturesList = [
+    'Unit Converter (Length, Weight, Temp, etc.)',
+    'Calculator with History',
+    'Rich-text Notes with attachments',
+    'Cross-tool History (Conversions, Calculations)',
+    'Favorites for quick access',
+    'User Authentication',
+    'Profile & Statistics Tracking',
+    'Customizable Themes & UI',
+    'PWA for offline use',
+    'AI-powered natural language conversion parsing'
+];
+
 
 const DetailRow = ({ label, value }: { label: string, value: string }) => (
     <div className="flex justify-between items-center py-3">
@@ -83,6 +99,8 @@ export function About() {
   const [aboutStats, setAboutStats] = useState<AboutStats>(defaultAboutStats);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [showConfetti, setShowConfetti] = useState(false);
+  const [featureSuggestions, setFeatureSuggestions] = useState<SuggestFeaturesOutput | null>(null);
+  const [isSuggesting, setIsSuggesting] = useState(false);
   
   const toggleExpand = (id: string) => {
     setExpandedItems(prev => ({...prev, [id]: !prev[id]}));
@@ -108,6 +126,19 @@ export function About() {
         unsubscribeStats();
     }
   }, []);
+
+  const handleSuggestFeatures = async () => {
+      setIsSuggesting(true);
+      setFeatureSuggestions(null);
+      try {
+          const suggestions = await suggestFeatures({ currentFeatures: currentFeaturesList });
+          setFeatureSuggestions(suggestions);
+      } catch (error) {
+          console.error("Failed to suggest features:", error);
+      } finally {
+          setIsSuggesting(false);
+      }
+  };
 
   useEffect(() => {
     if (showConfetti) {
@@ -194,6 +225,46 @@ export function About() {
              <DetailRow label="Channel" value={appInfo.releaseChannel} />
              <DetailRow label="License" value={appInfo.license} />
           </CardContent>
+        </Card>
+      </motion.div>
+      
+      {/* Feature Suggestion Section */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <Card className="shadow-lg rounded-2xl border-l-4 border-accent bg-card/80">
+            <CardHeader className="text-center">
+                <CardTitle className="text-accent flex items-center gap-2 justify-center"><Lightbulb className="w-5 h-5"/> What's Next for Sutradhaar?</CardTitle>
+                <CardDescription>Click the button to get AI-powered feature suggestions!</CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+                <Button onClick={handleSuggestFeatures} disabled={isSuggesting}>
+                    {isSuggesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4" />}
+                    {isSuggesting ? "Brainstorming..." : "Suggest New Features"}
+                </Button>
+                {featureSuggestions && (
+                    <div className="mt-6 space-y-4 text-left">
+                        {featureSuggestions.features.map((feature, index) => {
+                            const Icon = (LucideIcons as any)[feature.icon] || LucideIcons.Zap;
+                            return (
+                                <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className="p-4 bg-secondary rounded-lg flex items-start gap-4"
+                                >
+                                    <div className="p-2 bg-primary/10 rounded-full text-primary mt-1">
+                                        <Icon className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold text-foreground">{feature.title}</h4>
+                                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                )}
+            </CardContent>
         </Card>
       </motion.div>
 
